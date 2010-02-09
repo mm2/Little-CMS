@@ -3,22 +3,22 @@
 //  Little Color Management System
 //  Copyright (c) 1998-2010 Marti Maria Saguer
 //
-// Permission is hereby granted, free of charge, to any person obtaining 
-// a copy of this software and associated documentation files (the "Software"), 
-// to deal in the Software without restriction, including without limitation 
-// the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-// and/or sell copies of the Software, and to permit persons to whom the Software 
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in 
+// The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
-// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //---------------------------------------------------------------------------------
@@ -30,11 +30,11 @@
 
 // ********** Configuration toggles ****************************************
 
-// Uncomment this one if you are using big endian machines 
+// Uncomment this one if you are using big endian machines
 // #define CMS_USE_BIG_ENDIAN   1
 
 // Uncomment this one if your compiler/machine does NOT support the
-// "long long" type. 
+// "long long" type.
 // #define CMS_DONT_USE_INT64        1
 
 // Uncomment this if your compiler doesn't work with fast floor function
@@ -43,15 +43,15 @@
 // Uncomment this line if your system does not support multithreading
 #define CMS_DONT_USE_PTHREADS    1
 
-// Uncomment this line if you want lcms to use the black point tag in profile, 
-// if commented, lcms will compute the black point by its own. 
+// Uncomment this line if you want lcms to use the black point tag in profile,
+// if commented, lcms will compute the black point by its own.
 // It is safer to leve it commented out
 // #define CMS_USE_PROFILE_BLACK_POINT_TAG    1
 
 // Uncomment this line if you are compiling as C++ and want a C++ API
 // #define CMS_USE_CPP_API
 
-// Uncomment this line if you need strict CGATS syntax. Makes CGATS file to 
+// Uncomment this line if you need strict CGATS syntax. Makes CGATS file to
 // require "KEYWORD" on undefined identifiers, keep it comented out unless needed
 // #define CMS_STRICT_CGATS  1
 
@@ -66,8 +66,8 @@
 #include <stddef.h>
 
 #ifndef CMS_USE_CPP_API
-#   ifdef __cplusplus 
-extern "C" { 
+#   ifdef __cplusplus
+extern "C" {
 #   endif
 #endif
 
@@ -77,15 +77,15 @@ extern "C" {
 // I will give the chance of redefining basic types for compilers that are not fully C99 compliant
 #ifndef CMS_BASIC_TYPES_ALREADY_DEFINED
 
-// Base types 
+// Base types
 typedef unsigned char        cmsUInt8Number;   // That is guaranteed by the C99 spec
 typedef signed char          cmsInt8Number;    // That is guaranteed by the C99 spec
 
-// IEEE float storage numbers 
+// IEEE float storage numbers
 typedef float                cmsFloat32Number;
 typedef double               cmsFloat64Number;
 
-// 16-bit base types 
+// 16-bit base types
 #if (USHRT_MAX == 65535U)
  typedef unsigned short      cmsUInt16Number;
 #elif (UINT_MAX == 65535U)
@@ -96,14 +96,14 @@ typedef double               cmsFloat64Number;
 
 #if (SHRT_MAX == 32767)
   typedef  short             cmsInt16Number;
-#elif (INT_MAX == 32767) 
-  typedef  int               cmsInt16Number;   
+#elif (INT_MAX == 32767)
+  typedef  int               cmsInt16Number;
 #else
 #  error "Unable to find 16 bits signed type, unsupported compiler"
 #endif
 
 // 32-bit base type
-#if (UINT_MAX == 4294967295U)   
+#if (UINT_MAX == 4294967295U)
  typedef unsigned int        cmsUInt32Number;
 #elif (ULONG_MAX == 4294967295U)
  typedef unsigned long       cmsUInt32Number;
@@ -111,7 +111,7 @@ typedef double               cmsFloat64Number;
 #  error "Unable to find 32 bit unsigned type, unsupported compiler"
 #endif
 
-#if (INT_MAX == +2147483647)    
+#if (INT_MAX == +2147483647)
  typedef  int                cmsInt32Number;
 #elif (LONG_MAX == +2147483647)
  typedef  long               cmsInt32Number;
@@ -173,7 +173,7 @@ typedef int                  cmsBool;
 #   define CMS_USE_BIG_ENDIAN      1
 #endif
 
-#if defined(__sgi__) || defined(__sgi) || defined(__powerpc__) || defined(sparc) 
+#if defined(__sgi__) || defined(__sgi) || defined(__powerpc__) || defined(sparc)
 #   define CMS_USE_BIG_ENDIAN      1
 #endif
 
@@ -206,11 +206,11 @@ typedef int                  cmsBool;
 #       endif
 #     endif
 #  else
-#       define CMSEXPORT 
+#       define CMSEXPORT
 #       define CMSAPI
 #  endif
-#else 
-# define CMSEXPORT 
+#else
+# define CMSEXPORT
 # define CMSAPI
 #endif
 
@@ -235,20 +235,20 @@ typedef int                  cmsBool;
 #define cmsPERCEPTUAL_BLACK_Z  0.00287
 
 // Definitions in ICC spec
-#define cmsMagicNumber      0x61637370     // 'acsp' 
+#define cmsMagicNumber      0x61637370     // 'acsp'
 #define lcmsSignature       0x6c636d73     // 'lcms'
 
 
-// Base ICC type definitions 
+// Base ICC type definitions
 typedef enum {
     cmsSigChromaticityType                  = 0x6368726D,  // 'chrm'
     cmsSigColorantOrderType                 = 0x636C726F,  // 'clro'
     cmsSigColorantTableType                 = 0x636C7274,  // 'clrt'
-    cmsSigCrdInfoType                       = 0x63726469,  // 'crdi' 
+    cmsSigCrdInfoType                       = 0x63726469,  // 'crdi'
     cmsSigCurveType                         = 0x63757276,  // 'curv'
     cmsSigDataType                          = 0x64617461,  // 'data'
     cmsSigDateTimeType                      = 0x6474696D,  // 'dtim'
-    cmsSigDeviceSettingsType                = 0x64657673,  // 'devs' 
+    cmsSigDeviceSettingsType                = 0x64657673,  // 'devs'
     cmsSigLut16Type                         = 0x6d667432,  // 'mft2'
     cmsSigLut8Type                          = 0x6d667431,  // 'mft1'
     cmsSigLutAtoBType                       = 0x6d414220,  // 'mAB '
@@ -263,12 +263,12 @@ typedef enum {
     cmsSigProfileSequenceIdType             = 0x70736964,  // 'psid'
     cmsSigResponseCurveSet16Type            = 0x72637332,  // 'rcs2'
     cmsSigS15Fixed16ArrayType               = 0x73663332,  // 'sf32'
-    cmsSigScreeningType                     = 0x7363726E,  // 'scrn' 
+    cmsSigScreeningType                     = 0x7363726E,  // 'scrn'
     cmsSigSignatureType                     = 0x73696720,  // 'sig '
     cmsSigTextType                          = 0x74657874,  // 'text'
-    cmsSigTextDescriptionType               = 0x64657363,  // 'desc' 
+    cmsSigTextDescriptionType               = 0x64657363,  // 'desc'
     cmsSigU16Fixed16ArrayType               = 0x75663332,  // 'uf32'
-    cmsSigUcrBgType                         = 0x62666420,  // 'bfd ' 
+    cmsSigUcrBgType                         = 0x62666420,  // 'bfd '
     cmsSigUInt16ArrayType                   = 0x75693136,  // 'ui16'
     cmsSigUInt32ArrayType                   = 0x75693332,  // 'ui32'
     cmsSigUInt64ArrayType                   = 0x75693634,  // 'ui64'
@@ -281,9 +281,9 @@ typedef enum {
 
 // Base ICC tag definitions
 typedef enum {
-    cmsSigAToB0Tag                          = 0x41324230,  // 'A2B0' 
+    cmsSigAToB0Tag                          = 0x41324230,  // 'A2B0'
     cmsSigAToB1Tag                          = 0x41324231,  // 'A2B1'
-    cmsSigAToB2Tag                          = 0x41324232,  // 'A2B2' 
+    cmsSigAToB2Tag                          = 0x41324232,  // 'A2B2'
     cmsSigBlueColorantTag                   = 0x6258595A,  // 'bXYZ'
     cmsSigBlueMatrixColumnTag               = 0x6258595A,  // 'bXYZ'
     cmsSigBlueTRCTag                        = 0x62545243,  // 'bTRC'
@@ -291,7 +291,7 @@ typedef enum {
     cmsSigBToA1Tag                          = 0x42324131,  // 'B2A1'
     cmsSigBToA2Tag                          = 0x42324132,  // 'B2A2'
     cmsSigCalibrationDateTimeTag            = 0x63616C74,  // 'calt'
-    cmsSigCharTargetTag                     = 0x74617267,  // 'targ' 
+    cmsSigCharTargetTag                     = 0x74617267,  // 'targ'
     cmsSigChromaticAdaptationTag            = 0x63686164,  // 'chad'
     cmsSigChromaticityTag                   = 0x6368726D,  // 'chrm'
     cmsSigColorantOrderTag                  = 0x636C726F,  // 'clro'
@@ -299,12 +299,12 @@ typedef enum {
     cmsSigColorantTableOutTag               = 0x636C6F74,  // 'clot'
     cmsSigColorimetricIntentImageStateTag   = 0x63696973,  // 'ciis'
     cmsSigCopyrightTag                      = 0x63707274,  // 'cprt'
-    cmsSigCrdInfoTag                        = 0x63726469,  // 'crdi' 
-    cmsSigDataTag                           = 0x64617461,  // 'data' 
-    cmsSigDateTimeTag                       = 0x6474696D,  // 'dtim' 
+    cmsSigCrdInfoTag                        = 0x63726469,  // 'crdi'
+    cmsSigDataTag                           = 0x64617461,  // 'data'
+    cmsSigDateTimeTag                       = 0x6474696D,  // 'dtim'
     cmsSigDeviceMfgDescTag                  = 0x646D6E64,  // 'dmnd'
     cmsSigDeviceModelDescTag                = 0x646D6464,  // 'dmdd'
-    cmsSigDeviceSettingsTag                 = 0x64657673,  // 'devs' 
+    cmsSigDeviceSettingsTag                 = 0x64657673,  // 'devs'
     cmsSigDToB0Tag                          = 0x44324230,  // 'D2B0'
     cmsSigDToB1Tag                          = 0x44324231,  // 'D2B1'
     cmsSigDToB2Tag                          = 0x44324232,  // 'D2B2'
@@ -332,20 +332,20 @@ typedef enum {
     cmsSigProfileDescriptionTag             = 0x64657363,  // 'desc'
     cmsSigProfileSequenceDescTag            = 0x70736571,  // 'pseq'
     cmsSigProfileSequenceIdTag              = 0x70736964,  // 'psid'
-    cmsSigPs2CRD0Tag                        = 0x70736430,  // 'psd0' 
-    cmsSigPs2CRD1Tag                        = 0x70736431,  // 'psd1' 
-    cmsSigPs2CRD2Tag                        = 0x70736432,  // 'psd2' 
-    cmsSigPs2CRD3Tag                        = 0x70736433,  // 'psd3' 
-    cmsSigPs2CSATag                         = 0x70733273,  // 'ps2s' 
-    cmsSigPs2RenderingIntentTag             = 0x70733269,  // 'ps2i' 
+    cmsSigPs2CRD0Tag                        = 0x70736430,  // 'psd0'
+    cmsSigPs2CRD1Tag                        = 0x70736431,  // 'psd1'
+    cmsSigPs2CRD2Tag                        = 0x70736432,  // 'psd2'
+    cmsSigPs2CRD3Tag                        = 0x70736433,  // 'psd3'
+    cmsSigPs2CSATag                         = 0x70733273,  // 'ps2s'
+    cmsSigPs2RenderingIntentTag             = 0x70733269,  // 'ps2i'
     cmsSigRedColorantTag                    = 0x7258595A,  // 'rXYZ'
     cmsSigRedMatrixColumnTag                = 0x7258595A,  // 'rXYZ'
     cmsSigRedTRCTag                         = 0x72545243,  // 'rTRC'
     cmsSigSaturationRenderingIntentGamutTag = 0x72696732,  // 'rig2'
-    cmsSigScreeningDescTag                  = 0x73637264,  // 'scrd' 
-    cmsSigScreeningTag                      = 0x7363726E,  // 'scrn' 
+    cmsSigScreeningDescTag                  = 0x73637264,  // 'scrd'
+    cmsSigScreeningTag                      = 0x7363726E,  // 'scrn'
     cmsSigTechnologyTag                     = 0x74656368,  // 'tech'
-    cmsSigUcrBgTag                          = 0x62666420,  // 'bfd ' 
+    cmsSigUcrBgTag                          = 0x62666420,  // 'bfd '
     cmsSigViewingCondDescTag                = 0x76756564,  // 'vued'
     cmsSigViewingConditionsTag              = 0x76696577,  // 'view'
     cmsSigVcgtTag                           = 0x76636774   // 'vcgt'
@@ -354,11 +354,11 @@ typedef enum {
 
 
 // ICC Technology tag
-typedef enum {    
+typedef enum {
     cmsSigDigitalCamera                     = 0x6463616D,  // 'dcam'
     cmsSigFilmScanner                       = 0x6673636E,  // 'fscn'
     cmsSigReflectiveScanner                 = 0x7273636E,  // 'rscn'
-    cmsSigInkJetPrinter                     = 0x696A6574,  // 'ijet' 
+    cmsSigInkJetPrinter                     = 0x696A6574,  // 'ijet'
     cmsSigThermalWaxPrinter                 = 0x74776178,  // 'twax'
     cmsSigElectrophotographicPrinter        = 0x6570686F,  // 'epho'
     cmsSigElectrostaticPrinter              = 0x65737461,  // 'esta'
@@ -381,12 +381,12 @@ typedef enum {
     cmsSigMotionPictureFilmRecorder         = 0x6D706672,  // 'mpfr'
     cmsSigDigitalMotionPictureCamera        = 0x646D7063,  // 'dmpc'
     cmsSigDigitalCinemaProjector            = 0x64636A70,  // 'dcpj'
-                                           
-} cmsTechnologySignature;                  
-                                           
-                                           
-// ICC Color spaces                        
-typedef enum {                             
+
+} cmsTechnologySignature;
+
+
+// ICC Color spaces
+typedef enum {
     cmsSigXYZData                           = 0x58595A20,  // 'XYZ '
     cmsSigLabData                           = 0x4C616220,  // 'Lab '
     cmsSigLuvData                           = 0x4C757620,  // 'Luv '
@@ -398,23 +398,23 @@ typedef enum {
     cmsSigHlsData                           = 0x484C5320,  // 'HLS '
     cmsSigCmykData                          = 0x434D594B,  // 'CMYK'
     cmsSigCmyData                           = 0x434D5920,  // 'CMY '
-    cmsSigMCH1Data                          = 0x4D434831,  // 'MCH1' 
-    cmsSigMCH2Data                          = 0x4D434832,  // 'MCH2'   
-    cmsSigMCH3Data                          = 0x4D434833,  // 'MCH3' 
-    cmsSigMCH4Data                          = 0x4D434834,  // 'MCH4'      
-    cmsSigMCH5Data                          = 0x4D434835,  // 'MCH5' 
-    cmsSigMCH6Data                          = 0x4D434836,  // 'MCH6' 
-    cmsSigMCH7Data                          = 0x4D434837,  // 'MCH7' 
-    cmsSigMCH8Data                          = 0x4D434838,  // 'MCH8' 
-    cmsSigMCH9Data                          = 0x4D434839,  // 'MCH9' 
-    cmsSigMCHAData                          = 0x4D43483A,  // 'MCHA' 
-    cmsSigMCHBData                          = 0x4D43483B,  // 'MCHB' 
-    cmsSigMCHCData                          = 0x4D43483C,  // 'MCHC' 
-    cmsSigMCHDData                          = 0x4D43483D,  // 'MCHD' 
-    cmsSigMCHEData                          = 0x4D43483E,  // 'MCHE' 
-    cmsSigMCHFData                          = 0x4D43483F,  // 'MCHF' 
+    cmsSigMCH1Data                          = 0x4D434831,  // 'MCH1'
+    cmsSigMCH2Data                          = 0x4D434832,  // 'MCH2'
+    cmsSigMCH3Data                          = 0x4D434833,  // 'MCH3'
+    cmsSigMCH4Data                          = 0x4D434834,  // 'MCH4'
+    cmsSigMCH5Data                          = 0x4D434835,  // 'MCH5'
+    cmsSigMCH6Data                          = 0x4D434836,  // 'MCH6'
+    cmsSigMCH7Data                          = 0x4D434837,  // 'MCH7'
+    cmsSigMCH8Data                          = 0x4D434838,  // 'MCH8'
+    cmsSigMCH9Data                          = 0x4D434839,  // 'MCH9'
+    cmsSigMCHAData                          = 0x4D43483A,  // 'MCHA'
+    cmsSigMCHBData                          = 0x4D43483B,  // 'MCHB'
+    cmsSigMCHCData                          = 0x4D43483C,  // 'MCHC'
+    cmsSigMCHDData                          = 0x4D43483D,  // 'MCHD'
+    cmsSigMCHEData                          = 0x4D43483E,  // 'MCHE'
+    cmsSigMCHFData                          = 0x4D43483F,  // 'MCHF'
     cmsSigNamedData                         = 0x6e6d636c,  // 'nmcl'
-    cmsSig1colorData                        = 0x31434C52,  // '1CLR' 
+    cmsSig1colorData                        = 0x31434C52,  // '1CLR'
     cmsSig2colorData                        = 0x32434C52,  // '2CLR'
     cmsSig3colorData                        = 0x33434C52,  // '3CLR'
     cmsSig4colorData                        = 0x34434C52,  // '4CLR'
@@ -430,18 +430,18 @@ typedef enum {
     cmsSig14colorData                       = 0x45434C52,  // 'ECLR'
     cmsSig15colorData                       = 0x46434C52,  // 'FCLR'
     cmsSigLuvKData                          = 0x4C75764B   // 'LuvK'
-                                           
-} cmsColorSpaceSignature;                  
-                                           
-// ICC Profile Class                       
-typedef enum {                             
-    cmsSigInputClass                        = 0x73636E72,  // 'scnr' 
-    cmsSigDisplayClass                      = 0x6D6E7472,  // 'mntr' 
-    cmsSigOutputClass                       = 0x70727472,  // 'prtr' 
-    cmsSigLinkClass                         = 0x6C696E6B,  // 'link' 
-    cmsSigAbstractClass                     = 0x61627374,  // 'abst' 
-    cmsSigColorSpaceClass                   = 0x73706163,  // 'spac' 
-    cmsSigNamedColorClass                   = 0x6e6d636c,  // 'nmcl' 
+
+} cmsColorSpaceSignature;
+
+// ICC Profile Class
+typedef enum {
+    cmsSigInputClass                        = 0x73636E72,  // 'scnr'
+    cmsSigDisplayClass                      = 0x6D6E7472,  // 'mntr'
+    cmsSigOutputClass                       = 0x70727472,  // 'prtr'
+    cmsSigLinkClass                         = 0x6C696E6B,  // 'link'
+    cmsSigAbstractClass                     = 0x61627374,  // 'abst'
+    cmsSigColorSpaceClass                   = 0x73706163,  // 'spac'
+    cmsSigNamedColorClass                   = 0x6e6d636c,  // 'nmcl'
 
 } cmsProfileClassSignature;
 
@@ -457,26 +457,26 @@ typedef enum {
 } cmsPlatformSignature;
 
 // Reference gamut
-#define  cmsSigPerceptualReferenceMediumGamut         0x70726d67  //'prmg' 
+#define  cmsSigPerceptualReferenceMediumGamut         0x70726d67  //'prmg'
 
 // For cmsSigColorimetricIntentImageStateTag
-#define  cmsSigSceneColorimetryEstimates              0x73636F65  //'scoe' 
-#define  cmsSigSceneAppearanceEstimates               0x73617065  //'sape' 
-#define  cmsSigFocalPlaneColorimetryEstimates         0x66706365  //'fpce' 
-#define  cmsSigReflectionHardcopyOriginalColorimetry  0x72686F63  //'rhoc' 
-#define  cmsSigReflectionPrintOutputColorimetry       0x72706F63  //'rpoc' 
+#define  cmsSigSceneColorimetryEstimates              0x73636F65  //'scoe'
+#define  cmsSigSceneAppearanceEstimates               0x73617065  //'sape'
+#define  cmsSigFocalPlaneColorimetryEstimates         0x66706365  //'fpce'
+#define  cmsSigReflectionHardcopyOriginalColorimetry  0x72686F63  //'rhoc'
+#define  cmsSigReflectionPrintOutputColorimetry       0x72706F63  //'rpoc'
 
 // Multi process elements types
 typedef enum {
-    cmsSigCurveSetElemType              = 0x63767374,  //'cvst' 
-    cmsSigMatrixElemType                = 0x6D617466,  //'matf' 
-    cmsSigCLutElemType                  = 0x636C7574,  //'clut' 
-    
-    cmsSigBAcsElemType                  = 0x62414353,  // 'bACS' 
-    cmsSigEAcsElemType                  = 0x65414353,  // 'eACS' 
+    cmsSigCurveSetElemType              = 0x63767374,  //'cvst'
+    cmsSigMatrixElemType                = 0x6D617466,  //'matf'
+    cmsSigCLutElemType                  = 0x636C7574,  //'clut'
 
-    // Custom from here, not in the ICC Spec    
-    cmsSigXYZ2LabElemType               = 0x6C327820,  // 'l2x '   
+    cmsSigBAcsElemType                  = 0x62414353,  // 'bACS'
+    cmsSigEAcsElemType                  = 0x65414353,  // 'eACS'
+
+    // Custom from here, not in the ICC Spec
+    cmsSigXYZ2LabElemType               = 0x6C327820,  // 'l2x '
     cmsSigLab2XYZElemType               = 0x78326C20,  // 'x2l '
     cmsSigNamedColorElemType            = 0x6E636C20,  // 'ncl '
     cmsSigLabV2toV4                     = 0x32203420,  // '2 4 '
@@ -490,24 +490,24 @@ typedef enum {
 // Types of CurveElements
 typedef enum {
 
-    cmsSigFormulaCurveSeg               = 0x70617266, // 'parf' 
-    cmsSigSampledCurveSeg               = 0x73616D66, // 'samf' 
-    cmsSigSegmentedCurve                = 0x63757266  // 'curf' 
+    cmsSigFormulaCurveSeg               = 0x70617266, // 'parf'
+    cmsSigSampledCurveSeg               = 0x73616D66, // 'samf'
+    cmsSigSegmentedCurve                = 0x63757266  // 'curf'
 
 } cmsCurveSegSignature;
 
 // Used in ResponseCurveType
-#define  cmsSigStatusA                    0x53746141 //'StaA' 
-#define  cmsSigStatusE                    0x53746145 //'StaE' 
-#define  cmsSigStatusI                    0x53746149 //'StaI' 
-#define  cmsSigStatusT                    0x53746154 //'StaT' 
-#define  cmsSigStatusM                    0x5374614D //'StaM' 
-#define  cmsSigDN                         0x444E2020 //'DN  ' 
-#define  cmsSigDNP                        0x444E2050 //'DN P' 
-#define  cmsSigDNN                        0x444E4E20 //'DNN ' 
-#define  cmsSigDNNP                       0x444E4E50 //'DNNP' 
+#define  cmsSigStatusA                    0x53746141 //'StaA'
+#define  cmsSigStatusE                    0x53746145 //'StaE'
+#define  cmsSigStatusI                    0x53746149 //'StaI'
+#define  cmsSigStatusT                    0x53746154 //'StaT'
+#define  cmsSigStatusM                    0x5374614D //'StaM'
+#define  cmsSigDN                         0x444E2020 //'DN  '
+#define  cmsSigDNP                        0x444E2050 //'DN P'
+#define  cmsSigDNN                        0x444E4E20 //'DNN '
+#define  cmsSigDNNP                       0x444E4E50 //'DNNP'
 
-// Device attributes, currently defined values correspond to the low 4 bytes 
+// Device attributes, currently defined values correspond to the low 4 bytes
 // of the 8 byte attribute quantity
 #define cmsReflective     0
 #define cmsTransparency   1
@@ -580,16 +580,16 @@ typedef struct {
 
 // ICC base tag
 typedef struct {
-    cmsTagTypeSignature  sig;            
-    cmsInt8Number        reserved[4];    
+    cmsTagTypeSignature  sig;
+    cmsInt8Number        reserved[4];
 
 } cmsTagBase;
 
 // A tag entry in directory
 typedef struct {
-    cmsTagSignature      sig;            // The tag signature 
-    cmsUInt32Number      offset;         // Start of tag 
-    cmsUInt32Number      size;           // Size in bytes 
+    cmsTagSignature      sig;            // The tag signature
+    cmsUInt32Number      offset;         // Start of tag
+    cmsUInt32Number      size;           // Size in bytes
 
 } cmsTagEntry;
 
@@ -730,7 +730,7 @@ typedef void* cmsHTRANSFORM;
 #define TYPE_CMY_16_SE         (COLORSPACE_SH(PT_CMY)|CHANNELS_SH(3)|BYTES_SH(2)|ENDIAN16_SH(1))
 
 #define TYPE_CMYK_8            (COLORSPACE_SH(PT_CMYK)|CHANNELS_SH(4)|BYTES_SH(1))
-#define TYPE_CMYKA_8           (COLORSPACE_SH(PT_CMYK)|EXTRA_SH(1)|CHANNELS_SH(4)|BYTES_SH(1))  
+#define TYPE_CMYKA_8           (COLORSPACE_SH(PT_CMYK)|EXTRA_SH(1)|CHANNELS_SH(4)|BYTES_SH(1))
 #define TYPE_CMYK_8_REV        (COLORSPACE_SH(PT_CMYK)|CHANNELS_SH(4)|BYTES_SH(1)|FLAVOR_SH(1))
 #define TYPE_YUVK_8            TYPE_CMYK_8_REV
 #define TYPE_CMYK_8_PLANAR     (COLORSPACE_SH(PT_CMYK)|CHANNELS_SH(4)|BYTES_SH(1)|PLANAR_SH(1))
@@ -837,10 +837,10 @@ typedef void* cmsHTRANSFORM;
 #define TYPE_HSV_16_PLANAR     (COLORSPACE_SH(PT_HSV)|CHANNELS_SH(3)|BYTES_SH(2)|PLANAR_SH(1))
 #define TYPE_HSV_16_SE         (COLORSPACE_SH(PT_HSV)|CHANNELS_SH(3)|BYTES_SH(2)|ENDIAN16_SH(1))
 
-// Named color index. Only 16 bits allowed (don't check colorspace) 
+// Named color index. Only 16 bits allowed (don't check colorspace)
 #define TYPE_NAMED_COLOR_INDEX (CHANNELS_SH(1)|BYTES_SH(2))
 
-// Float formatters.  
+// Float formatters.
 #define TYPE_XYZ_FLT          (COLORSPACE_SH(PT_XYZ)|CHANNELS_SH(3)|BYTES_SH(4))
 #define TYPE_Lab_FLT          (COLORSPACE_SH(PT_Lab)|CHANNELS_SH(3)|BYTES_SH(4))
 #define TYPE_GRAY_FLT         (COLORSPACE_SH(PT_GRAY)|CHANNELS_SH(1)|BYTES_SH(4))
@@ -862,30 +862,30 @@ typedef struct {
         cmsFloat64Number Y;
         cmsFloat64Number Z;
 
-    } cmsCIEXYZ; 
-        
-typedef struct {               
+    } cmsCIEXYZ;
+
+typedef struct {
         cmsFloat64Number x;
         cmsFloat64Number y;
         cmsFloat64Number Y;
 
     } cmsCIExyY;
 
-typedef struct {               
+typedef struct {
         cmsFloat64Number L;
-        cmsFloat64Number a;               
-        cmsFloat64Number b;    
+        cmsFloat64Number a;
+        cmsFloat64Number b;
 
     } cmsCIELab;
 
-typedef struct {               
+typedef struct {
         cmsFloat64Number L;
         cmsFloat64Number C;
         cmsFloat64Number h;
 
     } cmsCIELCh;
 
-typedef struct {               
+typedef struct {
         cmsFloat64Number J;
         cmsFloat64Number C;
         cmsFloat64Number h;
@@ -899,7 +899,7 @@ typedef struct {
 
     } cmsCIEXYZTRIPLE;
 
-typedef struct {              
+typedef struct {
         cmsCIExyY  Red;
         cmsCIExyY  Green;
         cmsCIExyY  Blue;
@@ -949,10 +949,10 @@ CMSAPI void              CMSEXPORT cmsUnregisterPlugins(void);
 // For example, all create functions does return NULL on failure. Other may return FALSE.
 // It may be interesting, for the developer, to know why the function is failing.
 // for that reason, lcms2 does offer a logging function. This function will get
-// an ENGLISH string with some clues on what is going wrong. You can show this 
+// an ENGLISH string with some clues on what is going wrong. You can show this
 // info to the end user if you wish, or just create some sort of log on disk.
 // The logging function should NOT terminate the program, as this obviously can leave
-// unfreed resources. It is the programmer's responsability to check each function 
+// unfreed resources. It is the programmer's responsibility to check each function
 // return code to make sure it didn't fail.
 
 #define cmsERROR_UNDEFINED                    0
@@ -970,10 +970,10 @@ CMSAPI void              CMSEXPORT cmsUnregisterPlugins(void);
 #define cmsERROR_CORRUPTION_DETECTED          12
 #define cmsERROR_NOT_SUITABLE                 13
 
-// Error logger is called with the ContextID when a message is raised. This gives the 
-// chance to know which thread is responsible of the warning and any environment associated 
-// with it. Non-multithreading applications may safely ignore this parameter. 
-// Note that under certain special circunstances, ContextID may be NULL.
+// Error logger is called with the ContextID when a message is raised. This gives the
+// chance to know which thread is responsible of the warning and any environment associated
+// with it. Non-multithreading applications may safely ignore this parameter.
+// Note that under certain special circumstances, ContextID may be NULL.
 typedef void  (* cmsLogErrorHandlerFunction)(cmsContext ContextID, cmsUInt32Number ErrorCode, const char *Text);
 
 // Allows user to set any specific logger
@@ -983,7 +983,7 @@ CMSAPI void              CMSEXPORT cmsSetLogErrorHandler(cmsLogErrorHandlerFunct
 
 // Returns pointers to constant structs
 CMSAPI const cmsCIEXYZ*  CMSEXPORT cmsD50_XYZ(void);
-CMSAPI const cmsCIExyY*  CMSEXPORT cmsD50_xyY(void); 
+CMSAPI const cmsCIExyY*  CMSEXPORT cmsD50_xyY(void);
 
 // Colorimetric space conversions
 CMSAPI void              CMSEXPORT cmsXYZ2xyY(cmsCIExyY* Dest, const cmsCIEXYZ* Source);
@@ -1001,7 +1001,7 @@ CMSAPI void              CMSEXPORT cmsFloat2LabEncodedV2(cmsUInt16Number wLab[3]
 CMSAPI void              CMSEXPORT cmsXYZEncoded2Float(cmsCIEXYZ* fxyz, const cmsUInt16Number XYZ[3]);
 CMSAPI void              CMSEXPORT cmsFloat2XYZEncoded(cmsUInt16Number XYZ[3], const cmsCIEXYZ* fXYZ);
 
-// DeltaE metrics 
+// DeltaE metrics
 CMSAPI cmsFloat64Number  CMSEXPORT cmsDeltaE(const cmsCIELab* Lab1, const cmsCIELab* Lab2);
 CMSAPI cmsFloat64Number  CMSEXPORT cmsCIE94DeltaE(const cmsCIELab* Lab1, const cmsCIELab* Lab2);
 CMSAPI cmsFloat64Number  CMSEXPORT cmsBFDdeltaE(const cmsCIELab* Lab1, const cmsCIELab* Lab2);
@@ -1019,7 +1019,7 @@ CMSAPI cmsBool           CMSEXPORT cmsAdaptToIlluminant(cmsCIEXYZ* Result, const
 
 // CIECAM02 ---------------------------------------------------------------------------------------------------
 
-// Viewing conditions. Please note those are CAM model viewing conditions, and not the ICC tag viewing 
+// Viewing conditions. Please note those are CAM model viewing conditions, and not the ICC tag viewing
 // conditions, which I'm naming cmsICCViewingConditions to make differences evident. Unfortunately, the tag
 // cannot deal with surround La, Yb and D value so is basically useless to store CAM02 viewing conditions.
 
@@ -1031,7 +1031,7 @@ CMSAPI cmsBool           CMSEXPORT cmsAdaptToIlluminant(cmsCIEXYZ* Result, const
 
 #define D_CALCULATE        (-1)
 
-typedef struct {              
+typedef struct {
     cmsCIEXYZ        whitePoint;
     cmsFloat64Number Yb;
     cmsFloat64Number La;
@@ -1060,7 +1060,7 @@ typedef struct {
 
 } cmsCurveSegment;
 
-// The internal respresentation is none of your business. 
+// The internal representation is none of your business.
 typedef struct _cms_curve_struct cmsToneCurve;
 
 CMSAPI cmsToneCurve*     CMSEXPORT cmsBuildSegmentedToneCurve(cmsContext ContextID, cmsInt32Number nSegments, const cmsCurveSegment Segments[]);
@@ -1085,13 +1085,13 @@ CMSAPI cmsInt32Number    CMSEXPORT cmsGetToneCurveParametricType(const cmsToneCu
 CMSAPI cmsFloat64Number  CMSEXPORT cmsEstimateGamma(const cmsToneCurve* t, cmsFloat64Number Precision);
 
 
-// Implements pipelines of multi processing elements -------------------------------------------------------------
+// Implements pipelines of multi-processing elements -------------------------------------------------------------
 
 // Nothing to see here, move along
 typedef struct _cmsPipeline_struct cmsPipeline;
 typedef struct _cmsStage_struct cmsStage;
 
-// Those are hi-level pipelines 
+// Those are hi-level pipelines
 CMSAPI cmsPipeline*      CMSEXPORT cmsPipelineAlloc(cmsContext ContextID, cmsUInt32Number InputChannels, cmsUInt32Number OutputChannels);
 CMSAPI void              CMSEXPORT cmsPipelineFree(cmsPipeline* lut);
 CMSAPI cmsPipeline*      CMSEXPORT cmsPipelineDup(const cmsPipeline* Orig);
@@ -1167,7 +1167,7 @@ CMSAPI cmsBool           CMSEXPORT cmsSliceSpace16(cmsUInt32Number nInputs, cons
 CMSAPI cmsBool           CMSEXPORT cmsSliceSpaceFloat(cmsUInt32Number nInputs, const cmsUInt32Number clutPoints[],
                                                    cmsSAMPLERFLOAT Sampler, void * Cargo);
 
-// Multilocalized unicode management ---------------------------------------------------------------------------------------
+// Multilocalized Unicode management ---------------------------------------------------------------------------------------
 
 typedef struct _cms_MLU_struct cmsMLU;
 
@@ -1178,23 +1178,23 @@ CMSAPI cmsMLU*           CMSEXPORT cmsMLUalloc(cmsContext ContextID, cmsUInt32Nu
 CMSAPI void              CMSEXPORT cmsMLUfree(cmsMLU* mlu);
 CMSAPI cmsMLU*           CMSEXPORT cmsMLUdup(const cmsMLU* mlu);
 
-CMSAPI cmsBool           CMSEXPORT cmsMLUsetASCII(cmsMLU* mlu, 
-                                                  const char LanguageCode[3], const char CountryCode[3], 
+CMSAPI cmsBool           CMSEXPORT cmsMLUsetASCII(cmsMLU* mlu,
+                                                  const char LanguageCode[3], const char CountryCode[3],
                                                   const char* ASCIIString);
-CMSAPI cmsBool           CMSEXPORT cmsMLUsetWide(cmsMLU* mlu,  
-                                                  const char LanguageCode[3], const char CountryCode[3], 
+CMSAPI cmsBool           CMSEXPORT cmsMLUsetWide(cmsMLU* mlu,
+                                                  const char LanguageCode[3], const char CountryCode[3],
                                                   const wchar_t* WideString);
 
-CMSAPI cmsUInt32Number   CMSEXPORT cmsMLUgetASCII(const cmsMLU* mlu, 
-                                                  const char LanguageCode[3], const char CountryCode[3], 
+CMSAPI cmsUInt32Number   CMSEXPORT cmsMLUgetASCII(const cmsMLU* mlu,
+                                                  const char LanguageCode[3], const char CountryCode[3],
                                                   char* Buffer,    cmsUInt32Number BufferSize);
 
-CMSAPI cmsUInt32Number   CMSEXPORT cmsMLUgetWide(const cmsMLU* mlu,   
-                                                 const char LanguageCode[3], const char CountryCode[3], 
+CMSAPI cmsUInt32Number   CMSEXPORT cmsMLUgetWide(const cmsMLU* mlu,
+                                                 const char LanguageCode[3], const char CountryCode[3],
                                                  wchar_t* Buffer, cmsUInt32Number BufferSize);
 
-CMSAPI cmsBool           CMSEXPORT cmsMLUgetTranslation(const cmsMLU* mlu,   
-                                                         const char LanguageCode[3], const char CountryCode[3], 
+CMSAPI cmsBool           CMSEXPORT cmsMLUgetTranslation(const cmsMLU* mlu,
+                                                         const char LanguageCode[3], const char CountryCode[3],
                                                          char ObtainedLanguage[3], char ObtainedCountry[3]);
 
 // Undercolorremoval & black generation -------------------------------------------------------------------------------------
@@ -1215,7 +1215,7 @@ typedef struct {
 #define cmsSPOT_UNKNOWN         0
 #define cmsSPOT_PRINTER_DEFAULT 1
 #define cmsSPOT_ROUND           2
-#define cmsSPOT_DIAMOND         3 
+#define cmsSPOT_DIAMOND         3
 #define cmsSPOT_ELLIPSE         4
 #define cmsSPOT_LINE            5
 #define cmsSPOT_SQUARE          6
@@ -1231,7 +1231,7 @@ typedef struct {
 typedef struct {
     cmsUInt32Number Flag;
     cmsUInt32Number nChannels;
-    cmsScreeningChannel Channels[MAXCHANNELS];   
+    cmsScreeningChannel Channels[MAXCHANNELS];
 
 } cmsScreening;
 
@@ -1240,25 +1240,25 @@ typedef struct {
 
 typedef struct _cms_NAMEDCOLORLIST_struct cmsNAMEDCOLORLIST;
 
-CMSAPI cmsNAMEDCOLORLIST* CMSEXPORT cmsAllocNamedColorList(cmsContext ContextID, 
-                                                           cmsUInt32Number n, 
-                                                           cmsUInt32Number ColorantCount, 
+CMSAPI cmsNAMEDCOLORLIST* CMSEXPORT cmsAllocNamedColorList(cmsContext ContextID,
+                                                           cmsUInt32Number n,
+                                                           cmsUInt32Number ColorantCount,
                                                            const char* Prefix, const char* Suffix);
 
 CMSAPI void               CMSEXPORT cmsFreeNamedColorList(cmsNAMEDCOLORLIST* v);
 CMSAPI cmsNAMEDCOLORLIST* CMSEXPORT cmsDupNamedColorList(const cmsNAMEDCOLORLIST* v);
-CMSAPI cmsBool            CMSEXPORT cmsAppendNamedColor(cmsNAMEDCOLORLIST* v, const char* Name, 
-                                                            cmsUInt16Number PCS[3], 
+CMSAPI cmsBool            CMSEXPORT cmsAppendNamedColor(cmsNAMEDCOLORLIST* v, const char* Name,
+                                                            cmsUInt16Number PCS[3],
                                                             cmsUInt16Number Colorant[MAXCHANNELS]);
 
 CMSAPI cmsUInt32Number    CMSEXPORT cmsNamedColorCount(const cmsNAMEDCOLORLIST* v);
 CMSAPI cmsInt32Number     CMSEXPORT cmsNamedColorIndex(const cmsNAMEDCOLORLIST* v, const char* Name);
 
-CMSAPI cmsBool            CMSEXPORT cmsNamedColorInfo(const cmsNAMEDCOLORLIST* NamedColorList, cmsUInt32Number nColor, 
-                                                      char* Name, 
-                                                      char* Prefix, 
+CMSAPI cmsBool            CMSEXPORT cmsNamedColorInfo(const cmsNAMEDCOLORLIST* NamedColorList, cmsUInt32Number nColor,
+                                                      char* Name,
+                                                      char* Prefix,
                                                       char* Suffix,
-                                                      cmsUInt16Number* PCS, 
+                                                      cmsUInt16Number* PCS,
                                                       cmsUInt16Number* Colorant);
 
 // Retrieve named color list from transform
@@ -1266,23 +1266,23 @@ CMSAPI cmsNAMEDCOLORLIST* CMSEXPORT cmsGetNamedColorList(cmsHTRANSFORM xform);
 
 // Profile sequence -----------------------------------------------------------------------------------------------------
 
-// Profile sequence descriptor. Some fields come from profile sequence descriptor tag, others 
+// Profile sequence descriptor. Some fields come from profile sequence descriptor tag, others
 // come from Profile Sequence Identifier Tag
 typedef struct {
-    cmsSignature           deviceMfg;      
-    cmsSignature           deviceModel;                
-    cmsUInt64Number        attributes;     
-    cmsTechnologySignature technology;     
+    cmsSignature           deviceMfg;
+    cmsSignature           deviceModel;
+    cmsUInt64Number        attributes;
+    cmsTechnologySignature technology;
     cmsProfileID           ProfileID;
     cmsMLU*                Manufacturer;
     cmsMLU*                Model;
     cmsMLU*                Description;
-    
+
 } cmsPSEQDESC;
 
 typedef struct {
 
-    cmsUInt32Number n;  
+    cmsUInt32Number n;
     cmsContext     ContextID;
     cmsPSEQDESC*    seq;
 
@@ -1324,14 +1324,14 @@ CMSAPI void              CMSEXPORT cmsSetHeaderModel(cmsHPROFILE hProfile, cmsUI
 CMSAPI void              CMSEXPORT cmsSetHeaderAttributes(cmsHPROFILE hProfile, cmsUInt64Number Flags);
 CMSAPI void              CMSEXPORT cmsSetHeaderProfileID(cmsHPROFILE hProfile, cmsUInt8Number* ProfileID);
 CMSAPI void              CMSEXPORT cmsSetHeaderRenderingIntent(cmsHPROFILE hProfile, cmsUInt32Number RenderingIntent);
- 
+
 CMSAPI cmsColorSpaceSignature
                          CMSEXPORT cmsGetPCS(cmsHPROFILE hProfile);
 CMSAPI void              CMSEXPORT cmsSetPCS(cmsHPROFILE hProfile, cmsColorSpaceSignature pcs);
-CMSAPI cmsColorSpaceSignature   
+CMSAPI cmsColorSpaceSignature
                          CMSEXPORT cmsGetColorSpace(cmsHPROFILE hProfile);
 CMSAPI void              CMSEXPORT cmsSetColorSpace(cmsHPROFILE hProfile, cmsColorSpaceSignature sig);
-CMSAPI cmsProfileClassSignature 
+CMSAPI cmsProfileClassSignature
                          CMSEXPORT cmsGetDeviceClass(cmsHPROFILE hProfile);
 CMSAPI void              CMSEXPORT cmsSetDeviceClass(cmsHPROFILE hProfile, cmsProfileClassSignature sig);
 CMSAPI void              CMSEXPORT cmsSetProfileVersion(cmsHPROFILE hProfile, cmsFloat64Number Version);
@@ -1349,7 +1349,7 @@ CMSAPI cmsBool           CMSEXPORT cmsIsIntentSupported(cmsHPROFILE hProfile, cm
 CMSAPI cmsBool           CMSEXPORT cmsIsMatrixShaper(cmsHPROFILE hProfile);
 CMSAPI cmsBool           CMSEXPORT cmsIsCLUT(cmsHPROFILE hProfile, cmsUInt32Number Intent, int UsedDirection);
 
-// Translate form/to our notation to ICC 
+// Translate form/to our notation to ICC
 CMSAPI cmsColorSpaceSignature   CMSEXPORT _cmsICCcolorSpace(int OurNotation);
 CMSAPI int                      CMSEXPORT _cmsLCMScolorSpace(cmsColorSpaceSignature ProfileSpace);
 
@@ -1368,12 +1368,12 @@ typedef enum {
              cmsInfoCopyright    = 3
 } cmsInfoType;
 
-CMSAPI cmsUInt32Number   CMSEXPORT cmsGetProfileInfo(cmsHPROFILE hProfile, cmsInfoType Info, 
-                                                            const char LanguageCode[3], const char CountryCode[3], 
+CMSAPI cmsUInt32Number   CMSEXPORT cmsGetProfileInfo(cmsHPROFILE hProfile, cmsInfoType Info,
+                                                            const char LanguageCode[3], const char CountryCode[3],
                                                             wchar_t* Buffer, cmsUInt32Number BufferSize);
 
-CMSAPI cmsUInt32Number   CMSEXPORT cmsGetProfileInfoASCII(cmsHPROFILE hProfile, cmsInfoType Info, 
-                                                            const char LanguageCode[3], const char CountryCode[3], 
+CMSAPI cmsUInt32Number   CMSEXPORT cmsGetProfileInfoASCII(cmsHPROFILE hProfile, cmsInfoType Info,
+                                                            const char LanguageCode[3], const char CountryCode[3],
                                                             char* Buffer, cmsUInt32Number BufferSize);
 
 // IO handlers ----------------------------------------------------------------------------------------------------------
@@ -1450,19 +1450,19 @@ CMSAPI cmsHPROFILE      CMSEXPORT cmsCreate_sRGBProfile(void);
 
 CMSAPI cmsHPROFILE      CMSEXPORT cmsCreateBCHSWabstractProfileTHR(cmsContext ContextID,
                                                              int nLUTPoints,
-                                                             cmsFloat64Number Bright, 
+                                                             cmsFloat64Number Bright,
                                                              cmsFloat64Number Contrast,
                                                              cmsFloat64Number Hue,
                                                              cmsFloat64Number Saturation,
-                                                             int TempSrc, 
+                                                             int TempSrc,
                                                              int TempDest);
 
 CMSAPI cmsHPROFILE      CMSEXPORT cmsCreateBCHSWabstractProfile(int nLUTPoints,
-                                                             cmsFloat64Number Bright, 
+                                                             cmsFloat64Number Bright,
                                                              cmsFloat64Number Contrast,
                                                              cmsFloat64Number Hue,
                                                              cmsFloat64Number Saturation,
-                                                             int TempSrc, 
+                                                             int TempSrc,
                                                              int TempDest);
 
 CMSAPI cmsHPROFILE      CMSEXPORT cmsCreateNULLProfileTHR(cmsContext ContextID);
@@ -1503,14 +1503,14 @@ CMSAPI cmsUInt32Number  CMSEXPORT cmsGetSupportedIntents(cmsUInt32Number nMax, c
 
 // Misc
 #define cmsFLAGS_BLACKPOINTCOMPENSATION   0x2000
-#define cmsFLAGS_NOWHITEONWHITEFIXUP      0x0004    // Don't fix scum dot   
+#define cmsFLAGS_NOWHITEONWHITEFIXUP      0x0004    // Don't fix scum dot
 #define cmsFLAGS_HIGHRESPRECALC           0x0400    // Use more memory to give better accurancy
 #define cmsFLAGS_LOWRESPRECALC            0x0800    // Use less memory to minimize resouces
 
 // For devicelink creation
 #define cmsFLAGS_8BITS_DEVICELINK         0x0008   // Create 8 bits devicelinks
 #define cmsFLAGS_GUESSDEVICECLASS         0x0020   // Guess device class (for transform2devicelink)
-#define cmsFLAGS_KEEP_SEQUENCE            0x0080   // Keep profile sequence for devicelink creation 
+#define cmsFLAGS_KEEP_SEQUENCE            0x0080   // Keep profile sequence for devicelink creation
 
 // Specific to a particular optimizations
 #define cmsFLAGS_FORCE_CLUT               0x0002    // Force CLUT optimization
@@ -1577,12 +1577,12 @@ CMSAPI cmsHTRANSFORM    CMSEXPORT cmsCreateMultiprofileTransform(cmsHPROFILE hPr
 
 
 CMSAPI cmsHTRANSFORM    CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
-                                                   cmsUInt32Number nProfiles, cmsHPROFILE hProfiles[], 
-                                                   cmsBool  BPC[], 
-                                                   cmsUInt32Number Intents[], 
+                                                   cmsUInt32Number nProfiles, cmsHPROFILE hProfiles[],
+                                                   cmsBool  BPC[],
+                                                   cmsUInt32Number Intents[],
                                                    cmsFloat64Number AdaptationStates[],
                                                    cmsHPROFILE hGamutProfile,
-                                                   cmsUInt32Number nGamutPCSposition,           
+                                                   cmsUInt32Number nGamutPCSposition,
                                                    cmsUInt32Number InputFormat,
                                                    cmsUInt32Number OutputFormat,
                                                    cmsUInt32Number dwFlags);
@@ -1608,16 +1608,16 @@ CMSAPI cmsContext       CMSEXPORT cmsGetTransformContextID(cmsHTRANSFORM hTransf
 typedef enum { cmsPS_RESOURCE_CSA, cmsPS_RESOURCE_CRD } cmsPSResourceType;
 
 // lcms2 unified method to access postscript color resources
-CMSAPI cmsUInt32Number  CMSEXPORT cmsGetPostScriptColorResource(cmsContext ContextID,                                                               
+CMSAPI cmsUInt32Number  CMSEXPORT cmsGetPostScriptColorResource(cmsContext ContextID,
                                                                 cmsPSResourceType Type,
-                                                                cmsHPROFILE hProfile, 
-                                                                cmsUInt32Number Intent, 
-                                                                cmsUInt32Number dwFlags, 
+                                                                cmsHPROFILE hProfile,
+                                                                cmsUInt32Number Intent,
+                                                                cmsUInt32Number dwFlags,
                                                                 cmsIOHANDLER* io);
 
 CMSAPI cmsUInt32Number  CMSEXPORT cmsGetPostScriptCSA(cmsContext ContextID, cmsHPROFILE hProfile, cmsUInt32Number Intent, cmsUInt32Number dwFlags, void* Buffer, cmsUInt32Number dwBufferLen);
 CMSAPI cmsUInt32Number  CMSEXPORT cmsGetPostScriptCRD(cmsContext ContextID, cmsHPROFILE hProfile, cmsUInt32Number Intent, cmsUInt32Number dwFlags, void* Buffer, cmsUInt32Number dwBufferLen);
-                                                                                       
+
 
 // IT8.7 / CGATS.17-200x handling -----------------------------------------------------------------------------
 
@@ -1653,16 +1653,16 @@ CMSAPI cmsFloat64Number CMSEXPORT cmsIT8GetPropertyDbl(cmsHANDLE hIT8, const cha
 CMSAPI cmsUInt32Number  CMSEXPORT cmsIT8EnumProperties(cmsHANDLE hIT8, char ***PropertyNames);
 
 // Datasets
-CMSAPI const char*      CMSEXPORT cmsIT8GetDataRowCol(cmsHANDLE hIT8, int row, int col);                                                
+CMSAPI const char*      CMSEXPORT cmsIT8GetDataRowCol(cmsHANDLE hIT8, int row, int col);
 CMSAPI cmsFloat64Number CMSEXPORT cmsIT8GetDataRowColDbl(cmsHANDLE hIT8, int row, int col);
 
-CMSAPI cmsBool          CMSEXPORT cmsIT8SetDataRowCol(cmsHANDLE hIT8, int row, int col, 
+CMSAPI cmsBool          CMSEXPORT cmsIT8SetDataRowCol(cmsHANDLE hIT8, int row, int col,
                                                 const char* Val);
 
-CMSAPI cmsBool          CMSEXPORT cmsIT8SetDataRowColDbl(cmsHANDLE hIT8, int row, int col, 
+CMSAPI cmsBool          CMSEXPORT cmsIT8SetDataRowColDbl(cmsHANDLE hIT8, int row, int col,
                                                 cmsFloat64Number Val);
 
-CMSAPI const char*      CMSEXPORT cmsIT8GetData(cmsHANDLE hIT8, const char* cPatch, const char* cSample);                                                
+CMSAPI const char*      CMSEXPORT cmsIT8GetData(cmsHANDLE hIT8, const char* cPatch, const char* cSample);
 
 
 CMSAPI cmsFloat64Number CMSEXPORT cmsIT8GetDataDbl(cmsHANDLE hIT8, const char* cPatch, const char* cSample);
@@ -1705,7 +1705,7 @@ CMSAPI cmsFloat64Number CMSEXPORT cmsDetectTAC(cmsHPROFILE hProfile);
 
 
 // Poor man's gamut mapping
-CMSAPI cmsBool          CMSEXPORT cmsDesaturateLab(cmsCIELab* Lab, 
+CMSAPI cmsBool          CMSEXPORT cmsDesaturateLab(cmsCIELab* Lab,
                                                    double amax, double amin,
                                                    double bmax, double bmin);
 

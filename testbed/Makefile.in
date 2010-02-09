@@ -215,7 +215,8 @@ testcms_LDADD = $(top_builddir)/src/liblcms2.la
 testcms_LDFLAGS = @LDFLAGS@
 testcms_SOURCES = testcms2.c
 EXTRA_DIST = sRGBSpac.icm bad.icc toosmall.icc UncoatedFOGRA29.icc \
-             USWebCoatedSWOP.icc sRGB_v4_ICC_preference.icc 
+             USWebCoatedSWOP.icc sRGB_v4_ICC_preference.icc \
+             sRGB_Color_Space_Profile.icm 
 
 all: all-am
 
@@ -375,9 +376,6 @@ distdir: $(DISTFILES)
 	    || exit 1; \
 	  fi; \
 	done
-	$(MAKE) $(AM_MAKEFLAGS) \
-	  top_distdir="$(top_distdir)" distdir="$(distdir)" \
-	  dist-hook
 check-am: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
 check: check-am
@@ -460,7 +458,7 @@ uninstall-am: uninstall-info-am
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean \
 	clean-checkPROGRAMS clean-generic clean-libtool ctags \
-	dist-hook distclean distclean-compile distclean-generic \
+	distclean distclean-compile distclean-generic \
 	distclean-libtool distclean-tags distdir dvi dvi-am html \
 	html-am info info-am install install-am install-data \
 	install-data-am install-exec install-exec-am install-info \
@@ -472,16 +470,13 @@ uninstall-am: uninstall-info-am
 
 
 check:
+	if [ $(top_srcdir) != $(top_builddir) ]; then \
+		cp $(top_srcdir)/testbed/*.ic? $(top_builddir)/testbed; \
+	fi
 	./testcms
-
-dist-hook:
-	cp -p $(srcdir)/"sRGB Color Space Profile.icm" $(distdir)
-	cp -p $(srcdir)/sRGBSpac.icm $(distdir)
-	cp -p $(srcdir)/bad.icc $(distdir)
-	cp -p $(srcdir)/toosmall.icc $(distdir)
-	cp -p $(srcdir)/UncoatedFOGRA29.icc $(distdir)
-	cp -p $(srcdir)/USWebCoatedSWOP.icc $(distdir)
-	cp -p $(srcdir)/sRGB_v4_ICC_preference.icc $(distdir)
+	if [ $(top_srcdir) != $(top_builddir) ]; then \
+		rm -f $(top_builddir)/testbed/*.ic?; \
+	fi
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.
 .NOEXPORT:

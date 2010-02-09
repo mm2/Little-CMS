@@ -5492,7 +5492,7 @@ int CheckBlackPoint(void)
     cmsCIEXYZ Black;
     cmsCIELab Lab;
 
-    hProfile  = cmsOpenProfileFromFileTHR(DbgThread(), "sRGB Color Space Profile.icm", "r");  
+    hProfile  = cmsOpenProfileFromFileTHR(DbgThread(), "sRGB_Color_Space_Profile.icm", "r");  
     cmsDetectBlackPoint(&Black, hProfile, INTENT_RELATIVE_COLORIMETRIC, 0);
     cmsCloseProfile(hProfile);
 
@@ -5708,14 +5708,14 @@ void GenerateCRD(const char* cOutProf, const char* FileName)
 static 
 int CheckPostScript(void)
 {
-    GenerateCSA("sRGB Color Space Profile.icm", "sRGB_CSA.ps");
+    GenerateCSA("sRGB_Color_Space_Profile.icm", "sRGB_CSA.ps");
     GenerateCSA("aRGBlcms2.icc", "aRGB_CSA.ps");
     GenerateCSA("sRGB_v4_ICC_preference.icc", "sRGBV4_CSA.ps");
     GenerateCSA("USWebCoatedSWOP.icc", "SWOP_CSA.ps");
     GenerateCSA(NULL, "Lab_CSA.ps");
     GenerateCSA("graylcms2.icc", "gray_CSA.ps");
     
-    GenerateCRD("sRGB Color Space Profile.icm", "sRGB_CRD.ps");
+    GenerateCRD("sRGB_Color_Space_Profile.icm", "sRGB_CRD.ps");
     GenerateCRD("aRGBlcms2.icc", "aRGB_CRD.ps");
     GenerateCRD(NULL, "Lab_CRD.ps");
     GenerateCRD("USWebCoatedSWOP.icc", "SWOP_CRD.ps");
@@ -6033,11 +6033,11 @@ void SpeedTest(void)
 {
 
     SpeedTest16bits("16 bits on CLUT profiles", 
-        cmsOpenProfileFromFileTHR(DbgThread(), "sRGB Color Space Profile.icm", "r"),
+        cmsOpenProfileFromFileTHR(DbgThread(), "sRGB_Color_Space_Profile.icm", "r"),
         cmsOpenProfileFromFileTHR(DbgThread(), "sRGBSpac.icm", "r"));
 
     SpeedTest8bits("8 bits on CLUT profiles", 
-        cmsOpenProfileFromFileTHR(DbgThread(), "sRGB Color Space Profile.icm", "r"),
+        cmsOpenProfileFromFileTHR(DbgThread(), "sRGB_Color_Space_Profile.icm", "r"),
         cmsOpenProfileFromFileTHR(DbgThread(), "sRGBSpac.icm", "r"),
 		INTENT_PERCEPTUAL);
     

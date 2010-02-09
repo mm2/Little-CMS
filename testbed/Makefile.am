@@ -16,16 +16,16 @@ testcms_LDFLAGS = @LDFLAGS@
 testcms_SOURCES = testcms2.c
 
 EXTRA_DIST = sRGBSpac.icm bad.icc toosmall.icc UncoatedFOGRA29.icc \
-             USWebCoatedSWOP.icc sRGB_v4_ICC_preference.icc 
+             USWebCoatedSWOP.icc sRGB_v4_ICC_preference.icc \
+             sRGB_Color_Space_Profile.icm 
 
 check:
+	if [ $(top_srcdir) != $(top_builddir) ]; then \
+		cp $(top_srcdir)/testbed/*.ic? $(top_builddir)/testbed; \
+	fi
 	./testcms
+	if [ $(top_srcdir) != $(top_builddir) ]; then \
+		rm -f $(top_builddir)/testbed/*.ic?; \
+	fi
 
-dist-hook:
-	cp -p $(srcdir)/"sRGB Color Space Profile.icm" $(distdir)
-	cp -p $(srcdir)/sRGBSpac.icm $(distdir)
-	cp -p $(srcdir)/bad.icc $(distdir)
-	cp -p $(srcdir)/toosmall.icc $(distdir)
-	cp -p $(srcdir)/UncoatedFOGRA29.icc $(distdir)
-	cp -p $(srcdir)/USWebCoatedSWOP.icc $(distdir)
-	cp -p $(srcdir)/sRGB_v4_ICC_preference.icc $(distdir)
+

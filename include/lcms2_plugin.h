@@ -3,22 +3,22 @@
 //  Little Color Management System
 //  Copyright (c) 1998-2010 Marti Maria Saguer
 //
-// Permission is hereby granted, free of charge, to any person obtaining 
-// a copy of this software and associated documentation files (the "Software"), 
-// to deal in the Software without restriction, including without limitation 
-// the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-// and/or sell copies of the Software, and to permit persons to whom the Software 
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in 
+// The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
-// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //---------------------------------------------------------------------------------
@@ -30,14 +30,14 @@
 
 #ifndef __lcms_plugin_H
 
-// Deal with Microsoft's attempt at deprecating C standard runtime functions 
+// Deal with Microsoft's attempt at deprecating C standard runtime functions
 #ifdef _MSC_VER
 #    if (_MSC_VER >= 1400)
 #      ifndef _CRT_SECURE_NO_DEPRECATE
 #        define _CRT_SECURE_NO_DEPRECATE
 #      endif
 #      ifndef _CRT_SECURE_NO_WARNINGS
-#        define _CRT_SECURE_NO_WARNINGS 
+#        define _CRT_SECURE_NO_WARNINGS
 #      endif
 #    endif
 #endif
@@ -68,18 +68,18 @@ extern "C" {
 #define VZ      2
 
 // Vectors
-typedef struct {    
+typedef struct {
     cmsFloat64Number n[3];
 
     } cmsVEC3;
 
-// 3x3 Matrix     
-typedef struct {                   
+// 3x3 Matrix
+typedef struct {
     cmsVEC3 v[3];
 
-    } cmsMAT3; 
+    } cmsMAT3;
 
-CMSAPI void               CMSEXPORT _cmsVEC3init(cmsVEC3* r, cmsFloat64Number x, cmsFloat64Number y, cmsFloat64Number z);  
+CMSAPI void               CMSEXPORT _cmsVEC3init(cmsVEC3* r, cmsFloat64Number x, cmsFloat64Number y, cmsFloat64Number z);
 CMSAPI void               CMSEXPORT _cmsVEC3minus(cmsVEC3* r, const cmsVEC3* a, const cmsVEC3* b);
 CMSAPI void               CMSEXPORT _cmsVEC3cross(cmsVEC3* r, const cmsVEC3* u, const cmsVEC3* v);
 CMSAPI cmsFloat64Number   CMSEXPORT _cmsVEC3dot(const cmsVEC3* u, const cmsVEC3* v);
@@ -102,7 +102,7 @@ CMSAPI void               CMSEXPORT  cmsSignalError(cmsContext ContextID, cmsUIn
 
 CMSAPI void*              CMSEXPORT _cmsMalloc(cmsContext ContextID, cmsUInt32Number size);
 CMSAPI void*              CMSEXPORT _cmsMallocZero(cmsContext ContextID, cmsUInt32Number size);
-CMSAPI void*              CMSEXPORT _cmsCalloc(cmsContext ContextID, cmsUInt32Number num, cmsUInt32Number size); 
+CMSAPI void*              CMSEXPORT _cmsCalloc(cmsContext ContextID, cmsUInt32Number num, cmsUInt32Number size);
 CMSAPI void*              CMSEXPORT _cmsRealloc(cmsContext ContextID, void* Ptr, cmsUInt32Number NewSize);
 CMSAPI void               CMSEXPORT _cmsFree(cmsContext ContextID, void* Ptr);
 CMSAPI void*              CMSEXPORT _cmsDupMem(cmsContext ContextID, const void* Org, cmsUInt32Number size);
@@ -112,19 +112,19 @@ CMSAPI void*              CMSEXPORT _cmsDupMem(cmsContext ContextID, const void*
 struct _cms_io_handler {
 
     void* stream;   // Associated stream, which is implemented differently depending on media.
-    
+
     cmsContext        ContextID;
-    cmsUInt32Number   UsedSpace;  
+    cmsUInt32Number   UsedSpace;
     char              PhysicalFile[cmsMAX_PATH];
-    
-    cmsUInt32Number   (* Read)(struct _cms_io_handler* iohandler, void *Buffer, 
-                                                                  cmsUInt32Number size, 
+
+    cmsUInt32Number   (* Read)(struct _cms_io_handler* iohandler, void *Buffer,
+                                                                  cmsUInt32Number size,
                                                                   cmsUInt32Number count);
     cmsBool           (* Seek)(struct _cms_io_handler* iohandler, cmsUInt32Number offset);
     cmsBool           (* Close)(struct _cms_io_handler* iohandler);
     cmsUInt32Number   (* Tell)(struct _cms_io_handler* iohandler);
-    cmsBool           (* Write)(struct _cms_io_handler* iohandler, cmsUInt32Number size, 
-                                                                   const void* Buffer);               
+    cmsBool           (* Write)(struct _cms_io_handler* iohandler, cmsUInt32Number size,
+                                                                   const void* Buffer);
 };
 
 // Endianess adjust functions
@@ -153,8 +153,8 @@ CMSAPI cmsBool           CMSEXPORT  _cmsWriteUInt16Array(cmsIOHANDLER* io, cmsUI
 
 // ICC base tag
 typedef struct {
-    cmsTagTypeSignature  sig;            
-    cmsInt8Number        reserved[4];    
+    cmsTagTypeSignature  sig;
+    cmsInt8Number        reserved[4];
 
 } _cmsTagBase;
 
@@ -184,7 +184,7 @@ CMSAPI void                CMSEXPORT _cmsDecodeDateTimeNumber(const cmsDateTimeN
 //----------------------------------------------------------------------------------------------------------
 
 // Plug-in foundation
-#define cmsPluginMagicNumber                 0x61637070     // 'acpp' 
+#define cmsPluginMagicNumber                 0x61637070     // 'acpp'
 
 #define cmsPluginMemHandlerSig               0x6D656D48     // 'memH'
 #define cmsPluginInterpolationSig            0x696E7048     // 'inpH'
@@ -197,8 +197,8 @@ CMSAPI void                CMSEXPORT _cmsDecodeDateTimeNumber(const cmsDateTimeN
 #define cmsPluginOptimizationSig             0x6F707448     // 'optH'
 
 typedef struct _cmsPluginBaseStruct {
-    
-        cmsUInt32Number                Magic;               // 'acpp' signature     
+
+        cmsUInt32Number                Magic;               // 'acpp' signature
         cmsUInt32Number                ExpectedVersion;     // Expected version of LittleCMS
         cmsUInt32Number                Type;                // Type of plug-in
         struct _cmsPluginBaseStruct*   Next;                // For multiple plugin definition. NULL for end of list.
@@ -217,10 +217,10 @@ typedef struct {
 
         // Required
         void * (* MallocPtr)(cmsContext ContextID, cmsUInt32Number size);
-        void   (* FreePtr)(cmsContext ContextID, void *Ptr);      
+        void   (* FreePtr)(cmsContext ContextID, void *Ptr);
         void * (* ReallocPtr)(cmsContext ContextID, void* Ptr, cmsUInt32Number NewSize);
 
-        // Optional     
+        // Optional
         void * (* MallocZeroPtr)(cmsContext ContextID, cmsUInt32Number size);
         void * (* CallocPtr)(cmsContext ContextID, cmsUInt32Number num, cmsUInt32Number size);
         void * (* DupPtr)(cmsContext ContextID, const void* Org, cmsUInt32Number size);
@@ -239,14 +239,14 @@ struct _cms_interp_struc;
 // and is supposed to be quite fast. Implementation may be tetrahedral or trilinear, and plug-ins may
 // choose to implement any other interpolation algorithm.
 typedef void (* _cmsInterpFn16)(register const cmsUInt16Number Input[],
-                                register cmsUInt16Number Output[],                               
+                                register cmsUInt16Number Output[],
                                 register const struct _cms_interp_struc* p);
 
-// Floating point forward interpolation. Full precision interpolation using floats. This is not a 
+// Floating point forward interpolation. Full precision interpolation using floats. This is not a
 // time critical function. Implementation may be tetrahedral or trilinear, and plug-ins may
 // choose to implement any other interpolation algorithm.
 typedef void (* _cmsInterpFnFloat)(cmsFloat32Number const Input[],
-                                   cmsFloat32Number Output[],                                  
+                                   cmsFloat32Number Output[],
                                    const struct _cms_interp_struc* p);
 
 
@@ -273,17 +273,17 @@ typedef struct _cms_interp_struc {  // Used on all interpolations. Supplied by l
     cmsUInt32Number nInputs;  // != 1 only in 3D interpolation
     cmsUInt32Number nOutputs; // != 1 only in 3D interpolation
 
-    cmsUInt32Number nSamples[MAX_INPUT_DIMENSIONS];  // Valid on all kinds of tables   
+    cmsUInt32Number nSamples[MAX_INPUT_DIMENSIONS];  // Valid on all kinds of tables
     cmsUInt32Number Domain[MAX_INPUT_DIMENSIONS];    // Domain = nSamples - 1
 
     cmsUInt32Number opta[MAX_INPUT_DIMENSIONS];     // Optimization for 3D CLUT. This is the number of nodes premultiplied for each
-                                                    // dimension. For example, in 7 nodes, 7, 7^2 , 7^3, 7^4, etc. On non-regular   
+                                                    // dimension. For example, in 7 nodes, 7, 7^2 , 7^3, 7^4, etc. On non-regular
                                                     // Samplings may vary according of the number of nodes for each dimension.
-                                   
+
     const void *Table;                // Points to the actual interpolation table
     cmsInterpFunction Interpolation;  // Points to the function to do the interpolation
 
- } cmsInterpParams; 
+ } cmsInterpParams;
 
 // Interpolators factory
 typedef cmsInterpFunction (* cmsInterpFnFactory)(cmsUInt32Number nInputChannels, cmsUInt32Number nOutputChannels, cmsUInt32Number dwFlags);
@@ -299,7 +299,7 @@ typedef struct {
 
 //----------------------------------------------------------------------------------------------------------
 
-// Parametric curves. A negative type means same function but analytically inverted. Max. number of params is 10 
+// Parametric curves. A negative type means same function but analytically inverted. Max. number of params is 10
 
 // Evaluator callback for user-suplied parametric curves. May implement more than one type
 typedef  cmsFloat64Number (* cmsParametricCurveEvaluator)(cmsInt32Number Type, const cmsFloat64Number Params[10], cmsFloat64Number R);
@@ -318,18 +318,18 @@ typedef struct {
 //----------------------------------------------------------------------------------------------------------
 
 // Formatters. This plug-in adds new handlers, replacing them if they already exist. Formatters dealing with
-// cmsFloat32Number (bps = 4) or double (bps = 0) types are requested via FormatterFloat callback. Others come across 
+// cmsFloat32Number (bps = 4) or double (bps = 0) types are requested via FormatterFloat callback. Others come across
 // Formatter16 callback
 
 struct _cmstransform_struct;
 
 typedef cmsUInt8Number* (* cmsFormatter16)(register struct _cmstransform_struct* CMMcargo,
                                            register cmsUInt16Number Values[],
-                                           register cmsUInt8Number*  Buffer);   
+                                           register cmsUInt8Number*  Buffer);
 
 typedef cmsUInt8Number* (* cmsFormatterFloat)(struct _cmstransform_struct* CMMcargo,
                                              cmsFloat32Number Values[],
-                                             cmsUInt8Number*  Buffer);  
+                                             cmsUInt8Number*  Buffer);
 
 // This type holds a pointer to a formatter that can be either 16 bits or cmsFloat32Number
 typedef union {
@@ -344,7 +344,7 @@ typedef union {
 typedef enum { cmsFormatterInput=0, cmsFormatterOutput=1 } cmsFormatterDirection;
 
 typedef cmsFormatter (* cmsFormatterFactory)(cmsUInt32Number Type,           // Specific type, i.e. TYPE_RGB_8
-                                             cmsFormatterDirection Dir, 
+                                             cmsFormatterDirection Dir,
                                              cmsUInt32Number dwFlags);      // precision
 
 // Plug-in may implement an arbitrary number of formatters
@@ -356,31 +356,31 @@ typedef struct {
 
 //----------------------------------------------------------------------------------------------------------
 
-// Tag type handler. Each type is free to return anything it wants, and it is up to the caller to 
-// know in advance what is the type contained in the tag. 
+// Tag type handler. Each type is free to return anything it wants, and it is up to the caller to
+// know in advance what is the type contained in the tag.
 typedef struct _cms_typehandler_struct {
-       
+
         cmsTagTypeSignature Signature;     // The signature of the type
-        
+
         // Allocates and reads items
         void *   (* ReadPtr)(struct _cms_typehandler_struct* self,
-                             cmsIOHANDLER*      io, 
-                             cmsUInt32Number*   nItems, 
-                             cmsUInt32Number    SizeOfTag); 
-                             
+                             cmsIOHANDLER*      io,
+                             cmsUInt32Number*   nItems,
+                             cmsUInt32Number    SizeOfTag);
+
         // Writes n Items
         cmsBool  (* WritePtr)(struct _cms_typehandler_struct* self,
-                              cmsIOHANDLER*     io, 
-                              void*             Ptr, 
-                              cmsUInt32Number   nItems);                              
+                              cmsIOHANDLER*     io,
+                              void*             Ptr,
+                              cmsUInt32Number   nItems);
 
         // Duplicate an item or array of items
-        void*   (* DupPtr)(struct _cms_typehandler_struct* self,      
-                           const void *Ptr, 
+        void*   (* DupPtr)(struct _cms_typehandler_struct* self,
+                           const void *Ptr,
                            cmsUInt32Number n);
 
-        // Free all resources 
-        void    (* FreePtr)(struct _cms_typehandler_struct* self, 
+        // Free all resources
+        void    (* FreePtr)(struct _cms_typehandler_struct* self,
                             void *Ptr);
 
         // The calling thread
@@ -397,17 +397,17 @@ typedef struct {
 
 //----------------------------------------------------------------------------------------------------------
 
-// This is the tag plugin, which identifies tags. For writting, a pointer to function is provided. 
-// This function should return the desired type for this tag, given the version of profile 
+// This is the tag plugin, which identifies tags. For writing, a pointer to function is provided.
+// This function should return the desired type for this tag, given the version of profile
 // and the data being serialized.
 typedef struct {
 
-    cmsUInt32Number     ElemCount;          // If this tag needs an array, how many elements should keep    
+    cmsUInt32Number     ElemCount;          // If this tag needs an array, how many elements should keep
 
     // For reading.
-    cmsUInt32Number     nSupportedTypes;    // In how many types this tag can come (MAX_TYPES_IN_LCMS_PLUGIN maximum)   
-    cmsTagTypeSignature SupportedTypes[MAX_TYPES_IN_LCMS_PLUGIN];   
-    
+    cmsUInt32Number     nSupportedTypes;    // In how many types this tag can come (MAX_TYPES_IN_LCMS_PLUGIN maximum)
+    cmsTagTypeSignature SupportedTypes[MAX_TYPES_IN_LCMS_PLUGIN];
+
     // For writting
     cmsTagTypeSignature (* DecideType)(cmsFloat64Number ICCVersion, const void *Data);
 
@@ -424,24 +424,24 @@ typedef struct {
 
 //----------------------------------------------------------------------------------------------------------
 
-// Custom intents. This function should join all profiles specified in the array in  
+// Custom intents. This function should join all profiles specified in the array in
 // a single LUT. Any custom intent in the chain redirects to custom function. If more than
 // one custom intent is found, the one located first is invoked. Usually users should use only one
 // custom intent, so mixing custom intents in same multiprofile transform is not supported.
 
-typedef cmsPipeline* (* cmsIntentFn)( cmsContext       ContextID, 
+typedef cmsPipeline* (* cmsIntentFn)( cmsContext       ContextID,
                                       cmsUInt32Number  nProfiles,
-                                      cmsUInt32Number  Intents[], 
-                                      cmsHPROFILE      hProfiles[], 
+                                      cmsUInt32Number  Intents[],
+                                      cmsHPROFILE      hProfiles[],
                                       cmsBool          BPC[],
                                       cmsFloat64Number AdaptationStates[],
                                       cmsUInt32Number  dwFlags);
 
 
-// Each plug-in defines a single intent number. 
+// Each plug-in defines a single intent number.
 typedef struct {
     cmsPluginBase     base;
-    cmsUInt32Number   Intent;   
+    cmsUInt32Number   Intent;
     cmsIntentFn       Link;
     char              Description[256];
 
@@ -449,10 +449,10 @@ typedef struct {
 
 
 // The default ICC intents (perceptual, saturation, rel.col and abs.col)
-CMSAPI cmsPipeline*  CMSEXPORT _cmsDefaultICCintents(cmsContext       ContextID, 
+CMSAPI cmsPipeline*  CMSEXPORT _cmsDefaultICCintents(cmsContext       ContextID,
                                                      cmsUInt32Number  nProfiles,
-                                                     cmsUInt32Number  Intents[], 
-                                                     cmsHPROFILE      hProfiles[], 
+                                                     cmsUInt32Number  Intents[],
+                                                     cmsHPROFILE      hProfiles[],
                                                      cmsBool          BPC[],
                                                      cmsFloat64Number AdaptationStates[],
                                                      cmsUInt32Number  dwFlags);
@@ -460,63 +460,63 @@ CMSAPI cmsPipeline*  CMSEXPORT _cmsDefaultICCintents(cmsContext       ContextID,
 
 //----------------------------------------------------------------------------------------------------------
 
-// Pipelines, Multi Process Elements. 
+// Pipelines, Multi Process Elements.
 
-typedef void (* _cmsStageEvalFn)     (const cmsFloat32Number In[], cmsFloat32Number Out[], const cmsStage* mpe); 
+typedef void (* _cmsStageEvalFn)     (const cmsFloat32Number In[], cmsFloat32Number Out[], const cmsStage* mpe);
 typedef void*(* _cmsStageDupElemFn)  (cmsStage* mpe);
 typedef void (* _cmsStageFreeElemFn) (cmsStage* mpe);
 
 
 // This function allocates a generic MPE
-CMSAPI cmsStage* CMSEXPORT _cmsStageAllocPlaceholder(cmsContext ContextID, 
+CMSAPI cmsStage* CMSEXPORT _cmsStageAllocPlaceholder(cmsContext ContextID,
                                 cmsStageSignature     Type,
-                                cmsUInt32Number       InputChannels, 
+                                cmsUInt32Number       InputChannels,
                                 cmsUInt32Number       OutputChannels,
                                 _cmsStageEvalFn       EvalPtr,            // Points to fn that evaluates the element (always in floating point)
                                 _cmsStageDupElemFn    DupElemPtr,         // Points to a fn that duplicates the stage
                                 _cmsStageFreeElemFn   FreePtr,            // Points to a fn that sets the element free
                                 void*                 Data);              // A generic pointer to whatever memory needed by the element
 typedef struct {
-      cmsPluginBase     base;   
-      cmsTagTypeHandler Handler;    
+      cmsPluginBase     base;
+      cmsTagTypeHandler Handler;
 
 }  cmsPluginMultiProcessElement;
 
 //----------------------------------------------------------------------------------------------------------
-// Optimization. Using this plug-in, additional optimization strategies may be implemented. 
-// The function should return TRUE if any optimization is done on the LUT, this terminates 
+// Optimization. Using this plug-in, additional optimization strategies may be implemented.
+// The function should return TRUE if any optimization is done on the LUT, this terminates
 // the optimization  search. Or FALSE if it is unable to optimize and want to give a chance
 // to the rest of optimizers.
 
-typedef void     (* _cmsOPTeval16Fn)(register const cmsUInt16Number In[], 
-                                     register cmsUInt16Number Out[], 
+typedef void     (* _cmsOPTeval16Fn)(register const cmsUInt16Number In[],
+                                     register cmsUInt16Number Out[],
                                      register const void* Data);
 
 typedef void     (* _cmsOPTfreeDataFn)(cmsContext ContextID, void* Data);
 typedef void*    (* _cmsOPTdupDataFn)(cmsContext ContextID, const void* Data);
 
 
-typedef cmsBool  (* _cmsOPToptimizeFn)(cmsPipeline** Lut, 
-									   cmsUInt32Number  Intent, 
-                                       cmsUInt32Number* InputFormat, 
-                                       cmsUInt32Number* OutputFormat, 
+typedef cmsBool  (* _cmsOPToptimizeFn)(cmsPipeline** Lut,
+									   cmsUInt32Number  Intent,
+                                       cmsUInt32Number* InputFormat,
+                                       cmsUInt32Number* OutputFormat,
                                        cmsUInt32Number* dwFlags);
 
 // This function may be used to set the optional evaluator and a block of private data. If private data is being used, an optional
 // duplicator and free functions should also be specified in order to duplicate the LUT construct. Use NULL to inhibit such functionality.
 
-CMSAPI void CMSEXPORT _cmsPipelineSetOptimizationParameters(cmsPipeline* Lut, 
-                                               _cmsOPTeval16Fn Eval16, 
-                                               void* PrivateData, 
-                                               _cmsOPTfreeDataFn FreePrivateDataFn, 
+CMSAPI void CMSEXPORT _cmsPipelineSetOptimizationParameters(cmsPipeline* Lut,
+                                               _cmsOPTeval16Fn Eval16,
+                                               void* PrivateData,
+                                               _cmsOPTfreeDataFn FreePrivateDataFn,
                                                _cmsOPTdupDataFn DupPrivateDataFn);
 
 typedef struct {
-      cmsPluginBase     base;   
-      
+      cmsPluginBase     base;
+
       // Optimize entry point
       _cmsOPToptimizeFn  OptimizePtr;
-      
+
 }  cmsPluginOptimization;
 
 //----------------------------------------------------------------------------------------------------------
