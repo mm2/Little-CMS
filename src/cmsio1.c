@@ -54,19 +54,11 @@ static const cmsTagSignature PCS2DeviceFloat[] = {cmsSigBToD0Tag,     // Percept
 #define InpAdj   (1.0/MAX_ENCODEABLE_XYZ)     // (65536.0/(65535.0*2.0))
 #define OutpAdj  (MAX_ENCODEABLE_XYZ)          // ((2.0*65535.0)/65536.0)
 
-// Equal power for Gray. This is just to obtain XYZ of D50 scaled down. Note that gray spaces are implemented
-// as RGB spaces, and R=G=B is forced in input.
-static const cmsFloat64Number 
-                    GrayInputEqupower[] = { (InpAdj*cmsD50X)/3.0,  (InpAdj*cmsD50X)/3.0,  (InpAdj*cmsD50X)/3.0,
-                                            (InpAdj*cmsD50Y)/3.0,  (InpAdj*cmsD50Y)/3.0,  (InpAdj*cmsD50Y)/3.0,
-                                            (InpAdj*cmsD50Z)/3.0,  (InpAdj*cmsD50Z)/3.0,  (InpAdj*cmsD50Z)/3.0,
-                                             0, 0, 0 };
-
-static const cmsFloat64Number 
-                    GrayOutputEqupower[] = {(OutpAdj*cmsD50X)/3.0,  (OutpAdj*cmsD50X)/3.0,  (OutpAdj*cmsD50X)/3.0,
-                                            (OutpAdj*cmsD50Y)/3.0,  (OutpAdj*cmsD50Y)/3.0,  (OutpAdj*cmsD50Y)/3.0,
-                                            (OutpAdj*cmsD50Z)/3.0,  (OutpAdj*cmsD50Z)/3.0,  (OutpAdj*cmsD50Z)/3.0,
-                                             0, 0, 0 };
+// Several resources for gray conversions.
+static const cmsFloat64Number GrayInputMatrix[] = { (InpAdj*cmsD50X),  (InpAdj*cmsD50Y),  (InpAdj*cmsD50Z) };
+static const cmsFloat64Number OneToThreeInputMatrix[] = { 1, 1, 1 };   
+static const cmsFloat64Number PickYMatrix[] = { 0, (OutpAdj*cmsD50Y), 0 };   
+static const cmsFloat64Number PickLstarMatrix[] = { 1, 0, 0 };   
 
 // Get a media white point fixing some issues found in certain old profiles
 cmsBool  _cmsReadMediaWhitePoint(cmsCIEXYZ* Dest, cmsHPROFILE hProfile)
@@ -150,77 +142,51 @@ cmsBool ReadICCMatrixRGB2XYZ(cmsMAT3* r, cmsHPROFILE hProfile)
     return TRUE;
 }
 
-// Some gray profiles are using kTCR as L*, this function converts the curve to XYZ PCS.
+
+// Gray input pipeline
 static
-void FromLstarToXYZ(cmsToneCurve* g, cmsToneCurve* gxyz[3])
-{
-    int i;
-    const int nPoints = 4096;
-    cmsCIELab Lab;
-    cmsCIEXYZ XYZ;
-
-    // Allocate curves
-    gxyz[0] = cmsBuildTabulatedToneCurve16(g ->InterpParams->ContextID, nPoints, NULL);
-    gxyz[1] = cmsBuildTabulatedToneCurve16(g ->InterpParams->ContextID, nPoints, NULL);
-    gxyz[2] = cmsBuildTabulatedToneCurve16(g ->InterpParams->ContextID, nPoints, NULL);
-
-    // Resample curve, converting from Lab to XYZ
-    for (i=0; i < nPoints; i++) {
-
-        cmsUInt16Number val = _cmsQuantizeVal(i, nPoints);
-        cmsUInt16Number w;
-        
-        w = cmsEvalToneCurve16(g, val);
-        
-        Lab.L = ((cmsFloat64Number) 100.0 * w ) / 65535.0;
-        Lab.a = Lab.b = 0;
-
-        cmsLab2XYZ(NULL, &XYZ, &Lab);
-
-        // Store XYX data
-        gxyz[0] ->Table16[i] = _cmsQuickSaturateWord((65535.0 * XYZ.X) / cmsD50X);
-        gxyz[1] ->Table16[i] = _cmsQuickSaturateWord((65535.0 * XYZ.Y) / cmsD50Y);
-        gxyz[2] ->Table16[i] = _cmsQuickSaturateWord((65535.0 * XYZ.Z) / cmsD50Z);
-    }
-}
-
-
-// Gray matrix shaper
-static
-cmsPipeline* BuildGrayInputMatrixShaper(cmsHPROFILE hProfile)
+cmsPipeline* BuildGrayInputMatrixPipeline(cmsHPROFILE hProfile)
 {
     cmsToneCurve *GrayTRC;
-    cmsToneCurve *Shapes[3];
     cmsPipeline* Lut;
     cmsContext ContextID = cmsGetProfileContextID(hProfile);
     
-    GrayTRC = cmsReadTag(hProfile, cmsSigGrayTRCTag);   // This is Y
+    GrayTRC = cmsReadTag(hProfile, cmsSigGrayTRCTag);
     if (GrayTRC == NULL) return NULL;
+
+	Lut = cmsPipelineAlloc(ContextID, 1, 3);
+	if (Lut == NULL) return NULL;
 
     if (cmsGetPCS(hProfile) == cmsSigLabData) {
 
-        // Fixup for Lab monochrome
-        FromLstarToXYZ(GrayTRC, Shapes);
-    }
-    else  {
-        Shapes[0] = cmsDupToneCurve(GrayTRC);
-        Shapes[1] = cmsDupToneCurve(GrayTRC);
-        Shapes[2] = cmsDupToneCurve(GrayTRC); 
-    }
+		// In this case we implement the profile as an  identity matrix plus 3 tone curves
+		cmsUInt16Number Zero[2] = { 0x8080, 0x8080 };
+		cmsToneCurve* EmptyTab;
+		cmsToneCurve* LabCurves[3];
+		
+		EmptyTab = cmsBuildTabulatedToneCurve16(ContextID, 2, Zero); 
 
-    if (!Shapes[0] || !Shapes[1] || !Shapes[2]) {
+		if (EmptyTab == NULL) {
+
+			     cmsPipelineFree(Lut);
         return NULL;
     }
 
+		LabCurves[0] = GrayTRC;
+		LabCurves[1] = EmptyTab;
+        LabCurves[2] = EmptyTab;
 
-    Lut = cmsPipelineAlloc(ContextID, 3, 3);
-    if (Lut != NULL) {
+		cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, OneToThreeInputMatrix, NULL));
+		cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, LabCurves));
+ 		
+        cmsFreeToneCurve(EmptyTab);
 
-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, Shapes));
-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3, 3, GrayInputEqupower, NULL));
+    }
+    else  {
+       cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &GrayTRC));
+       cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, GrayInputMatrix, NULL));
     }
 
-    cmsFreeToneCurveTriple(Shapes);
     return Lut;
 }
 
@@ -307,7 +273,7 @@ cmsPipeline* _cmsReadInputLUT(cmsHPROFILE hProfile, int Intent)
 
         // if so, build appropiate conversion tables. 
         // The tables are the PCS iluminant, scaled across GrayTRC
-        return BuildGrayInputMatrixShaper(hProfile);              
+        return BuildGrayInputMatrixPipeline(hProfile);              
     }
 
     // Not gray, create a normal matrix-shaper 
@@ -316,51 +282,46 @@ cmsPipeline* _cmsReadInputLUT(cmsHPROFILE hProfile, int Intent)
 
 // ---------------------------------------------------------------------------------------------------------------
 
-// Gray matrix shaper
+// Gray output pipeline. 
+// XYZ -> Gray or Lab -> Gray. Since we only know the GrayTRC, we need to do some assumptions. Gray component will be
+// given by Y on XYZ PCS and by L* on Lab PCS, Both across inverse TRC curve.
+// The complete pipeline on XYZ is Matrix[3:1] -> Tone curve and in Lab Matrix[3:1] -> Tone Curve as well.
+
 static
-cmsPipeline* BuildGrayOutputMatrixShaper(cmsHPROFILE hProfile)
+cmsPipeline* BuildGrayOutputPipeline(cmsHPROFILE hProfile)
 {
-    cmsToneCurve *GrayTRC, *Shapes[3], *RevShapes[3];
+	cmsToneCurve *GrayTRC, *RevGrayTRC;
     cmsPipeline* Lut;
     cmsContext ContextID = cmsGetProfileContextID(hProfile);
 
-    GrayTRC = cmsReadTag(hProfile, cmsSigGrayTRCTag);        // Y
+	GrayTRC = cmsReadTag(hProfile, cmsSigGrayTRCTag);       
     if (GrayTRC == NULL) return NULL;
+
+	RevGrayTRC = cmsReverseToneCurve(GrayTRC);
+	if (RevGrayTRC == NULL) return NULL;
+
+	Lut = cmsPipelineAlloc(ContextID, 3, 1);
+	if (Lut == NULL) {
+		cmsFreeToneCurve(RevGrayTRC);
+		return NULL;
+	}
 
     if (cmsGetPCS(hProfile) == cmsSigLabData) {
 
-        // Fixup for Lab monochrome
-        FromLstarToXYZ(GrayTRC, Shapes);
+		cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 1,  3, PickLstarMatrix, NULL));
     }
     else  {
-        Shapes[0] = cmsDupToneCurve(GrayTRC);
-        Shapes[1] = cmsDupToneCurve(GrayTRC);
-        Shapes[2] = cmsDupToneCurve(GrayTRC); 
+		cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 1,  3, PickYMatrix, NULL));
     }
 
+	cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &RevGrayTRC));
+	cmsFreeToneCurve(RevGrayTRC);
       
-    if (!Shapes[0] || !Shapes[1] || !Shapes[2]) 
-        return NULL;
-    
-    // This is output matrix-shaper, so we need to reverse curves
-    RevShapes[0] = cmsReverseToneCurve(Shapes[0]);
-    RevShapes[1] = cmsReverseToneCurve(Shapes[1]);
-    RevShapes[2] = cmsReverseToneCurve(Shapes[2]);
-
-    if (!RevShapes[0] || !RevShapes[1] || !RevShapes[2])
-                     return NULL;
-
-    Lut = cmsPipelineAlloc(ContextID, 3, 3);
-    if (Lut != NULL) {
-
-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, RevShapes));
-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3, 3, GrayOutputEqupower, NULL));
-    }
-
-    cmsFreeToneCurveTriple(Shapes);
-    cmsFreeToneCurveTriple(RevShapes);
-    return Lut;
+	return Lut;
 }
+
+
+
 
 static
 cmsPipeline* BuildRGBOutputMatrixShaper(cmsHPROFILE hProfile)
@@ -455,7 +416,7 @@ cmsPipeline* _cmsReadOutputLUT(cmsHPROFILE hProfile, int Intent)
 
               // if so, build appropiate conversion tables. 
               // The tables are the PCS iluminant, scaled across GrayTRC
-              return BuildGrayOutputMatrixShaper(hProfile);              
+              return BuildGrayOutputPipeline(hProfile);              
     }
 
     // Not gray, create a normal matrix-shaper 

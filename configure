@@ -15952,6 +15952,8 @@ ac_config_files="$ac_config_files Makefile"
 
 ac_config_files="$ac_config_files lcms2.pc"
 
+ac_config_files="$ac_config_files include/Makefile"
+
 ac_config_files="$ac_config_files src/Makefile"
 
 ac_config_files="$ac_config_files utils/tificc/Makefile"
@@ -17075,6 +17077,7 @@ do
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "lcms2.pc") CONFIG_FILES="$CONFIG_FILES lcms2.pc" ;;
+    "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
     "src/Makefile") CONFIG_FILES="$CONFIG_FILES src/Makefile" ;;
     "utils/tificc/Makefile") CONFIG_FILES="$CONFIG_FILES utils/tificc/Makefile" ;;
     "utils/transicc/Makefile") CONFIG_FILES="$CONFIG_FILES utils/transicc/Makefile" ;;

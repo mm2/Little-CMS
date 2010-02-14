@@ -274,6 +274,7 @@ LIBS=''
 #
 AC_CONFIG_FILES([Makefile])
 AC_CONFIG_FILES([lcms2.pc])
+AC_CONFIG_FILES([include/Makefile])
 AC_CONFIG_FILES([src/Makefile])
 AC_CONFIG_FILES([utils/tificc/Makefile])
 AC_CONFIG_FILES([utils/transicc/Makefile])

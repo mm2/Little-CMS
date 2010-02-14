@@ -281,22 +281,24 @@ void CachedXFORM(_cmsTRANSFORM* p,
 
 
        LCMS_READ_LOCK(&p ->rwlock);
-           memmove(CacheIn,  p ->CacheIn, sizeof(cmsUInt16Number) * MAXCHANNELS);
-           memmove(CacheOut, p ->CacheOut, sizeof(cmsUInt16Number) * MAXCHANNELS);
+	memmove(CacheIn,  p ->CacheIn, sizeof(CacheIn));
+	memmove(CacheOut, p ->CacheOut, sizeof(CacheOut));
        LCMS_UNLOCK(&p ->rwlock);
 
        for (i=0; i < n; i++) {
 
              accum = p -> FromInput(p, wIn, accum);
      
-             if (memcmp(wIn, CacheIn, sizeof(cmsUInt16Number) * MAXCHANNELS) == 0) {
+		if (memcmp(wIn, CacheIn, sizeof(CacheIn)) == 0) {
 
-                     memmove(wOut, CacheOut, sizeof(cmsUInt16Number) * MAXCHANNELS);
+			memmove(wOut, CacheOut, sizeof(CacheOut));
              }
              else {  
+
                      p ->Lut ->Eval16Fn(wIn, wOut, p -> Lut->Data);                      
-                     memmove(CacheIn,  wIn,  sizeof(cmsUInt16Number) * MAXCHANNELS);
-                     memmove(CacheOut, wOut, sizeof(cmsUInt16Number) * MAXCHANNELS);
+
+			memmove(CacheIn,  wIn,  sizeof(CacheIn));
+			memmove(CacheOut, wOut, sizeof(CacheOut));
             }
        
             output = p -> ToOutput(p, wOut, output);
@@ -304,8 +306,8 @@ void CachedXFORM(_cmsTRANSFORM* p,
 
        
        LCMS_WRITE_LOCK(&p ->rwlock);
-           memmove(p->CacheIn,  CacheIn, sizeof(cmsUInt16Number) * MAXCHANNELS);
-           memmove(p->CacheOut, CacheOut, sizeof(cmsUInt16Number) * MAXCHANNELS);
+	memmove(p->CacheIn,  CacheIn, sizeof(CacheIn));
+	memmove(p->CacheOut, CacheOut, sizeof(CacheOut));
        LCMS_UNLOCK(&p ->rwlock);
 }
 
@@ -329,7 +331,6 @@ void CachedXFORMGamutCheck(_cmsTRANSFORM* p,
        n = Size;                    // Buffer len
 
        // Empty buffers for quick memcmp
-
        memset(wIn,  0, sizeof(cmsUInt16Number) * MAXCHANNELS);
        memset(wOut, 0, sizeof(cmsUInt16Number) * MAXCHANNELS);
 
@@ -498,6 +499,9 @@ cmsHTRANSFORM CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
     // On floating point transforms, inhibit optimizations 
     FloatTransform = (_cmsFormatterIsFloat(InputFormat) && _cmsFormatterIsFloat(OutputFormat));
 
+	if (_cmsFormatterIsFloat(InputFormat) || _cmsFormatterIsFloat(OutputFormat))
+		dwFlags |= cmsFLAGS_NOCACHE;
+
     // Mark entry/exit spaces
     GetXFormColorSpaces(nProfiles, hProfiles, &EntryColorSpace, &ExitColorSpace);
 
@@ -578,14 +582,18 @@ cmsHTRANSFORM CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
 		xform ->Sequence = NULL;
 
     // If this is a cached transform, init first value, which is zero (16 bits only)
-    if (!FloatTransform && !(dwFlags & cmsFLAGS_NOCACHE)) {
+	if (!(dwFlags & cmsFLAGS_NOCACHE)) {
     
         memset(&xform ->CacheIn, 0, sizeof(xform ->CacheIn));
 
-        if (xform ->GamutCheck != NULL)
-            PrecalculatedXFORMGamutCheck(xform, &xform ->CacheIn, &xform->CacheOut, 1);
-        else
-            PrecalculatedXFORM(xform, &xform ->CacheIn, &xform->CacheOut, 1);
+		if (xform ->GamutCheck != NULL) {
+			TransformOnePixelWithGamutCheck(xform, xform ->CacheIn, xform->CacheOut);
+		}
+		else {
+
+			xform ->Lut ->Eval16Fn(xform ->CacheIn, xform->CacheOut, xform -> Lut->Data);  
+		}
+
     }
 
     return (cmsHTRANSFORM) xform; 

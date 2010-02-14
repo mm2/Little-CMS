@@ -229,7 +229,7 @@ to_host_path_cmd = @to_host_path_cmd@
 AUTOMAKE_OPTIONS = 1.7.2 dist-zip foreign
 
 # Directories containing Makefiles to 'make'
-SUBDIRS = src utils/tificc utils/transicc utils/linkicc utils/jpgicc utils/psicc testbed
+SUBDIRS = src include utils/tificc utils/transicc utils/linkicc utils/jpgicc utils/psicc testbed
 
 # Additional files to distribute
 EXTRA_DIST = AUTHORS COPYING ChangeLog doc Projects include bin Lib INSTALL NEWS README.1ST lcms2.pc.in

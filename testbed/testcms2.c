@@ -294,6 +294,7 @@ void DumpToneCurve(cmsToneCurve* gamma, const char* FileName)
 
 // -------------------------------------------------------------------------------------------------
 
+
 // Used to perform several checks. 
 // The space used is a clone of a well-known commercial 
 // color space which I will name "Above RGB"
@@ -327,6 +328,21 @@ cmsHPROFILE Create_Gray22(void)
     hProfile = cmsCreateGrayProfileTHR(DbgThread(), cmsD50_xyY(), Curve);
     cmsFreeToneCurve(Curve);
 
+	return hProfile;
+}
+
+
+static
+cmsHPROFILE Create_GrayLab(void)
+{
+	cmsHPROFILE hProfile;
+	cmsToneCurve* Curve = cmsBuildGamma(DbgThread(), 1.0);
+    if (Curve == NULL) return NULL;
+
+    hProfile = cmsCreateGrayProfileTHR(DbgThread(), cmsD50_xyY(), Curve);
+    cmsFreeToneCurve(Curve);
+
+	cmsSetPCS(hProfile, cmsSigLabData);
 	return hProfile;
 }
 
@@ -5726,8 +5742,60 @@ int CheckPostScript(void)
 }
 
 
+static
+int CheckGray(cmsHTRANSFORM xform, int g, double L)
+{
+	cmsCIELab Lab;
 
+	cmsDoTransform(xform, &g, &Lab, 1);
 
+	if (!IsGoodVal("a axis on gray", 0, Lab.a, 0.001)) return 0;
+    if (!IsGoodVal("b axis on gray", 0, Lab.b, 0.001)) return 0;
+
+	return IsGoodVal("Gray value", L, Lab.L, 0.01);
+}
+
+static
+int CheckInputGray(void)
+{
+	cmsHPROFILE hGray = Create_Gray22();
+	cmsHPROFILE hLab  = cmsCreateLab4Profile(NULL);
+    cmsHTRANSFORM xform;
+
+	if (hGray == NULL || hLab == NULL) return 0;
+
+	xform = cmsCreateTransform(hGray, TYPE_GRAY_8, hLab, TYPE_Lab_DBL, INTENT_RELATIVE_COLORIMETRIC, 0); 
+    cmsCloseProfile(hGray); cmsCloseProfile(hLab);
+
+    if (!CheckGray(xform, 0, 0)) return 0;
+    if (!CheckGray(xform, 125, 52.768)) return 0;
+    if (!CheckGray(xform, 200, 81.069)) return 0;
+	if (!CheckGray(xform, 255, 100.0)) return 0;
+
+	cmsDeleteTransform(xform);
+	return 1;
+}
+
+static
+int CheckLabInputGray(void)
+{
+	cmsHPROFILE hGray = Create_GrayLab();
+	cmsHPROFILE hLab  = cmsCreateLab4Profile(NULL);
+    cmsHTRANSFORM xform;
+
+	if (hGray == NULL || hLab == NULL) return 0;
+
+	xform = cmsCreateTransform(hGray, TYPE_GRAY_8, hLab, TYPE_Lab_DBL, INTENT_RELATIVE_COLORIMETRIC, 0);
+    cmsCloseProfile(hGray); cmsCloseProfile(hLab);
+
+    if (!CheckGray(xform, 0, 0)) return 0;
+    if (!CheckGray(xform, 125, 49.019)) return 0;
+    if (!CheckGray(xform, 200, 78.431)) return 0;
+	if (!CheckGray(xform, 255, 100.0)) return 0;
+
+	cmsDeleteTransform(xform);
+	return 1;
+}
 
 
 
@@ -6100,7 +6168,7 @@ void PrintSupportedIntents(void)
 
 #ifdef _CMS_IS_WINDOWS
 
-static char ZOOfolder[cmsMAX_PATH] = "c:\\colormaps\\bpc\\";
+static char ZOOfolder[cmsMAX_PATH] = "c:\\colormaps\\";
 static char ZOOwrite[cmsMAX_PATH]  = "c:\\colormaps\\write\\";
 static char ZOORawWrite[cmsMAX_PATH]  = "c:\\colormaps\\rawwrite\\";
 
@@ -6288,7 +6356,7 @@ void CheckProfileZOO(void)
 
 	cmsSetLogErrorHandler(NULL);
 
-	if ( (hFile = _findfirst("c:\\colormaps\\bpc\\*.*", &c_file)) == -1L )
+	if ( (hFile = _findfirst("c:\\colormaps\\*.*", &c_file)) == -1L )
         printf("No files in current directory");
     else
     {
@@ -6300,7 +6368,7 @@ void CheckProfileZOO(void)
                 strcmp(c_file.name, "..") != 0) {
 
                 CheckSingleSpecimen( c_file.name);
-                // CheckRAWSpecimen( c_file.name);
+					CheckRAWSpecimen( c_file.name);
 
 					if (TotalMemory > 0)
 						printf("Ok, but %s are left!\n", MemStr(TotalMemory));
@@ -6660,6 +6728,8 @@ int main(int argc, char* argv[])
 
 	// Known values
     Check("Known values across matrix-shaper", Chack_sRGB_Float);
+    Check("Gray input profile", CheckInputGray);
+    Check("Gray lab input profile", CheckLabInputGray);
 
     Check("Matrix-shaper proofing transform (float)",   CheckProofingXFORMFloat);
     Check("Matrix-shaper proofing transform (16 bits)",  CheckProofingXFORM16);
