@@ -671,7 +671,7 @@ cmsBool OptimizeByResampling(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
 // -----------------------------------------------------------------------------------------------------------------------------------------------
 // Fixes the gamma balancing of transform. This is described in my paper "Prelinearization Stages on 
 // Color-Management Application-Specific Integrated Circuits (ASICs)" presented at NIP24. It only works 
-// for gray and RGB transforms. See the paper for more details
+// for RGB transforms. See the paper for more details
 // -----------------------------------------------------------------------------------------------------------------------------------------------
 
 
@@ -897,9 +897,9 @@ cmsBool OptimizeByComputingLinearization(cmsPipeline** Lut, cmsUInt32Number Inte
     // This is a loosy optimization! does not apply in floating-point cases
     if (_cmsFormatterIsFloat(*InputFormat) || _cmsFormatterIsFloat(*OutputFormat)) return FALSE;
 
-    // Only on RGB/Gray
-    if ((T_COLORSPACE(*InputFormat)  != PT_GRAY) && (T_COLORSPACE(*InputFormat)  != PT_RGB)) return FALSE;
-    if ((T_COLORSPACE(*OutputFormat) != PT_GRAY) && (T_COLORSPACE(*OutputFormat) != PT_RGB)) return FALSE;
+    // Only on RGB
+    if (T_COLORSPACE(*InputFormat)  != PT_RGB) return FALSE;
+    if (T_COLORSPACE(*OutputFormat) != PT_RGB) return FALSE;
 
 
     OriginalLut = *Lut;
