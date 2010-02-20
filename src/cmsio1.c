@@ -243,6 +243,11 @@ cmsPipeline* _cmsReadInputLUT(cmsHPROFILE hProfile, int Intent)
         return cmsPipelineDup(cmsReadTag(hProfile, tagFloat));
     }
 
+	// Revert to perceptual if no tag is found
+	if (!cmsIsTag(hProfile, tag16)) {
+		tag16 = Device2PCS16[0];
+	}
+
     if (cmsIsTag(hProfile, tag16)) { // Is there any LUT-Based table?
 
         // Check profile version and LUT type. Do the necessary adjustments if needed
@@ -385,6 +390,11 @@ cmsPipeline* _cmsReadOutputLUT(cmsHPROFILE hProfile, int Intent)
         // Floating point LUT are always V4, so no adjustment is required
         return cmsPipelineDup(cmsReadTag(hProfile, tagFloat));
     }
+
+    // Revert to perceptual if no tag is found
+	if (!cmsIsTag(hProfile, tag16)) {
+		tag16 = PCS2Device16[0];
+	}
 
     if (cmsIsTag(hProfile, tag16)) { // Is there any LUT-Based table?
 
