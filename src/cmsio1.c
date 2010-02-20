@@ -52,7 +52,7 @@ static const cmsTagSignature PCS2DeviceFloat[] = {cmsSigBToD0Tag,     // Percept
 
 // Factors to convert from 1.15 fixed point to 0..1.0 range and vice-versa
 #define InpAdj   (1.0/MAX_ENCODEABLE_XYZ)     // (65536.0/(65535.0*2.0))
-#define OutpAdj  (MAX_ENCODEABLE_XYZ)          // ((2.0*65535.0)/65536.0)
+#define OutpAdj  (MAX_ENCODEABLE_XYZ)         // ((2.0*65535.0)/65536.0)
 
 // Several resources for gray conversions.
 static const cmsFloat64Number GrayInputMatrix[] = { (InpAdj*cmsD50X),  (InpAdj*cmsD50Y),  (InpAdj*cmsD50Z) };
@@ -91,34 +91,34 @@ cmsBool  _cmsReadMediaWhitePoint(cmsCIEXYZ* Dest, cmsHPROFILE hProfile)
 // Chromatic adaptation matrix. Fix some issues as well
 cmsBool  _cmsReadCHAD(cmsMAT3* Dest, cmsHPROFILE hProfile)
 {
-	cmsMAT3* Tag;
+    cmsMAT3* Tag;
 
-	Tag = (cmsMAT3*) cmsReadTag(hProfile, cmsSigChromaticAdaptationTag);
+    Tag = (cmsMAT3*) cmsReadTag(hProfile, cmsSigChromaticAdaptationTag);
 
-	if (Tag == NULL) {
-		_cmsMAT3identity(Dest);
-		return TRUE;
-	}
+    if (Tag == NULL) {
+        _cmsMAT3identity(Dest);
+        return TRUE;
+    }
 
-	// V2 display profiles should give D50
-	if (cmsGetEncodedICCversion(hProfile) < 0x4000000) {
+    // V2 display profiles should give D50
+    if (cmsGetEncodedICCversion(hProfile) < 0x4000000) {
 
-		if (cmsGetDeviceClass(hProfile) == cmsSigDisplayClass) {
+        if (cmsGetDeviceClass(hProfile) == cmsSigDisplayClass) {
 
-			cmsCIEXYZ* White = (cmsCIEXYZ*) cmsReadTag(hProfile, cmsSigMediaWhitePointTag);   
+            cmsCIEXYZ* White = (cmsCIEXYZ*) cmsReadTag(hProfile, cmsSigMediaWhitePointTag);   
 
-			if (White == NULL) {
+            if (White == NULL) {
 
-				_cmsMAT3identity(Dest);
-				return TRUE;
-			}
+                _cmsMAT3identity(Dest);
+                return TRUE;
+            }
 
-			return _cmsAdaptationMatrix(Dest, NULL, cmsD50_XYZ(), White);
-		}
-	}
+            return _cmsAdaptationMatrix(Dest, NULL, cmsD50_XYZ(), White);
+        }
+    }
 
-	*Dest = *Tag;
-	return TRUE;
+    *Dest = *Tag;
+    return TRUE;
 }
 
 
@@ -154,31 +154,31 @@ cmsPipeline* BuildGrayInputMatrixPipeline(cmsHPROFILE hProfile)
     GrayTRC = cmsReadTag(hProfile, cmsSigGrayTRCTag);
     if (GrayTRC == NULL) return NULL;
 
-	Lut = cmsPipelineAlloc(ContextID, 1, 3);
-	if (Lut == NULL) return NULL;
+    Lut = cmsPipelineAlloc(ContextID, 1, 3);
+    if (Lut == NULL) return NULL;
 
     if (cmsGetPCS(hProfile) == cmsSigLabData) {
 
-		// In this case we implement the profile as an  identity matrix plus 3 tone curves
-		cmsUInt16Number Zero[2] = { 0x8080, 0x8080 };
-		cmsToneCurve* EmptyTab;
-		cmsToneCurve* LabCurves[3];
-		
-		EmptyTab = cmsBuildTabulatedToneCurve16(ContextID, 2, Zero); 
+        // In this case we implement the profile as an  identity matrix plus 3 tone curves
+        cmsUInt16Number Zero[2] = { 0x8080, 0x8080 };
+        cmsToneCurve* EmptyTab;
+        cmsToneCurve* LabCurves[3];
+        
+        EmptyTab = cmsBuildTabulatedToneCurve16(ContextID, 2, Zero); 
 
-		if (EmptyTab == NULL) {
+        if (EmptyTab == NULL) {
 
-			     cmsPipelineFree(Lut);
-        return NULL;
-    }
+                 cmsPipelineFree(Lut);
+                 return NULL;
+        }
 
-		LabCurves[0] = GrayTRC;
-		LabCurves[1] = EmptyTab;
+        LabCurves[0] = GrayTRC;
+        LabCurves[1] = EmptyTab;
         LabCurves[2] = EmptyTab;
 
-		cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, OneToThreeInputMatrix, NULL));
-		cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, LabCurves));
- 		
+        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, OneToThreeInputMatrix, NULL));
+        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, LabCurves));
+        
         cmsFreeToneCurve(EmptyTab);
 
     }
@@ -186,7 +186,7 @@ cmsPipeline* BuildGrayInputMatrixPipeline(cmsHPROFILE hProfile)
        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &GrayTRC));
        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, GrayInputMatrix, NULL));
     }
-
+  
     return Lut;
 }
 
@@ -243,10 +243,10 @@ cmsPipeline* _cmsReadInputLUT(cmsHPROFILE hProfile, int Intent)
         return cmsPipelineDup(cmsReadTag(hProfile, tagFloat));
     }
 
-	// Revert to perceptual if no tag is found
-	if (!cmsIsTag(hProfile, tag16)) {
-		tag16 = Device2PCS16[0];
-	}
+    // Revert to perceptual if no tag is found
+    if (!cmsIsTag(hProfile, tag16)) {
+        tag16 = Device2PCS16[0];
+    }
 
     if (cmsIsTag(hProfile, tag16)) { // Is there any LUT-Based table?
 
@@ -295,34 +295,34 @@ cmsPipeline* _cmsReadInputLUT(cmsHPROFILE hProfile, int Intent)
 static
 cmsPipeline* BuildGrayOutputPipeline(cmsHPROFILE hProfile)
 {
-	cmsToneCurve *GrayTRC, *RevGrayTRC;
+    cmsToneCurve *GrayTRC, *RevGrayTRC;
     cmsPipeline* Lut;
     cmsContext ContextID = cmsGetProfileContextID(hProfile);
 
-	GrayTRC = cmsReadTag(hProfile, cmsSigGrayTRCTag);       
+    GrayTRC = cmsReadTag(hProfile, cmsSigGrayTRCTag);       
     if (GrayTRC == NULL) return NULL;
 
-	RevGrayTRC = cmsReverseToneCurve(GrayTRC);
-	if (RevGrayTRC == NULL) return NULL;
+    RevGrayTRC = cmsReverseToneCurve(GrayTRC);
+    if (RevGrayTRC == NULL) return NULL;
 
-	Lut = cmsPipelineAlloc(ContextID, 3, 1);
-	if (Lut == NULL) {
-		cmsFreeToneCurve(RevGrayTRC);
-		return NULL;
-	}
+    Lut = cmsPipelineAlloc(ContextID, 3, 1);
+    if (Lut == NULL) {
+        cmsFreeToneCurve(RevGrayTRC);
+        return NULL;
+    }
 
     if (cmsGetPCS(hProfile) == cmsSigLabData) {
 
-		cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 1,  3, PickLstarMatrix, NULL));
+        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 1,  3, PickLstarMatrix, NULL));
     }
     else  {
-		cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 1,  3, PickYMatrix, NULL));
+        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 1,  3, PickYMatrix, NULL));
     }
 
-	cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &RevGrayTRC));
-	cmsFreeToneCurve(RevGrayTRC);
-      
-	return Lut;
+    cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &RevGrayTRC));
+    cmsFreeToneCurve(RevGrayTRC);
+
+    return Lut;
 }
 
 
@@ -392,9 +392,9 @@ cmsPipeline* _cmsReadOutputLUT(cmsHPROFILE hProfile, int Intent)
     }
 
     // Revert to perceptual if no tag is found
-	if (!cmsIsTag(hProfile, tag16)) {
-		tag16 = PCS2Device16[0];
-	}
+    if (!cmsIsTag(hProfile, tag16)) {
+        tag16 = PCS2Device16[0];
+    }
 
     if (cmsIsTag(hProfile, tag16)) { // Is there any LUT-Based table?
 
@@ -554,9 +554,9 @@ cmsBool  CMSEXPORT cmsIsIntentSupported(cmsHPROFILE hProfile,
                                         cmsUInt32Number Intent, int UsedDirection)
 {
 
-	if (cmsIsCLUT(hProfile, Intent, UsedDirection)) return TRUE;
+    if (cmsIsCLUT(hProfile, Intent, UsedDirection)) return TRUE;
 
-	// Is there any matrix-shaper? If so, the intent is supported. This is a bit odd, since V2 matrix shaper
+    // Is there any matrix-shaper? If so, the intent is supported. This is a bit odd, since V2 matrix shaper
     // does not fully support relative colorimetric because they cannot deal with non-zero black points, but
     // many profiles claims that, and this is certainly not true for V4 profiles. Lets answer "yes" no matter
     // the accuracy would be less than optimal in rel.col and v2 case.
@@ -693,6 +693,7 @@ const cmsMLU* GetInfo(cmsHPROFILE hProfile, cmsInfoType Info)
 
     return (cmsMLU*) cmsReadTag(hProfile, sig);
 }
+
 
 
 cmsUInt32Number CMSEXPORT cmsGetProfileInfo(cmsHPROFILE hProfile, cmsInfoType Info, 
