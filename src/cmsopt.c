@@ -805,15 +805,15 @@ void PrelinEval8(register const cmsUInt16Number Input[],
     Y0 = Y1 = p8->Y0[g];
     Z0 = Z1 = p8->Z0[b];
 
-    X1 += (r == 255) ? 0 : p ->opta[2];
-    Y1 += (g == 255) ? 0 : p ->opta[1];
-    Z1 += (b == 255) ? 0 : p ->opta[0];
-
     rx = p8 ->rx[r];
     ry = p8 ->ry[g];
     rz = p8 ->rz[b];
 
+    X1 = X0 + ((rx == 0) ? 0 : p ->opta[2]);
+    Y1 = Y0 + ((ry == 0) ? 0 : p ->opta[1]);
+    Z1 = Z0 + ((rz == 0) ? 0 : p ->opta[0]);
 
+  
     // These are the 6 Tetrahedral
     for (OutChan=0; OutChan < TotalOut; OutChan++) {
 
@@ -1001,8 +1001,8 @@ cmsBool OptimizeByComputingLinearization(cmsPipeline** Lut, cmsUInt32Number Inte
     if (_cmsFormatterIs8bit(*InputFormat)) {
 
         Prelin8Data* p8 = PrelinOpt8alloc(OptimizedLUT ->ContextID, 
-            OptimizedPrelinCLUT ->Params, 
-            OptimizedPrelinCurves);
+                                                OptimizedPrelinCLUT ->Params, 
+                                                OptimizedPrelinCurves);
         if (p8 == NULL) return FALSE;
 
         _cmsPipelineSetOptimizationParameters(OptimizedLUT, PrelinEval8, (void*) p8, Prelin8free, Prelin8dup);

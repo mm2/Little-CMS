@@ -296,7 +296,7 @@ cmsUInt8Number Word2Byte(cmsUInt16Number w)
 
 
 // Convert to byte (using ICC2 notation)
-
+/*
 static
 cmsUInt8Number L2Byte(cmsUInt16Number w)
 {    
@@ -306,7 +306,7 @@ cmsUInt8Number L2Byte(cmsUInt16Number w)
 
     return (cmsUInt8Number) ((cmsUInt16Number) (ww >> 8) & 0xFF);
 }
-
+*/
 
 // Write a cooked byte
 
@@ -351,8 +351,8 @@ void EmitHeader(cmsIOHANDLER* m, const char* Title, cmsHPROFILE hProfile)
     
     time(&timer);
 	
-	Description = cmsReadTag(hProfile, cmsSigProfileDescriptionTag);
-	Copyright   = cmsReadTag(hProfile, cmsSigCopyrightTag);
+	Description = (cmsMLU*) cmsReadTag(hProfile, cmsSigProfileDescriptionTag);
+	Copyright   = (cmsMLU*) cmsReadTag(hProfile, cmsSigCopyrightTag);
 
 	DescASCII[0] = DescASCII[255] = 0;
     CopyrightASCII[0] = CopyrightASCII[255] = 0;

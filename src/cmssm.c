@@ -47,15 +47,17 @@ typedef struct {
 
 } cmsSpherical;
 
+typedef  enum {          
+        GP_EMPTY,
+        GP_SPECIFIED,
+        GP_MODELED
+
+    } GDBPointType;
+
 
 typedef struct {
 
-    enum {          
-        GP_EMPTY,
-        GP_SPECIFIED,
-        GP_MODELED,
-    } Type;
-
+    GDBPointType Type;
     cmsSpherical p;         // Keep also alpha & theta of maximum
 
 } cmsGDBPoint;
@@ -298,7 +300,7 @@ cmsBool ClosestLineToLine(cmsVEC3* r, const cmsLine* line1, const cmsLine* line2
 // Allocate & free structure
 cmsHANDLE  CMSEXPORT cmsGBDAlloc(cmsContext ContextID)
 {
-    cmsGDB* gbd = _cmsMallocZero(ContextID, sizeof(cmsGDB));
+    cmsGDB* gbd = (cmsGDB*) _cmsMallocZero(ContextID, sizeof(cmsGDB));
     if (gbd == NULL) return NULL;
     
     gbd -> ContextID = ContextID;

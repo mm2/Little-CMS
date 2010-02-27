@@ -128,9 +128,9 @@ cmsBool ReadICCMatrixRGB2XYZ(cmsMAT3* r, cmsHPROFILE hProfile)
 {
     cmsCIEXYZ *PtrRed, *PtrGreen, *PtrBlue;
 
-    PtrRed   = cmsReadTag(hProfile, cmsSigRedColorantTag);
-    PtrGreen = cmsReadTag(hProfile, cmsSigGreenColorantTag);
-    PtrBlue  = cmsReadTag(hProfile, cmsSigBlueColorantTag);
+    PtrRed   = (cmsCIEXYZ *) cmsReadTag(hProfile, cmsSigRedColorantTag);
+    PtrGreen = (cmsCIEXYZ *) cmsReadTag(hProfile, cmsSigGreenColorantTag);
+    PtrBlue  = (cmsCIEXYZ *) cmsReadTag(hProfile, cmsSigBlueColorantTag);
 
     if (PtrRed == NULL || PtrGreen == NULL || PtrBlue == NULL) 
         return FALSE;
@@ -151,7 +151,7 @@ cmsPipeline* BuildGrayInputMatrixPipeline(cmsHPROFILE hProfile)
     cmsPipeline* Lut;
     cmsContext ContextID = cmsGetProfileContextID(hProfile);
     
-    GrayTRC = cmsReadTag(hProfile, cmsSigGrayTRCTag);
+    GrayTRC = (cmsToneCurve *) cmsReadTag(hProfile, cmsSigGrayTRCTag);
     if (GrayTRC == NULL) return NULL;
 
     Lut = cmsPipelineAlloc(ContextID, 1, 3);
@@ -211,9 +211,9 @@ cmsPipeline* BuildRGBInputMatrixShaper(cmsHPROFILE hProfile)
             Mat.v[i].n[j] *= InpAdj;
     
 
-    Shapes[0] = cmsReadTag(hProfile, cmsSigRedTRCTag);        
-    Shapes[1] = cmsReadTag(hProfile, cmsSigGreenTRCTag);
-    Shapes[2] = cmsReadTag(hProfile, cmsSigBlueTRCTag);
+    Shapes[0] = (cmsToneCurve *) cmsReadTag(hProfile, cmsSigRedTRCTag);        
+    Shapes[1] = (cmsToneCurve *) cmsReadTag(hProfile, cmsSigGreenTRCTag);
+    Shapes[2] = (cmsToneCurve *) cmsReadTag(hProfile, cmsSigBlueTRCTag);
 
     if (!Shapes[0] || !Shapes[1] || !Shapes[2])
         return NULL;
@@ -240,7 +240,7 @@ cmsPipeline* _cmsReadInputLUT(cmsHPROFILE hProfile, int Intent)
     if (cmsIsTag(hProfile, tagFloat)) {  // Float tag takes precedence
 
         // Floating point LUT are always V4, so no adjustment is required
-        return cmsPipelineDup(cmsReadTag(hProfile, tagFloat));
+        return cmsPipelineDup((cmsPipeline*) cmsReadTag(hProfile, tagFloat));
     }
 
     // Revert to perceptual if no tag is found
@@ -253,7 +253,7 @@ cmsPipeline* _cmsReadInputLUT(cmsHPROFILE hProfile, int Intent)
         // Check profile version and LUT type. Do the necessary adjustments if needed
 
         // First read the tag
-        cmsPipeline* Lut = cmsReadTag(hProfile, tag16);
+        cmsPipeline* Lut = (cmsPipeline*) cmsReadTag(hProfile, tag16);
         if (Lut == NULL) return NULL;
 
         // After reading it, we have now info about the original type
@@ -299,7 +299,7 @@ cmsPipeline* BuildGrayOutputPipeline(cmsHPROFILE hProfile)
     cmsPipeline* Lut;
     cmsContext ContextID = cmsGetProfileContextID(hProfile);
 
-    GrayTRC = cmsReadTag(hProfile, cmsSigGrayTRCTag);       
+    GrayTRC = (cmsToneCurve *) cmsReadTag(hProfile, cmsSigGrayTRCTag);       
     if (GrayTRC == NULL) return NULL;
 
     RevGrayTRC = cmsReverseToneCurve(GrayTRC);
@@ -351,9 +351,9 @@ cmsPipeline* BuildRGBOutputMatrixShaper(cmsHPROFILE hProfile)
         for (j=0; j < 3; j++)
             Inv.v[i].n[j] *= OutpAdj;
 
-    Shapes[0] = cmsReadTag(hProfile, cmsSigRedTRCTag);        
-    Shapes[1] = cmsReadTag(hProfile, cmsSigGreenTRCTag);
-    Shapes[2] = cmsReadTag(hProfile, cmsSigBlueTRCTag);
+    Shapes[0] = (cmsToneCurve *) cmsReadTag(hProfile, cmsSigRedTRCTag);        
+    Shapes[1] = (cmsToneCurve *) cmsReadTag(hProfile, cmsSigGreenTRCTag);
+    Shapes[2] = (cmsToneCurve *) cmsReadTag(hProfile, cmsSigBlueTRCTag);
 
     if (!Shapes[0] || !Shapes[1] || !Shapes[2])
         return NULL;
@@ -388,7 +388,7 @@ cmsPipeline* _cmsReadOutputLUT(cmsHPROFILE hProfile, int Intent)
     if (cmsIsTag(hProfile, tagFloat)) {  // Float tag takes precedence
 
         // Floating point LUT are always V4, so no adjustment is required
-        return cmsPipelineDup(cmsReadTag(hProfile, tagFloat));
+        return cmsPipelineDup((cmsPipeline*) cmsReadTag(hProfile, tagFloat));
     }
 
     // Revert to perceptual if no tag is found
@@ -401,7 +401,7 @@ cmsPipeline* _cmsReadOutputLUT(cmsHPROFILE hProfile, int Intent)
         // Check profile version and LUT type. Do the necessary adjustments if needed
 
         // First read the tag
-        cmsPipeline* Lut = cmsReadTag(hProfile, tag16);
+        cmsPipeline* Lut = (cmsPipeline*) cmsReadTag(hProfile, tag16);
         if (Lut == NULL) return NULL;
 
         // After reading it, we have info about the original type
@@ -448,13 +448,13 @@ cmsPipeline* _cmsReadDevicelinkLUT(cmsHPROFILE hProfile, int Intent)
     if (cmsIsTag(hProfile, tagFloat)) {  // Float tag takes precedence
 
         // Floating point LUT are always V4, no adjustment is required
-        return cmsPipelineDup(cmsReadTag(hProfile, tagFloat));
+        return cmsPipelineDup((cmsPipeline*) cmsReadTag(hProfile, tagFloat));
     }
 
     tagFloat = Device2PCSFloat[0];
     if (cmsIsTag(hProfile, tagFloat)) {  
         
-        return cmsPipelineDup(cmsReadTag(hProfile, tagFloat));
+        return cmsPipelineDup((cmsPipeline*) cmsReadTag(hProfile, tagFloat));
     }
 
     if (!cmsIsTag(hProfile, tag16)) {  // Is there any LUT-Based table?
@@ -466,7 +466,7 @@ cmsPipeline* _cmsReadDevicelinkLUT(cmsHPROFILE hProfile, int Intent)
     // Check profile version and LUT type. Do the necessary adjustments if needed
 
     // Read the tag
-    Lut = cmsReadTag(hProfile, tag16);
+    Lut = (cmsPipeline*) cmsReadTag(hProfile, tag16);
     if (Lut == NULL) return NULL;
 
     // The profile owns the Lut, so we need to copy it
@@ -578,10 +578,10 @@ cmsSEQ* _cmsReadProfileSequence(cmsHPROFILE hProfile)
     cmsUInt32Number i;
 
     // Take profile sequence description first
-    ProfileSeq = cmsReadTag(hProfile, cmsSigProfileSequenceDescTag);
+    ProfileSeq = (cmsSEQ*) cmsReadTag(hProfile, cmsSigProfileSequenceDescTag);
     
     // Take profile sequence ID
-    ProfileId  = cmsReadTag(hProfile, cmsSigProfileSequenceIdTag);
+    ProfileId  = (cmsSEQ*) cmsReadTag(hProfile, cmsSigProfileSequenceIdTag);
 
     if (ProfileSeq == NULL && ProfileId == NULL) return NULL;
 
@@ -621,7 +621,7 @@ cmsBool _cmsWriteProfileSequence(cmsHPROFILE hProfile, const cmsSEQ* seq)
 static
 cmsMLU* GetMLUFromProfile(cmsHPROFILE h, cmsTagSignature sig)
 {
-    cmsMLU* mlu = cmsReadTag(h, sig);
+    cmsMLU* mlu = (cmsMLU*) cmsReadTag(h, sig);
     if (mlu == NULL) return NULL;
 
     return cmsMLUdup(mlu);
@@ -646,7 +646,7 @@ cmsSEQ* _cmsCompileProfileSequence(cmsContext ContextID, cmsUInt32Number nProfil
         ps ->deviceMfg   = cmsGetHeaderManufacturer(h);
         ps ->deviceModel = cmsGetHeaderModel(h);
         
-        techpt = cmsReadTag(h, cmsSigTechnologyTag);
+        techpt = (cmsTechnologySignature*) cmsReadTag(h, cmsSigTechnologyTag);
         if (techpt == NULL)
             ps ->technology   =  (cmsTechnologySignature) 0;
         else

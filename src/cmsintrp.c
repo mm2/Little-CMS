@@ -164,7 +164,7 @@ void LinLerp1D(register const cmsUInt16Number Value[],
     cmsUInt16Number y1, y0; 
     int cell0, rest;
     int val3;
-    const cmsUInt16Number* LutTable = p ->Table;
+    const cmsUInt16Number* LutTable = (cmsUInt16Number*) p ->Table;
 
     // if last value... 
     if (Value[0] == 0xffff) {
@@ -196,7 +196,7 @@ void LinLerp1Dfloat(const cmsFloat32Number Value[],
        cmsFloat32Number y1, y0;
        cmsFloat32Number val2, rest;
        int cell0, cell1;
-       const cmsFloat32Number* LutTable = p ->Table;
+       const cmsFloat32Number* LutTable = (cmsFloat32Number*) p ->Table;
 
        // if last value...
        if (Value[0] == 1.0) {
@@ -230,7 +230,7 @@ void Eval1Input(register const cmsUInt16Number Input[],
        cmsS15Fixed16Number k0, k1, rk, K0, K1;
        int v;
        cmsUInt32Number OutChan;
-       const cmsUInt16Number* LutTable = p16 -> Table;
+       const cmsUInt16Number* LutTable = (cmsUInt16Number*) p16 -> Table;
 
        v = Input[0] * p16 -> Domain[0];
        fk = _cmsToFixedDomain(v);
@@ -261,7 +261,7 @@ void Eval1InputFloat(const cmsFloat32Number Value[],
     cmsFloat32Number val2, rest;
     int cell0, cell1;
 	cmsUInt32Number OutChan;
-    const cmsFloat32Number* LutTable = p ->Table; 
+    const cmsFloat32Number* LutTable = (cmsFloat32Number*) p ->Table; 
 
         // if last value...
        if (Value[0] == 1.0) {
@@ -301,7 +301,7 @@ void TrilinearInterpFloat(const cmsFloat32Number Input[],
 #   define LERP(a,l,h)      (cmsFloat32Number) ((l)+(((h)-(l))*(a)))
 #   define DENS(i,j,k)      (LutTable[(i)+(j)+(k)+OutChan])
 
-    const cmsFloat32Number* LutTable = p ->Table; 
+    const cmsFloat32Number* LutTable = (cmsFloat32Number*) p ->Table; 
     cmsFloat32Number      px, py, pz;
     int        x0, y0, z0,
                X0, Y0, Z0, X1, Y1, Z1;
@@ -375,7 +375,7 @@ void TrilinearInterp16(register const cmsUInt16Number Input[],
 #define DENS(i,j,k) (LutTable[(i)+(j)+(k)+OutChan])
 #define LERP(a,l,h)     (cmsUInt16Number) (l + ROUND_FIXED_TO_INT(((h-l)*a)))
 
-           const cmsUInt16Number* LutTable = p ->Table; 
+           const cmsUInt16Number* LutTable = (cmsUInt16Number*) p ->Table; 
            int        OutChan, TotalOut;
            cmsS15Fixed16Number    fx, fy, fz;
   register int        rx, ry, rz;
@@ -450,7 +450,7 @@ void TetrahedralInterpFloat(const cmsFloat32Number Input[],
                             cmsFloat32Number Output[],                          
                             const cmsInterpParams* p)
 {
-    const cmsFloat32Number* LutTable = p -> Table; 
+    const cmsFloat32Number* LutTable = (cmsFloat32Number*) p -> Table; 
     cmsFloat32Number     px, py, pz;
     int        x0, y0, z0,
                X0, Y0, Z0, X1, Y1, Z1;
@@ -554,7 +554,7 @@ void TetrahedralInterp16(register const cmsUInt16Number Input[],
                          register cmsUInt16Number Output[],
                          register const cmsInterpParams* p)
 {
-    const cmsUInt16Number* LutTable = p -> Table;
+    const cmsUInt16Number* LutTable = (cmsUInt16Number*) p -> Table;
     cmsS15Fixed16Number    fx, fy, fz;
     cmsS15Fixed16Number    rx, ry, rz;
     int        x0, y0, z0;
@@ -659,7 +659,7 @@ void Eval4Inputs(register const cmsUInt16Number Input[],
                  register cmsUInt16Number Output[], 
                  register const cmsInterpParams* p16)
 {                        
-       const cmsUInt16Number* LutTable = p16 -> Table; 
+       const cmsUInt16Number* LutTable = (cmsUInt16Number*) p16 -> Table; 
        cmsS15Fixed16Number fk;
        cmsS15Fixed16Number k0, rk;
        int K0, K1;
@@ -700,7 +700,7 @@ void Eval4InputsFloat(const cmsFloat32Number Input[],
                       cmsFloat32Number Output[], 
                       const cmsInterpParams* p)
 {                             
-       const cmsFloat32Number* LutTable = p -> Table; 
+       const cmsFloat32Number* LutTable = (cmsFloat32Number*) p -> Table; 
        cmsFloat32Number rest;
        cmsFloat32Number pk;
        int k0, K0, K1;
@@ -747,7 +747,7 @@ void Eval5Inputs(register const cmsUInt16Number Input[],
 
                  register const cmsInterpParams* p16)
 {       
-       const cmsUInt16Number* LutTable = p16 -> Table;  
+       const cmsUInt16Number* LutTable = (cmsUInt16Number*) p16 -> Table;  
        cmsS15Fixed16Number fk;
        cmsS15Fixed16Number k0, rk;
        int K0, K1;
@@ -792,7 +792,7 @@ void Eval5InputsFloat(const cmsFloat32Number Input[],
                       cmsFloat32Number Output[], 
                       const cmsInterpParams* p)
 {                             
-       const cmsFloat32Number* LutTable = p -> Table; 
+       const cmsFloat32Number* LutTable = (cmsFloat32Number*) p -> Table; 
        cmsFloat32Number rest;
        cmsFloat32Number pk;
        int k0, K0, K1;
@@ -839,7 +839,7 @@ void Eval6Inputs(register const cmsUInt16Number Input[],
                  register cmsUInt16Number Output[], 
                  register const cmsInterpParams* p16)
 {       
-       const cmsUInt16Number* LutTable = p16 -> Table; 
+       const cmsUInt16Number* LutTable = (cmsUInt16Number*) p16 -> Table; 
        cmsS15Fixed16Number fk;
        cmsS15Fixed16Number k0, rk;
        int K0, K1;
@@ -885,7 +885,7 @@ void Eval6InputsFloat(const cmsFloat32Number Input[],
                       cmsFloat32Number Output[], 
                       const cmsInterpParams* p)
 {                             
-       const cmsFloat32Number* LutTable = p -> Table; 
+       const cmsFloat32Number* LutTable = (cmsFloat32Number*) p -> Table; 
        cmsFloat32Number rest;
        cmsFloat32Number pk;
        int k0, K0, K1;
@@ -931,7 +931,7 @@ void Eval7Inputs(register const cmsUInt16Number Input[],
                  register cmsUInt16Number Output[], 
                  register const cmsInterpParams* p16)
 {       
-       const cmsUInt16Number* LutTable = p16 -> Table; 
+       const cmsUInt16Number* LutTable = (cmsUInt16Number*) p16 -> Table; 
        cmsS15Fixed16Number fk;
        cmsS15Fixed16Number k0, rk;
        int K0, K1;
@@ -973,7 +973,7 @@ void Eval7InputsFloat(const cmsFloat32Number Input[],
                       cmsFloat32Number Output[], 
                       const cmsInterpParams* p)
 {                             
-       const cmsFloat32Number* LutTable = p -> Table; 
+       const cmsFloat32Number* LutTable = (cmsFloat32Number*) p -> Table; 
        cmsFloat32Number rest;
        cmsFloat32Number pk;
        int k0, K0, K1;
@@ -1018,7 +1018,7 @@ void Eval8Inputs(register const cmsUInt16Number Input[],
                  register cmsUInt16Number Output[], 
                  register const cmsInterpParams* p16)
 {       
-       const cmsUInt16Number* LutTable = p16 -> Table; 
+       const cmsUInt16Number* LutTable = (cmsUInt16Number*) p16 -> Table; 
        cmsS15Fixed16Number fk;
        cmsS15Fixed16Number k0, rk;
        int K0, K1;
@@ -1060,7 +1060,7 @@ void Eval8InputsFloat(const cmsFloat32Number Input[],
                       cmsFloat32Number Output[], 
                       const cmsInterpParams* p)
 {                             
-       const cmsFloat32Number* LutTable = p -> Table; 
+       const cmsFloat32Number* LutTable = (cmsFloat32Number*) p -> Table; 
        cmsFloat32Number rest;
        cmsFloat32Number pk;
        int k0, K0, K1;

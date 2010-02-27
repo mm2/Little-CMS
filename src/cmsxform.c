@@ -61,7 +61,7 @@ void CMSEXPORT cmsGetAlarmCodes(cmsUInt16Number OldAlarm[MAXCHANNELS])
 {
     int i;
 
-	_cmsAssert(OldAlarm != NULL);
+    _cmsAssert(OldAlarm != NULL);
 
     for (i=0; i < MAXCHANNELS; i++) 
         OldAlarm[i] = Alarm[i];
@@ -70,34 +70,34 @@ void CMSEXPORT cmsGetAlarmCodes(cmsUInt16Number OldAlarm[MAXCHANNELS])
 // Get rid of transform resources
 void CMSEXPORT cmsDeleteTransform(cmsHTRANSFORM hTransform)
 {
-	_cmsTRANSFORM* p = (_cmsTRANSFORM*) hTransform;
+    _cmsTRANSFORM* p = (_cmsTRANSFORM*) hTransform;
 
-	_cmsAssert(p != NULL);
+    _cmsAssert(p != NULL);
 
-	if (p -> GamutCheck)
-		cmsPipelineFree(p -> GamutCheck);
+    if (p -> GamutCheck)
+        cmsPipelineFree(p -> GamutCheck);
 
-	if (p -> Lut)
-		cmsPipelineFree(p -> Lut);
+    if (p -> Lut)
+        cmsPipelineFree(p -> Lut);
 
-	if (p ->InputColorant)
-		cmsFreeNamedColorList(p ->InputColorant);
+    if (p ->InputColorant)
+        cmsFreeNamedColorList(p ->InputColorant);
 
-	if (p -> OutputColorant)
-		cmsFreeNamedColorList(p ->OutputColorant);
+    if (p -> OutputColorant)
+        cmsFreeNamedColorList(p ->OutputColorant);
 
-	if (p ->Sequence)
-		cmsFreeProfileSequenceDescription(p ->Sequence);
+    if (p ->Sequence)
+        cmsFreeProfileSequenceDescription(p ->Sequence);
 
-	LCMS_FREE_LOCK(&p->rwlock);
-	_cmsFree(p ->ContextID, (void *) p);
+    LCMS_FREE_LOCK(&p->rwlock);
+    _cmsFree(p ->ContextID, (void *) p);
 }
 
 // Apply transform 
-void CMSEXPORT cmsDoTransform(cmsHTRANSFORM Transform,
+void CMSEXPORT cmsDoTransform(cmsHTRANSFORM  Transform,
                               const void* InputBuffer,
                               void* OutputBuffer, 
-							  cmsUInt32Number Size)
+                              cmsUInt32Number Size)
 
 {
     _cmsTRANSFORM* p = (_cmsTRANSFORM*) Transform;
@@ -214,101 +214,101 @@ void PrecalculatedXFORM(_cmsTRANSFORM* p,
 // Auxiliar: Handle precalculated gamut check
 static
 void TransformOnePixelWithGamutCheck(_cmsTRANSFORM* p, 
-									 const cmsUInt16Number wIn[], 
-									 cmsUInt16Number wOut[])
+                                     const cmsUInt16Number wIn[], 
+                                     cmsUInt16Number wOut[])
 {
-	cmsUInt16Number wOutOfGamut;
+    cmsUInt16Number wOutOfGamut;
 
-	p ->GamutCheck ->Eval16Fn(wIn, &wOutOfGamut, p ->GamutCheck ->Data);   
-	if (wOutOfGamut >= 1) {
+    p ->GamutCheck ->Eval16Fn(wIn, &wOutOfGamut, p ->GamutCheck ->Data);   
+    if (wOutOfGamut >= 1) {
 
-		cmsUInt16Number i;
+        cmsUInt16Number i;
 
-		for (i=0; i < p ->Lut->OutputChannels; i++)
-			wOut[i] = Alarm[i];                      
-	}
-	else
-		p ->Lut ->Eval16Fn(wIn, wOut, p -> Lut->Data);   
+        for (i=0; i < p ->Lut->OutputChannels; i++)
+            wOut[i] = Alarm[i];                      
+    }
+    else
+        p ->Lut ->Eval16Fn(wIn, wOut, p -> Lut->Data);   
 }
 
 // Gamut check, No caché, 16 bits.
 static
 void PrecalculatedXFORMGamutCheck(_cmsTRANSFORM* p,
-								  const void* in,
-								  void* out, cmsUInt32Number Size)
+                                  const void* in,
+                                  void* out, cmsUInt32Number Size)
 {
-	cmsUInt8Number* accum;
-	cmsUInt8Number* output;
-	cmsUInt16Number wIn[MAXCHANNELS], wOut[MAXCHANNELS];
-	cmsUInt32Number i, n;
+    cmsUInt8Number* accum;
+    cmsUInt8Number* output;
+    cmsUInt16Number wIn[MAXCHANNELS], wOut[MAXCHANNELS];
+    cmsUInt32Number i, n;
 
-	p -> StrideIn = p -> StrideOut = Size;
+    p -> StrideIn = p -> StrideOut = Size;
 
-	accum  = (cmsUInt8Number*)  in;
-	output = (cmsUInt8Number*)  out;
-	n = Size;                    // Buffer len
+    accum  = (cmsUInt8Number*)  in;
+    output = (cmsUInt8Number*)  out;
+    n = Size;                    // Buffer len
 
-	for (i=0; i < n; i++) {
+    for (i=0; i < n; i++) {
 
-		accum = p -> FromInput(p, wIn, accum);
-		TransformOnePixelWithGamutCheck(p, wIn, wOut);
-		output = p -> ToOutput(p, wOut, output);
-	}
+        accum = p -> FromInput(p, wIn, accum);
+        TransformOnePixelWithGamutCheck(p, wIn, wOut);
+        output = p -> ToOutput(p, wOut, output);
+    }
 }
 
 
 // No gamut check, Caché, 16 bits, 
 static
 void CachedXFORM(_cmsTRANSFORM* p,
-                     const void* in,
-                     void* out, cmsUInt32Number Size)
+                 const void* in,
+                 void* out, cmsUInt32Number Size)
 {
-       cmsUInt8Number* accum;
-       cmsUInt8Number* output;
-       cmsUInt16Number wIn[MAXCHANNELS], wOut[MAXCHANNELS];
-       cmsUInt32Number i, n;
-       cmsUInt16Number CacheIn[MAXCHANNELS], CacheOut[MAXCHANNELS];
+    cmsUInt8Number* accum;
+    cmsUInt8Number* output;
+    cmsUInt16Number wIn[MAXCHANNELS], wOut[MAXCHANNELS];
+    cmsUInt32Number i, n;
+    cmsUInt16Number CacheIn[MAXCHANNELS], CacheOut[MAXCHANNELS];
 
-       p -> StrideIn = p -> StrideOut = Size;
+    p -> StrideIn = p -> StrideOut = Size;
 
-       accum  = (cmsUInt8Number*)  in;
-       output = (cmsUInt8Number*)  out;
-       n = Size;                    // Buffer len
+    accum  = (cmsUInt8Number*)  in;
+    output = (cmsUInt8Number*)  out;
+    n = Size;                    // Buffer len
 
-       // Empty buffers for quick memcmp
-       memset(wIn,  0, sizeof(wIn));
-       memset(wOut, 0, sizeof(wOut));
+    // Empty buffers for quick memcmp
+    memset(wIn,  0, sizeof(wIn));
+    memset(wOut, 0, sizeof(wOut));
 
 
-       LCMS_READ_LOCK(&p ->rwlock);
-	memmove(CacheIn,  p ->CacheIn, sizeof(CacheIn));
-	memmove(CacheOut, p ->CacheOut, sizeof(CacheOut));
-       LCMS_UNLOCK(&p ->rwlock);
+    LCMS_READ_LOCK(&p ->rwlock);
+    memmove(CacheIn,  p ->CacheIn, sizeof(CacheIn));
+    memmove(CacheOut, p ->CacheOut, sizeof(CacheOut));
+    LCMS_UNLOCK(&p ->rwlock);
 
-       for (i=0; i < n; i++) {
+    for (i=0; i < n; i++) {
 
-             accum = p -> FromInput(p, wIn, accum);
-     
-		if (memcmp(wIn, CacheIn, sizeof(CacheIn)) == 0) {
+        accum = p -> FromInput(p, wIn, accum);
 
-			memmove(wOut, CacheOut, sizeof(CacheOut));
-             }
-             else {  
+        if (memcmp(wIn, CacheIn, sizeof(CacheIn)) == 0) {
 
-                     p ->Lut ->Eval16Fn(wIn, wOut, p -> Lut->Data);                      
+            memmove(wOut, CacheOut, sizeof(CacheOut));
+        }
+        else {   
 
-			memmove(CacheIn,  wIn,  sizeof(CacheIn));
-			memmove(CacheOut, wOut, sizeof(CacheOut));
-            }
-       
-            output = p -> ToOutput(p, wOut, output);
-       }
+            p ->Lut ->Eval16Fn(wIn, wOut, p -> Lut->Data);  
 
-       
-       LCMS_WRITE_LOCK(&p ->rwlock);
-	memmove(p->CacheIn,  CacheIn, sizeof(CacheIn));
-	memmove(p->CacheOut, CacheOut, sizeof(CacheOut));
-       LCMS_UNLOCK(&p ->rwlock);
+            memmove(CacheIn,  wIn,  sizeof(CacheIn));
+            memmove(CacheOut, wOut, sizeof(CacheOut));
+        }
+
+        output = p -> ToOutput(p, wOut, output);            
+    }
+
+
+    LCMS_WRITE_LOCK(&p ->rwlock);
+    memmove(p->CacheIn,  CacheIn, sizeof(CacheIn));
+    memmove(p->CacheOut, CacheOut, sizeof(CacheOut));
+    LCMS_UNLOCK(&p ->rwlock);
 }
 
 
@@ -459,15 +459,15 @@ static
 cmsBool  IsProperColorSpace(cmsColorSpaceSignature Check, cmsUInt32Number dwFormat)
 {
     int Space1 = T_COLORSPACE(dwFormat);
-	int Space2 = _cmsLCMScolorSpace(Check);
+    int Space2 = _cmsLCMScolorSpace(Check);
 
     if (Space1 == PT_ANY) return TRUE;
-	if (Space1 == Space2) return TRUE;
+    if (Space1 == Space2) return TRUE;
 
-	if (Space1 == PT_LabV2 && Space2 == PT_Lab) return TRUE;
-	if (Space1 == PT_Lab   && Space2 == PT_LabV2) return TRUE;
+    if (Space1 == PT_LabV2 && Space2 == PT_Lab) return TRUE;
+    if (Space1 == PT_Lab   && Space2 == PT_LabV2) return TRUE;
 
-	return FALSE;
+    return FALSE;
 }
 
 // ----------------------------------------------------------------------------------------------------------------
@@ -499,14 +499,14 @@ cmsHTRANSFORM CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
     // On floating point transforms, inhibit optimizations 
     FloatTransform = (_cmsFormatterIsFloat(InputFormat) && _cmsFormatterIsFloat(OutputFormat));
 
-	if (_cmsFormatterIsFloat(InputFormat) || _cmsFormatterIsFloat(OutputFormat))
-		dwFlags |= cmsFLAGS_NOCACHE;
+    if (_cmsFormatterIsFloat(InputFormat) || _cmsFormatterIsFloat(OutputFormat))
+        dwFlags |= cmsFLAGS_NOCACHE;
 
     // Mark entry/exit spaces
     GetXFormColorSpaces(nProfiles, hProfiles, &EntryColorSpace, &ExitColorSpace);
 
     // Check if proper colorspaces
-    if (!IsProperColorSpace(EntryColorSpace, InputFormat)) {		
+    if (!IsProperColorSpace(EntryColorSpace, InputFormat)) {        
         cmsSignalError(ContextID, cmsERROR_COLORSPACE_CHECK, "Wrong input color space on transform");        
         return NULL;
     }
@@ -519,8 +519,8 @@ cmsHTRANSFORM CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
     // Create a pipeline with all transformations
     Lut = _cmsLinkProfiles(ContextID, nProfiles, Intents, hProfiles, BPC, AdaptationStates, dwFlags);
     if (Lut == NULL) {
-		    cmsSignalError(ContextID, cmsERROR_NOT_SUITABLE, "Couldn't link the profiles");   
-            return NULL;
+        cmsSignalError(ContextID, cmsERROR_NOT_SUITABLE, "Couldn't link the profiles");   
+        return NULL;
     }
 
     // Optimize the LUT if possible
@@ -533,66 +533,66 @@ cmsHTRANSFORM CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
         cmsPipelineFree(Lut);
         return NULL;
     }
-    
+
     // Keep values
     xform ->EntryColorSpace = EntryColorSpace;
     xform ->ExitColorSpace  = ExitColorSpace;
     xform ->Lut             = Lut;
-    
-        
+
+
     // Create a gamut check LUT if requested
     if (hGamutProfile != NULL && (dwFlags & cmsFLAGS_GAMUTCHECK))       
-       xform ->GamutCheck  = _cmsCreateGamutCheckPipeline(ContextID, hProfiles, 
-			                                              BPC, Intents, 
-														  AdaptationStates, 
-														  nGamutPCSposition, 
-														  hGamutProfile);
-            
-        
+        xform ->GamutCheck  = _cmsCreateGamutCheckPipeline(ContextID, hProfiles, 
+                                                        BPC, Intents, 
+                                                        AdaptationStates, 
+                                                        nGamutPCSposition, 
+                                                        hGamutProfile);
+
+
     // Try to read input and output colorant table
     if (cmsIsTag(hProfiles[0], cmsSigColorantTableTag)) {
-        
-        // Input table can only come in this way.		
-        xform ->InputColorant = cmsDupNamedColorList(cmsReadTag(hProfiles[0], cmsSigColorantTableTag));
+
+        // Input table can only come in this way.       
+        xform ->InputColorant = cmsDupNamedColorList((cmsNAMEDCOLORLIST*) cmsReadTag(hProfiles[0], cmsSigColorantTableTag));
     }
-    
+
     // Output is a little bit more complex.    
     if (cmsGetDeviceClass(hProfiles[nProfiles-1]) == cmsSigLinkClass) {
-        
+
         // This tag may exist only on devicelink profiles.        
         if (cmsIsTag(hProfiles[nProfiles-1], cmsSigColorantTableOutTag)) {
-            
-			// It may be NULL if error
-            xform ->OutputColorant = cmsDupNamedColorList(cmsReadTag(hProfiles[nProfiles-1], cmsSigColorantTableOutTag));
+
+            // It may be NULL if error
+            xform ->OutputColorant = cmsDupNamedColorList((cmsNAMEDCOLORLIST*) cmsReadTag(hProfiles[nProfiles-1], cmsSigColorantTableOutTag));
         }
-        
+
     } else {
-        
+
         if (cmsIsTag(hProfiles[nProfiles-1], cmsSigColorantTableTag)) {
-            
-            xform -> OutputColorant = cmsDupNamedColorList(cmsReadTag(hProfiles[nProfiles-1], cmsSigColorantTableTag));
+
+            xform -> OutputColorant = cmsDupNamedColorList((cmsNAMEDCOLORLIST*) cmsReadTag(hProfiles[nProfiles-1], cmsSigColorantTableTag));
         }     
     }
 
-	// Store the sequence of profiles
-	if (dwFlags & cmsFLAGS_KEEP_SEQUENCE) {
-		xform ->Sequence = _cmsCompileProfileSequence(ContextID, nProfiles, hProfiles);
-	}
-	else 
-		xform ->Sequence = NULL;
+    // Store the sequence of profiles
+    if (dwFlags & cmsFLAGS_KEEP_SEQUENCE) {
+        xform ->Sequence = _cmsCompileProfileSequence(ContextID, nProfiles, hProfiles);
+    }
+    else 
+        xform ->Sequence = NULL;
 
     // If this is a cached transform, init first value, which is zero (16 bits only)
-	if (!(dwFlags & cmsFLAGS_NOCACHE)) {
-    
+    if (!(dwFlags & cmsFLAGS_NOCACHE)) {
+
         memset(&xform ->CacheIn, 0, sizeof(xform ->CacheIn));
 
-		if (xform ->GamutCheck != NULL) {
-			TransformOnePixelWithGamutCheck(xform, xform ->CacheIn, xform->CacheOut);
-		}
-		else {
+        if (xform ->GamutCheck != NULL) {
+            TransformOnePixelWithGamutCheck(xform, xform ->CacheIn, xform->CacheOut);
+        }
+        else {
 
-			xform ->Lut ->Eval16Fn(xform ->CacheIn, xform->CacheOut, xform -> Lut->Data);  
-		}
+            xform ->Lut ->Eval16Fn(xform ->CacheIn, xform->CacheOut, xform -> Lut->Data);  
+        }
 
     }
 
@@ -702,7 +702,7 @@ cmsHTRANSFORM CMSEXPORT cmsCreateProofingTransformTHR(cmsContext ContextID,
     Intents[0] = nIntent;      Intents[1] = nIntent;        Intents[2] = INTENT_RELATIVE_COLORIMETRIC;  Intents[3] = ProofingIntent;
     BPC[0]     = DoBPC;        BPC[1] = DoBPC;              BPC[2] = 0;                                 BPC[3] = 0;
     
-	Adaptation[0] = Adaptation[1] = Adaptation[2] = Adaptation[3] = GlobalAdaptationState;
+    Adaptation[0] = Adaptation[1] = Adaptation[2] = Adaptation[3] = GlobalAdaptationState;
 
     if (!(dwFlags & (cmsFLAGS_SOFTPROOFING|cmsFLAGS_GAMUTCHECK))) 
         return cmsCreateTransformTHR(ContextID, InputProfile, InputFormat, OutputProfile, OutputFormat, nIntent, dwFlags);

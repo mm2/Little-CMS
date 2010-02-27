@@ -251,7 +251,7 @@ _cmsSubAllocator_chunk* _cmsCreateSubAllocChunk(cmsContext ContextID, cmsUInt32N
     if (chunk == NULL) return NULL;
 
     // Initialize values
-    chunk ->Block     = _cmsMalloc(ContextID, Initial);
+    chunk ->Block     = (cmsUInt8Number*) _cmsMalloc(ContextID, Initial);
     if (chunk ->Block == NULL) {
 
         // Something went wrong

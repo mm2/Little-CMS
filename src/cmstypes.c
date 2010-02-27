@@ -705,7 +705,7 @@ cmsBool Type_Text_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
     if (size == 0) return FALSE;       // Cannot be zero!
 
     // Create memory
-    Text = _cmsMalloc(self ->ContextID, size);
+    Text = (char*) _cmsMalloc(self ->ContextID, size);
     cmsMLUgetASCII(mlu, cmsNoLanguage, cmsNoCountry, Text, size);
 
     // Write it, including separator
@@ -842,7 +842,7 @@ void *Type_Text_Description_Read(struct _cms_typehandler_struct* self, cmsIOHAND
     if (mlu == NULL) return NULL;
 
     // As many memory as size of tag
-    Text = _cmsMalloc(self ->ContextID, AsciiCount + 1);
+    Text = (char*) _cmsMalloc(self ->ContextID, AsciiCount + 1);
     if (Text == NULL) goto Error;
 
     // Read it
@@ -929,15 +929,15 @@ cmsBool  Type_Text_Description_Write(struct _cms_typehandler_struct* self, cmsIO
     // Null strings
     if (len <= 0) {
 
-        Text = _cmsDupMem(self ->ContextID, "", sizeof(char));
-        Wide = _cmsDupMem(self ->ContextID, L"", sizeof(wchar_t));
+        Text = (char*)    _cmsDupMem(self ->ContextID, "", sizeof(char));
+        Wide = (wchar_t*) _cmsDupMem(self ->ContextID, L"", sizeof(wchar_t));
     }
     else {
         // Create independent buffers
-        Text = _cmsCalloc(self ->ContextID, len, sizeof(char));
+        Text = (char*) _cmsCalloc(self ->ContextID, len, sizeof(char));
         if (Text == NULL) goto Error;
 
-        Wide = _cmsCalloc(self ->ContextID, len, sizeof(wchar_t));
+        Wide = (wchar_t*) _cmsCalloc(self ->ContextID, len, sizeof(wchar_t));
         if (Wide == NULL) goto Error;
 
         // Get both representations. 
@@ -1448,7 +1448,7 @@ cmsBool  Type_MLU_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
         if (!_cmsWriteUInt32Number(io, Offset)) return FALSE;               
     }
 
-    if (!_cmsWriteUInt16Array(io, mlu ->PoolUsed / sizeof(cmsUInt16Number), mlu ->MemPool)) return FALSE;
+    if (!_cmsWriteUInt16Array(io, mlu ->PoolUsed / sizeof(cmsUInt16Number), (cmsUInt16Number*)  mlu ->MemPool)) return FALSE;
 
     return TRUE;
 
@@ -2209,7 +2209,7 @@ cmsStage* ReadCLUT(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUI
     if (!_cmsReadUInt8Number(io, NULL)) return NULL;
 
     CLUT = cmsStageAllocCLut16bitGranular(self ->ContextID, GridPoints, InputChannels, OutputChannels, NULL);
-    Data = CLUT ->Data;
+    Data = (_cmsStageCLutData*) CLUT ->Data;
 
     // Precision can be 1 or 2 bytes
     if (Precision == 1) {
@@ -2381,7 +2381,7 @@ void* Type_LUTA2B_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, c
 static
 cmsBool  WriteMatrix(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsStage* mpe)
 {   
-    _cmsStageMatrixData* m = mpe -> Data;
+    _cmsStageMatrixData* m = (_cmsStageMatrixData*) mpe -> Data;
 
     // Write the Matrix
     if (!_cmsWrite15Fixed16Number(io, m -> Double[0])) return FALSE;
@@ -2462,7 +2462,7 @@ cmsBool WriteCLUT(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUIn
 {
     cmsUInt8Number  gridPoints[MAXCHANNELS]; // Number of grid points in each dimension.  
     cmsUInt32Number i;    
-    _cmsStageCLutData* CLUT = mpe -> Data;
+    _cmsStageCLutData* CLUT = ( _cmsStageCLutData*) mpe -> Data;
 
     memset(gridPoints, 0, sizeof(gridPoints));
     for (i=0; i < (cmsUInt32Number) CLUT ->Params ->nInputs; i++) 
@@ -3958,7 +3958,7 @@ cmsBool  Type_MPEcurve_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER*
 {   
     cmsUInt32Number BaseOffset;
     cmsStage* mpe = (cmsStage*) Ptr;
-    _cmsStageToneCurvesData* Curves = mpe ->Data;
+    _cmsStageToneCurvesData* Curves = (_cmsStageToneCurvesData*) mpe ->Data;
 
     BaseOffset = io ->Tell(io) - sizeof(_cmsTagBase);
 
@@ -4042,7 +4042,7 @@ cmsBool  Type_MPEmatrix_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER
 {
     cmsUInt32Number i, nElems;
     cmsStage* mpe = (cmsStage*) Ptr;
-    _cmsStageMatrixData* Matrix = mpe ->Data;
+    _cmsStageMatrixData* Matrix = (_cmsStageMatrixData*) mpe ->Data;
 
     if (!_cmsWriteUInt16Number(io, (cmsUInt16Number) mpe ->InputChannels)) return FALSE;    
     if (!_cmsWriteUInt16Number(io, (cmsUInt16Number) mpe ->OutputChannels)) return FALSE;
@@ -4097,7 +4097,7 @@ void *Type_MPEclut_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
     if (mpe == NULL) goto Error;
 
     // Read the data
-    clut = mpe ->Data;
+    clut = (_cmsStageCLutData*) mpe ->Data;
     for (i=0; i < clut ->nEntries; i++) {
         
         if (!_cmsReadFloat32Number(io, &clut ->Tab.TFloat[i])) goto Error;
@@ -4121,7 +4121,7 @@ cmsBool  Type_MPEclut_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* 
     cmsUInt8Number Dimensions8[16];
     cmsUInt32Number i;
     cmsStage* mpe = (cmsStage*) Ptr;
-    _cmsStageCLutData* clut = mpe ->Data;
+    _cmsStageCLutData* clut = (_cmsStageCLutData*) mpe ->Data;
 
     // Check for maximum number of channels
     if (mpe -> InputChannels > 15) return FALSE;
@@ -4202,7 +4202,7 @@ cmsBool ReadMPEElem(struct _cms_typehandler_struct* self,
     if (TypeHandler ->ReadPtr != NULL) {
 
         // This is a real element which should be read and processed
-        mpe = TypeHandler ->ReadPtr(self, io, &nItems, SizeOfTag);
+        mpe = (cmsStage*) TypeHandler ->ReadPtr(self, io, &nItems, SizeOfTag);
         if (mpe == NULL) return FALSE;
 
         // All seems ok, insert element
@@ -4262,7 +4262,7 @@ cmsBool Type_MPE_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, v
     cmsUInt32Number ElemCount;
     cmsUInt32Number *ElementOffsets = NULL, *ElementSizes = NULL, Before;
     cmsStageSignature ElementSig;
-    cmsPipeline* Lut = (void*) Ptr;
+    cmsPipeline* Lut = (cmsPipeline*) Ptr;
     cmsStage* Elem = Lut ->Elements;
     cmsTagTypeHandler* TypeHandler;
 
@@ -4396,7 +4396,7 @@ void *Type_vcgt_Read(struct _cms_typehandler_struct* self,
     if (!_cmsReadUInt32Number(io, &TagType)) return NULL;
  
     // Allocate space for the array
-    Curves = _cmsCalloc(self ->ContextID, 3, sizeof(cmsToneCurve*));
+    Curves = ( cmsToneCurve**) _cmsCalloc(self ->ContextID, 3, sizeof(cmsToneCurve*));
     if (Curves == NULL) return NULL;
 
     // There are two possible flavors
@@ -4572,7 +4572,7 @@ void* Type_vcgt_Dup(struct _cms_typehandler_struct* self, const void *Ptr, cmsUI
 	cmsToneCurve** OldCurves =  (cmsToneCurve**) Ptr;
 	cmsToneCurve** NewCurves;
 
-	NewCurves = _cmsCalloc(self ->ContextID, 3, sizeof(cmsToneCurve*));
+	NewCurves = ( cmsToneCurve**) _cmsCalloc(self ->ContextID, 3, sizeof(cmsToneCurve*));
     if (NewCurves == NULL) return NULL;
 
 	NewCurves[0] = cmsDupToneCurve(OldCurves[0]);
