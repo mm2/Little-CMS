@@ -37,7 +37,7 @@
 #endif
 
 // A single check. Returns 1 if success, 0 if failed
-typedef int (*TestFn)(void);
+typedef cmsInt32Number (*TestFn)(void);
 
 // A parametric Tone curve test function
 typedef cmsFloat32Number (* dblfnptr)(cmsFloat32Number x, const cmsFloat64Number Params[]);
@@ -47,9 +47,9 @@ typedef cmsFloat32Number (* dblfnptr)(cmsFloat32Number x, const cmsFloat64Number
 
 static char ReasonToFailBuffer[TEXT_ERROR_BUFFER_SIZE];
 static char SubTestBuffer[TEXT_ERROR_BUFFER_SIZE];
-static int TotalTests = 0, TotalFail = 0;
+static cmsInt32Number TotalTests = 0, TotalFail = 0;
 static cmsBool TrappedError;
-static int SimultaneousErrors;
+static cmsInt32Number SimultaneousErrors;
 
 
 #define cmsmin(a, b) (((a) < (b)) ? (a) : (b))
@@ -58,9 +58,9 @@ static int SimultaneousErrors;
 static
 void Die(const char* Reason)
 {
-	printf("\n\nArrrgggg!!: %s!\n\n", Reason);
-	fflush(stdout);
-	exit(1);
+    printf("\n\nArrrgggg!!: %s!\n\n", Reason);
+    fflush(stdout);
+    exit(1);
 }
 
 // Memory management replacement -----------------------------------------------------------------------------
@@ -87,7 +87,7 @@ typedef struct {
 static
 cmsContext DbgThread(void)
 {
-    static int n = 1;
+    static cmsUInt32Number n = 1;
 
     return (cmsContext) n++;
 }
@@ -233,7 +233,7 @@ static
 void Check(const char* Title, TestFn Fn)
 {
     printf("Checking %s ...", Title);
-	fflush(stdout);
+    fflush(stdout);
 
     ReasonToFailBuffer[0] = 0;
     SubTestBuffer[0] = 0;
@@ -261,8 +261,8 @@ void Check(const char* Title, TestFn Fn)
                printf("\tMore than one (%d) errors were reported\n", SimultaneousErrors); 
 
         TotalFail++;
-    }
-	fflush(stdout);
+    }   
+    fflush(stdout);
 }
 
 // Dump a tone curve, for easy diagnostic
@@ -321,38 +321,38 @@ cmsHPROFILE Create_AboveRGB(void)
 static
 cmsHPROFILE Create_Gray22(void)
 {
-	cmsHPROFILE hProfile;
-	cmsToneCurve* Curve = cmsBuildGamma(DbgThread(), 2.2);
+    cmsHPROFILE hProfile;
+    cmsToneCurve* Curve = cmsBuildGamma(DbgThread(), 2.2);
     if (Curve == NULL) return NULL;
 
     hProfile = cmsCreateGrayProfileTHR(DbgThread(), cmsD50_xyY(), Curve);
     cmsFreeToneCurve(Curve);
 
-	return hProfile;
+    return hProfile;
 }
 
 
 static
 cmsHPROFILE Create_GrayLab(void)
 {
-	cmsHPROFILE hProfile;
-	cmsToneCurve* Curve = cmsBuildGamma(DbgThread(), 1.0);
+    cmsHPROFILE hProfile;
+    cmsToneCurve* Curve = cmsBuildGamma(DbgThread(), 1.0);
     if (Curve == NULL) return NULL;
 
     hProfile = cmsCreateGrayProfileTHR(DbgThread(), cmsD50_xyY(), Curve);
     cmsFreeToneCurve(Curve);
 
-	cmsSetPCS(hProfile, cmsSigLabData);
-	return hProfile;
+    cmsSetPCS(hProfile, cmsSigLabData);
+    return hProfile;
 }
 
 // A CMYK devicelink that adds gamma 3.0 to each channel
 static
 cmsHPROFILE Create_CMYK_DeviceLink(void)
 {
-	cmsHPROFILE hProfile;
-	cmsToneCurve* Tab[4];
-	cmsToneCurve* Curve = cmsBuildGamma(DbgThread(), 3.0);
+    cmsHPROFILE hProfile;
+    cmsToneCurve* Tab[4];
+    cmsToneCurve* Curve = cmsBuildGamma(DbgThread(), 3.0);
     if (Curve == NULL) return NULL;
 
     Tab[0] = Curve;
@@ -365,7 +365,7 @@ cmsHPROFILE Create_CMYK_DeviceLink(void)
 
     cmsFreeToneCurve(Curve);
 
-	return hProfile;
+    return hProfile;
 }
 
 
@@ -373,9 +373,9 @@ cmsHPROFILE Create_CMYK_DeviceLink(void)
 // DONT USE THIS PROFILE FOR ANYTHING, IT IS USELESS BUT FOR TESTING PURPOSES.
 typedef struct {
 
-	cmsHTRANSFORM hLab2sRGB;
-	cmsHTRANSFORM sRGB2Lab;
-	cmsHTRANSFORM hIlimit;
+    cmsHTRANSFORM hLab2sRGB;
+    cmsHTRANSFORM sRGB2Lab;
+    cmsHTRANSFORM hIlimit;
 
 } FakeCMYKParams;
 
@@ -389,40 +389,40 @@ cmsFloat64Number Clip(cmsFloat64Number v)
 }
 
 static
-int ForwardSampler(register const cmsUInt16Number In[], register cmsUInt16Number Out[], register void* Cargo)
+cmsUInt32Number ForwardSampler(register const cmsUInt16Number In[], register cmsUInt16Number Out[], register void* Cargo)
 {
-	FakeCMYKParams* p = (FakeCMYKParams*) Cargo;
-    cmsFloat64Number rgb[3], cmyk[4];	
-	cmsFloat64Number c, m, y, k;
+    FakeCMYKParams* p = (FakeCMYKParams*) Cargo;
+    cmsFloat64Number rgb[3], cmyk[4];   
+    cmsFloat64Number c, m, y, k;
 
-	cmsDoTransform(p ->hLab2sRGB, In, rgb, 1);
-		 
-	c = 1 - rgb[0];
+    cmsDoTransform(p ->hLab2sRGB, In, rgb, 1);
+         
+    c = 1 - rgb[0];
     m = 1 - rgb[1];
     y = 1 - rgb[2];
 
     k = (c < m ? cmsmin(c, y) : cmsmin(m, y));
    
-	// NONSENSE WARNING!: I'm doing this just because this is a test 
-	// profile that may have ink limit up to 400%. There is no UCR here
-	// so the profile is basically useless for anything but testing.
+    // NONSENSE WARNING!: I'm doing this just because this is a test 
+    // profile that may have ink limit up to 400%. There is no UCR here
+    // so the profile is basically useless for anything but testing.
 
     cmyk[0] = c;
     cmyk[1] = m;
     cmyk[2] = y;
     cmyk[3] = k;
 
-	cmsDoTransform(p ->hIlimit, cmyk, Out, 1);
+    cmsDoTransform(p ->hIlimit, cmyk, Out, 1);
 
-	return 1;
+    return 1;
 }
 
 
 static
-int ReverseSampler(register const cmsUInt16Number In[], register cmsUInt16Number Out[], register void* Cargo)
+cmsUInt32Number ReverseSampler(register const cmsUInt16Number In[], register cmsUInt16Number Out[], register void* Cargo)
 {
-	FakeCMYKParams* p = (FakeCMYKParams*) Cargo;
-    cmsFloat64Number c, m, y, k, rgb[3];	
+    FakeCMYKParams* p = (FakeCMYKParams*) Cargo;
+    cmsFloat64Number c, m, y, k, rgb[3];    
 
     c = In[0] / 65535.0;
     m = In[1] / 65535.0;
@@ -447,107 +447,107 @@ int ReverseSampler(register const cmsUInt16Number In[], register cmsUInt16Number
             rgb[2] = Clip((1 - y) * (1 - k));       
         }   
 
-		cmsDoTransform(p ->sRGB2Lab, rgb, Out, 1);
-		return 1;
+        cmsDoTransform(p ->sRGB2Lab, rgb, Out, 1);
+        return 1;
 }
 
 
 
 static
-cmsHPROFILE* CreateFakeCMYK(cmsFloat64Number InkLimit, cmsBool lUseAboveRGB)
+cmsHPROFILE CreateFakeCMYK(cmsFloat64Number InkLimit, cmsBool lUseAboveRGB)
 {
-	cmsHPROFILE hICC;
-	cmsPipeline* AToB0, *BToA0;
-	cmsStage* CLUT;
-	cmsContext ContextID;
-	FakeCMYKParams p;
-	cmsHPROFILE hLab, hsRGB, hLimit;
-	cmsUInt16Number cmykfrm;
+    cmsHPROFILE hICC;
+    cmsPipeline* AToB0, *BToA0;
+    cmsStage* CLUT;
+    cmsContext ContextID;
+    FakeCMYKParams p;
+    cmsHPROFILE hLab, hsRGB, hLimit;
+    cmsUInt16Number cmykfrm;
 
 
-	if (lUseAboveRGB)
-		hsRGB = Create_AboveRGB();
-	else
-	   hsRGB  = cmsCreate_sRGBProfile();
+    if (lUseAboveRGB)
+        hsRGB = Create_AboveRGB();
+    else
+       hsRGB  = cmsCreate_sRGBProfile();
 
-	hLab   = cmsCreateLab4Profile(NULL);
-	hLimit = cmsCreateInkLimitingDeviceLink(cmsSigCmykData, InkLimit);
+    hLab   = cmsCreateLab4Profile(NULL);
+    hLimit = cmsCreateInkLimitingDeviceLink(cmsSigCmykData, InkLimit);
 
-	cmykfrm = BYTES_SH(0)|CHANNELS_SH(4);
-	p.hLab2sRGB = cmsCreateTransform(hLab,  TYPE_Lab_16,  hsRGB, TYPE_RGB_DBL, INTENT_PERCEPTUAL, cmsFLAGS_NOOPTIMIZE|cmsFLAGS_NOCACHE);
-	p.sRGB2Lab  = cmsCreateTransform(hsRGB, TYPE_RGB_DBL, hLab,  TYPE_Lab_16,  INTENT_PERCEPTUAL, cmsFLAGS_NOOPTIMIZE|cmsFLAGS_NOCACHE);
-	p.hIlimit   = cmsCreateTransform(hLimit, cmykfrm, NULL, TYPE_CMYK_16, INTENT_PERCEPTUAL, cmsFLAGS_NOOPTIMIZE|cmsFLAGS_NOCACHE);
+    cmykfrm = BYTES_SH(0)|CHANNELS_SH(4);
+    p.hLab2sRGB = cmsCreateTransform(hLab,  TYPE_Lab_16,  hsRGB, TYPE_RGB_DBL, INTENT_PERCEPTUAL, cmsFLAGS_NOOPTIMIZE|cmsFLAGS_NOCACHE);
+    p.sRGB2Lab  = cmsCreateTransform(hsRGB, TYPE_RGB_DBL, hLab,  TYPE_Lab_16,  INTENT_PERCEPTUAL, cmsFLAGS_NOOPTIMIZE|cmsFLAGS_NOCACHE);
+    p.hIlimit   = cmsCreateTransform(hLimit, cmykfrm, NULL, TYPE_CMYK_16, INTENT_PERCEPTUAL, cmsFLAGS_NOOPTIMIZE|cmsFLAGS_NOCACHE);
 
-	cmsCloseProfile(hLab); cmsCloseProfile(hsRGB); cmsCloseProfile(hLimit);
+    cmsCloseProfile(hLab); cmsCloseProfile(hsRGB); cmsCloseProfile(hLimit);
 
-	ContextID = DbgThread();
-	hICC = cmsCreateProfilePlaceholder(ContextID);
-	if (!hICC) return NULL;
+    ContextID = DbgThread();
+    hICC = cmsCreateProfilePlaceholder(ContextID);
+    if (!hICC) return NULL;
 
-	cmsSetProfileVersion(hICC, 4.2);
+    cmsSetProfileVersion(hICC, 4.2);
 
-	cmsSetDeviceClass(hICC, cmsSigOutputClass);
-	cmsSetColorSpace(hICC,  cmsSigCmykData);
-	cmsSetPCS(hICC,         cmsSigLabData);
+    cmsSetDeviceClass(hICC, cmsSigOutputClass);
+    cmsSetColorSpace(hICC,  cmsSigCmykData);
+    cmsSetPCS(hICC,         cmsSigLabData);
 
     BToA0 = cmsPipelineAlloc(ContextID, 3, 4);
-	if (BToA0 == NULL) return 0;
-	CLUT = cmsStageAllocCLut16bit(ContextID, 17, 3, 4, NULL);
-	if (CLUT == NULL) return 0;
-	if (!cmsStageSampleCLut16bit(CLUT, ForwardSampler, &p, 0)) return 0;
-	
-	cmsPipelineInsertStage(BToA0, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, 3));	
-	cmsPipelineInsertStage(BToA0, cmsAT_END, CLUT);
-	cmsPipelineInsertStage(BToA0, cmsAT_END, _cmsStageAllocIdentityCurves(ContextID, 4));
-	
+    if (BToA0 == NULL) return 0;
+    CLUT = cmsStageAllocCLut16bit(ContextID, 17, 3, 4, NULL);
+    if (CLUT == NULL) return 0;
+    if (!cmsStageSampleCLut16bit(CLUT, ForwardSampler, &p, 0)) return 0;
+    
+    cmsPipelineInsertStage(BToA0, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, 3)); 
+    cmsPipelineInsertStage(BToA0, cmsAT_END, CLUT);
+    cmsPipelineInsertStage(BToA0, cmsAT_END, _cmsStageAllocIdentityCurves(ContextID, 4));
+    
     if (!cmsWriteTag(hICC, cmsSigBToA0Tag, (void*) BToA0)) return 0;
-	cmsPipelineFree(BToA0);
-	
-	AToB0 = cmsPipelineAlloc(ContextID, 4, 3);
-	if (AToB0 == NULL) return 0;
-	CLUT = cmsStageAllocCLut16bit(ContextID, 17, 4, 3, NULL);
-	if (CLUT == NULL) return 0;
-	if (!cmsStageSampleCLut16bit(CLUT, ReverseSampler, &p, 0)) return 0;
+    cmsPipelineFree(BToA0);
+    
+    AToB0 = cmsPipelineAlloc(ContextID, 4, 3);
+    if (AToB0 == NULL) return 0;
+    CLUT = cmsStageAllocCLut16bit(ContextID, 17, 4, 3, NULL);
+    if (CLUT == NULL) return 0;
+    if (!cmsStageSampleCLut16bit(CLUT, ReverseSampler, &p, 0)) return 0;
 
-    cmsPipelineInsertStage(AToB0, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, 4));	
-	cmsPipelineInsertStage(AToB0, cmsAT_END, CLUT);
-	cmsPipelineInsertStage(AToB0, cmsAT_END, _cmsStageAllocIdentityCurves(ContextID, 3));
-	
+    cmsPipelineInsertStage(AToB0, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, 4)); 
+    cmsPipelineInsertStage(AToB0, cmsAT_END, CLUT);
+    cmsPipelineInsertStage(AToB0, cmsAT_END, _cmsStageAllocIdentityCurves(ContextID, 3));
+    
     if (!cmsWriteTag(hICC, cmsSigAToB0Tag, (void*) AToB0)) return 0;
-	cmsPipelineFree(AToB0);
+    cmsPipelineFree(AToB0);
 
-	cmsDeleteTransform(p.hLab2sRGB);
-	cmsDeleteTransform(p.sRGB2Lab);
-	cmsDeleteTransform(p.hIlimit);
+    cmsDeleteTransform(p.hLab2sRGB);
+    cmsDeleteTransform(p.sRGB2Lab);
+    cmsDeleteTransform(p.hIlimit);
 
-	cmsLinkTag(hICC, cmsSigAToB1Tag, cmsSigAToB0Tag);
+    cmsLinkTag(hICC, cmsSigAToB1Tag, cmsSigAToB0Tag);
     cmsLinkTag(hICC, cmsSigAToB2Tag, cmsSigAToB0Tag);
-	cmsLinkTag(hICC, cmsSigBToA1Tag, cmsSigBToA0Tag);
+    cmsLinkTag(hICC, cmsSigBToA1Tag, cmsSigBToA0Tag);
     cmsLinkTag(hICC, cmsSigBToA2Tag, cmsSigBToA0Tag);
 
-	return hICC;    
+    return hICC;    
 }
 
 
 // Does create several profiles for latter use------------------------------------------------------------------------------------------------
 
 static
-int OneVirtual(cmsHPROFILE h, const char* SubTestTxt, const char* FileName)
+cmsInt32Number OneVirtual(cmsHPROFILE h, const char* SubTestTxt, const char* FileName)
 {
-	SubTest(SubTestTxt);
-	if (h == NULL) return 0;
+    SubTest(SubTestTxt);
+    if (h == NULL) return 0;
 
-	if (!cmsSaveProfileToFile(h, FileName)) return 0;
-	cmsCloseProfile(h);
+    if (!cmsSaveProfileToFile(h, FileName)) return 0;
+    cmsCloseProfile(h);
 
-	h = cmsOpenProfileFromFile(FileName, "r");
-	if (h == NULL) return 0;
+    h = cmsOpenProfileFromFile(FileName, "r");
+    if (h == NULL) return 0;
 
-	// Do some teste....
+    // Do some teste....
 
-	cmsCloseProfile(h);
+    cmsCloseProfile(h);
 
-	return 1;
+    return 1;
 }
 
 
@@ -555,7 +555,7 @@ int OneVirtual(cmsHPROFILE h, const char* SubTestTxt, const char* FileName)
 // This test checks the ability of lcms2 to save its built-ins as valid profiles. 
 // It does not check the functionality of such profiles
 static
-int CreateTestProfiles(void)
+cmsInt32Number CreateTestProfiles(void)
 {
     cmsHPROFILE h;
 
@@ -569,12 +569,17 @@ int CreateTestProfiles(void)
 
     // ----
     
-	h = Create_Gray22();
+    h = Create_Gray22();
     if (!OneVirtual(h, "Gray profile", "graylcms2.icc")) return 0;
 
     // ----
 
-	h = Create_CMYK_DeviceLink();
+    h = Create_GrayLab();
+    if (!OneVirtual(h, "Gray Lab profile", "glablcms2.icc")) return 0;
+    
+    // ----
+
+    h = Create_CMYK_DeviceLink();
     if (!OneVirtual(h, "Linearization profile", "linlcms2.icc")) return 0;
 
     // -------
@@ -607,10 +612,10 @@ int CreateTestProfiles(void)
     h = cmsCreateBCHSWabstractProfileTHR(DbgThread(), 17, 0, 0, 0, 0, 5000, 6000);
     if (!OneVirtual(h, "BCHS profile", "bchslcms2.icc")) return 0;
 
-	// ---
+    // ---
 
-	h = CreateFakeCMYK(300, FALSE);
-	if (!OneVirtual(h, "Fake CMYK profile", "lcms2cmyk.icc")) return 0;
+    h = CreateFakeCMYK(300, FALSE);
+    if (!OneVirtual(h, "Fake CMYK profile", "lcms2cmyk.icc")) return 0;
 
     return 1;
 }
@@ -618,7 +623,7 @@ int CreateTestProfiles(void)
 static
 void RemoveTestProfiles(void)
 {
-	remove("sRGBlcms2.icc");
+    remove("sRGBlcms2.icc");
     remove("aRGBlcms2.icc");
     remove("graylcms2.icc");
     remove("linlcms2.icc");
@@ -628,14 +633,15 @@ void RemoveTestProfiles(void)
     remove("xyzlcms2.icc");
     remove("nullcms2.icc");
     remove("bchslcms2.icc");
-	remove("lcms2cmyk.icc");
+    remove("lcms2cmyk.icc");
+    remove("glablcms2.icc");
 }
 
 // -------------------------------------------------------------------------------------------------
 
 // Check the size of basic types. If this test fails, nothing is going to work anyway
 static
-int CheckBaseTypes(void)
+cmsInt32Number CheckBaseTypes(void)
 {
     if (sizeof(cmsUInt8Number) != 1) return 0;
     if (sizeof(cmsInt8Number) != 1) return 0;
@@ -647,10 +653,10 @@ int CheckBaseTypes(void)
     if (sizeof(cmsInt64Number) != 8) return 0;
     if (sizeof(cmsFloat32Number) != 4) return 0;
     if (sizeof(cmsFloat64Number) != 8) return 0;
-	if (sizeof(cmsSignature) != 4) return 0;
-	if (sizeof(cmsU8Fixed8Number) != 2) return 0;
-	if (sizeof(cmsS15Fixed16Number) != 4) return 0;
-	if (sizeof(cmsU16Fixed16Number) != 4) return 0;
+    if (sizeof(cmsSignature) != 4) return 0;
+    if (sizeof(cmsU8Fixed8Number) != 2) return 0;
+    if (sizeof(cmsS15Fixed16Number) != 4) return 0;
+    if (sizeof(cmsU16Fixed16Number) != 4) return 0;
     
     return 1;
 }
@@ -660,9 +666,9 @@ int CheckBaseTypes(void)
 
 // Are we little or big endian?  From Harbison&Steele.  
 static
-int CheckEndianess(void)
+cmsInt32Number CheckEndianess(void)
 {
-    int BigEndian, IsOk;   
+    cmsInt32Number BigEndian, IsOk;   
     union {
         long l;
         char c[sizeof (long)];
@@ -688,7 +694,7 @@ int CheckEndianess(void)
 
 // Check quick floor
 static
-int CheckQuickFloor(void)
+cmsInt32Number CheckQuickFloor(void)
 {
     if ((_cmsQuickFloor(1.234) != 1) ||
         (_cmsQuickFloor(32767.234) != 32767) ||
@@ -706,7 +712,7 @@ int CheckQuickFloor(void)
 
 // Quick floor restricted to word
 static
-int CheckQuickFloorWord(void)
+cmsInt32Number CheckQuickFloorWord(void)
 {
     cmsUInt32Number i;
 
@@ -782,7 +788,7 @@ cmsBool  IsGoodWord(const char *title, cmsUInt16Number in, cmsUInt16Number out)
 // Fixed point ----------------------------------------------------------------------------------------------
 
 static
-int TestSingleFixed15_16(cmsFloat64Number d)
+cmsInt32Number TestSingleFixed15_16(cmsFloat64Number d)
 {
     cmsS15Fixed16Number f = _cmsDoubleTo15Fixed16(d);
     cmsFloat64Number RoundTrip = _cms15Fixed16toDouble(f);
@@ -792,7 +798,7 @@ int TestSingleFixed15_16(cmsFloat64Number d)
 }
 
 static
-int CheckFixedPoint15_16(void)
+cmsInt32Number CheckFixedPoint15_16(void)
 {
     if (!TestSingleFixed15_16(1.0)) return 0;
     if (!TestSingleFixed15_16(2.0)) return 0;
@@ -809,7 +815,7 @@ int CheckFixedPoint15_16(void)
 }
 
 static
-int TestSingleFixed8_8(cmsFloat64Number d)
+cmsInt32Number TestSingleFixed8_8(cmsFloat64Number d)
 {
     cmsS15Fixed16Number f = _cmsDoubleTo8Fixed8(d);
     cmsFloat64Number RoundTrip = _cms8Fixed8toDouble((cmsUInt16Number) f);
@@ -819,7 +825,7 @@ int TestSingleFixed8_8(cmsFloat64Number d)
 }
 
 static
-int CheckFixedPoint8_8(void)
+cmsInt32Number CheckFixedPoint8_8(void)
 {
     if (!TestSingleFixed8_8(1.0)) return 0;
     if (!TestSingleFixed8_8(2.0)) return 0;
@@ -840,9 +846,9 @@ int CheckFixedPoint8_8(void)
 // I test tables of 2, 4, 6, and 18 points, that will be exact.
 
 static
-void BuildTable(int n, cmsUInt16Number Tab[], cmsBool  Descending)
+void BuildTable(cmsInt32Number n, cmsUInt16Number Tab[], cmsBool  Descending)
 {
-    int i;
+    cmsInt32Number i;
 
     for (i=0; i < n; i++) {
         cmsFloat64Number v = (cmsFloat64Number) ((cmsFloat64Number) 65535.0 * i ) / (n-1);
@@ -858,7 +864,7 @@ void BuildTable(int n, cmsUInt16Number Tab[], cmsBool  Descending)
 // max_err = max allowed error 
 
 static
-int Check1D(int nNodesToCheck, cmsBool  Down, int max_err)
+cmsInt32Number Check1D(cmsInt32Number nNodesToCheck, cmsBool  Down, cmsInt32Number max_err)
 {
     cmsUInt32Number i;
     cmsUInt16Number in, out;
@@ -898,65 +904,65 @@ int Check1D(int nNodesToCheck, cmsBool  Down, int max_err)
 
 
 static
-int Check1DLERP2(void)
+cmsInt32Number Check1DLERP2(void)
 {
     return Check1D(2, FALSE, 0);
 }
 
 
 static
-int Check1DLERP3(void)
+cmsInt32Number Check1DLERP3(void)
 {
     return Check1D(3, FALSE, 1);    
 }
 
 
 static
-int Check1DLERP4(void)
+cmsInt32Number Check1DLERP4(void)
 {
     return Check1D(4, FALSE, 0);
 }
 
 static
-int Check1DLERP6(void)
+cmsInt32Number Check1DLERP6(void)
 {
     return Check1D(6, FALSE, 0);
 }
 
 static
-int Check1DLERP18(void)
+cmsInt32Number Check1DLERP18(void)
 {
     return Check1D(18, FALSE, 0);
 }
 
 
 static
-int Check1DLERP2Down(void)
+cmsInt32Number Check1DLERP2Down(void)
 {
     return Check1D(2, TRUE, 0);
 }
 
 
 static
-int Check1DLERP3Down(void)
+cmsInt32Number Check1DLERP3Down(void)
 {
     return Check1D(3, TRUE, 1);
 }
 
 static
-int Check1DLERP6Down(void)
+cmsInt32Number Check1DLERP6Down(void)
 {
     return Check1D(6, TRUE, 0);
 }
 
 static
-int Check1DLERP18Down(void)
+cmsInt32Number Check1DLERP18Down(void)
 {
     return Check1D(18, TRUE, 0);
 }
 
 static
-int ExhaustiveCheck1DLERP(void)
+cmsInt32Number ExhaustiveCheck1DLERP(void)
 {
     cmsUInt32Number j;
     
@@ -973,7 +979,7 @@ int ExhaustiveCheck1DLERP(void)
 }
 
 static
-int ExhaustiveCheck1DLERPDown(void)
+cmsInt32Number ExhaustiveCheck1DLERPDown(void)
 {
     cmsUInt32Number j;
     
@@ -995,10 +1001,10 @@ int ExhaustiveCheck1DLERPDown(void)
 // 3D interpolation -------------------------------------------------------------------------------------------------
 
 static
-int Check3DinterpolationFloatTetrahedral(void)
+cmsInt32Number Check3DinterpolationFloatTetrahedral(void)
 {
     cmsInterpParams* p;
-    int i;
+    cmsInt32Number i;
     cmsFloat32Number In[3], Out[3];
     cmsFloat32Number FloatTable[] = { //R     G    B
 
@@ -1041,10 +1047,10 @@ Error:
 }
 
 static
-int Check3DinterpolationFloatTrilinear(void)
+cmsInt32Number Check3DinterpolationFloatTrilinear(void)
 {
     cmsInterpParams* p;
-    int i;
+    cmsInt32Number i;
     cmsFloat32Number In[3], Out[3];
     cmsFloat32Number FloatTable[] = { //R     G    B
 
@@ -1087,10 +1093,10 @@ Error:
 }
 
 static
-int Check3DinterpolationTetrahedral16(void)
+cmsInt32Number Check3DinterpolationTetrahedral16(void)
 {
     cmsInterpParams* p;
-    int i;
+    cmsInt32Number i;
     cmsUInt16Number In[3], Out[3];
     cmsUInt16Number Table[] = { 
 
@@ -1131,10 +1137,10 @@ Error:
 }
 
 static
-int Check3DinterpolationTrilinear16(void)
+cmsInt32Number Check3DinterpolationTrilinear16(void)
 {
     cmsInterpParams* p;
-    int i;
+    cmsInt32Number i;
     cmsUInt16Number In[3], Out[3];
     cmsUInt16Number Table[] = { 
 
@@ -1176,10 +1182,10 @@ Error:
 
 
 static
-int ExaustiveCheck3DinterpolationFloatTetrahedral(void)
+cmsInt32Number ExaustiveCheck3DinterpolationFloatTetrahedral(void)
 {
     cmsInterpParams* p;
-    int r, g, b;
+    cmsInt32Number r, g, b;
     cmsFloat32Number In[3], Out[3];
     cmsFloat32Number FloatTable[] = { //R     G    B
 
@@ -1227,10 +1233,10 @@ Error:
 }
 
 static
-int ExaustiveCheck3DinterpolationFloatTrilinear(void)
+cmsInt32Number ExaustiveCheck3DinterpolationFloatTrilinear(void)
 {
     cmsInterpParams* p;
-    int r, g, b;
+    cmsInt32Number r, g, b;
     cmsFloat32Number In[3], Out[3];
     cmsFloat32Number FloatTable[] = { //R     G    B
 
@@ -1251,22 +1257,22 @@ int ExaustiveCheck3DinterpolationFloatTrilinear(void)
     p = _cmsComputeInterpParams(DbgThread(), 2, 3, 3, FloatTable, CMS_LERP_FLAGS_FLOAT|CMS_LERP_FLAGS_TRILINEAR);
 
     MaxErr = 0.0;
-	for (r=0; r < 0xff; r++) 
-		for (g=0; g < 0xff; g++) 
-			for (b=0; b < 0xff; b++) 
-			{
+    for (r=0; r < 0xff; r++) 
+        for (g=0; g < 0xff; g++) 
+            for (b=0; b < 0xff; b++) 
+            {
 
-				In[0] = (cmsFloat32Number) r / 255.0F;
-				In[1] = (cmsFloat32Number) g / 255.0F;
-				In[2] = (cmsFloat32Number) b / 255.0F;
+                In[0] = (cmsFloat32Number) r / 255.0F;
+                In[1] = (cmsFloat32Number) g / 255.0F;
+                In[2] = (cmsFloat32Number) b / 255.0F;
 
 
-				p ->Interpolation.LerpFloat(In, Out, p);
+                p ->Interpolation.LerpFloat(In, Out, p);
 
-				if (!IsGoodFixed15_16("Channel 1", Out[0], In[0])) goto Error;
-				if (!IsGoodFixed15_16("Channel 2", Out[1], (cmsFloat32Number) In[1] / 2.F)) goto Error;
-				if (!IsGoodFixed15_16("Channel 3", Out[2], (cmsFloat32Number) In[2] / 4.F)) goto Error;
-			}
+                if (!IsGoodFixed15_16("Channel 1", Out[0], In[0])) goto Error;
+                if (!IsGoodFixed15_16("Channel 2", Out[1], (cmsFloat32Number) In[1] / 2.F)) goto Error;
+                if (!IsGoodFixed15_16("Channel 3", Out[2], (cmsFloat32Number) In[2] / 4.F)) goto Error;
+            }
 
     if (MaxErr > 0) printf("|Err|<%lf ", MaxErr);
     _cmsFreeInterpParams(p);
@@ -1279,10 +1285,10 @@ Error:
 }
 
 static
-int ExhaustiveCheck3DinterpolationTetrahedral16(void)
+cmsInt32Number ExhaustiveCheck3DinterpolationTetrahedral16(void)
 {
     cmsInterpParams* p;
-    int r, g, b;
+    cmsInt32Number r, g, b;
     cmsUInt16Number In[3], Out[3];
     cmsUInt16Number Table[] = { 
 
@@ -1326,10 +1332,10 @@ Error:
 }
 
 static
-int ExhaustiveCheck3DinterpolationTrilinear16(void)
+cmsInt32Number ExhaustiveCheck3DinterpolationTrilinear16(void)
 {
     cmsInterpParams* p;
-    int r, g, b;
+    cmsInt32Number r, g, b;
     cmsUInt16Number In[3], Out[3];
     cmsUInt16Number Table[] = { 
 
@@ -1375,13 +1381,13 @@ Error:
 
 // Check reverse interpolation on LUTS. This is right now exclusively used by K preservation algorithm
 static
-int CheckReverseInterpolation3x3(void)
+cmsInt32Number CheckReverseInterpolation3x3(void)
 {
  cmsPipeline* Lut;
  cmsStage* clut;
  cmsFloat32Number Target[3], Result[3], Hint[3];
  cmsFloat32Number err, max;
- int i;
+ cmsInt32Number i;
  cmsUInt16Number Table[] = { 
 
         0,    0,   0,                 // 0 0 0  
@@ -1409,65 +1415,65 @@ int CheckReverseInterpolation3x3(void)
    cmsPipelineEvalReverseFloat(Target, Result, NULL, Lut);
    if (Result[0] != 0 || Result[1] != 0 || Result[2] != 0){
 
-	   Fail("Reverse interpolation didn't find zero");
-	   return 0;
+       Fail("Reverse interpolation didn't find zero");
+       return 0;
    }
 
    // Transverse identity
    max = 0;
    for (i=0; i <= 100; i++) {
 
-	   cmsFloat32Number in = i / 100.0F;
+       cmsFloat32Number in = i / 100.0F;
 
-	   Target[0] = in; Target[1] = 0; Target[2] = 0; 
-	   cmsPipelineEvalReverseFloat(Target, Result, Hint, Lut);
+       Target[0] = in; Target[1] = 0; Target[2] = 0; 
+       cmsPipelineEvalReverseFloat(Target, Result, Hint, Lut);
 
-	   err = fabsf(in - Result[0]);
-	   if (err > max) max = err;
+       err = fabsf(in - Result[0]);
+       if (err > max) max = err;
 
-	   memcpy(Hint, Result, sizeof(Hint));
+       memcpy(Hint, Result, sizeof(Hint));
    }
 
     cmsPipelineFree(Lut);
-	return (max <= FLOAT_PRECISSION);
+    return (max <= FLOAT_PRECISSION);
 }
 
 
 static
-int CheckReverseInterpolation4x3(void)
+cmsInt32Number CheckReverseInterpolation4x3(void)
 {
  cmsPipeline* Lut;
  cmsStage* clut;
  cmsFloat32Number Target[4], Result[4], Hint[4];
  cmsFloat32Number err, max;
- int i;
+ cmsInt32Number i;
 
  // 4 -> 3, output gets 3 first channels copied
  cmsUInt16Number Table[] = { 
 
         0,         0,         0,          //  0 0 0 0   = ( 0, 0, 0)
         0,         0,         0,          //  0 0 0 1   = ( 0, 0, 0)
-										
+                                        
         0,         0,         0xffff,     //  0 0 1 0   = ( 0, 0, 1)
-        0,         0,         0xffff,     //  0 0 1 1	= ( 0, 0, 1)
-											
+        0,         0,         0xffff,     //  0 0 1 1   = ( 0, 0, 1)
+                                            
         0,         0xffff,    0,          //  0 1 0 0   = ( 0, 1, 0)
         0,         0xffff,    0,          //  0 1 0 1   = ( 0, 1, 0)
-											
+                                            
         0,         0xffff,    0xffff,     //  0 1 1 0    = ( 0, 1, 1)
         0,         0xffff,    0xffff,     //  0 1 1 1    = ( 0, 1, 1)
 
         0xffff,    0,         0,          //  1 0 0 0    = ( 1, 0, 0)
         0xffff,    0,         0,          //  1 0 0 1    = ( 1, 0, 0)
-											
+                                            
         0xffff,    0,         0xffff,     //  1 0 1 0    = ( 1, 0, 1)
-        0xffff,    0,         0xffff,     //  1 0 1 1	 = ( 1, 0, 1)
-											
+        0xffff,    0,         0xffff,     //  1 0 1 1    = ( 1, 0, 1)
+                                            
         0xffff,    0xffff,    0,          //  1 1 0 0    = ( 1, 1, 0)
-        0xffff,    0xffff,    0,          //  1 1 0 1	 = ( 1, 1, 0)
-											
+        0xffff,    0xffff,    0,          //  1 1 0 1    = ( 1, 1, 0)
+                                            
         0xffff,    0xffff,    0xffff,     //  1 1 1 0    = ( 1, 1, 1)
-        0xffff,    0xffff,    0xffff,     //  1 1 1 1	 = ( 1, 1, 1)
+        0xffff,    0xffff,    0xffff,     //  1 1 1 1    = ( 1, 1, 1)
     };
 
    
@@ -1480,16 +1486,16 @@ int CheckReverseInterpolation4x3(void)
    SubTest("4->3 feasibility");
    for (i=0; i <= 100; i++) {
 
-	   Target[0] = i / 100.0F;
-	   Target[1] = Target[0];
-	   Target[2] = 0;
-	   Target[3] = 12;
+       Target[0] = i / 100.0F;
+       Target[1] = Target[0];
+       Target[2] = 0;
+       Target[3] = 12;
 
-	   cmsPipelineEvalFloat(Target, Result, Lut);
+       cmsPipelineEvalFloat(Target, Result, Lut);
 
-	   if (!IsGoodFixed15_16("0", Target[0], Result[0])) return 0;
+       if (!IsGoodFixed15_16("0", Target[0], Result[0])) return 0;
        if (!IsGoodFixed15_16("1", Target[1], Result[1])) return 0;
-	   if (!IsGoodFixed15_16("2", Target[2], Result[2])) return 0;
+       if (!IsGoodFixed15_16("2", Target[2], Result[2])) return 0;
    }
 
    SubTest("4->3 zero");
@@ -1507,27 +1513,27 @@ int CheckReverseInterpolation4x3(void)
 
    if (Result[0] != 0 || Result[1] != 0 || Result[2] != 0 || Result[3] != 0){
 
-	   Fail("Reverse interpolation didn't find zero");
-	   return 0;
+       Fail("Reverse interpolation didn't find zero");
+       return 0;
    }
 
    SubTest("4->3 find CMY");
    max = 0;
    for (i=0; i <= 100; i++) {
 
-	   cmsFloat32Number in = i / 100.0F;
+       cmsFloat32Number in = i / 100.0F;
 
-	   Target[0] = in; Target[1] = 0; Target[2] = 0; 
-	   cmsPipelineEvalReverseFloat(Target, Result, Hint, Lut);
+       Target[0] = in; Target[1] = 0; Target[2] = 0; 
+       cmsPipelineEvalReverseFloat(Target, Result, Hint, Lut);
 
-	   err = fabsf(in - Result[0]);
-	   if (err > max) max = err;
+       err = fabsf(in - Result[0]);
+       if (err > max) max = err;
 
-	   memcpy(Hint, Result, sizeof(Hint));
+       memcpy(Hint, Result, sizeof(Hint));
    }
 
     cmsPipelineFree(Lut);
-	return (max <= FLOAT_PRECISSION);
+    return (max <= FLOAT_PRECISSION);
 }
 
 
@@ -1535,9 +1541,9 @@ int CheckReverseInterpolation4x3(void)
 
 // Lab to LCh and back should be performed at 1E-12 accuracy at least
 static
-int CheckLab2LCh(void)
+cmsInt32Number CheckLab2LCh(void)
 {
-    int l, a, b;
+    cmsInt32Number l, a, b;
     cmsFloat64Number dist, Max = 0;
     cmsCIELab Lab, Lab2;
     cmsCIELCh LCh;
@@ -1566,9 +1572,9 @@ int CheckLab2LCh(void)
 
 // Lab to LCh and back should be performed at 1E-12 accuracy at least
 static
-int CheckLab2XYZ(void)
+cmsInt32Number CheckLab2XYZ(void)
 {
-    int l, a, b;
+    cmsInt32Number l, a, b;
     cmsFloat64Number dist, Max = 0;
     cmsCIELab Lab, Lab2;
     cmsCIEXYZ XYZ;
@@ -1598,13 +1604,13 @@ int CheckLab2XYZ(void)
 
 // Lab to xyY and back should be performed at 1E-12 accuracy at least
 static
-int CheckLab2xyY(void)
+cmsInt32Number CheckLab2xyY(void)
 {
-    int l, a, b;
+    cmsInt32Number l, a, b;
     cmsFloat64Number dist, Max = 0;
     cmsCIELab Lab, Lab2;
     cmsCIEXYZ XYZ;
-	cmsCIExyY xyY;
+    cmsCIExyY xyY;
 
     for (l=0; l <= 100; l += 10) {
 
@@ -1617,8 +1623,8 @@ int CheckLab2xyY(void)
                 Lab.b = b;
 
                 cmsLab2XYZ(NULL, &XYZ, &Lab);
-				cmsXYZ2xyY(&xyY, &XYZ);
-				cmsxyY2XYZ(&XYZ, &xyY);
+                cmsXYZ2xyY(&xyY, &XYZ);
+                cmsxyY2XYZ(&XYZ, &xyY);
                 cmsXYZ2Lab(NULL, &Lab2, &XYZ);
 
                 dist = cmsDeltaE(&Lab, &Lab2);
@@ -1633,9 +1639,9 @@ int CheckLab2xyY(void)
 
 
 static
-int CheckLabV2encoding(void)
+cmsInt32Number CheckLabV2encoding(void)
 {
-    int n2, i, j;
+    cmsInt32Number n2, i, j;
     cmsUInt16Number Inw[3], aw[3];
     cmsCIELab Lab;
 
@@ -1661,9 +1667,9 @@ int CheckLabV2encoding(void)
 }
 
 static
-int CheckLabV4encoding(void)
+cmsInt32Number CheckLabV4encoding(void)
 {
-    int n2, i, j;
+    cmsInt32Number n2, i, j;
     cmsUInt16Number Inw[3], aw[3];
     cmsCIELab Lab;
 
@@ -1692,9 +1698,9 @@ int CheckLabV4encoding(void)
 // BlackBody -----------------------------------------------------------------------------------------------------
 
 static
-int CheckTemp2CHRM(void)
+cmsInt32Number CheckTemp2CHRM(void)
 {
-    int j;
+    cmsInt32Number j;
     cmsFloat64Number d, v, Max = 0;
     cmsCIExyY White;
     
@@ -1716,20 +1722,20 @@ int CheckTemp2CHRM(void)
 // Tone curves -----------------------------------------------------------------------------------------------------
 
 static
-int CheckGammaEstimation(cmsToneCurve* c, cmsFloat64Number g)
+cmsInt32Number CheckGammaEstimation(cmsToneCurve* c, cmsFloat64Number g)
 {
-	cmsFloat64Number est = cmsEstimateGamma(c, 0.001);
+    cmsFloat64Number est = cmsEstimateGamma(c, 0.001);
 
-	SubTest("Gamma estimation");
-	if (fabs(est - g) > 0.001) return 0;
-	return 1;
+    SubTest("Gamma estimation");
+    if (fabs(est - g) > 0.001) return 0;
+    return 1;
 }
 
 static
-int CheckGammaCreation16(void)
+cmsInt32Number CheckGammaCreation16(void)
 {
     cmsToneCurve* LinGamma = cmsBuildGamma(DbgThread(), 1.0);
-    int i;
+    cmsInt32Number i;
     cmsUInt16Number in, out;
 
     for (i=0; i < 0xffff; i++) {
@@ -1743,7 +1749,7 @@ int CheckGammaCreation16(void)
         }
     }       
 
-	if (!CheckGammaEstimation(LinGamma, 1.0)) return 0;
+    if (!CheckGammaEstimation(LinGamma, 1.0)) return 0;
 
     cmsFreeToneCurve(LinGamma);
     return 1;
@@ -1751,10 +1757,10 @@ int CheckGammaCreation16(void)
 }
 
 static
-int CheckGammaCreationFlt(void)
+cmsInt32Number CheckGammaCreationFlt(void)
 {
     cmsToneCurve* LinGamma = cmsBuildGamma(DbgThread(), 1.0);
-    int i;
+    cmsInt32Number i;
     cmsFloat32Number in, out;
 
     for (i=0; i < 0xffff; i++) {
@@ -1768,7 +1774,7 @@ int CheckGammaCreationFlt(void)
         }
     }       
 
-	if (!CheckGammaEstimation(LinGamma, 1.0)) return 0;
+    if (!CheckGammaEstimation(LinGamma, 1.0)) return 0;
     cmsFreeToneCurve(LinGamma);
     return 1;
 }
@@ -1776,10 +1782,10 @@ int CheckGammaCreationFlt(void)
 // Curve curves using a single power function
 // Error is given in 0..ffff counts
 static
-int CheckGammaFloat(int nPoints, cmsFloat64Number g)
+cmsInt32Number CheckGammaFloat(cmsInt32Number nPoints, cmsFloat64Number g)
 {
     cmsToneCurve* Curve = cmsBuildGamma(DbgThread(), g);
-    int i;
+    cmsInt32Number i;
     cmsFloat32Number in, out;
     cmsFloat64Number val, Err;
 
@@ -1788,7 +1794,7 @@ int CheckGammaFloat(int nPoints, cmsFloat64Number g)
 
         in = (cmsFloat32Number) (i / 65535.0);
         out = cmsEvalToneCurveFloat(Curve, in);
-        val = pow(in, g);
+        val = pow((cmsFloat64Number) in, g);
 
         Err = fabs( val - out);
         if (Err > MaxErr) MaxErr = Err;     
@@ -1796,23 +1802,23 @@ int CheckGammaFloat(int nPoints, cmsFloat64Number g)
 
     if (MaxErr > 0) printf("|Err|<%lf ", MaxErr * 65535.0);
 
-	if (!CheckGammaEstimation(Curve, g)) return 0;
+    if (!CheckGammaEstimation(Curve, g)) return 0;
 
     cmsFreeToneCurve(Curve);
     return 1;
 }
 
-static int CheckGamma18(void) 
+static cmsInt32Number CheckGamma18(void) 
 {
     return CheckGammaFloat(256, 1.8);
 }
 
-static int CheckGamma22(void) 
+static cmsInt32Number CheckGamma22(void) 
 {
     return CheckGammaFloat(256, 2.2);
 }
 
-static int CheckGamma30(void) 
+static cmsInt32Number CheckGamma30(void) 
 {
     return CheckGammaFloat(256, 3.0);
 }
@@ -1820,19 +1826,19 @@ static int CheckGamma30(void)
 
 // Check table-based gamma functions
 static
-int CheckGammaFloatTable(cmsFloat64Number g)
+cmsInt32Number CheckGammaFloatTable(cmsFloat64Number g)
 {
-	cmsFloat32Number Values[1025];
+    cmsFloat32Number Values[1025];
     cmsToneCurve* Curve; 
-    int i;
+    cmsInt32Number i;
     cmsFloat32Number in, out;
     cmsFloat64Number val, Err;
 
-	for (i=0; i <= 1024; i++) {
+    for (i=0; i <= 1024; i++) {
 
         in = (cmsFloat32Number) (i / 1024.0);
-	    Values[i] = powf(in, g);
-	}
+        Values[i] = powf(in, (float) g);
+    }
 
     Curve = cmsBuildTabulatedToneCurveFloat(DbgThread(), 1025, Values);
 
@@ -1849,43 +1855,43 @@ int CheckGammaFloatTable(cmsFloat64Number g)
 
     if (MaxErr > 0) printf("|Err|<%lf ", MaxErr * 65535.0);
 
-	if (!CheckGammaEstimation(Curve, g)) return 0;
+    if (!CheckGammaEstimation(Curve, g)) return 0;
 
     cmsFreeToneCurve(Curve);
     return 1;
 }
 
 
-static int CheckGamma18Table(void) 
+static cmsInt32Number CheckGamma18Table(void) 
 {
     return CheckGammaFloatTable(1.8);
 }
 
-static int CheckGamma22Table(void) 
+static cmsInt32Number CheckGamma22Table(void) 
 {
     return CheckGammaFloatTable(2.2);
 }
 
-static int CheckGamma30Table(void) 
+static cmsInt32Number CheckGamma30Table(void) 
 {
     return CheckGammaFloatTable(3.0);
 }
 
 // Create a curve from a table (which is a pure gamma function) and check it against the pow function.
 static
-int CheckGammaWordTable(cmsFloat64Number g)
+cmsInt32Number CheckGammaWordTable(cmsFloat64Number g)
 {
-	cmsUInt16Number Values[1025];
+    cmsUInt16Number Values[1025];
     cmsToneCurve* Curve; 
-    int i;
+    cmsInt32Number i;
     cmsFloat32Number in, out;
     cmsFloat64Number val, Err;
 
-	for (i=0; i <= 1024; i++) {
+    for (i=0; i <= 1024; i++) {
 
         in = (cmsFloat32Number) (i / 1024.0);
-	    Values[i] = (cmsUInt16Number) floor(powf(in, g) * 65535.0 + 0.5);
-	}
+        Values[i] = (cmsUInt16Number) floor(powf(in, g) * 65535.0 + 0.5);
+    }
 
     Curve = cmsBuildTabulatedToneCurve16(DbgThread(), 1025, Values);
 
@@ -1902,23 +1908,23 @@ int CheckGammaWordTable(cmsFloat64Number g)
 
     if (MaxErr > 0) printf("|Err|<%lf ", MaxErr * 65535.0);
 
-	if (!CheckGammaEstimation(Curve, g)) return 0;
+    if (!CheckGammaEstimation(Curve, g)) return 0;
 
     cmsFreeToneCurve(Curve);
     return 1;
 }
 
-static int CheckGamma18TableWord(void) 
+static cmsInt32Number CheckGamma18TableWord(void) 
 {
     return CheckGammaWordTable(1.8);
 }
 
-static int CheckGamma22TableWord(void) 
+static cmsInt32Number CheckGamma22TableWord(void) 
 {
     return CheckGammaWordTable(2.2);
 }
 
-static int CheckGamma30TableWord(void) 
+static cmsInt32Number CheckGamma30TableWord(void) 
 {
     return CheckGammaWordTable(3.0);
 }
@@ -1927,7 +1933,7 @@ static int CheckGamma30TableWord(void)
 // Curve joining test. Joining two high-gamma of 3.0 curves should
 // give something like linear
 static
-int CheckJointCurves(void)
+cmsInt32Number CheckJointCurves(void)
 {
     cmsToneCurve *Forward, *Reverse, *Result;
     cmsBool  rc;
@@ -1951,14 +1957,14 @@ int CheckJointCurves(void)
 
 // Create a gamma curve by cheating the table
 static
-cmsToneCurve* GammaTableLinear(int nEntries, cmsBool Dir)
+cmsToneCurve* GammaTableLinear(cmsInt32Number nEntries, cmsBool Dir)
 {
-    int i;
+    cmsInt32Number i;
     cmsToneCurve* g = cmsBuildTabulatedToneCurve16(DbgThread(), nEntries, NULL);
 
     for (i=0; i < nEntries; i++) {
 
-        int v = _cmsQuantizeVal(i, nEntries);
+        cmsInt32Number v = _cmsQuantizeVal(i, nEntries);
 
         if (Dir)
             g->Table16[i] = v;
@@ -1971,10 +1977,10 @@ cmsToneCurve* GammaTableLinear(int nEntries, cmsBool Dir)
 
 
 static
-int CheckJointCurvesDescending(void)
+cmsInt32Number CheckJointCurvesDescending(void)
 {
     cmsToneCurve *Forward, *Reverse, *Result;
-    int i, rc;
+    cmsInt32Number i, rc;
 
      Forward = cmsBuildGamma(DbgThread(), 2.2); 
 
@@ -1999,9 +2005,9 @@ int CheckJointCurvesDescending(void)
 
 
 static
-int CheckFToneCurvePoint(cmsToneCurve* c, int Point, int Value)
+cmsInt32Number CheckFToneCurvePoint(cmsToneCurve* c, cmsInt32Number Point, cmsInt32Number Value)
 {
-    int Result;
+    cmsInt32Number Result;
 
     Result = cmsEvalToneCurve16(c, Point);
     
@@ -2009,7 +2015,7 @@ int CheckFToneCurvePoint(cmsToneCurve* c, int Point, int Value)
 }
 
 static
-int CheckReverseDegenerated(void)
+cmsInt32Number CheckReverseDegenerated(void)
 {
     cmsToneCurve* p, *g;
     cmsUInt16Number Tab[16];
@@ -2074,7 +2080,7 @@ cmsToneCurve* CombineGammaFloat(cmsToneCurve* g1, cmsToneCurve* g2)
 {
     cmsUInt16Number Tab[256];
     cmsFloat32Number f;
-    int i;
+    cmsInt32Number i;
 
     for (i=0; i < 256; i++) {
 
@@ -2093,7 +2099,7 @@ cmsToneCurve* CombineGamma16(cmsToneCurve* g1, cmsToneCurve* g2)
 {
     cmsUInt16Number Tab[256];
 
-    int i;
+    cmsInt32Number i;
 
     for (i=0; i < 256; i++) {
 
@@ -2107,7 +2113,7 @@ cmsToneCurve* CombineGamma16(cmsToneCurve* g1, cmsToneCurve* g2)
 }
 
 static
-int CheckJointFloatCurves_sRGB(void)
+cmsInt32Number CheckJointFloatCurves_sRGB(void)
 {
     cmsToneCurve *Forward, *Reverse, *Result;
     cmsBool  rc;
@@ -2124,7 +2130,7 @@ int CheckJointFloatCurves_sRGB(void)
 }
 
 static
-int CheckJoint16Curves_sRGB(void)
+cmsInt32Number CheckJoint16Curves_sRGB(void)
 {
     cmsToneCurve *Forward, *Reverse, *Result;
     cmsBool  rc;
@@ -2143,11 +2149,11 @@ int CheckJoint16Curves_sRGB(void)
 // sigmoidal curve f(x) = (1-x^g) ^(1/g)
 
 static
-int CheckJointCurvesSShaped(void)
+cmsInt32Number CheckJointCurvesSShaped(void)
 {
-	cmsFloat64Number p = 3.2;
+    cmsFloat64Number p = 3.2;
     cmsToneCurve *Forward, *Reverse, *Result;
-    int rc;
+    cmsInt32Number rc;
 
     Forward = cmsBuildParametricToneCurve(DbgThread(), 108, &p);    
     Reverse = cmsReverseToneCurve(Forward);
@@ -2301,9 +2307,9 @@ cmsFloat32Number sigmoidal(cmsFloat32Number x, const cmsFloat64Number Params[])
 
 
 static
-cmsBool CheckSingleParametric(const char* Name, dblfnptr fn, int Type, const cmsFloat64Number Params[])
+cmsBool CheckSingleParametric(const char* Name, dblfnptr fn, cmsInt32Number Type, const cmsFloat64Number Params[])
 {
-    int i;
+    cmsInt32Number i;
     cmsToneCurve* tc;
     cmsToneCurve* tc_1;
     char InverseText[256];
@@ -2342,7 +2348,7 @@ Error:
 
 // Check against some known values
 static
-int CheckParametricToneCurves(void)
+cmsInt32Number CheckParametricToneCurves(void)
 {
     cmsFloat64Number Params[10];
 
@@ -2442,11 +2448,11 @@ int CheckParametricToneCurves(void)
 // LUT checks ------------------------------------------------------------------------------
 
 static
-int CheckLUTcreation(void)
+cmsInt32Number CheckLUTcreation(void)
 {
     cmsPipeline* lut;
     cmsPipeline* lut2;
-    int n1, n2;
+    cmsInt32Number n1, n2;
     
     lut = cmsPipelineAlloc(DbgThread(), 1, 1);
     n1 = cmsPipelineStageCount(lut);
@@ -2532,23 +2538,23 @@ void Add3GammaCurves(cmsPipeline* lut, cmsFloat64Number Curve)
 
 
 static
-int CheckFloatLUT(cmsPipeline* lut)
+cmsInt32Number CheckFloatLUT(cmsPipeline* lut)
 {
-    int n1, i, j;
+    cmsInt32Number n1, i, j;
     cmsFloat32Number Inf[3], Outf[3];
 
     n1=0;
 
     for (j=0; j < 65535; j++) {
 
-        int af[3];
+        cmsInt32Number af[3];
 
         Inf[0] = Inf[1] = Inf[2] = (cmsFloat32Number) j / 65535.0F;
         cmsPipelineEvalFloat(Inf, Outf, lut);
 
-        af[0] = (int) floor(Outf[0]*65535.0 + 0.5);
-        af[1] = (int) floor(Outf[1]*65535.0 + 0.5);
-        af[2] = (int) floor(Outf[2]*65535.0 + 0.5);
+        af[0] = (cmsInt32Number) floor(Outf[0]*65535.0 + 0.5);
+        af[1] = (cmsInt32Number) floor(Outf[1]*65535.0 + 0.5);
+        af[2] = (cmsInt32Number) floor(Outf[2]*65535.0 + 0.5);
 
         for (i=0; i < 3; i++) {
 
@@ -2564,16 +2570,16 @@ int CheckFloatLUT(cmsPipeline* lut)
 
 
 static
-int Check16LUT(cmsPipeline* lut)
+cmsInt32Number Check16LUT(cmsPipeline* lut)
 {
-    int n2, i, j;
+    cmsInt32Number n2, i, j;
     cmsUInt16Number Inw[3], Outw[3];
 
     n2=0;
     
     for (j=0; j < 65535; j++) {
 
-        int aw[3];
+        cmsInt32Number aw[3];
 
         Inw[0] = Inw[1] = Inw[2] = j;
         cmsPipelineEval16(Inw, Outw, lut);
@@ -2596,10 +2602,10 @@ int Check16LUT(cmsPipeline* lut)
 
 // Check any LUT that is linear
 static
-int CheckStagesLUT(cmsPipeline* lut, int ExpectedStages)
+cmsInt32Number CheckStagesLUT(cmsPipeline* lut, cmsInt32Number ExpectedStages)
 {
     
-    int nInpChans, nOutpChans, nStages;
+    cmsInt32Number nInpChans, nOutpChans, nStages;
 
     nInpChans  = cmsPipelineInputChannels(lut);
     nOutpChans = cmsPipelineOutputChannels(lut);
@@ -2610,9 +2616,9 @@ int CheckStagesLUT(cmsPipeline* lut, int ExpectedStages)
 
 
 static
-int CheckFullLUT(cmsPipeline* lut, int ExpectedStages)
+cmsInt32Number CheckFullLUT(cmsPipeline* lut, cmsInt32Number ExpectedStages)
 {
-    int rc = CheckStagesLUT(lut, ExpectedStages) && Check16LUT(lut) && CheckFloatLUT(lut);
+    cmsInt32Number rc = CheckStagesLUT(lut, ExpectedStages) && Check16LUT(lut) && CheckFloatLUT(lut);
 
     cmsPipelineFree(lut);
     return rc;
@@ -2620,7 +2626,7 @@ int CheckFullLUT(cmsPipeline* lut, int ExpectedStages)
 
 
 static
-int Check1StageLUT(void)
+cmsInt32Number Check1StageLUT(void)
 {
     cmsPipeline* lut = cmsPipelineAlloc(DbgThread(), 3, 3);
 
@@ -2631,7 +2637,7 @@ int Check1StageLUT(void)
 
 
 static
-int Check2StageLUT(void)
+cmsInt32Number Check2StageLUT(void)
 {
     cmsPipeline* lut = cmsPipelineAlloc(DbgThread(), 3, 3);
 
@@ -2642,7 +2648,7 @@ int Check2StageLUT(void)
 }
 
 static
-int Check2Stage16LUT(void)
+cmsInt32Number Check2Stage16LUT(void)
 {
     cmsPipeline* lut = cmsPipelineAlloc(DbgThread(), 3, 3);
 
@@ -2655,7 +2661,7 @@ int Check2Stage16LUT(void)
 
 
 static
-int Check3StageLUT(void)
+cmsInt32Number Check3StageLUT(void)
 {
     cmsPipeline* lut = cmsPipelineAlloc(DbgThread(), 3, 3);
 
@@ -2667,7 +2673,7 @@ int Check3StageLUT(void)
 }
 
 static
-int Check3Stage16LUT(void)
+cmsInt32Number Check3Stage16LUT(void)
 {
     cmsPipeline* lut = cmsPipelineAlloc(DbgThread(), 3, 3);
 
@@ -2681,7 +2687,7 @@ int Check3Stage16LUT(void)
 
 
 static
-int Check4StageLUT(void)
+cmsInt32Number Check4StageLUT(void)
 {
     cmsPipeline* lut = cmsPipelineAlloc(DbgThread(), 3, 3);
 
@@ -2694,7 +2700,7 @@ int Check4StageLUT(void)
 }
 
 static
-int Check4Stage16LUT(void)
+cmsInt32Number Check4Stage16LUT(void)
 {
     cmsPipeline* lut = cmsPipelineAlloc(DbgThread(), 3, 3);
 
@@ -2707,7 +2713,7 @@ int Check4Stage16LUT(void)
 }
 
 static
-int Check5StageLUT(void)
+cmsInt32Number Check5StageLUT(void)
 {
     cmsPipeline* lut = cmsPipelineAlloc(DbgThread(), 3, 3);
 
@@ -2722,7 +2728,7 @@ int Check5StageLUT(void)
 
 
 static
-int Check5Stage16LUT(void)
+cmsInt32Number Check5Stage16LUT(void)
 {
     cmsPipeline* lut = cmsPipelineAlloc(DbgThread(), 3, 3);
 
@@ -2736,7 +2742,7 @@ int Check5Stage16LUT(void)
 }
 
 static
-int Check6StageLUT(void)
+cmsInt32Number Check6StageLUT(void)
 {
     cmsPipeline* lut = cmsPipelineAlloc(DbgThread(), 3, 3);
 
@@ -2751,7 +2757,7 @@ int Check6StageLUT(void)
 }
 
 static
-int Check6Stage16LUT(void)
+cmsInt32Number Check6Stage16LUT(void)
 {
     cmsPipeline* lut = cmsPipelineAlloc(DbgThread(), 3, 3);
 
@@ -2767,10 +2773,10 @@ int Check6Stage16LUT(void)
 
 
 static
-int CheckLab2LabLUT(void)
+cmsInt32Number CheckLab2LabLUT(void)
 {
     cmsPipeline* lut = cmsPipelineAlloc(DbgThread(), 3, 3);
-    int rc;
+    cmsInt32Number rc;
 
     cmsPipelineInsertStage(lut, cmsAT_END, _cmsStageAllocLab2XYZ(DbgThread()));
     cmsPipelineInsertStage(lut, cmsAT_END, _cmsStageAllocXYZ2Lab(DbgThread()));
@@ -2784,10 +2790,10 @@ int CheckLab2LabLUT(void)
 
 
 static
-int CheckXYZ2XYZLUT(void)
+cmsInt32Number CheckXYZ2XYZLUT(void)
 {
     cmsPipeline* lut = cmsPipelineAlloc(DbgThread(), 3, 3);
-    int rc;
+    cmsInt32Number rc;
 
     cmsPipelineInsertStage(lut, cmsAT_END, _cmsStageAllocXYZ2Lab(DbgThread()));
     cmsPipelineInsertStage(lut, cmsAT_END, _cmsStageAllocLab2XYZ(DbgThread()));
@@ -2802,10 +2808,10 @@ int CheckXYZ2XYZLUT(void)
 
 
 static
-int CheckLab2LabMatLUT(void)
+cmsInt32Number CheckLab2LabMatLUT(void)
 {
     cmsPipeline* lut = cmsPipelineAlloc(DbgThread(), 3, 3);
-    int rc;
+    cmsInt32Number rc;
 
     cmsPipelineInsertStage(lut, cmsAT_END, _cmsStageAllocLab2XYZ(DbgThread()));
     AddIdentityMatrix(lut);
@@ -2819,11 +2825,11 @@ int CheckLab2LabMatLUT(void)
 }
 
 static
-int CheckNamedColorLUT(void)
+cmsInt32Number CheckNamedColorLUT(void)
 {
     cmsPipeline* lut = cmsPipelineAlloc(DbgThread(), 3, 3);
     cmsNAMEDCOLORLIST* nc;
-    int i,j, rc = 1, n2;
+    cmsInt32Number i,j, rc = 1, n2;
     cmsUInt16Number PCS[3];
     cmsUInt16Number Colorant[MAXCHANNELS];
     char Name[255];
@@ -2874,12 +2880,12 @@ int CheckNamedColorLUT(void)
 // A lightweight test of multilocalized unicode structures. 
 
 static
-int CheckMLU(void)
+cmsInt32Number CheckMLU(void)
 {
     cmsMLU* mlu, *mlu2, *mlu3;
     char Buffer[256], Buffer2[256];
-    int rc = 1;
-    int i;
+    cmsInt32Number rc = 1;
+    cmsInt32Number i;
     cmsHPROFILE h= NULL;
 
     // Allocate a MLU structure, no preferred size
@@ -2999,10 +3005,10 @@ Error:
 
 // A lightweight test of named color structures.
 static
-int CheckNamedColorList(void)
+cmsInt32Number CheckNamedColorList(void)
 {
     cmsNAMEDCOLORLIST* nc = NULL, *nc2;
-    int i, j, rc=1;
+    cmsInt32Number i, j, rc=1;
     char Name[255];
     cmsUInt16Number PCS[3];
     cmsUInt16Number Colorant[MAXCHANNELS];
@@ -3102,7 +3108,7 @@ void CheckSingleFormatter16(cmsUInt32Number Type, const char* Text)
     cmsUInt16Number Values[MAXCHANNELS];
     char Buffer[1024];
     cmsFormatter f, b;
-    int i, j, nChannels, bytes;
+    cmsInt32Number i, j, nChannels, bytes;
     _cmsTRANSFORM info;
 
     // Already failed?
@@ -3174,7 +3180,7 @@ void CheckSingleFormatter16(cmsUInt32Number Type, const char* Text)
 
 // Check all formatters
 static
-int CheckFormatters16(void)
+cmsInt32Number CheckFormatters16(void)
 {
     FormatterFailed = FALSE;
 
@@ -3334,7 +3340,7 @@ void CheckSingleFormatterFloat(cmsUInt32Number Type, const char* Text)
     cmsFloat32Number Values[MAXCHANNELS];
     char Buffer[1024];
     cmsFormatter f, b;
-    int i, j, nChannels;
+    cmsInt32Number i, j, nChannels;
     _cmsTRANSFORM info;
 
     // Already failed?
@@ -3395,7 +3401,7 @@ void CheckSingleFormatterFloat(cmsUInt32Number Type, const char* Text)
 #define C(a) CheckSingleFormatterFloat(a, #a)
 
 static
-int CheckFormattersFloat(void)
+cmsInt32Number CheckFormattersFloat(void)
 {
     FormatterFailed = FALSE;
 
@@ -3419,7 +3425,7 @@ int CheckFormattersFloat(void)
 // Write tag testbed ----------------------------------------------------------------------------------------
 
 static
-int CheckXYZ(int Pass, cmsHPROFILE hProfile, cmsTagSignature tag)
+cmsInt32Number CheckXYZ(cmsInt32Number Pass, cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     cmsCIEXYZ XYZ, *Pt;
 
@@ -3445,10 +3451,10 @@ int CheckXYZ(int Pass, cmsHPROFILE hProfile, cmsTagSignature tag)
 
 
 static
-int CheckGamma(int Pass, cmsHPROFILE hProfile, cmsTagSignature tag)
+cmsInt32Number CheckGamma(cmsInt32Number Pass, cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     cmsToneCurve *g, *Pt;
-    int rc;
+    cmsInt32Number rc;
 
     switch (Pass) {
 
@@ -3470,10 +3476,10 @@ int CheckGamma(int Pass, cmsHPROFILE hProfile, cmsTagSignature tag)
 }
 
 static
-int CheckText(int Pass, cmsHPROFILE hProfile, cmsTagSignature tag)
+cmsInt32Number CheckText(cmsInt32Number Pass, cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     cmsMLU *m, *Pt;
-    int rc;
+    cmsInt32Number rc;
     char Buffer[256];
 
     
@@ -3498,11 +3504,11 @@ int CheckText(int Pass, cmsHPROFILE hProfile, cmsTagSignature tag)
 }
 
 static
-int CheckData(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
+cmsInt32Number CheckData(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     cmsICCData *Pt;
-	cmsICCData d = { 1, 0, { '?' }};
-    int rc;
+    cmsICCData d = { 1, 0, { '?' }};
+    cmsInt32Number rc;
 
     
     switch (Pass) {
@@ -3523,7 +3529,7 @@ int CheckData(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 
 
 static
-int CheckSignature(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
+cmsInt32Number CheckSignature(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     cmsTagSignature *Pt, Holder;
     
@@ -3545,7 +3551,7 @@ int CheckSignature(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 
 
 static
-int CheckDateTime(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
+cmsInt32Number CheckDateTime(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     struct tm *Pt, Holder;
 
@@ -3580,10 +3586,10 @@ int CheckDateTime(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 
 
 static
-int CheckNamedColor(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag, int max_check, cmsBool  colorant_check)
+cmsInt32Number CheckNamedColor(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTagSignature tag, cmsInt32Number max_check, cmsBool  colorant_check)
 {
     cmsNAMEDCOLORLIST* nc;
-    int i, j, rc;
+    cmsInt32Number i, j, rc;
     char Name[255];
     cmsUInt16Number PCS[3];
     cmsUInt16Number Colorant[MAXCHANNELS];
@@ -3648,10 +3654,10 @@ int CheckNamedColor(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag, int ma
 
 
 static
-int CheckLUT(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
+cmsInt32Number CheckLUT(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     cmsPipeline* Lut, *Pt;
-    int rc;
+    cmsInt32Number rc;
 
 
     switch (Pass) {
@@ -3683,11 +3689,11 @@ int CheckLUT(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 }
 
 static
-int CheckCHAD(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
+cmsInt32Number CheckCHAD(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     cmsFloat64Number *Pt;
     cmsFloat64Number CHAD[] = { 0, .1, .2, .3, .4, .5, .6, .7, .8 };
-    int i;
+    cmsInt32Number i;
 
     switch (Pass) {
 
@@ -3711,7 +3717,7 @@ int CheckCHAD(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 }
 
 static
-int CheckChromaticity(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
+cmsInt32Number CheckChromaticity(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     cmsCIExyYTRIPLE *Pt, c = { {0, .1, 1 }, { .3, .4, 1 }, { .6, .7, 1 }};
 
@@ -3740,10 +3746,10 @@ int CheckChromaticity(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 
 
 static
-int CheckColorantOrder(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
+cmsInt32Number CheckColorantOrder(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     cmsUInt8Number *Pt, c[MAXCHANNELS];
-    int i;
+    cmsInt32Number i;
 
     switch (Pass) {
 
@@ -3767,7 +3773,7 @@ int CheckColorantOrder(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 }
 
 static
-int CheckMeasurement(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
+cmsInt32Number CheckMeasurement(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     cmsICCMeasurementConditions *Pt, m;
 
@@ -3805,10 +3811,10 @@ int CheckMeasurement(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 
 
 static
-int CheckUcrBg(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
+cmsInt32Number CheckUcrBg(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     cmsUcrBg *Pt, m;
-    int rc;
+    cmsInt32Number rc;
     char Buffer[256];
 
     switch (Pass) {
@@ -3840,11 +3846,11 @@ int CheckUcrBg(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 
 
 static
-int CheckCRDinfo(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
+cmsInt32Number CheckCRDinfo(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     cmsMLU *mlu;
     char Buffer[256];
-    int rc;
+    cmsInt32Number rc;
 
     switch (Pass) {
 
@@ -3926,11 +3932,11 @@ cmsToneCurve *CreateSegmentedCurve(void)
 
 
 static
-int CheckMPE(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
+cmsInt32Number CheckMPE(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     cmsPipeline* Lut, *Pt;
     cmsToneCurve* G[3];
-    int rc;
+    cmsInt32Number rc;
 
     switch (Pass) {
 
@@ -3962,10 +3968,10 @@ int CheckMPE(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 
 
 static
-int CheckScreening(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
+cmsInt32Number CheckScreening(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     cmsScreening *Pt, sc;
-    int rc;
+    cmsInt32Number rc;
     
     switch (Pass) {
 
@@ -3999,7 +4005,7 @@ int CheckScreening(int Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 
 
 static
-cmsBool CheckOneStr(cmsMLU* mlu, int n)
+cmsBool CheckOneStr(cmsMLU* mlu, cmsInt32Number n)
 {
     char Buffer[256], Buffer2[256];
 
@@ -4027,10 +4033,10 @@ void SetOneStr(cmsMLU** mlu, wchar_t* s1, wchar_t* s2)
 
 
 static
-int CheckProfileSequenceTag(int Pass,  cmsHPROFILE hProfile)
+cmsInt32Number CheckProfileSequenceTag(cmsInt32Number Pass,  cmsHPROFILE hProfile)
 {
     cmsSEQ* s;
-    int i;
+    cmsInt32Number i;
 
     switch (Pass) {
 
@@ -4115,10 +4121,10 @@ int CheckProfileSequenceTag(int Pass,  cmsHPROFILE hProfile)
 
 
 static
-int CheckProfileSequenceIDTag(int Pass,  cmsHPROFILE hProfile)
+cmsInt32Number CheckProfileSequenceIDTag(cmsInt32Number Pass,  cmsHPROFILE hProfile)
 {
     cmsSEQ* s;
-    int i;
+    cmsInt32Number i;
 
     switch (Pass) {
 
@@ -4165,7 +4171,7 @@ int CheckProfileSequenceIDTag(int Pass,  cmsHPROFILE hProfile)
 
 
 static
-int CheckICCViewingConditions(int Pass,  cmsHPROFILE hProfile)
+cmsInt32Number CheckICCViewingConditions(cmsInt32Number Pass,  cmsHPROFILE hProfile)
 {
     cmsICCViewingConditions* v;
     cmsICCViewingConditions  s;
@@ -4207,42 +4213,42 @@ int CheckICCViewingConditions(int Pass,  cmsHPROFILE hProfile)
 
 
 static
-int CheckVCGT(int Pass,  cmsHPROFILE hProfile)
+cmsInt32Number CheckVCGT(cmsInt32Number Pass,  cmsHPROFILE hProfile)
 {
-	cmsToneCurve* Curves[3];
-	cmsToneCurve** PtrCurve;
-	
-	 switch (Pass) {
+    cmsToneCurve* Curves[3];
+    cmsToneCurve** PtrCurve;
+    
+     switch (Pass) {
 
         case 1:     
-			Curves[0] = cmsBuildGamma(DbgThread(), 1.1);
+            Curves[0] = cmsBuildGamma(DbgThread(), 1.1);
             Curves[1] = cmsBuildGamma(DbgThread(), 2.2);
-	        Curves[2] = cmsBuildGamma(DbgThread(), 3.4);
+            Curves[2] = cmsBuildGamma(DbgThread(), 3.4);
 
-			if (!cmsWriteTag(hProfile, cmsSigVcgtTag, Curves)) return 0;    
+            if (!cmsWriteTag(hProfile, cmsSigVcgtTag, Curves)) return 0;    
 
-			cmsFreeToneCurveTriple(Curves);
+            cmsFreeToneCurveTriple(Curves);
             return 1;
 
 
-		case 2:
+        case 2:
 
-			 PtrCurve = cmsReadTag(hProfile, cmsSigVcgtTag);
-			 if (PtrCurve == NULL) return 0;
-			 if (!IsGoodVal("VCGT R", cmsEstimateGamma(PtrCurve[0], 0.01), 1.1, 0.001)) return 0;
+             PtrCurve = cmsReadTag(hProfile, cmsSigVcgtTag);
+             if (PtrCurve == NULL) return 0;
+             if (!IsGoodVal("VCGT R", cmsEstimateGamma(PtrCurve[0], 0.01), 1.1, 0.001)) return 0;
              if (!IsGoodVal("VCGT G", cmsEstimateGamma(PtrCurve[1], 0.01), 2.2, 0.001)) return 0;
-			 if (!IsGoodVal("VCGT B", cmsEstimateGamma(PtrCurve[2], 0.01), 3.4, 0.001)) return 0;
-			 return 1;
+             if (!IsGoodVal("VCGT B", cmsEstimateGamma(PtrCurve[2], 0.01), 3.4, 0.001)) return 0;
+             return 1;
 
-		default:;
-	}
+        default:;
+    }
 
-	return 0;
+    return 0;
 }
 
 
 static
-int CheckRAWtags(int Pass,  cmsHPROFILE hProfile)
+cmsInt32Number CheckRAWtags(cmsInt32Number Pass,  cmsHPROFILE hProfile)
 {
     char Buffer[7];
 
@@ -4265,10 +4271,10 @@ int CheckRAWtags(int Pass,  cmsHPROFILE hProfile)
 
 // This is a very big test that checks every single tag
 static
-int CheckProfileCreation(void)
+cmsInt32Number CheckProfileCreation(void)
 {
     cmsHPROFILE h;
-    int Pass;
+    cmsInt32Number Pass;
 
     h = cmsCreateProfilePlaceholder(DbgThread());
     if (h == NULL) return 0;
@@ -4395,8 +4401,8 @@ int CheckProfileCreation(void)
         if (!CheckICCViewingConditions(Pass, h)) return 0;
 
 
-		SubTest("VCGT tags");
-		if (!CheckVCGT(Pass, h)) return 0;
+        SubTest("VCGT tags");
+        if (!CheckVCGT(Pass, h)) return 0;
 
         SubTest("RAW tags");
         if (!CheckRAWtags(Pass, h)) return 0;
@@ -4438,7 +4444,7 @@ void ErrorReportingFunction(cmsContext ContextID, cmsUInt32Number ErrorCode, con
 
 
 static
-int CheckBadProfiles(void)
+cmsInt32Number CheckBadProfiles(void)
 {
     cmsHPROFILE h;
 
@@ -4504,17 +4510,17 @@ int CheckBadProfiles(void)
 
 
 static
-int CheckErrReportingOnBadProfiles(void)
+cmsInt32Number CheckErrReportingOnBadProfiles(void)
 {
-	int rc;
+    cmsInt32Number rc;
 
-	cmsSetLogErrorHandler(ErrorReportingFunction);
-	rc = CheckBadProfiles();
-	cmsSetLogErrorHandler(FatalErrorQuit);
+    cmsSetLogErrorHandler(ErrorReportingFunction);
+    rc = CheckBadProfiles();
+    cmsSetLogErrorHandler(FatalErrorQuit);
 
-	// Reset the error state
-	TrappedError = FALSE;
-	return rc;
+    // Reset the error state
+    TrappedError = FALSE;
+    return rc;
 }
 
 
@@ -4524,9 +4530,9 @@ int CheckErrReportingOnBadProfiles(void)
 
 // Check a linear xform
 static
-int Check8linearXFORM(cmsHTRANSFORM xform, int nChan)
+cmsInt32Number Check8linearXFORM(cmsHTRANSFORM xform, cmsInt32Number nChan)
 {
-    int n2, i, j;
+    cmsInt32Number n2, i, j;
     cmsUInt8Number Inw[MAXCHANNELS], Outw[MAXCHANNELS];
 
     n2=0;
@@ -4538,7 +4544,7 @@ int Check8linearXFORM(cmsHTRANSFORM xform, int nChan)
         
         for (i=0; i < nChan; i++) {
 
-           int dif = abs(Outw[i] - j);
+           cmsInt32Number dif = abs(Outw[i] - j);
            if (dif > n2) n2 = dif;
 
         }
@@ -4555,9 +4561,9 @@ int Check8linearXFORM(cmsHTRANSFORM xform, int nChan)
 }
 
 static
-int Compare8bitXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, int nChan)
+cmsInt32Number Compare8bitXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, cmsInt32Number nChan)
 {
-    int n2, i, j;
+    cmsInt32Number n2, i, j;
     cmsUInt8Number Inw[MAXCHANNELS], Outw1[MAXCHANNELS], Outw2[MAXCHANNELS];;
 
     n2=0;
@@ -4570,7 +4576,7 @@ int Compare8bitXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, int nChan)
 
         for (i=0; i < nChan; i++) {
 
-           int dif = abs(Outw2[i] - Outw1[i]);
+           cmsInt32Number dif = abs(Outw2[i] - Outw1[i]);
            if (dif > n2) n2 = dif;
 
         }
@@ -4590,9 +4596,9 @@ int Compare8bitXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, int nChan)
 
 // Check a linear xform
 static
-int Check16linearXFORM(cmsHTRANSFORM xform, int nChan)
+cmsInt32Number Check16linearXFORM(cmsHTRANSFORM xform, cmsInt32Number nChan)
 {
-    int n2, i, j;
+    cmsInt32Number n2, i, j;
     cmsUInt16Number Inw[MAXCHANNELS], Outw[MAXCHANNELS];
 
     n2=0;    
@@ -4604,7 +4610,7 @@ int Check16linearXFORM(cmsHTRANSFORM xform, int nChan)
         
         for (i=0; i < nChan; i++) {
 
-           int dif = abs(Outw[i] - j);
+           cmsInt32Number dif = abs(Outw[i] - j);
            if (dif > n2) n2 = dif;
 
         }
@@ -4622,9 +4628,9 @@ int Check16linearXFORM(cmsHTRANSFORM xform, int nChan)
 }
 
 static
-int Compare16bitXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, int nChan)
+cmsInt32Number Compare16bitXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, cmsInt32Number nChan)
 {
-    int n2, i, j;
+    cmsInt32Number n2, i, j;
     cmsUInt16Number Inw[MAXCHANNELS], Outw1[MAXCHANNELS], Outw2[MAXCHANNELS];;
 
     n2=0;
@@ -4638,7 +4644,7 @@ int Compare16bitXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, int nChan)
 
         for (i=0; i < nChan; i++) {
 
-           int dif = abs(Outw2[i] - Outw1[i]);
+           cmsInt32Number dif = abs(Outw2[i] - Outw1[i]);
            if (dif > n2) n2 = dif;
 
         }
@@ -4658,9 +4664,9 @@ int Compare16bitXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, int nChan)
 
 // Check a linear xform
 static
-int CheckFloatlinearXFORM(cmsHTRANSFORM xform, int nChan)
+cmsInt32Number CheckFloatlinearXFORM(cmsHTRANSFORM xform, cmsInt32Number nChan)
 {
-    int n2, i, j;
+    cmsInt32Number n2, i, j;
     cmsFloat32Number In[MAXCHANNELS], Out[MAXCHANNELS];
 
     n2=0;
@@ -4685,9 +4691,9 @@ int CheckFloatlinearXFORM(cmsHTRANSFORM xform, int nChan)
 
 // Check a linear xform
 static
-int CompareFloatXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, int nChan)
+cmsInt32Number CompareFloatXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, cmsInt32Number nChan)
 {
-    int n2, i, j;
+    cmsInt32Number n2, i, j;
     cmsFloat32Number In[MAXCHANNELS], Out1[MAXCHANNELS], Out2[MAXCHANNELS];
 
     n2=0;
@@ -4715,13 +4721,13 @@ int CompareFloatXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, int nChan)
 // Curves only transforms ----------------------------------------------------------------------------------------
 
 static
-int CheckCurvesOnlyTransforms(void)
+cmsInt32Number CheckCurvesOnlyTransforms(void)
 {
 
     cmsHTRANSFORM xform1, xform2;
     cmsHPROFILE h1, h2, h3;
     cmsToneCurve* c1, *c2, *c3;
-    int rc = 1;
+    cmsInt32Number rc = 1;
 
 
     c1 = cmsBuildGamma(DbgThread(), 2.2);
@@ -4793,7 +4799,7 @@ Error:
 static cmsFloat64Number MaxDE;
 
 static
-int CheckOneLab(cmsHTRANSFORM xform, cmsFloat64Number L, cmsFloat64Number a, cmsFloat64Number b)
+cmsInt32Number CheckOneLab(cmsHTRANSFORM xform, cmsFloat64Number L, cmsFloat64Number a, cmsFloat64Number b)
 {
     cmsCIELab In, Out;
     cmsFloat64Number dE;
@@ -4816,9 +4822,9 @@ int CheckOneLab(cmsHTRANSFORM xform, cmsFloat64Number L, cmsFloat64Number a, cms
 
 // Check several Lab, slicing at non-exact values. Precision should be 16 bits. 50x50x50 checks aprox.
 static
-int CheckSeveralLab(cmsHTRANSFORM xform)
+cmsInt32Number CheckSeveralLab(cmsHTRANSFORM xform)
 {
-    int L, a, b;
+    cmsInt32Number L, a, b;
 
     MaxDE = 0;
     for (L=0; L < 65536; L += 1311) {
@@ -4840,10 +4846,10 @@ int CheckSeveralLab(cmsHTRANSFORM xform)
 
 
 static
-int OneTrivialLab(cmsHPROFILE hLab1, cmsHPROFILE hLab2, const char* txt)
+cmsInt32Number OneTrivialLab(cmsHPROFILE hLab1, cmsHPROFILE hLab2, const char* txt)
 {   
     cmsHTRANSFORM xform;
-    int rc;
+    cmsInt32Number rc;
 
     SubTest(txt);
     xform = cmsCreateTransformTHR(DbgThread(), hLab1, TYPE_Lab_DBL, hLab2, TYPE_Lab_DBL, INTENT_RELATIVE_COLORIMETRIC, 0);
@@ -4856,7 +4862,7 @@ int OneTrivialLab(cmsHPROFILE hLab1, cmsHPROFILE hLab2, const char* txt)
 
 
 static
-int CheckFloatLabTransforms(void)
+cmsInt32Number CheckFloatLabTransforms(void)
 {
     return OneTrivialLab(cmsCreateLab4ProfileTHR(DbgThread(), NULL), cmsCreateLab4ProfileTHR(DbgThread(), NULL),  "Lab4/Lab4") &&
            OneTrivialLab(cmsCreateLab2ProfileTHR(DbgThread(), NULL), cmsCreateLab2ProfileTHR(DbgThread(), NULL),  "Lab2/Lab2") &&
@@ -4866,7 +4872,7 @@ int CheckFloatLabTransforms(void)
 
 
 static
-int CheckEncodedLabTransforms(void)
+cmsInt32Number CheckEncodedLabTransforms(void)
 {
     cmsHTRANSFORM xform;
     cmsUInt16Number In[3];
@@ -4944,11 +4950,11 @@ int CheckEncodedLabTransforms(void)
 }
 
 static
-int CheckStoredIdentities(void)
+cmsInt32Number CheckStoredIdentities(void)
 {
     cmsHPROFILE hLab, hLink, h4, h2;
     cmsHTRANSFORM xform;
-    int rc = 1;
+    cmsInt32Number rc = 1;
 
     hLab  = cmsCreateLab4ProfileTHR(DbgThread(), NULL);
     xform = cmsCreateTransformTHR(DbgThread(), hLab, TYPE_Lab_8, hLab, TYPE_Lab_8, 0, 0);
@@ -5017,11 +5023,11 @@ Error:
 
 // Check a simple xform from a matrix profile to itself. Test floating point accuracy.
 static
-int CheckMatrixShaperXFORMFloat(void)
+cmsInt32Number CheckMatrixShaperXFORMFloat(void)
 {
     cmsHPROFILE hAbove, hSRGB;
     cmsHTRANSFORM xform;
-    int rc1, rc2;
+    cmsInt32Number rc1, rc2;
 
     hAbove = Create_AboveRGB();
     xform = cmsCreateTransformTHR(DbgThread(), hAbove, TYPE_RGB_FLT, hAbove, TYPE_RGB_FLT,  INTENT_RELATIVE_COLORIMETRIC, 0);
@@ -5041,11 +5047,11 @@ int CheckMatrixShaperXFORMFloat(void)
 
 // Check a simple xform from a matrix profile to itself. Test 16 bits accuracy.
 static
-int CheckMatrixShaperXFORM16(void)
+cmsInt32Number CheckMatrixShaperXFORM16(void)
 {   
     cmsHPROFILE hAbove, hSRGB;
     cmsHTRANSFORM xform;
-    int rc1, rc2;
+    cmsInt32Number rc1, rc2;
 
     hAbove = Create_AboveRGB();
     xform = cmsCreateTransformTHR(DbgThread(), hAbove, TYPE_RGB_16, hAbove, TYPE_RGB_16,  INTENT_RELATIVE_COLORIMETRIC, 0);
@@ -5066,11 +5072,11 @@ int CheckMatrixShaperXFORM16(void)
 
 // Check a simple xform from a matrix profile to itself. Test 8 bits accuracy.
 static
-int CheckMatrixShaperXFORM8(void)
+cmsInt32Number CheckMatrixShaperXFORM8(void)
 {   
     cmsHPROFILE hAbove, hSRGB;
     cmsHTRANSFORM xform;
-    int rc1, rc2;
+    cmsInt32Number rc1, rc2;
 
     hAbove = Create_AboveRGB();
     xform = cmsCreateTransformTHR(DbgThread(), hAbove, TYPE_RGB_8, hAbove, TYPE_RGB_8,  INTENT_RELATIVE_COLORIMETRIC, 0);
@@ -5101,7 +5107,7 @@ int CheckMatrixShaperXFORM8(void)
 
 // Check known values going from sRGB to XYZ
 static
-int CheckOneRGB_f(cmsHTRANSFORM xform, int R, int G, int B, cmsFloat64Number X, cmsFloat64Number Y, cmsFloat64Number Z, cmsFloat64Number err)
+cmsInt32Number CheckOneRGB_f(cmsHTRANSFORM xform, cmsInt32Number R, cmsInt32Number G, cmsInt32Number B, cmsFloat64Number X, cmsFloat64Number Y, cmsFloat64Number Z, cmsFloat64Number err)
 {
     cmsFloat32Number RGB[3];
     cmsFloat64Number Out[3];
@@ -5119,11 +5125,11 @@ int CheckOneRGB_f(cmsHTRANSFORM xform, int R, int G, int B, cmsFloat64Number X, 
 
 
 static
-int Chack_sRGB_Float(void)
+cmsInt32Number Chack_sRGB_Float(void)
 {
     cmsHPROFILE hsRGB, hXYZ, hLab;
     cmsHTRANSFORM xform1, xform2;
-    int rc;
+    cmsInt32Number rc;
 
 
     hsRGB = cmsCreate_sRGBProfileTHR(DbgThread());
@@ -5160,12 +5166,77 @@ int Chack_sRGB_Float(void)
 }
 
 
+// ---------------------------------------------------
+
+static
+cmsBool GetProfileRGBPrimaries(cmsHPROFILE hProfile,
+                                cmsCIEXYZTRIPLE *result,
+                                cmsUInt32Number intent)
+{
+    cmsHPROFILE hXYZ;
+    cmsHTRANSFORM hTransform;
+    cmsFloat64Number rgb[3][3] = {{1., 0., 0.},
+    {0., 1., 0.},
+    {0., 0., 1.}};
+
+    hXYZ = cmsCreateXYZProfile();
+    if (hXYZ == NULL) return FALSE;
+
+    hTransform = cmsCreateTransform(hProfile, TYPE_RGB_DBL, hXYZ, TYPE_XYZ_DBL,
+        intent, cmsFLAGS_NOCACHE | cmsFLAGS_NOOPTIMIZE);
+    cmsCloseProfile(hXYZ);
+    if (hTransform == NULL) return FALSE;
+
+    cmsDoTransform(hTransform, rgb, result, 3);
+    cmsDeleteTransform(hTransform);
+    return TRUE;
+}
+
+
+static
+int CheckRGBPrimaries(void)
+{
+    cmsHPROFILE hsRGB;
+    cmsCIEXYZTRIPLE tripXYZ;
+    cmsCIExyYTRIPLE tripxyY;
+    cmsBool result;
+
+    hsRGB = cmsCreate_sRGBProfileTHR(DbgThread());
+    if (!hsRGB) return 0;
+
+    result = GetProfileRGBPrimaries(hsRGB, &tripXYZ,
+        INTENT_ABSOLUTE_COLORIMETRIC);
+
+    cmsCloseProfile(hsRGB);
+    if (!result) return 0;
+
+    cmsXYZ2xyY(&tripxyY.Red, &tripXYZ.Red);
+    cmsXYZ2xyY(&tripxyY.Green, &tripXYZ.Green);
+    cmsXYZ2xyY(&tripxyY.Blue, &tripXYZ.Blue);
+
+    /* valus were taken from
+    http://en.wikipedia.org/wiki/RGB_color_spaces#Specifications */
+
+    if (!IsGoodFixed15_16("xRed", tripxyY.Red.x, 0.64) ||
+        !IsGoodFixed15_16("yRed", tripxyY.Red.y, 0.33) ||
+        !IsGoodFixed15_16("xGreen", tripxyY.Green.x, 0.30) || 
+        !IsGoodFixed15_16("yGreen", tripxyY.Green.y, 0.60) ||
+        !IsGoodFixed15_16("xBlue", tripxyY.Blue.x, 0.15) || 
+        !IsGoodFixed15_16("yBlue", tripxyY.Blue.y, 0.06)) {
+            Fail("One or more primaries are wrong.");
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
+
 // -----------------------------------------------------------------------------------------------------------------
 
 // This function will check CMYK -> CMYK transforms. It uses FOGRA29 and SWOP ICC profiles
 
 static
-int CheckCMYK(int Intent, const char *Profile1, const char* Profile2)
+cmsInt32Number CheckCMYK(cmsInt32Number Intent, const char *Profile1, const char* Profile2)
 {
     cmsHPROFILE hSWOP  = cmsOpenProfileFromFileTHR(DbgThread(), Profile1, "r");
     cmsHPROFILE hFOGRA = cmsOpenProfileFromFileTHR(DbgThread(), Profile2, "r");
@@ -5174,7 +5245,7 @@ int CheckCMYK(int Intent, const char *Profile1, const char* Profile2)
     cmsCIELab Lab1, Lab2;
     cmsHPROFILE hLab;
     cmsFloat64Number DeltaL, Max;
-    int i;
+    cmsInt32Number i;
 
     hLab = cmsCreateLab4ProfileTHR(DbgThread(), NULL);
 
@@ -5237,14 +5308,14 @@ int CheckCMYK(int Intent, const char *Profile1, const char* Profile2)
 }
 
 static
-int CheckCMYKRoundtrip(void)
+cmsInt32Number CheckCMYKRoundtrip(void)
 {
     return CheckCMYK(INTENT_RELATIVE_COLORIMETRIC, "USWebCoatedSWOP.icc", "USWebCoatedSWOP.icc");
 }
 
 
 static
-int CheckCMYKPerceptual(void)
+cmsInt32Number CheckCMYKPerceptual(void)
 {
     return CheckCMYK(INTENT_PERCEPTUAL, "USWebCoatedSWOP.icc", "UncoatedFOGRA29.icc");
 }
@@ -5252,7 +5323,7 @@ int CheckCMYKPerceptual(void)
 
 
 static
-int CheckCMYKRelCol(void)
+cmsInt32Number CheckCMYKRelCol(void)
 {
     return CheckCMYK(INTENT_RELATIVE_COLORIMETRIC, "USWebCoatedSWOP.icc", "UncoatedFOGRA29.icc");
 }
@@ -5260,7 +5331,7 @@ int CheckCMYKRelCol(void)
 
 
 static
-int CheckKOnlyBlackPreserving(void)
+cmsInt32Number CheckKOnlyBlackPreserving(void)
 {
     cmsHPROFILE hSWOP  = cmsOpenProfileFromFileTHR(DbgThread(), "USWebCoatedSWOP.icc", "r");
     cmsHPROFILE hFOGRA = cmsOpenProfileFromFileTHR(DbgThread(), "UncoatedFOGRA29.icc", "r");
@@ -5269,7 +5340,7 @@ int CheckKOnlyBlackPreserving(void)
     cmsCIELab Lab1, Lab2;
     cmsHPROFILE hLab;
     cmsFloat64Number DeltaL, Max;
-    int i;
+    cmsInt32Number i;
 
     hLab = cmsCreateLab4ProfileTHR(DbgThread(), NULL);
 
@@ -5286,16 +5357,16 @@ int CheckKOnlyBlackPreserving(void)
         CMYK1[2] = 0;
         CMYK1[3] = (cmsFloat32Number) i;
 
-		// SWOP CMYK to Lab1
+        // SWOP CMYK to Lab1
         cmsDoTransform(swop_lab, CMYK1, &Lab1, 1);
 
-		// SWOP To FOGRA using black preservation
+        // SWOP To FOGRA using black preservation
         cmsDoTransform(xform, CMYK1, CMYK2, 1);
 
-		// Obtained FOGRA CMYK to Lab2
+        // Obtained FOGRA CMYK to Lab2
         cmsDoTransform(fogra_lab, CMYK2, &Lab2, 1);
 
-		// We care only on L*
+        // We care only on L*
         DeltaL = fabs(Lab1.L - Lab2.L);
 
         if (DeltaL > Max) Max = DeltaL;
@@ -5304,11 +5375,11 @@ int CheckKOnlyBlackPreserving(void)
 
     cmsDeleteTransform(xform);
 
-	// dL should be below 3.0
+    // dL should be below 3.0
     if (Max > 3.0) return 0;
 
 
-	// Same, but FOGRA to SWOP
+    // Same, but FOGRA to SWOP
     xform = cmsCreateTransformTHR(DbgThread(), hFOGRA, TYPE_CMYK_FLT, hSWOP, TYPE_CMYK_FLT, INTENT_PRESERVE_K_ONLY_PERCEPTUAL, 0);
 
     Max = 0;
@@ -5341,7 +5412,7 @@ int CheckKOnlyBlackPreserving(void)
 }
 
 static
-int CheckKPlaneBlackPreserving(void)
+cmsInt32Number CheckKPlaneBlackPreserving(void)
 {
     cmsHPROFILE hSWOP  = cmsOpenProfileFromFileTHR(DbgThread(), "USWebCoatedSWOP.icc", "r");
     cmsHPROFILE hFOGRA = cmsOpenProfileFromFileTHR(DbgThread(), "UncoatedFOGRA29.icc", "r");
@@ -5350,7 +5421,7 @@ int CheckKPlaneBlackPreserving(void)
     cmsCIELab Lab1, Lab2;
     cmsHPROFILE hLab;
     cmsFloat64Number DeltaE, Max;
-    int i;
+    cmsInt32Number i;
 
     hLab = cmsCreateLab4ProfileTHR(DbgThread(), NULL);
 
@@ -5416,11 +5487,11 @@ int CheckKPlaneBlackPreserving(void)
 
 
 static
-int CheckProofingXFORMFloat(void)
+cmsInt32Number CheckProofingXFORMFloat(void)
 {
     cmsHPROFILE hAbove;
     cmsHTRANSFORM xform;
-    int rc;
+    cmsInt32Number rc;
 
     hAbove = Create_AboveRGB();
     xform =  cmsCreateProofingTransformTHR(DbgThread(), hAbove, TYPE_RGB_FLT, hAbove, TYPE_RGB_FLT, hAbove, 
@@ -5432,11 +5503,11 @@ int CheckProofingXFORMFloat(void)
 }
 
 static
-int CheckProofingXFORM16(void)
+cmsInt32Number CheckProofingXFORM16(void)
 {
     cmsHPROFILE hAbove;
     cmsHTRANSFORM xform;
-    int rc;
+    cmsInt32Number rc;
 
     hAbove = Create_AboveRGB();
     xform =  cmsCreateProofingTransformTHR(DbgThread(), hAbove, TYPE_RGB_16, hAbove, TYPE_RGB_16, hAbove, 
@@ -5449,11 +5520,11 @@ int CheckProofingXFORM16(void)
 
 
 static
-int CheckGamutCheck(void)
+cmsInt32Number CheckGamutCheck(void)
 {
         cmsHPROFILE hSRGB, hAbove;
         cmsHTRANSFORM xform;
-        int rc;
+        cmsInt32Number rc;
         cmsUInt16Number Alarm[3] = { 0xDEAD, 0xBABE, 0xFACE };
 
         // Set alarm codes to fancy values so we could check the out of gamut condition
@@ -5502,7 +5573,7 @@ int CheckGamutCheck(void)
 // -------------------------------------------------------------------------------------------------------------------
 
 static
-int CheckBlackPoint(void)
+cmsInt32Number CheckBlackPoint(void)
 {
     cmsHPROFILE hProfile;
     cmsCIEXYZ Black;
@@ -5538,37 +5609,37 @@ int CheckBlackPoint(void)
 
 
 static
-int CheckOneTAC(cmsFloat64Number InkLimit)
+cmsInt32Number CheckOneTAC(cmsFloat64Number InkLimit)
 {
-	cmsHPROFILE h;
-	cmsFloat64Number d;
+    cmsHPROFILE h;
+    cmsFloat64Number d;
 
-	h =CreateFakeCMYK(InkLimit, TRUE);
-	cmsSaveProfileToFile(h, "lcmstac.icc");
-	cmsCloseProfile(h);
+    h =CreateFakeCMYK(InkLimit, TRUE);
+    cmsSaveProfileToFile(h, "lcmstac.icc");
+    cmsCloseProfile(h);
 
-	h = cmsOpenProfileFromFile("lcmstac.icc", "r");
-	d = cmsDetectTAC(h);
-	cmsCloseProfile(h);
+    h = cmsOpenProfileFromFile("lcmstac.icc", "r");
+    d = cmsDetectTAC(h);
+    cmsCloseProfile(h);
 
-	remove("lcmstac.icc");
+    remove("lcmstac.icc");
 
-	if (fabs(d - InkLimit) > 5) return 0;
+    if (fabs(d - InkLimit) > 5) return 0;
 
-	return 1;
+    return 1;
 }
 
 
 static
-int CheckTAC(void)
+cmsInt32Number CheckTAC(void)
 {
-	if (!CheckOneTAC(180)) return 0;
+    if (!CheckOneTAC(180)) return 0;
     if (!CheckOneTAC(220)) return 0;
-	if (!CheckOneTAC(286)) return 0;
-	if (!CheckOneTAC(310)) return 0;
-	if (!CheckOneTAC(330)) return 0;
+    if (!CheckOneTAC(286)) return 0;
+    if (!CheckOneTAC(310)) return 0;
+    if (!CheckOneTAC(330)) return 0;
 
-	return 1;
+    return 1;
 }
 
 // -------------------------------------------------------------------------------------------------------
@@ -5577,10 +5648,10 @@ int CheckTAC(void)
 #define NPOINTS_IT8 10  // (17*17*17*17)
 
 static
-int CheckCGATS(void)
+cmsInt32Number CheckCGATS(void)
 {
     cmsHANDLE  it8;
-    int i;
+    cmsInt32Number i;
     
 
     it8 = cmsIT8Alloc(DbgThread());
@@ -5722,7 +5793,7 @@ void GenerateCRD(const char* cOutProf, const char* FileName)
 }
 
 static 
-int CheckPostScript(void)
+cmsInt32Number CheckPostScript(void)
 {
     GenerateCSA("sRGB_Color_Space_Profile.icm", "sRGB_CSA.ps");
     GenerateCSA("aRGBlcms2.icc", "aRGB_CSA.ps");
@@ -5743,65 +5814,133 @@ int CheckPostScript(void)
 
 
 static
-int CheckGray(cmsHTRANSFORM xform, int g, double L)
+cmsInt32Number CheckGray(cmsHTRANSFORM xform, cmsInt32Number g, double L)
 {
-	cmsCIELab Lab;
+    cmsCIELab Lab;
 
-	cmsDoTransform(xform, &g, &Lab, 1);
+    cmsDoTransform(xform, &g, &Lab, 1);
 
-	if (!IsGoodVal("a axis on gray", 0, Lab.a, 0.001)) return 0;
+    if (!IsGoodVal("a axis on gray", 0, Lab.a, 0.001)) return 0;
     if (!IsGoodVal("b axis on gray", 0, Lab.b, 0.001)) return 0;
 
-	return IsGoodVal("Gray value", L, Lab.L, 0.01);
+    return IsGoodVal("Gray value", L, Lab.L, 0.01);
 }
 
 static
-int CheckInputGray(void)
+cmsInt32Number CheckInputGray(void)
 {
-	cmsHPROFILE hGray = Create_Gray22();
-	cmsHPROFILE hLab  = cmsCreateLab4Profile(NULL);
+    cmsHPROFILE hGray = Create_Gray22();
+    cmsHPROFILE hLab  = cmsCreateLab4Profile(NULL);
     cmsHTRANSFORM xform;
 
-	if (hGray == NULL || hLab == NULL) return 0;
+    if (hGray == NULL || hLab == NULL) return 0;
 
-	xform = cmsCreateTransform(hGray, TYPE_GRAY_8, hLab, TYPE_Lab_DBL, INTENT_RELATIVE_COLORIMETRIC, 0); 
+    xform = cmsCreateTransform(hGray, TYPE_GRAY_8, hLab, TYPE_Lab_DBL, INTENT_RELATIVE_COLORIMETRIC, 0); 
     cmsCloseProfile(hGray); cmsCloseProfile(hLab);
 
     if (!CheckGray(xform, 0, 0)) return 0;
     if (!CheckGray(xform, 125, 52.768)) return 0;
     if (!CheckGray(xform, 200, 81.069)) return 0;
-	if (!CheckGray(xform, 255, 100.0)) return 0;
+    if (!CheckGray(xform, 255, 100.0)) return 0;
 
-	cmsDeleteTransform(xform);
-	return 1;
+    cmsDeleteTransform(xform);
+    return 1;
 }
 
 static
-int CheckLabInputGray(void)
+cmsInt32Number CheckLabInputGray(void)
 {
-	cmsHPROFILE hGray = Create_GrayLab();
-	cmsHPROFILE hLab  = cmsCreateLab4Profile(NULL);
+    cmsHPROFILE hGray = Create_GrayLab();
+    cmsHPROFILE hLab  = cmsCreateLab4Profile(NULL);
     cmsHTRANSFORM xform;
 
-	if (hGray == NULL || hLab == NULL) return 0;
+    if (hGray == NULL || hLab == NULL) return 0;
 
-	xform = cmsCreateTransform(hGray, TYPE_GRAY_8, hLab, TYPE_Lab_DBL, INTENT_RELATIVE_COLORIMETRIC, 0);
+    xform = cmsCreateTransform(hGray, TYPE_GRAY_8, hLab, TYPE_Lab_DBL, INTENT_RELATIVE_COLORIMETRIC, 0);
     cmsCloseProfile(hGray); cmsCloseProfile(hLab);
 
     if (!CheckGray(xform, 0, 0)) return 0;
     if (!CheckGray(xform, 125, 49.019)) return 0;
     if (!CheckGray(xform, 200, 78.431)) return 0;
-	if (!CheckGray(xform, 255, 100.0)) return 0;
+    if (!CheckGray(xform, 255, 100.0)) return 0;
 
-	cmsDeleteTransform(xform);
-	return 1;
+    cmsDeleteTransform(xform);
+    return 1;
 }
 
 
+static
+cmsInt32Number CheckOutGray(cmsHTRANSFORM xform, double L, cmsUInt8Number g)
+{
+    cmsCIELab Lab;
+    cmsUInt8Number g_out;
+
+    Lab.L = L;
+    Lab.a = 0;
+    Lab.b = 0;
+
+    cmsDoTransform(xform, &Lab, &g_out, 1);
+
+    return IsGoodVal("Gray value", g, (double) g_out, 0.01);
+}
+
+static
+cmsInt32Number CheckOutputGray(void)
+{
+    cmsHPROFILE hGray = Create_Gray22();
+    cmsHPROFILE hLab  = cmsCreateLab4Profile(NULL);
+    cmsHTRANSFORM xform;
+
+    if (hGray == NULL || hLab == NULL) return 0;
+
+    xform = cmsCreateTransform( hLab, TYPE_Lab_DBL, hGray, TYPE_GRAY_8, INTENT_RELATIVE_COLORIMETRIC, 0); 
+    cmsCloseProfile(hGray); cmsCloseProfile(hLab);
+
+    if (!CheckOutGray(xform, 0, 0)) return 0;
+    if (!CheckOutGray(xform, 100, 255)) return 0;
+    
+    if (!CheckOutGray(xform, 20, 52)) return 0;
+    if (!CheckOutGray(xform, 50, 118)) return 0;
+    
+
+    cmsDeleteTransform(xform);
+    return 1;
+}
 
 
 static
-int CheckV4gamma(void)
+cmsInt32Number CheckLabOutputGray(void)
+{
+    cmsHPROFILE hGray = Create_GrayLab();
+    cmsHPROFILE hLab  = cmsCreateLab4Profile(NULL);
+    cmsHTRANSFORM xform;
+    cmsInt32Number i;
+
+    if (hGray == NULL || hLab == NULL) return 0;
+
+    xform = cmsCreateTransform( hLab, TYPE_Lab_DBL, hGray, TYPE_GRAY_8, INTENT_RELATIVE_COLORIMETRIC, 0);
+    cmsCloseProfile(hGray); cmsCloseProfile(hLab);
+
+    if (!CheckOutGray(xform, 0, 0)) return 0;
+    if (!CheckOutGray(xform, 100, 255)) return 0;
+
+    for (i=0; i < 100; i++) {
+
+        cmsUInt8Number g;
+
+        g = (cmsUInt8Number) floor(i * 255.0 / 100.0 + 0.5);
+
+        if (!CheckOutGray(xform, i, g)) return 0;
+    }
+    
+
+    cmsDeleteTransform(xform);
+    return 1;
+}
+
+
+static
+cmsInt32Number CheckV4gamma(void)
 {
     cmsHPROFILE h;
     cmsUInt16Number Lin[] = {0, 0xffff};
@@ -5821,81 +5960,195 @@ int CheckV4gamma(void)
     return 1;
 }
 
+// cmsBool cmsGBDdumpVRML(cmsHANDLE hGBD, const char* fname);
 
-
-/*
-#include <windows.h>
-void WindowsPerformance(void)
+// Gamut descriptor routines
+static
+cmsInt32Number CheckGBD(void)
 {
-    LARGE_INTEGER s1, s2, f;
-    cmsFloat64Number tmul, time;
-    cmsUInt32Number i, j;
-    cmsUInt16Number in, out;
-    cmsInterpParams* p;
-    cmsUInt16Number* Tab;
-    int nNodesToCheck = 4096;
-    int Down = 0;
+    cmsCIELab Lab;
+    cmsHANDLE  h;
+    cmsInt32Number L, a, b;
+    cmsUInt32Number r1, g1, b1;
+    cmsHPROFILE hLab, hsRGB;
+    cmsHTRANSFORM xform;
 
-    Tab = (cmsUInt16Number*) malloc(sizeof(cmsUInt16Number)* nNodesToCheck);
-    if (Tab == NULL) return;
+    h = cmsGBDAlloc(DbgThread());
+    if (h == NULL) return 0;
 
-    p = _cmsComputeInterpParams(DbgThread(), nNodesToCheck, 1, 1, 0);
-    if (p == NULL) return;
+    // Fill all Lab gamut as valid
+    SubTest("Filling RAW gamut");
 
-    BuildTable(nNodesToCheck, Tab, Down);
+    for (L=0; L <= 100; L += 10)
+        for (a = -128; a <= 128; a += 5)
+            for (b = -128; b <= 128; b += 5) {
 
-    p ->Table = Tab;
+                Lab.L = L;
+                Lab.a = a;
+                Lab.b = b;
+                if (!cmsGDBAddPoint(h, &Lab)) return 0;
+            }
 
-    QueryPerformanceFrequency(&f);
-    QueryPerformanceCounter(&s1);
+    // Complete boundaries
+    SubTest("computing Lab gamut");
+    if (!cmsGDBCompute(h, 0)) return 0;
 
-    
-    for (j = 0; j < 0xa00; j++) {
-    
-    for (i=0; i <= 0xffff; i++) {
 
-        in = i;
-        p ->Interpolation.Lerp16(&in, &out, p);     
+    // All points should be inside gamut
+    SubTest("checking Lab gamut");
+    for (L=10; L <= 90; L += 25)
+        for (a = -120; a <= 120; a += 25)
+            for (b = -120; b <= 120; b += 25) {
+
+                Lab.L = L;
+                Lab.a = a;
+                Lab.b = b;
+                if (!cmsGDBCheckPoint(h, &Lab)) {
+                    return 0;
+                }
+            }
+    cmsGBDFree(h);
+
+
+    // Now for sRGB
+    SubTest("checking sRGB gamut");
+    h = cmsGBDAlloc(DbgThread());
+    hsRGB = cmsCreate_sRGBProfile();
+    hLab  = cmsCreateLab4Profile(NULL);
+
+    xform = cmsCreateTransform(hsRGB, TYPE_RGB_8, hLab, TYPE_Lab_DBL, INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_NOCACHE);
+    cmsCloseProfile(hsRGB); cmsCloseProfile(hLab);
+
+
+    for (r1=0; r1 < 256; r1 += 5) {
+        for (g1=0; g1 < 256; g1 += 5)
+            for (b1=0; b1 < 256; b1 += 5) {
+
+                
+                cmsUInt8Number rgb[3];  
+
+                rgb[0] = r1;
+                rgb[1] = g1; 
+                rgb[2] = b1;
+
+                cmsDoTransform(xform, rgb, &Lab, 1);
+
+                // if (fabs(Lab.b) < 20 && Lab.a > 0) continue;
+
+                if (!cmsGDBAddPoint(h, &Lab)) {
+                    cmsGBDFree(h);
+                    return 0;
+                }
+                
+
+            }
     }
+    
+
+    if (!cmsGDBCompute(h, 0)) return 0;
+    // cmsGBDdumpVRML(h, "c:\\colormaps\\lab.wrl");
+
+    for (r1=10; r1 < 200; r1 += 10) {
+        for (g1=10; g1 < 200; g1 += 10)
+            for (b1=10; b1 < 200; b1 += 10) {
+
+                
+                cmsUInt8Number rgb[3];  
+
+                rgb[0] = r1;
+                rgb[1] = g1; 
+                rgb[2] = b1;
+
+                cmsDoTransform(xform, rgb, &Lab, 1);
+                if (!cmsGDBCheckPoint(h, &Lab)) {
+
+                    cmsDeleteTransform(xform);
+                    cmsGBDFree(h);
+                    return 0;
+                }
+            }
     }
 
 
-    QueryPerformanceCounter(&s2);
-    tmul = 1000./(cmsFloat64Number)f.QuadPart;
-    time = (s2.QuadPart - s1.QuadPart)*tmul;
+    cmsDeleteTransform(xform);
+    cmsGBDFree(h);
 
-    printf("\t\tTime = %lg ms\n", time);    
+    SubTest("checking LCh chroma ring");
+    h = cmsGBDAlloc(DbgThread());
+
     
-    printf("xput = %f\n", (cmsFloat64Number) (65535.0 * 0xa00 * 1000.0) / (time * 1024.0 * 1024.0));
-    _cmsFreeInterpParams(p);
-    free(Tab);
+    for (r1=0; r1 < 360; r1++) {
 
+        cmsCIELCh LCh;
+
+        LCh.L = 70;
+        LCh.C = 60;
+        LCh.h = r1;
+
+        cmsLCh2Lab(&Lab, &LCh);
+        if (!cmsGDBAddPoint(h, &Lab)) {
+                    cmsGBDFree(h);
+                    return 0;
+                }
+    }
+    
+
+    if (!cmsGDBCompute(h, 0)) return 0;
+
+    cmsGBDFree(h);
+
+    return 1;
 }
-*/
+
+
+// --------------------------------------------------------------------------------------------------
+// P E R F O R M A N C E   C H E C K S
+// --------------------------------------------------------------------------------------------------
 
 
 typedef struct {cmsUInt8Number r, g, b, a;}   Scanline_rgb1;
-typedef struct {cmsUInt16Number r, g, b, a;}   Scanline_rgb2;
+typedef struct {cmsUInt16Number r, g, b, a;}  Scanline_rgb2;
 typedef struct {cmsUInt8Number r, g, b;}      Scanline_rgb8;
-typedef struct {cmsUInt16Number r, g, b;}      Scanline_rgb0;
+typedef struct {cmsUInt16Number r, g, b;}     Scanline_rgb0;
 
+
+static 
+void TitlePerformance(const char* Txt)
+{
+    printf("%-45s: ", Txt); fflush(stdout);
+}
+
+static
+void PrintPerformance(cmsUInt32Number Bytes, cmsUInt32Number SizeOfPixel, cmsFloat64Number diff)
+{
+    cmsFloat64Number seconds  = (cmsFloat64Number) diff / CLOCKS_PER_SEC;
+    cmsFloat64Number mpix_sec = Bytes / (1024.0*1024.0*seconds*SizeOfPixel);
+
+    printf("%g MPixel/sec.\n", mpix_sec);
+    fflush(stdout);
+}
 
 
 static
-void SpeedTest16bits(const char * Title, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut)
+void SpeedTest16bits(const char * Title, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut, cmsInt32Number Intent)
 {
 
-    int r, g, b, j;
+    cmsInt32Number r, g, b, j;
     clock_t atime;
-    cmsFloat64Number seconds, diff;
+    cmsFloat64Number diff;
     cmsHTRANSFORM hlcmsxform;
     Scanline_rgb0 *In;
     cmsUInt32Number Mb;
-   
-    hlcmsxform  = cmsCreateTransformTHR(DbgThread(), hlcmsProfileIn, TYPE_RGB_16, hlcmsProfileOut, TYPE_RGB_16, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
+
+    if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL) 
+        Die("Unable to open profiles");
+
+    hlcmsxform  = cmsCreateTransformTHR(DbgThread(), hlcmsProfileIn, TYPE_RGB_16, 
+                               hlcmsProfileOut, TYPE_RGB_16, Intent, cmsFLAGS_NOCACHE);
+    cmsCloseProfile(hlcmsProfileIn);
+    cmsCloseProfile(hlcmsProfileOut);
 
     Mb = 256*256*256*sizeof(Scanline_rgb0);
-
     In = (Scanline_rgb0*) malloc(Mb);
 
     j = 0;
@@ -5911,38 +6164,38 @@ void SpeedTest16bits(const char * Title, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE
     }
 
 
-    printf("%s...", Title);
+    TitlePerformance(Title);
 
     atime = clock();
 
     cmsDoTransform(hlcmsxform, In, In, 256*256*256);
 
     diff = clock() - atime;
-    seconds = (cmsFloat64Number) diff / CLOCKS_PER_SEC;
     free(In);
-    
-    
-    printf("done.\n[%d tics, %g sec, %g Mpixel/sec.]\n", (int) diff, seconds, Mb / (1024*1024*seconds*3*2) );
-
+        
+    PrintPerformance(Mb, sizeof(Scanline_rgb0), diff);
     cmsDeleteTransform(hlcmsxform);
-    cmsCloseProfile(hlcmsProfileIn);
-    cmsCloseProfile(hlcmsProfileOut);
+    
 }
 
 
 static
 void SpeedTest16bitsCMYK(const char * Title, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut)
 {
-
-    int r, g, b, j;
+    cmsInt32Number r, g, b, j;
     clock_t atime;
-    cmsFloat64Number seconds, diff;
+    cmsFloat64Number diff;
     cmsHTRANSFORM hlcmsxform;
     Scanline_rgb2 *In;
     cmsUInt32Number Mb;
-      
+     
+    if (hlcmsProfileOut == NULL || hlcmsProfileOut == NULL) 
+        Die("Unable to open profiles");
 
-    hlcmsxform  = cmsCreateTransformTHR(DbgThread(), hlcmsProfileIn, TYPE_CMYK_16, hlcmsProfileOut, TYPE_CMYK_16, INTENT_PERCEPTUAL,  cmsFLAGS_NOCACHE);
+    hlcmsxform  = cmsCreateTransformTHR(DbgThread(), hlcmsProfileIn, TYPE_CMYK_16, 
+                hlcmsProfileOut, TYPE_CMYK_16, INTENT_PERCEPTUAL,  cmsFLAGS_NOCACHE);
+    cmsCloseProfile(hlcmsProfileIn);
+    cmsCloseProfile(hlcmsProfileOut);
 
     Mb = 256*256*256*sizeof(Scanline_rgb2);
 
@@ -5962,37 +6215,40 @@ void SpeedTest16bitsCMYK(const char * Title, cmsHPROFILE hlcmsProfileIn, cmsHPRO
     }
 
 
-    printf("%s...", Title);
+    TitlePerformance(Title);
 
     atime = clock();
 
     cmsDoTransform(hlcmsxform, In, In, 256*256*256);
 
     diff = clock() - atime;
-    seconds = (cmsFloat64Number) diff / CLOCKS_PER_SEC;
+
     free(In);
     
-    
-    printf("done.\n[%d tics, %g sec, %g Mpixel/sec.]\n", (int) diff, seconds, Mb / (1024*1024*seconds*4*2) );
+    PrintPerformance(Mb, sizeof(Scanline_rgb2), diff);
 
     cmsDeleteTransform(hlcmsxform);
-    cmsCloseProfile(hlcmsProfileIn);
-    cmsCloseProfile(hlcmsProfileOut);
+ 
 }
 
 
 static
-void SpeedTest8bits(const char * Title, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut, int Intent)
+void SpeedTest8bits(const char * Title, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut, cmsInt32Number Intent)
 {
-    int r, g, b, j;
+    cmsInt32Number r, g, b, j;
     clock_t atime;
-    cmsFloat64Number seconds, diff;
+    cmsFloat64Number diff;
     cmsHTRANSFORM hlcmsxform;
     Scanline_rgb8 *In;
     cmsUInt32Number Mb;
    
-   
-    hlcmsxform  = cmsCreateTransformTHR(DbgThread(), hlcmsProfileIn, TYPE_RGB_8, hlcmsProfileOut, TYPE_RGB_8, Intent, cmsFLAGS_NOCACHE);
+    if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL) 
+        Die("Unable to open profiles");
+
+    hlcmsxform  = cmsCreateTransformTHR(DbgThread(), hlcmsProfileIn, TYPE_RGB_8, 
+                            hlcmsProfileOut, TYPE_RGB_8, Intent, cmsFLAGS_NOCACHE);
+    cmsCloseProfile(hlcmsProfileIn);
+    cmsCloseProfile(hlcmsProfileOut);
 
     Mb = 256*256*256*sizeof(Scanline_rgb8);
 
@@ -6010,37 +6266,40 @@ void SpeedTest8bits(const char * Title, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE 
         j++;
     }
 
-
-    printf("%s...", Title);
+    TitlePerformance(Title);
 
     atime = clock();
 
     cmsDoTransform(hlcmsxform, In, In, 256*256*256);
 
     diff = clock() - atime;
-    seconds = (cmsFloat64Number) diff / CLOCKS_PER_SEC;
+
     free(In);
     
+    PrintPerformance(Mb, sizeof(Scanline_rgb8), diff);
     
-    printf("done.\n[%d tics, %g sec, %g Mpixels/sec.]\n", (int) diff, seconds, Mb / (1024*1024*seconds*3) );
-
     cmsDeleteTransform(hlcmsxform);
-    cmsCloseProfile(hlcmsProfileIn);
-    cmsCloseProfile(hlcmsProfileOut);
+
 }
 
 
 static
 void SpeedTest8bitsCMYK(const char * Title, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut)
 {
-    int r, g, b, j;
+    cmsInt32Number r, g, b, j;
     clock_t atime;
-    cmsFloat64Number seconds, diff;
+    cmsFloat64Number diff;
     cmsHTRANSFORM hlcmsxform;
     Scanline_rgb2 *In;
     cmsUInt32Number Mb;
-     
-    hlcmsxform  = cmsCreateTransformTHR(DbgThread(), hlcmsProfileIn, TYPE_CMYK_8, hlcmsProfileOut, TYPE_CMYK_8, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
+    
+    if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL) 
+        Die("Unable to open profiles");
+
+    hlcmsxform  = cmsCreateTransformTHR(DbgThread(), hlcmsProfileIn, TYPE_CMYK_8, 
+                        hlcmsProfileOut, TYPE_CMYK_8, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
+    cmsCloseProfile(hlcmsProfileIn);
+    cmsCloseProfile(hlcmsProfileOut);
 
     Mb = 256*256*256*sizeof(Scanline_rgb2);
 
@@ -6059,25 +6318,68 @@ void SpeedTest8bitsCMYK(const char * Title, cmsHPROFILE hlcmsProfileIn, cmsHPROF
         j++;
     }
 
-
-    printf("%s...", Title);
+    TitlePerformance(Title);
 
     atime = clock();
 
     cmsDoTransform(hlcmsxform, In, In, 256*256*256);
 
     diff = clock() - atime;
-    seconds = (cmsFloat64Number) diff / CLOCKS_PER_SEC;
+
     free(In);
     
-    
-    printf("done.\n[%d tics, %g sec, %g Mpixels/sec.]\n", (int) diff, seconds, Mb / (1024*1024*seconds*4) );
+    PrintPerformance(Mb, sizeof(Scanline_rgb2), diff);
+
 
     cmsDeleteTransform(hlcmsxform);
-    cmsCloseProfile(hlcmsProfileIn);
-    cmsCloseProfile(hlcmsProfileOut);
+
 }
 
+
+static
+void SpeedTest8bitsGray(const char * Title, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut, cmsInt32Number Intent)
+{
+    cmsInt32Number r, g, b, j;
+    clock_t atime;
+    cmsFloat64Number diff;
+    cmsHTRANSFORM hlcmsxform;
+    cmsUInt8Number *In;
+    cmsUInt32Number Mb;
+   
+   
+    if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL) 
+        Die("Unable to open profiles");
+
+    hlcmsxform  = cmsCreateTransformTHR(DbgThread(), hlcmsProfileIn, 
+                        TYPE_GRAY_8, hlcmsProfileOut, TYPE_GRAY_8, Intent, cmsFLAGS_NOCACHE);
+    cmsCloseProfile(hlcmsProfileIn);
+    cmsCloseProfile(hlcmsProfileOut);
+    Mb = 256*256*256;
+
+    In = (cmsUInt8Number*) malloc(Mb);
+
+    j = 0;
+    for (r=0; r < 256; r++)
+        for (g=0; g < 256; g++)
+            for (b=0; b < 256; b++) {
+
+        In[j] = (cmsUInt8Number) r;
+        
+        j++;
+    }
+
+    TitlePerformance(Title);
+
+    atime = clock();
+
+    cmsDoTransform(hlcmsxform, In, In, 256*256*256);
+
+    diff = clock() - atime;
+    free(In);
+        
+    PrintPerformance(Mb, sizeof(cmsUInt8Number), diff);
+    cmsDeleteTransform(hlcmsxform);
+}
 
 
 static
@@ -6100,50 +6402,78 @@ static
 void SpeedTest(void)
 {
 
+    printf("\n\nP E R F O R M A N C E   T E S T S\n");
+    printf(    "=================================\n\n");
+    fflush(stdout);
+
     SpeedTest16bits("16 bits on CLUT profiles", 
-        cmsOpenProfileFromFileTHR(DbgThread(), "sRGB_Color_Space_Profile.icm", "r"),
-        cmsOpenProfileFromFileTHR(DbgThread(), "sRGBSpac.icm", "r"));
+        cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"),
+        cmsOpenProfileFromFile("sRGBSpac.icm", "r"), INTENT_PERCEPTUAL);
 
     SpeedTest8bits("8 bits on CLUT profiles", 
-        cmsOpenProfileFromFileTHR(DbgThread(), "sRGB_Color_Space_Profile.icm", "r"),
-        cmsOpenProfileFromFileTHR(DbgThread(), "sRGBSpac.icm", "r"),
-		INTENT_PERCEPTUAL);
+        cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"),
+        cmsOpenProfileFromFile("sRGBSpac.icm", "r"),
+        INTENT_PERCEPTUAL);
     
     SpeedTest8bits("8 bits on Matrix-Shaper profiles", 
-        cmsCreate_sRGBProfile(), 
-        Create_AboveRGB(),
-		INTENT_PERCEPTUAL);
+        cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"), 
+        cmsOpenProfileFromFile("aRGBlcms2.icc", "r"),
+        INTENT_PERCEPTUAL);
 
     SpeedTest8bits("8 bits on SAME Matrix-Shaper profiles",
-        cmsCreate_sRGBProfile(),
-        cmsCreate_sRGBProfile(),
-		INTENT_PERCEPTUAL);
+        cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"),
+        cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"),
+        INTENT_PERCEPTUAL);
+
+    SpeedTest8bits("8 bits on Matrix-Shaper profiles (AbsCol)", 
+       cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"),
+       cmsOpenProfileFromFile("aRGBlcms2.icc", "r"),
+        INTENT_ABSOLUTE_COLORIMETRIC);  
+
+    SpeedTest16bits("16 bits on Matrix-Shaper profiles", 
+       cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"),
+        cmsOpenProfileFromFile("aRGBlcms2.icc", "r"),
+        INTENT_PERCEPTUAL);
+
+    SpeedTest16bits("16 bits on SAME Matrix-Shaper profiles", 
+        cmsOpenProfileFromFile("aRGBlcms2.icc", "r"),
+        cmsOpenProfileFromFile("aRGBlcms2.icc", "r"),
+        INTENT_PERCEPTUAL);
+
+    SpeedTest16bits("16 bits on Matrix-Shaper profiles (AbsCol)", 
+       cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"),
+       cmsOpenProfileFromFile("aRGBlcms2.icc", "r"),
+        INTENT_ABSOLUTE_COLORIMETRIC);
 
     SpeedTest8bits("8 bits on curves", 
         CreateCurves(), 
         CreateCurves(),
-		INTENT_PERCEPTUAL);
-
-
-	SpeedTest8bits("8 bits on Matrix-Shaper profiles (AbsCol)", 
-        cmsCreate_sRGBProfile(), 
-        Create_AboveRGB(),
-		INTENT_ABSOLUTE_COLORIMETRIC);
+        INTENT_PERCEPTUAL);
 
     SpeedTest16bits("16 bits on curves", 
         CreateCurves(), 
-        CreateCurves());
+        CreateCurves(),
+        INTENT_PERCEPTUAL);
 
     SpeedTest8bitsCMYK("8 bits on CMYK profiles", 
-        cmsOpenProfileFromFileTHR(DbgThread(), "USWebCoatedSWOP.icc", "r"),
-        cmsOpenProfileFromFileTHR(DbgThread(), "UncoatedFOGRA29.icc", "r"));
+        cmsOpenProfileFromFile("USWebCoatedSWOP.icc", "r"),
+        cmsOpenProfileFromFile("UncoatedFOGRA29.icc", "r"));
 
     SpeedTest16bitsCMYK("16 bits on CMYK profiles", 
-        cmsOpenProfileFromFileTHR(DbgThread(), "USWebCoatedSWOP.icc", "r"),
-        cmsOpenProfileFromFileTHR(DbgThread(), "UncoatedFOGRA29.icc", "r"));
+        cmsOpenProfileFromFile("USWebCoatedSWOP.icc", "r"),
+        cmsOpenProfileFromFile("UncoatedFOGRA29.icc", "r"));
 
+    SpeedTest8bitsGray("8 bits on gray-to-gray",
+        cmsOpenProfileFromFile("graylcms2.icc", "r"), 
+        cmsOpenProfileFromFile("glablcms2.icc", "r"), INTENT_RELATIVE_COLORIMETRIC);
+
+    SpeedTest8bitsGray("8 bits on SAME gray-to-gray",
+        cmsOpenProfileFromFile("graylcms2.icc", "r"), 
+        cmsOpenProfileFromFile("graylcms2.icc", "r"), INTENT_PERCEPTUAL);
 }
 
+
+// -----------------------------------------------------------------------------------------------------
 
 
 // Print the supported intents
@@ -6177,7 +6507,7 @@ static char ZOORawWrite[cmsMAX_PATH]  = "c:\\colormaps\\rawwrite\\";
 static
 void ReadAllTags(cmsHPROFILE h)
 {
-    int i, n;
+    cmsInt32Number i, n;
     cmsTagSignature sig;
 
     n = cmsGetTagCount(h);
@@ -6193,9 +6523,9 @@ void ReadAllTags(cmsHPROFILE h)
 static
 void ReadAllRAWTags(cmsHPROFILE h)
 {
-    int i, n;
+    cmsInt32Number i, n;
     cmsTagSignature sig;
-    int len;
+    cmsInt32Number len;
 
     n = cmsGetTagCount(h);
     for (i=0; i < n; i++) {
@@ -6210,7 +6540,7 @@ static
 void PrintInfo(cmsHPROFILE h, cmsInfoType Info)
 {
     wchar_t* text;
-    int len;
+    cmsInt32Number len;
     cmsContext id = DbgThread();
 
     len = cmsGetProfileInfo(h, Info, "en", "US", NULL, 0);
@@ -6283,13 +6613,13 @@ void ReadAllLUTS(cmsHPROFILE h)
     cmsDetectBlackPoint(&Black, h, INTENT_RELATIVE_COLORIMETRIC, 0);
     cmsDetectBlackPoint(&Black, h, INTENT_SATURATION, 0);
     cmsDetectBlackPoint(&Black, h, INTENT_ABSOLUTE_COLORIMETRIC, 0);
-	cmsDetectTAC(h);
+    cmsDetectTAC(h);
 }
 
 // Check one specimen in the ZOO
 
 static
-int CheckSingleSpecimen(const char* Profile)
+cmsInt32Number CheckSingleSpecimen(const char* Profile)
 {
     char BuffSrc[256];
     char BuffDst[256];
@@ -6321,7 +6651,7 @@ int CheckSingleSpecimen(const char* Profile)
 }
 
 static
-int CheckRAWSpecimen(const char* Profile)
+cmsInt32Number CheckRAWSpecimen(const char* Profile)
 {
     char BuffSrc[256];
     char BuffDst[256];
@@ -6354,222 +6684,45 @@ void CheckProfileZOO(void)
     struct _finddata_t c_file;
     long hFile;
 
-	cmsSetLogErrorHandler(NULL);
+    cmsSetLogErrorHandler(NULL);
 
-	if ( (hFile = _findfirst("c:\\colormaps\\*.*", &c_file)) == -1L )
+    if ( (hFile = _findfirst("c:\\colormaps\\*.*", &c_file)) == -1L )
         printf("No files in current directory");
     else
     {
         do
         {
-            
+
             printf("%s\n", c_file.name);
             if (strcmp(c_file.name, ".") != 0 &&
                 strcmp(c_file.name, "..") != 0) {
 
-                CheckSingleSpecimen( c_file.name);
-					CheckRAWSpecimen( c_file.name);
+                    CheckSingleSpecimen( c_file.name);
+                    CheckRAWSpecimen( c_file.name);
 
-					if (TotalMemory > 0)
-						printf("Ok, but %s are left!\n", MemStr(TotalMemory));
-					else
-						printf("Ok.\n");
+                    if (TotalMemory > 0)
+                        printf("Ok, but %s are left!\n", MemStr(TotalMemory));
+                    else
+                        printf("Ok.\n");
 
             }
 
         } while ( _findnext(hFile, &c_file) == 0 );
-            
+
         _findclose(hFile);
     }
 
-	cmsSetLogErrorHandler(FatalErrorQuit);
+    cmsSetLogErrorHandler(FatalErrorQuit);
 }
 
 #endif
 
 // ---------------------------------------------------------------------------------------
 
-// cmsBool cmsGBDdumpVRML(cmsHANDLE hGBD, const char* fname);
-
-// Gamut descriptor routines
-static
-int CheckGBD(void)
-{
-	cmsCIELab Lab;
-	cmsHANDLE  h;
-	int L, a, b;
-	cmsUInt32Number r1, g1, b1;
-	cmsHPROFILE hLab, hsRGB;
-	cmsHTRANSFORM xform;
-
-	h = cmsGBDAlloc(DbgThread());
-    if (h == NULL) return 0;
-
-	// Fill all Lab gamut as valid
-	SubTest("Filling RAW gamut");
-
-	for (L=0; L <= 100; L += 10)
-		for (a = -128; a <= 128; a += 5)
-			for (b = -128; b <= 128; b += 5) {
-
-				Lab.L = L;
-				Lab.a = a;
-				Lab.b = b;
-				if (!cmsGDBAddPoint(h, &Lab)) return 0;
-			}
-
-	// Complete boundaries
-	SubTest("computing Lab gamut");
-	if (!cmsGDBCompute(h, 0)) return 0;
-
-
-	// All points should be inside gamut
-	SubTest("checking Lab gamut");
-	for (L=10; L <= 90; L += 25)
-		for (a = -120; a <= 120; a += 25)
-			for (b = -120; b <= 120; b += 25) {
-
-				Lab.L = L;
-				Lab.a = a;
-				Lab.b = b;
-				if (!cmsGDBCheckPoint(h, &Lab)) {
-					return 0;
-				}
-			}
-	cmsGBDFree(h);
-
-
-	// Now for sRGB
-	SubTest("checking sRGB gamut");
-	h = cmsGBDAlloc(DbgThread());
-	hsRGB = cmsCreate_sRGBProfile();
-	hLab  = cmsCreateLab4Profile(NULL);
-
-	xform = cmsCreateTransform(hsRGB, TYPE_RGB_8, hLab, TYPE_Lab_DBL, INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_NOCACHE);
-	cmsCloseProfile(hsRGB); cmsCloseProfile(hLab);
-
-
-	for (r1=0; r1 < 256; r1 += 5) {
-		for (g1=0; g1 < 256; g1 += 5)
-			for (b1=0; b1 < 256; b1 += 5) {
-
-				cmsCIELab Lab;
-				cmsUInt8Number rgb[3];	
-
-				rgb[0] = r1;
-				rgb[1] = g1; 
-				rgb[2] = b1;
-
-				cmsDoTransform(xform, rgb, &Lab, 1);
-
-		        // if (fabs(Lab.b) < 20 && Lab.a > 0) continue;
-
-				if (!cmsGDBAddPoint(h, &Lab)) {
-					cmsGBDFree(h);
-					return 0;
-				}
-				
-
-			}
-	}
-	
-
-	if (!cmsGDBCompute(h, 0)) return 0;
-	// cmsGBDdumpVRML(h, "c:\\colormaps\\lab.wrl");
-
-	for (r1=10; r1 < 200; r1 += 10) {
-		for (g1=10; g1 < 200; g1 += 10)
-			for (b1=10; b1 < 200; b1 += 10) {
-
-				cmsCIELab Lab;
-				cmsUInt8Number rgb[3];	
-
-				rgb[0] = r1;
-				rgb[1] = g1; 
-				rgb[2] = b1;
-
-				cmsDoTransform(xform, rgb, &Lab, 1);
-				if (!cmsGDBCheckPoint(h, &Lab)) {
-
-					cmsDeleteTransform(xform);
-					cmsGBDFree(h);
-					return 0;
-				}
-			}
-	}
-
-
-	cmsDeleteTransform(xform);
-	cmsGBDFree(h);
-
-    SubTest("checking LCh chroma ring");
-	h = cmsGBDAlloc(DbgThread());
-
-	
-	for (r1=0; r1 < 360; r1++) {
-
-		cmsCIELCh LCh;
-
-		LCh.L = 70;
-		LCh.C = 60;
-		LCh.h = r1;
-
-		cmsLCh2Lab(&Lab, &LCh);
-		if (!cmsGDBAddPoint(h, &Lab)) {
-					cmsGBDFree(h);
-					return 0;
-				}
-	}
-    
-
-	if (!cmsGDBCompute(h, 0)) return 0;
-
-	cmsGBDFree(h);
-
-	return 1;
-}
-
-
-static
-void CheckCode()
-{
-    cmsHTRANSFORM Proof1_CMYK_from_XYZ_TRANSFORM, Proof2_CMYK_from_XYZ_TRANSFORM;
-	cmsHPROFILE Input_XYZ_PROFILE;
-    cmsHPROFILE Output_CMYK_PROFILE;
-	int Intent = INTENT_PERCEPTUAL;
-     cmsHPROFILE  PROFILE_ary[3];
-	 cmsFloat64Number Limit = 250;
-
-
-	Input_XYZ_PROFILE = cmsCreateXYZProfile();
-	Output_CMYK_PROFILE = cmsOpenProfileFromFile("USWebCoatedSWOP.icc", "r");
-
-
-    Proof1_CMYK_from_XYZ_TRANSFORM = cmsCreateProofingTransform(
-                                                       Input_XYZ_PROFILE, TYPE_XYZ_16,
-                                                       Output_CMYK_PROFILE, TYPE_CMYK_16,
-                                                       cmsCreateXYZProfile(),
-                                                       Intent,
-                                                       INTENT_ABSOLUTE_COLORIMETRIC, 0);
-
-	
-
-
-	    
-        PROFILE_ary[0] = cmsTransform2DeviceLink ( Proof1_CMYK_from_XYZ_TRANSFORM, 3.4, 0);
-        PROFILE_ary[1] = cmsCreateInkLimitingDeviceLink( cmsSigCmykData,  Limit);
-
-        // Generate proof transform with InkLimit.
-        Proof2_CMYK_from_XYZ_TRANSFORM = cmsCreateMultiprofileTransform(
-                            PROFILE_ary, 2, TYPE_XYZ_16,  TYPE_CMYK_16, Intent, 0);
-
-}
-
-
 int main(int argc, char* argv[])
 {
-    int Exhaustive = 0;
-	int DoSpeedTests = 1;
+    cmsInt32Number Exhaustive = 0;
+    cmsInt32Number DoSpeedTests = 1;
 
 
 #ifdef _MSC_VER
@@ -6584,24 +6737,24 @@ int main(int argc, char* argv[])
         printf("Running exhaustive tests (will take a while...)\n\n");
     }
 
-	
+    
     printf("Installing debug memory plug-in ... ");
     cmsPlugin(&DebugMemHandler);
     printf("done.\n");
 
     printf("Installing error logger ... ");
-	cmsSetLogErrorHandler(FatalErrorQuit);
-	printf("done.\n");
+    cmsSetLogErrorHandler(FatalErrorQuit);
+    printf("done.\n");
 
 #ifdef _CMS_IS_WINDOWS     
     // CheckProfileZOO();
 #endif
 
-	// CheckCode();
-
     PrintSupportedIntents();
 
-	// Create utility profiles
+    CheckRGBPrimaries();
+
+    // Create utility profiles
     Check("Creation of test profiles", CreateTestProfiles);    
 
     Check("Base types", CheckBaseTypes);
@@ -6645,17 +6798,17 @@ int main(int argc, char* argv[])
     Check("Reverse interpolation 3 -> 3", CheckReverseInterpolation3x3);
     Check("Reverse interpolation 4 -> 3", CheckReverseInterpolation4x3);
   
-	// Encoding of colorspaces
+    // Encoding of colorspaces
     Check("Lab to LCh and back (float only) ", CheckLab2LCh);
     Check("Lab to XYZ and back (float only) ", CheckLab2XYZ);
-	Check("Lab to xyY and back (float only) ", CheckLab2xyY);
+    Check("Lab to xyY and back (float only) ", CheckLab2xyY);
     Check("Lab V2 encoding", CheckLabV2encoding);
     Check("Lab V4 encoding", CheckLabV4encoding);
 
-	// BlackBody
+    // BlackBody
     Check("Blackbody radiator", CheckTemp2CHRM);
     
-	// Tone curves
+    // Tone curves
     Check("Linear gamma curves (16 bits)", CheckGammaCreation16);
     Check("Linear gamma curves (float)", CheckGammaCreationFlt);
 
@@ -6667,7 +6820,7 @@ int main(int argc, char* argv[])
     Check("Curve 2.2 (table)", CheckGamma22Table);
     Check("Curve 3.0 (table)", CheckGamma30Table);
 
-	Check("Curve 1.8 (word table)", CheckGamma18TableWord);
+    Check("Curve 1.8 (word table)", CheckGamma18TableWord);
     Check("Curve 2.2 (word table)", CheckGamma22TableWord);
     Check("Curve 3.0 (word table)", CheckGamma30TableWord);
 
@@ -6680,7 +6833,7 @@ int main(int argc, char* argv[])
     Check("Join curves sRGB (16 bits)", CheckJoint16Curves_sRGB);
     Check("Join curves sigmoidal", CheckJointCurvesSShaped);
         
-	// LUT basics
+    // LUT basics
     Check("LUT creation & dup", CheckLUTcreation);
     Check("1 Stage LUT ", Check1StageLUT);
     Check("2 Stage LUT ", Check2StageLUT);
@@ -6705,14 +6858,14 @@ int main(int argc, char* argv[])
     // MLU    
     Check("Multilocalized Unicode", CheckMLU);
     
-	// Named color
-	Check("Named color lists", CheckNamedColorList);
+    // Named color
+    Check("Named color lists", CheckNamedColorList);
     
-	// Profile I/O (this one is huge!)
+    // Profile I/O (this one is huge!)
     Check("Profile creation", CheckProfileCreation);
 
-
-	// Error reporting
+    
+    // Error reporting
     Check("Error reporting on bad profiles", CheckErrReportingOnBadProfiles);
     
     // Transforms
@@ -6726,10 +6879,13 @@ int main(int argc, char* argv[])
     Check("Matrix-shaper transform (8 bits)",  CheckMatrixShaperXFORM8);
 
 
-	// Known values
+    Check("Primaries of sRGB", CheckRGBPrimaries);
+    // Known values
     Check("Known values across matrix-shaper", Chack_sRGB_Float);
     Check("Gray input profile", CheckInputGray);
-    Check("Gray lab input profile", CheckLabInputGray);
+    Check("Gray Lab input profile", CheckLabInputGray);
+    Check("Gray output profile", CheckOutputGray);
+    Check("Gray Lab output profile", CheckLabOutputGray);
 
     Check("Matrix-shaper proofing transform (float)",   CheckProofingXFORMFloat);
     Check("Matrix-shaper proofing transform (16 bits)",  CheckProofingXFORM16);
@@ -6754,15 +6910,16 @@ int main(int argc, char* argv[])
     Check("PostScript generator", CheckPostScript);
     Check("Segment maxima GBD", CheckGBD);
 
-    if (DoSpeedTests)
-		SpeedTest();
 
+    if (DoSpeedTests)
+        SpeedTest();
+    
     DebugMemPrintTotals();
 
-	cmsUnregisterPlugins();
+    cmsUnregisterPlugins();
 
     // Cleanup
-	RemoveTestProfiles();
+    RemoveTestProfiles();
     
     return TotalFail;
 }
