@@ -902,6 +902,11 @@ cmsBool OptimizeByComputingLinearization(cmsPipeline** Lut, cmsUInt32Number Inte
     if (T_COLORSPACE(*OutputFormat) != PT_RGB) return FALSE;
 
 
+	// On 16 bits, user has to specify the feature
+	if (!_cmsFormatterIs8bit(*InputFormat)) {
+		if (!(*dwFlags & cmsFLAGS_CLUT_PRE_LINEARIZATION)) return FALSE;
+	}
+
     OriginalLut = *Lut;
     ColorSpace       = _cmsICCcolorSpace(T_COLORSPACE(*InputFormat));
     OutputColorSpace = _cmsICCcolorSpace(T_COLORSPACE(*OutputFormat));
