@@ -74,11 +74,12 @@ static cmsUInt32Number SingleHit, MaxAllocated=0, TotalMemory=0;
 // malloc are built in a way similar to that, but I do on my own to be portable.
 typedef struct { 
     cmsUInt32Number KeepSize;
-    cmsContext WhoAllocated;
-    cmsUInt8Number mem[1];
-} MemoryBlock;
+    cmsUInt32Number Align8;
+    cmsContext WhoAllocated; // Some systems do need pointers aligned to 8-byte boundaries.
 
-#define SIZE_OF_MEM_HEADER (sizeof(cmsUInt32Number) + sizeof(cmsContext))
+} _cmsMemoryBlock;
+
+#define SIZE_OF_MEM_HEADER (sizeof(_cmsMemoryBlock))
 
 // This is a fake thread descriptor used to check thread integrity. 
 // Basically it returns a different threadID each time it is called.
@@ -96,7 +97,7 @@ cmsContext DbgThread(void)
 static
 void* DebugMalloc(cmsContext ContextID, cmsUInt32Number size)
 {
-    MemoryBlock* blk;
+    _cmsMemoryBlock* blk;
 
     if (size <= 0) {
        Die("malloc requested with zero bytes");
@@ -110,26 +111,26 @@ void* DebugMalloc(cmsContext ContextID, cmsUInt32Number size)
     if (size > SingleHit) 
         SingleHit = size;
 
-    blk = (MemoryBlock*) malloc(size + SIZE_OF_MEM_HEADER);
+    blk = (_cmsMemoryBlock*) malloc(size + SIZE_OF_MEM_HEADER);
     if (blk == NULL) return NULL;
 
     blk ->KeepSize = size;
     blk ->WhoAllocated = ContextID;
 
-    return blk ->mem;
+    return (void*) ((cmsUInt8Number*) blk + SIZE_OF_MEM_HEADER);
 }
 
 // The free routine
 static
 void  DebugFree(cmsContext ContextID, void *Ptr)
 {
-    MemoryBlock* blk;
+    _cmsMemoryBlock* blk;
     
     if (Ptr == NULL) {
         Die("NULL free (which is a no-op in C, but may be an clue of something going wrong)");
     }
 
-    blk = (MemoryBlock*) (((cmsUInt8Number*) Ptr) - SIZE_OF_MEM_HEADER);
+    blk = (_cmsMemoryBlock*) (((cmsUInt8Number*) Ptr) - SIZE_OF_MEM_HEADER);
     TotalMemory -= blk ->KeepSize;
 
     if (blk ->WhoAllocated != ContextID) {
@@ -143,14 +144,14 @@ void  DebugFree(cmsContext ContextID, void *Ptr)
 static
 void * DebugRealloc(cmsContext ContextID, void* Ptr, cmsUInt32Number NewSize)
 {
-    MemoryBlock* blk;
+    _cmsMemoryBlock* blk;
     void*  NewPtr;
     cmsUInt32Number max_sz;
 
     NewPtr = DebugMalloc(ContextID, NewSize);
     if (Ptr == NULL) return NewPtr;
 
-    blk = (MemoryBlock*) (((cmsUInt8Number*) Ptr) - SIZE_OF_MEM_HEADER);
+    blk = (_cmsMemoryBlock*) (((cmsUInt8Number*) Ptr) - SIZE_OF_MEM_HEADER);
     max_sz = blk -> KeepSize > NewSize ? NewSize : blk ->KeepSize;
     memmove(NewPtr, Ptr, max_sz);
     DebugFree(ContextID, Ptr);
@@ -389,7 +390,7 @@ cmsFloat64Number Clip(cmsFloat64Number v)
 }
 
 static
-cmsUInt32Number ForwardSampler(register const cmsUInt16Number In[], register cmsUInt16Number Out[], register void* Cargo)
+cmsInt32Number ForwardSampler(register const cmsUInt16Number In[], cmsUInt16Number Out[], void* Cargo)
 {
     FakeCMYKParams* p = (FakeCMYKParams*) Cargo;
     cmsFloat64Number rgb[3], cmyk[4];   
@@ -419,7 +420,7 @@ cmsUInt32Number ForwardSampler(register const cmsUInt16Number In[], register cms
 
 
 static
-cmsUInt32Number ReverseSampler(register const cmsUInt16Number In[], register cmsUInt16Number Out[], register void* Cargo)
+cmsInt32Number ReverseSampler(register const cmsUInt16Number In[], register cmsUInt16Number Out[], register void* Cargo)
 {
     FakeCMYKParams* p = (FakeCMYKParams*) Cargo;
     cmsFloat64Number c, m, y, k, rgb[3];    
@@ -1118,7 +1119,7 @@ cmsInt32Number Check3DinterpolationTetrahedral16(void)
     MaxErr = 0.0;
      for (i=0; i < 0xffff; i++) {
 
-       In[0] = In[1] = In[2] = i;
+       In[0] = In[1] = In[2] = (cmsUInt16Number) i;
 
         p ->Interpolation.Lerp16(In, Out, p);
 
@@ -1162,7 +1163,7 @@ cmsInt32Number Check3DinterpolationTrilinear16(void)
     MaxErr = 0.0;
      for (i=0; i < 0xffff; i++) {
 
-       In[0] = In[1] = In[2] = i;
+       In[0] = In[1] = In[2] = (cmsUInt16Number) i;
 
         p ->Interpolation.Lerp16(In, Out, p);
 
@@ -1311,9 +1312,9 @@ cmsInt32Number ExhaustiveCheck3DinterpolationTetrahedral16(void)
         for (g=0; g < 0xff; g++) 
             for (b=0; b < 0xff; b++) 
         {
-            In[0] = r ;
-            In[1] = g ;
-            In[2] = b ;
+            In[0] = (cmsUInt16Number) r ;
+            In[1] = (cmsUInt16Number) g ;
+            In[2] = (cmsUInt16Number) b ;
 
 
         p ->Interpolation.Lerp16(In, Out, p);
@@ -5814,7 +5815,7 @@ cmsInt32Number CheckPostScript(void)
 
 
 static
-cmsInt32Number CheckGray(cmsHTRANSFORM xform, cmsInt32Number g, double L)
+cmsInt32Number CheckGray(cmsHTRANSFORM xform, cmsUInt8Number g, double L)
 {
     cmsCIELab Lab;
 
