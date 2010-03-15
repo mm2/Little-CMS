@@ -126,7 +126,7 @@ void FloatXFORM(_cmsTRANSFORM* p,
 
     for (i=0; i < Size; i++) {
 
-        accum = p -> FromInputFloat(p, fIn, accum);         
+		accum = p -> FromInputFloat(p, fIn, accum, Size);         
 
         // Any gamut chack to do?
         if (p ->GamutCheck != NULL) {
@@ -154,7 +154,7 @@ void FloatXFORM(_cmsTRANSFORM* p,
         }
 
         // Back to asked representation
-        output = p -> ToOutputFloat(p, fOut, output);
+		output = p -> ToOutputFloat(p, fOut, output, Size);
     }
 }
 
@@ -171,16 +171,14 @@ void NullXFORM(_cmsTRANSFORM* p,
     cmsUInt16Number wIn[MAXCHANNELS];
     cmsUInt32Number i, n;
 
-    p -> StrideIn = p -> StrideOut = Size;
-
     accum  = (cmsUInt8Number*)  in;
     output = (cmsUInt8Number*)  out;
     n = Size;                    // Buffer len
 
     for (i=0; i < n; i++) {
 
-        accum  = p -> FromInput(p, wIn, accum);
-        output = p -> ToOutput(p, wIn, output);
+        accum  = p -> FromInput(p, wIn, accum, Size);
+        output = p -> ToOutput(p, wIn, output, Size);
     }
 }
 
@@ -196,17 +194,15 @@ void PrecalculatedXFORM(_cmsTRANSFORM* p,
     cmsUInt16Number wIn[MAXCHANNELS], wOut[MAXCHANNELS];
     cmsUInt32Number i, n;
 
-    p -> StrideIn = p -> StrideOut = Size;
-
     accum  = (cmsUInt8Number*)  in;
     output = (cmsUInt8Number*)  out;
     n = Size;                    
 
     for (i=0; i < n; i++) {
 
-        accum = p -> FromInput(p, wIn, accum);         
+        accum = p -> FromInput(p, wIn, accum, Size);         
         p ->Lut ->Eval16Fn(wIn, wOut, p -> Lut->Data);     
-        output = p -> ToOutput(p, wOut, output);
+        output = p -> ToOutput(p, wOut, output, Size);
     }
 }
 
@@ -242,17 +238,15 @@ void PrecalculatedXFORMGamutCheck(_cmsTRANSFORM* p,
     cmsUInt16Number wIn[MAXCHANNELS], wOut[MAXCHANNELS];
     cmsUInt32Number i, n;
 
-    p -> StrideIn = p -> StrideOut = Size;
-
     accum  = (cmsUInt8Number*)  in;
     output = (cmsUInt8Number*)  out;
     n = Size;                    // Buffer len
 
     for (i=0; i < n; i++) {
 
-        accum = p -> FromInput(p, wIn, accum);
+        accum = p -> FromInput(p, wIn, accum, Size);
         TransformOnePixelWithGamutCheck(p, wIn, wOut);
-        output = p -> ToOutput(p, wOut, output);
+        output = p -> ToOutput(p, wOut, output, Size);
     }
 }
 
@@ -268,8 +262,6 @@ void CachedXFORM(_cmsTRANSFORM* p,
     cmsUInt16Number wIn[MAXCHANNELS], wOut[MAXCHANNELS];
     cmsUInt32Number i, n;
     cmsUInt16Number CacheIn[MAXCHANNELS], CacheOut[MAXCHANNELS];
-
-    p -> StrideIn = p -> StrideOut = Size;
 
     accum  = (cmsUInt8Number*)  in;
     output = (cmsUInt8Number*)  out;
@@ -287,7 +279,7 @@ void CachedXFORM(_cmsTRANSFORM* p,
 
     for (i=0; i < n; i++) {
 
-        accum = p -> FromInput(p, wIn, accum);
+        accum = p -> FromInput(p, wIn, accum, Size);
 
         if (memcmp(wIn, CacheIn, sizeof(CacheIn)) == 0) {
 
@@ -301,7 +293,7 @@ void CachedXFORM(_cmsTRANSFORM* p,
             memmove(CacheOut, wOut, sizeof(CacheOut));
         }
 
-        output = p -> ToOutput(p, wOut, output);            
+        output = p -> ToOutput(p, wOut, output, Size);            
     }
 
 
@@ -324,8 +316,6 @@ void CachedXFORMGamutCheck(_cmsTRANSFORM* p,
        cmsUInt32Number i, n;
        cmsUInt16Number CacheIn[MAXCHANNELS], CacheOut[MAXCHANNELS];
 
-       p -> StrideIn = p -> StrideOut = Size;
-
        accum  = (cmsUInt8Number*)  in;
        output = (cmsUInt8Number*)  out;
        n = Size;                    // Buffer len
@@ -342,7 +332,7 @@ void CachedXFORMGamutCheck(_cmsTRANSFORM* p,
 
        for (i=0; i < n; i++) {
 
-            accum = p -> FromInput(p, wIn, accum);
+            accum = p -> FromInput(p, wIn, accum, Size);
      
             if (memcmp(wIn, CacheIn, sizeof(cmsUInt16Number) * MAXCHANNELS) == 0) {
                     memmove(wOut, CacheOut, sizeof(cmsUInt16Number) * MAXCHANNELS);
@@ -353,7 +343,7 @@ void CachedXFORMGamutCheck(_cmsTRANSFORM* p,
                     memmove(CacheOut, wOut, sizeof(cmsUInt16Number) * MAXCHANNELS);
             }
 
-            output = p -> ToOutput(p, wOut, output);
+            output = p -> ToOutput(p, wOut, output, Size);
        }
 
         LCMS_WRITE_LOCK(&p ->rwlock);

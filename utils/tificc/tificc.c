@@ -133,7 +133,7 @@ static int FromLabV4ToLabV2(int x)
 
 // Formatter for 8bit Lab TIFF (photometric 8)
 static
-unsigned char* UnrollTIFFLab8(register void* nfo, register cmsUInt16Number wIn[], register cmsUInt8Number* accum)
+unsigned char* UnrollTIFFLab8(register void* nfo, register cmsUInt16Number wIn[], register cmsUInt8Number* accum, register cmsUInt32Number Stride)
 {
     wIn[0] = (cmsUInt16Number) FromLabV2ToLabV4((accum[0]) << 8);
     wIn[1] = (cmsUInt16Number) FromLabV2ToLabV4(((accum[1] > 127) ? (accum[1] - 128) : (accum[1] + 128)) << 8);
@@ -143,7 +143,7 @@ unsigned char* UnrollTIFFLab8(register void* nfo, register cmsUInt16Number wIn[]
 }
 
 static
-unsigned char* PackTIFFLab8(register void* nfo, register cmsUInt16Number wOut[], register cmsUInt8Number* output)
+unsigned char* PackTIFFLab8(register void* nfo, register cmsUInt16Number wOut[], register cmsUInt8Number* output, register cmsUInt32Number Stride)
 {
     int a, b;
 

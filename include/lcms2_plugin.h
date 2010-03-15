@@ -325,11 +325,13 @@ struct _cmstransform_struct;
 
 typedef cmsUInt8Number* (* cmsFormatter16)(register struct _cmstransform_struct* CMMcargo,
                                            register cmsUInt16Number Values[],
-                                           register cmsUInt8Number*  Buffer);
+                                           register cmsUInt8Number*  Buffer,
+										   register cmsUInt32Number  Stride);
 
 typedef cmsUInt8Number* (* cmsFormatterFloat)(struct _cmstransform_struct* CMMcargo,
-                                             cmsFloat32Number Values[],
-                                             cmsUInt8Number*  Buffer);
+                                              cmsFloat32Number Values[],
+                                              cmsUInt8Number*  Buffer,
+											  cmsUInt32Number  Stride);
 
 // This type holds a pointer to a formatter that can be either 16 bits or cmsFloat32Number
 typedef union {

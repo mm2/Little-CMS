@@ -1359,9 +1359,9 @@ cmsInt32Number ExhaustiveCheck3DinterpolationTrilinear16(void)
         for (g=0; g < 0xff; g++) 
             for (b=0; b < 0xff; b++) 
         {
-            In[0] = r ;
-            In[1] = g ;
-            In[2] = b ;
+            In[0] = (cmsUInt16Number) r ;
+            In[1] = (cmsUInt16Number)g ;
+            In[2] = (cmsUInt16Number)b ;
 
 
         p ->Interpolation.Lerp16(In, Out, p);
@@ -1650,7 +1650,7 @@ cmsInt32Number CheckLabV2encoding(void)
     
     for (j=0; j < 65535; j++) {
 
-        Inw[0] = Inw[1] = Inw[2] = j;
+        Inw[0] = Inw[1] = Inw[2] = (cmsUInt16Number) j;
 
         cmsLabEncoded2FloatV2(&Lab, Inw);
         cmsFloat2LabEncodedV2(aw, &Lab);
@@ -1678,7 +1678,7 @@ cmsInt32Number CheckLabV4encoding(void)
     
     for (j=0; j < 65535; j++) {
 
-        Inw[0] = Inw[1] = Inw[2] = j;
+        Inw[0] = Inw[1] = Inw[2] = (cmsUInt16Number) j;
 
         cmsLabEncoded2Float(&Lab, Inw);
         cmsFloat2LabEncoded(aw, &Lab);
@@ -1741,7 +1741,7 @@ cmsInt32Number CheckGammaCreation16(void)
 
     for (i=0; i < 0xffff; i++) {
 
-        in = i;
+        in = (cmsUInt16Number) i;
         out = cmsEvalToneCurve16(LinGamma, in);
         if (in != out) {
             Fail("(lin gamma): Must be %x, But is %x : ", in, out);
@@ -1783,7 +1783,7 @@ cmsInt32Number CheckGammaCreationFlt(void)
 // Curve curves using a single power function
 // Error is given in 0..ffff counts
 static
-cmsInt32Number CheckGammaFloat(cmsInt32Number nPoints, cmsFloat64Number g)
+cmsInt32Number CheckGammaFloat(cmsFloat64Number g)
 {
     cmsToneCurve* Curve = cmsBuildGamma(DbgThread(), g);
     cmsInt32Number i;
@@ -1811,17 +1811,17 @@ cmsInt32Number CheckGammaFloat(cmsInt32Number nPoints, cmsFloat64Number g)
 
 static cmsInt32Number CheckGamma18(void) 
 {
-    return CheckGammaFloat(256, 1.8);
+    return CheckGammaFloat(1.8);
 }
 
 static cmsInt32Number CheckGamma22(void) 
 {
-    return CheckGammaFloat(256, 2.2);
+    return CheckGammaFloat(2.2);
 }
 
 static cmsInt32Number CheckGamma30(void) 
 {
-    return CheckGammaFloat(256, 3.0);
+    return CheckGammaFloat(3.0);
 }
 
 
@@ -1968,9 +1968,9 @@ cmsToneCurve* GammaTableLinear(cmsInt32Number nEntries, cmsBool Dir)
         cmsInt32Number v = _cmsQuantizeVal(i, nEntries);
 
         if (Dir)
-            g->Table16[i] = v;
+            g->Table16[i] = (cmsUInt16Number) v;
         else
-            g->Table16[i] = 0xFFFF - v;
+            g->Table16[i] = (cmsUInt16Number) (0xFFFF - v);
     }
 
     return g;
@@ -2006,7 +2006,7 @@ cmsInt32Number CheckJointCurvesDescending(void)
 
 
 static
-cmsInt32Number CheckFToneCurvePoint(cmsToneCurve* c, cmsInt32Number Point, cmsInt32Number Value)
+cmsInt32Number CheckFToneCurvePoint(cmsToneCurve* c, cmsUInt16Number Point, cmsInt32Number Value)
 {
     cmsInt32Number Result;
 
@@ -2530,7 +2530,11 @@ static
 void Add3GammaCurves(cmsPipeline* lut, cmsFloat64Number Curve)
 {
     cmsToneCurve* id = cmsBuildGamma(DbgThread(), Curve);
-    cmsToneCurve* id3[3] = { id, id, id };
+    cmsToneCurve* id3[3];
+
+    id3[0] = id;
+    id3[1] = id;
+    id3[2] = id;
 
     cmsPipelineInsertStage(lut, cmsAT_END, cmsStageAllocToneCurves(DbgThread(), 3, id3));
     
@@ -2582,7 +2586,7 @@ cmsInt32Number Check16LUT(cmsPipeline* lut)
 
         cmsInt32Number aw[3];
 
-        Inw[0] = Inw[1] = Inw[2] = j;
+        Inw[0] = Inw[1] = Inw[2] = (cmsUInt16Number) j;
         cmsPipelineEval16(Inw, Outw, lut);
         aw[0] = Outw[0];
         aw[1] = Outw[1];
@@ -2842,8 +2846,8 @@ cmsInt32Number CheckNamedColorLUT(void)
 
     for (i=0; i < 256; i++) {
 
-        PCS[0] = PCS[1] = PCS[2] = i;
-        Colorant[0] = Colorant[1] = Colorant[2] = Colorant[3] = i;
+        PCS[0] = PCS[1] = PCS[2] = (cmsUInt16Number) i;
+        Colorant[0] = Colorant[1] = Colorant[2] = Colorant[3] = (cmsUInt16Number) i;
 
         sprintf(Name, "#%d", i);
         if (!cmsAppendNamedColor(nc, Name, PCS, Colorant)) { rc = 0; break; }
@@ -2858,7 +2862,7 @@ cmsInt32Number CheckNamedColorLUT(void)
 
     for (j=0; j < 256; j++) {
 
-        Inw[0] = j;
+        Inw[0] = (cmsUInt16Number) j;
 
         cmsPipelineEval16(Inw, Outw, lut);
         for (i=0; i < 3; i++) {
@@ -2930,8 +2934,8 @@ cmsInt32Number CheckMLU(void)
 
         char Lang[3];
         
-        Lang[0] = i % 255;
-        Lang[1] = i / 255;
+        Lang[0] = (char) (i % 255);
+        Lang[1] = (char) (i / 255);
         Lang[2] = 0;
 
         sprintf(Buffer, "String #%i", i);
@@ -2949,8 +2953,8 @@ cmsInt32Number CheckMLU(void)
 
         char Lang[3];
         
-        Lang[0] = i % 255;
-        Lang[1] = i / 255;
+        Lang[0] = (char)(i % 255);
+        Lang[1] = (char)(i / 255);
         Lang[2] = 0;
 
         cmsMLUgetASCII(mlu2, Lang, Lang, Buffer2, 256);
@@ -2983,8 +2987,8 @@ cmsInt32Number CheckMLU(void)
 
         char Lang[3];
         
-        Lang[0] = i % 255;
-        Lang[1] = i / 255;
+        Lang[0] = (char) (i % 255);
+        Lang[1] = (char) (i / 255);
         Lang[2] = 0;
 
         cmsMLUgetASCII(mlu3, Lang, Lang, Buffer2, 256);
@@ -3024,8 +3028,8 @@ cmsInt32Number CheckNamedColorList(void)
     for (i=0; i < 4096; i++) {
 
 
-        PCS[0] = PCS[1] = PCS[2] = i;
-        Colorant[0] = Colorant[1] = Colorant[2] = Colorant[3] = 4096 - i;
+        PCS[0] = PCS[1] = PCS[2] = (cmsUInt16Number) i;
+        Colorant[0] = Colorant[1] = Colorant[2] = Colorant[3] = (cmsUInt16Number) (4096 - i);
 
         sprintf(Name, "#%d", i);
         if (!cmsAppendNamedColor(nc, Name, PCS, Colorant)) { rc = 0; break; }
@@ -3033,8 +3037,8 @@ cmsInt32Number CheckNamedColorList(void)
 
     for (i=0; i < 4096; i++) {
 
-        CheckPCS[0] = CheckPCS[1] = CheckPCS[2] = i;
-        CheckColorant[0] = CheckColorant[1] = CheckColorant[2] = CheckColorant[3] = 4096 - i;
+        CheckPCS[0] = CheckPCS[1] = CheckPCS[2] = (cmsUInt16Number) i;
+        CheckColorant[0] = CheckColorant[1] = CheckColorant[2] = CheckColorant[3] = (cmsUInt16Number) (4096 - i);
 
         sprintf(CheckName, "#%d", i);
         if (!cmsNamedColorInfo(nc, i, Name, NULL, NULL, PCS, Colorant)) { rc = 0; goto Error; }
@@ -3069,8 +3073,8 @@ cmsInt32Number CheckNamedColorList(void)
 
     for (i=0; i < 4096; i++) {
 
-        CheckPCS[0] = CheckPCS[1] = CheckPCS[2] = i;
-        CheckColorant[0] = CheckColorant[1] = CheckColorant[2] = CheckColorant[3] = 4096 - i;
+        CheckPCS[0] = CheckPCS[1] = CheckPCS[2] = (cmsUInt16Number) i;
+        CheckColorant[0] = CheckColorant[1] = CheckColorant[2] = CheckColorant[3] = (cmsUInt16Number) (4096 - i);
 
         sprintf(CheckName, "#%d", i);
         if (!cmsNamedColorInfo(nc2, i, Name, NULL, NULL, PCS, Colorant)) { rc = 0; goto Error; }
@@ -3107,7 +3111,7 @@ static
 void CheckSingleFormatter16(cmsUInt32Number Type, const char* Text)
 {
     cmsUInt16Number Values[MAXCHANNELS];
-    char Buffer[1024];
+    cmsUInt8Number Buffer[1024];
     cmsFormatter f, b;
     cmsInt32Number i, j, nChannels, bytes;
     _cmsTRANSFORM info;
@@ -3117,7 +3121,6 @@ void CheckSingleFormatter16(cmsUInt32Number Type, const char* Text)
 
     memset(&info, 0, sizeof(info));
     info.OutputFormat = info.InputFormat = Type;
-    info.StrideIn = info.StrideOut = 1;
 
     // Go forth and back
     f = _cmsGetFormatter(Type,  cmsFormatterInput, 0);
@@ -3139,15 +3142,15 @@ void CheckSingleFormatter16(cmsUInt32Number Type, const char* Text)
     for (j=0; j < 5; j++) {
 
         for (i=0; i < nChannels; i++) { 
-            Values[i] = (i+j);
+            Values[i] = (cmsUInt16Number) (i+j);
             // For 8-bit
             if (bytes == 1) 
                 Values[i] <<= 8;
         }
 
-    b.Fmt16(&info, Values, Buffer);
+    b.Fmt16(&info, Values, Buffer, 1);
     memset(Values, 0, sizeof(Values));
-    f.Fmt16(&info, Values, Buffer);
+    f.Fmt16(&info, Values, Buffer, 1);
 
     for (i=0; i < nChannels; i++) {
         if (bytes == 1) 
@@ -3160,14 +3163,14 @@ void CheckSingleFormatter16(cmsUInt32Number Type, const char* Text)
 
             // Useful for debug
             for (i=0; i < nChannels; i++) { 
-                Values[i] = (i+j);
+                Values[i] = (cmsUInt16Number) (i+j);
                 // For 8-bit
                 if (bytes == 1) 
                     Values[i] <<= 8;
             }
 
-            b.Fmt16(&info, Values, Buffer);
-            f.Fmt16(&info, Values, Buffer);
+            b.Fmt16(&info, Values, Buffer, 1);
+            f.Fmt16(&info, Values, Buffer, 1);
             return;
         }
     }
@@ -3339,7 +3342,7 @@ static
 void CheckSingleFormatterFloat(cmsUInt32Number Type, const char* Text)
 {
     cmsFloat32Number Values[MAXCHANNELS];
-    char Buffer[1024];
+    cmsUInt8Number Buffer[1024];
     cmsFormatter f, b;
     cmsInt32Number i, j, nChannels;
     _cmsTRANSFORM info;
@@ -3349,7 +3352,6 @@ void CheckSingleFormatterFloat(cmsUInt32Number Type, const char* Text)
 
     memset(&info, 0, sizeof(info));
     info.OutputFormat = info.InputFormat = Type;
-    info.StrideIn = info.StrideOut = 1;
 
     // Go forth and back
     f = _cmsGetFormatter(Type,  cmsFormatterInput, CMS_PACK_FLAGS_FLOAT);
@@ -3373,9 +3375,9 @@ void CheckSingleFormatterFloat(cmsUInt32Number Type, const char* Text)
             Values[i] = (cmsFloat32Number) (i+j);
         }
 
-        b.FmtFloat(&info, Values, Buffer);
+        b.FmtFloat(&info, Values, Buffer, 1);
         memset(Values, 0, sizeof(Values));
-        f.FmtFloat(&info, Values, Buffer);
+        f.FmtFloat(&info, Values, Buffer, 1);
 
         for (i=0; i < nChannels; i++) {
 
@@ -3391,8 +3393,8 @@ void CheckSingleFormatterFloat(cmsUInt32Number Type, const char* Text)
                     Values[i] = (cmsFloat32Number) (i+j);
                 }
 
-                b.FmtFloat(&info, Values, Buffer);
-                f.FmtFloat(&info, Values, Buffer);
+                b.FmtFloat(&info, Values, Buffer, 1);
+                f.FmtFloat(&info, Values, Buffer, 1);
                 return;
             }
         }
@@ -3607,8 +3609,8 @@ cmsInt32Number CheckNamedColor(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTa
 
         for (i=0; i < max_check; i++) {
 
-            PCS[0] = PCS[1] = PCS[2] = i;
-            Colorant[0] = Colorant[1] = Colorant[2] = Colorant[3] = max_check - i;
+            PCS[0] = PCS[1] = PCS[2] = (cmsUInt16Number) i;
+            Colorant[0] = Colorant[1] = Colorant[2] = Colorant[3] = (cmsUInt16Number) (max_check - i);
 
             sprintf(Name, "#%d", i);
             if (!cmsAppendNamedColor(nc, Name, PCS, Colorant)) { Fail("Couldn't append named color"); return 0; }
@@ -3625,8 +3627,8 @@ cmsInt32Number CheckNamedColor(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTa
 
         for (i=0; i < max_check; i++) {
 
-            CheckPCS[0] = CheckPCS[1] = CheckPCS[2] = i;
-            CheckColorant[0] = CheckColorant[1] = CheckColorant[2] = CheckColorant[3] = max_check - i;
+            CheckPCS[0] = CheckPCS[1] = CheckPCS[2] = (cmsUInt16Number) i;
+            CheckColorant[0] = CheckColorant[1] = CheckColorant[2] = CheckColorant[3] = (cmsUInt16Number) (max_check - i);
 
             sprintf(CheckName, "#%d", i);
             if (!cmsNamedColorInfo(nc, i, Name, NULL, NULL, PCS, Colorant)) { Fail("Invalid string"); return 0; }
@@ -3755,7 +3757,7 @@ cmsInt32Number CheckColorantOrder(cmsInt32Number Pass,  cmsHPROFILE hProfile, cm
     switch (Pass) {
 
         case 1:         
-            for (i=0; i < MAXCHANNELS; i++) c[i] = MAXCHANNELS - i - 1;
+            for (i=0; i < MAXCHANNELS; i++) c[i] = (cmsUInt8Number) (MAXCHANNELS - i - 1);
             return cmsWriteTag(hProfile, tag, c);
             
 
@@ -4605,7 +4607,7 @@ cmsInt32Number Check16linearXFORM(cmsHTRANSFORM xform, cmsInt32Number nChan)
     n2=0;    
     for (j=0; j < 0xFFFF; j++) {
 
-        for (i=0; i < nChan; i++) Inw[i] = j;
+        for (i=0; i < nChan; i++) Inw[i] = (cmsUInt16Number) j;
 
         cmsDoTransform(xform, Inw, Outw, 1);
         
@@ -4638,7 +4640,7 @@ cmsInt32Number Compare16bitXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, cms
     
     for (j=0; j < 0xFFFF; j++) {
         
-        for (i=0; i < nChan; i++) Inw[i] = j;
+        for (i=0; i < nChan; i++) Inw[i] = (cmsUInt16Number) j;
 
         cmsDoTransform(xform1, Inw, Outw1, 1);
         cmsDoTransform(xform2, Inw, Outw2, 1);
@@ -6028,9 +6030,9 @@ cmsInt32Number CheckGBD(void)
                 
                 cmsUInt8Number rgb[3];  
 
-                rgb[0] = r1;
-                rgb[1] = g1; 
-                rgb[2] = b1;
+                rgb[0] = (cmsUInt8Number) r1;
+                rgb[1] = (cmsUInt8Number) g1; 
+                rgb[2] = (cmsUInt8Number) b1;
 
                 cmsDoTransform(xform, rgb, &Lab, 1);
 
@@ -6056,9 +6058,9 @@ cmsInt32Number CheckGBD(void)
                 
                 cmsUInt8Number rgb[3];  
 
-                rgb[0] = r1;
-                rgb[1] = g1; 
-                rgb[2] = b1;
+                rgb[0] = (cmsUInt8Number) r1;
+                rgb[1] = (cmsUInt8Number) g1; 
+                rgb[2] = (cmsUInt8Number) b1;
 
                 cmsDoTransform(xform, rgb, &Lab, 1);
                 if (!cmsGDBCheckPoint(h, &Lab)) {

@@ -572,7 +572,6 @@ typedef struct {
 typedef struct _cmstransform_struct {
 
     cmsUInt32Number InputFormat, OutputFormat; // Keep formats for further reference
-    cmsUInt32Number StrideIn, StrideOut;       // Planar support
 
     // Points to transform code
     _cmsTransformFn xform;
@@ -588,13 +587,13 @@ typedef struct _cmstransform_struct {
     cmsUInt16Number CacheIn[MAXCHANNELS];
     cmsUInt16Number CacheOut[MAXCHANNELS];
 
-    // Semaphor
+    // Semaphor for cache
     LCMS_RWLOCK_T rwlock;
     
     // A MPE LUT holding the full (optimized) transform
     cmsPipeline* Lut;
     
-        // A MPE LUT holding the gamut check. It goes from the input space to bilevel
+    // A MPE LUT holding the gamut check. It goes from the input space to bilevel
     cmsPipeline* GamutCheck;
 
     // Colorant tables
@@ -612,9 +611,9 @@ typedef struct _cmstransform_struct {
     cmsFloat64Number AdaptationState;              
 
     // The intent of this transform. That is usually the last intent in the profilechain, but may differ
-    int RenderingIntent;
+    cmsUInt32Number RenderingIntent;
 
-    // An id that uniquely identifies the running thread. Mostly for error handler. 
+    // An id that uniquely identifies the running context. May be null.
     cmsContext ContextID;
 
 } _cmsTRANSFORM;
