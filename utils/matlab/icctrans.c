@@ -426,8 +426,6 @@ void OpenTransforms(int argc, char *argv[])
 			ProofingIntent, 
 			dwFlags);
 
-
-
 }
 
 

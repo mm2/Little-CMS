@@ -69,7 +69,7 @@ cmsHPROFILE OpenStockProfile(cmsContext ContextID, const char* File)
        if (cmsstrcasecmp(File, "*Lab2") == 0)
                 return cmsCreateLab2ProfileTHR(ContextID, NULL);
 
-	   if (cmsstrcasecmp(File, "*Lab4") == 0)
+       if (cmsstrcasecmp(File, "*Lab4") == 0)
                 return cmsCreateLab4ProfileTHR(ContextID, NULL);
 
        if (cmsstrcasecmp(File, "*Lab") == 0)
@@ -89,6 +89,14 @@ cmsHPROFILE OpenStockProfile(cmsContext ContextID, const char* File)
        if (cmsstrcasecmp(File, "*Gray22") == 0) {
 
            cmsToneCurve* Curve = cmsBuildGamma(ContextID, 2.2);
+           cmsHPROFILE hProfile = cmsCreateGrayProfileTHR(ContextID, cmsD50_xyY(), Curve);
+           cmsFreeToneCurve(Curve);
+           return hProfile;
+       }
+
+        if (cmsstrcasecmp(File, "*Gray30") == 0) {
+
+           cmsToneCurve* Curve = cmsBuildGamma(ContextID, 3.0);
            cmsHPROFILE hProfile = cmsCreateGrayProfileTHR(ContextID, cmsD50_xyY(), Curve);
            cmsFreeToneCurve(Curve);
            return hProfile;
@@ -117,6 +125,20 @@ cmsHPROFILE OpenStockProfile(cmsContext ContextID, const char* File)
         return cmsOpenProfileFromFileTHR(ContextID, File, "r");
 }
 
+// Help on available built-ins
+void PrintBuiltins(void)
+{
+     fprintf(stderr, "\nBuilt-in profiles:\n\n");
+     fprintf(stderr, "\t*Lab2  -- D50-based v2 CIEL*a*b\n"
+                     "\t*Lab4  -- D50-based v4 CIEL*a*b\n"
+                     "\t*Lab   -- D50-based v4 CIEL*a*b\n"
+                     "\t*XYZ   -- CIE XYZ (PCS)\n"
+                     "\t*sRGB  -- sRGB color space\n" 
+                     "\t*Gray22 - Monochrome of Gamma 2.2\n"
+                     "\t*Gray30 - Monochrome of Gamma 3.0\n"
+                     "\t*null   - Monochrome black for all input\n"
+                     "\t*Lin2222- CMYK linearization of gamma 2.2 on each channel\n");
+}
 
 
 // Auxiliar for printing information on profile
@@ -182,7 +204,7 @@ void PrintProfileInformation(cmsHPROFILE hInput)
     PrintInfo(hInput, cmsInfoCopyright);   
 
     if (Verbose > 2) {
- 		
+        
         PrintColorantTable(hInput, cmsSigColorantTableTag,    "Input colorant table");
         PrintColorantTable(hInput, cmsSigColorantTableOutTag, "Input colorant out table");      
     }

@@ -553,7 +553,6 @@ Error:
     return NULL;
 
     cmsUNUSED_PARAMETER(dwFlags);
-
 }
 
 

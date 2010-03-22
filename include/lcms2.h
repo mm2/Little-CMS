@@ -26,7 +26,7 @@
 // Version 2.0-alpha20
 //
 
-#ifndef __lcms2_H
+#ifndef _lcms2_H
 
 // ********** Configuration toggles ****************************************
 
@@ -1715,5 +1715,5 @@ CMSAPI cmsBool          CMSEXPORT cmsDesaturateLab(cmsCIELab* Lab,
 #   endif
 #endif
 
-#define __lcms2_H
+#define _lcms2_H
 #endif

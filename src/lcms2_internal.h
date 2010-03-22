@@ -24,10 +24,10 @@
 //---------------------------------------------------------------------------------
 //
 
-#ifndef __lcms_internal_H
+#ifndef _lcms_internal_H
 
 // Include plug-in foundation
-#ifndef __lcms_plugin_H
+#ifndef _lcms_plugin_H
 #   include "lcms2_plugin.h"
 #endif
 
@@ -645,5 +645,5 @@ cmsBool   _cmsAdaptationMatrix(cmsMAT3* r, const cmsMAT3* ConeMatrix, const cmsC
 cmsBool   _cmsBuildRGB2XYZtransferMatrix(cmsMAT3* r, const cmsCIExyY* WhitePoint, const cmsCIExyYTRIPLE* Primaries);
 
 
-#define __lcms_internal_H
+#define _lcms_internal_H
 #endif

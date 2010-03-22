@@ -95,7 +95,7 @@ void Warning(const char *frm, ...)
     va_list args;
 
     va_start(args, frm);
-    ConsoleWarningHandler("[tifficc]", frm, args);
+    ConsoleWarningHandler("[tificc]", frm, args);
     va_end(args);
 }
 
@@ -105,7 +105,7 @@ void Warning(const char *frm, ...)
 static
 void OutOfMem(cmsUInt32Number size)
 {
-    FatalError("Out of memory on allocating %d bytes.", size);	
+    FatalError("Out of memory on allocating %d bytes.", size);  
 }
 
 
@@ -519,7 +519,7 @@ void WriteOutputTags(TIFF *out, int Colorspace, int BytesPerSample)
     }
 
   if (Width == 32) 
-	  TIFFSetField(out, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
+      TIFFSetField(out, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
 }
 
 
@@ -550,7 +550,7 @@ void CopyOtherTags(TIFF* in, TIFF* out)
     CopyField(TIFFTAG_COMPRESSION, shortv);
 
     if (Width != 32) 
-		CopyField(TIFFTAG_PREDICTOR, shortv);
+        CopyField(TIFFTAG_PREDICTOR, shortv);
 
     CopyField(TIFFTAG_THRESHHOLDING, shortv);
     CopyField(TIFFTAG_FILLORDER, shortv);
@@ -596,10 +596,10 @@ void DoEmbedProfile(TIFF* Out, const char* ProfileFile)
 
     size = cmsfilelength(f);
     EmbedBuffer = (cmsUInt8Number*) malloc(size + 1);
-	if (EmbedBuffer == NULL) { 
+    if (EmbedBuffer == NULL) { 
         OutOfMem(size+1);
-		return;
-	}
+        return;
+    }
 
     EmbedLen = fread(EmbedBuffer, 1, size, f);
 
@@ -887,15 +887,10 @@ void Help(int level)
    
          fprintf(stderr, "%ck<0..400> - Ink-limiting in %% (CMYK only)\n", SW);       
          fprintf(stderr, "\n");
-         fprintf(stderr, "%ch<0,1,2> - More help\n", SW);
-         fprintf(stderr, "\n");
-         fprintf(stderr, "You can also use '*Lab' and '*XYZ' as predefined, built-in\n");
-         fprintf(stderr, "profiles for CIE L*a*b* and XYZ color spaces.\n");
-
+         fprintf(stderr, "%ch<0,1,2,3> - More help\n", SW);
          break;
 
      case 1:
-
 
          fprintf(stderr, "Examples:\n\n"
              "To color correct from scanner to sRGB:\n"
@@ -912,7 +907,10 @@ void Help(int level)
          break;
 
      case 2:
+         PrintBuiltins();
+         break;
 
+     case 3:
 
          fprintf(stderr, "This program is intended to be a demo of the little cms\n"
              "engine. Both lcms and this program are freeware. You can\n"
@@ -935,10 +933,9 @@ void HandleSwitches(int argc, char *argv[])
 {
     int s;
 
-	while ((s=xgetopt(argc,argv,"aAeEbBw:W:nNvVGgh:H:i:I:o:O:P:p:t:T:c:C:l:L:M:m:K:k:S:s:D:d:")) != EOF) {
+    while ((s=xgetopt(argc,argv,"aAeEbBw:W:nNvVGgh:H:i:I:o:O:P:p:t:T:c:C:l:L:M:m:K:k:S:s:D:d:")) != EOF) {
 
-        switch (s)
-        {
+        switch (s) {
 
         case 'a':
         case 'A':
@@ -996,8 +993,8 @@ void HandleSwitches(int argc, char *argv[])
 
         case 'l':
         case 'L': 
-			if (cInpProf != NULL || cOutProf != NULL) 
-				FatalError("input/output profiles already specified");
+            if (cInpProf != NULL || cOutProf != NULL) 
+                FatalError("input/output profiles already specified");
 
             cInpProf = xoptarg;
             lIsDeviceLink = TRUE;
@@ -1026,10 +1023,9 @@ void HandleSwitches(int argc, char *argv[])
         case 'W':
         case 'w':
             Width = atoi(xoptarg);
-			if (Width != 8 && Width != 16 && Width != 32)
-				FatalError("Only 8, 16 and 32 bps are supported");
+            if (Width != 8 && Width != 16 && Width != 32)
+                FatalError("Only 8, 16 and 32 bps are supported");
             break;
-
 
         case 'k':
         case 'K':
@@ -1048,8 +1044,8 @@ void HandleSwitches(int argc, char *argv[])
 
             int a =  atoi(xoptarg);
             Help(a); 
-                   }
-                   break;
+            }
+            break;
 
         default:
 

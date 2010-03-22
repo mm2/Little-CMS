@@ -24,7 +24,7 @@
 //
 //---------------------------------------------------------------------------------
 
-#ifndef __lcms_utils_h
+#ifndef _lcms_utils_h
 
 // Deal with Microsoft's attempt at deprecating C standard runtime functions 
 #ifdef _MSC_VER
@@ -78,6 +78,7 @@ void PrintProfileInformation(cmsHPROFILE h);
 // ---------------------------------------------------------------------------------
 
 void PrintRenderingIntents(void);
+void PrintBuiltins(void);
 
 // ---------------------------------------------------------------------------------
 
@@ -93,5 +94,5 @@ int PixelTypeFromChanCount(int ColorChannels);
 // Return number of channels of pixel type
 int ChanCountFromPixelType(int ColorChannels);
 
-#define __lcms_utils_h
+#define _lcms_utils_h
 #endif

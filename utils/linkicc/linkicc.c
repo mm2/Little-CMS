@@ -71,7 +71,7 @@ int Help(int level)
          fprintf(stderr, "%cx - Creatively, guess deviceclass of resulting profile.\n", SW);
          fprintf(stderr, "%cb - Black point compensation\n", SW);
          fprintf(stderr, "%cl - Use linearization curves (may affect accuracy)\n", SW);
-		 fprintf(stderr, "%cr<v.r> - Profile version. (CAUTION: may change the profile implementation)\n", SW);
+         fprintf(stderr, "%cr<v.r> - Profile version. (CAUTION: may change the profile implementation)\n", SW);
          fprintf(stderr, "\n");    
          fprintf(stderr, "Colorspaces must be paired except Lab/XYZ, that can be interchanged.\n\n");
 
@@ -79,13 +79,7 @@ int Help(int level)
          break;
 
      case 1:
-
-         fprintf(stderr, "\nBuilt-in profiles:\n\n");
-         fprintf(stderr, "\t*Lab  -- D50-based CIEL*a*b (PCS)\n"
-             "\t*XYZ  -- CIE XYZ (PCS)\n"
-             "\t*sRGB -- sRGB color space\n" 
-             "\t*Gray22- Monochrome of Gamma 2.2\n"
-             "\t*Lin2222- CMYK linearization of gamma 2.2 on each channel\n");
+         PrintBuiltins();
          break;
 
      case 2:
@@ -116,8 +110,7 @@ int Help(int level)
              "info@littlecms.com\n\n");
     }
 
-    return 0;
-
+   exit(0);
 }
 
 // The toggles stuff
@@ -126,7 +119,7 @@ void HandleSwitches(int argc, char *argv[])
 {
     int s;
 
-	while ((s = xgetopt(argc,argv,"V:v:xXH:h:8k:K:BbO:o:T:t:D:d:C:c:n:N:f:F:lLy:Y:r:R:")) != EOF) {
+    while ((s = xgetopt(argc,argv,"V:v:xXH:h:8k:K:BbO:o:T:t:D:d:C:c:n:N:f:F:lLy:Y:r:R:")) != EOF) {
 
     switch (s) {
 
@@ -144,8 +137,8 @@ void HandleSwitches(int argc, char *argv[])
 
        case 'd':
        case 'D':
-		   // Doing that is correct and safe: Description points to memory allocated in the command line.
-		   // same for Copyright and output devicelink.
+           // Doing that is correct and safe: Description points to memory allocated in the command line.
+           // same for Copyright and output devicelink.
            Description = xoptarg;
            break;
 
@@ -196,13 +189,13 @@ void HandleSwitches(int argc, char *argv[])
            }
            break;
 
-	   case 'r':
-	   case 'R':
-		  Version = atof(xoptarg);
-		  if (Version < 2.0 || Version > 4.3) {
-			  fprintf(stderr, "WARNING: lcms was not aware of this version, tag types may be wrong!\n");
-		  }
-		  break;
+       case 'r':
+       case 'R':
+          Version = atof(xoptarg);
+          if (Version < 2.0 || Version > 4.3) {
+              fprintf(stderr, "WARNING: lcms was not aware of this version, tag types may be wrong!\n");
+          }
+          break;
 
 
        case 'x':
@@ -212,7 +205,7 @@ void HandleSwitches(int argc, char *argv[])
        case 'h':
        case 'H':
            Help(atoi(xoptarg));
-		   return;
+           return;
 
            
        case 'l':
@@ -271,7 +264,7 @@ int main(int argc, char *argv[])
     fflush(stderr);
 
     // Initialize
-	InitUtils("linkicc");
+    InitUtils("linkicc");
     rc = 0;
     
     // Get the options
@@ -334,7 +327,7 @@ int main(int argc, char *argv[])
     if (lUse8bits) dwFlags |= cmsFLAGS_8BITS_DEVICELINK;
 
     // Create the color transform. Specify 0 for the format is safe as the transform 
-	// is intended to be used only for the devicelink.
+    // is intended to be used only for the devicelink.
     hTransform = cmsCreateMultiprofileTransform(Profiles, nargs, 0, 0, Intent, dwFlags);
     if (hTransform == NULL) {
         FatalError("Transform creation failed");

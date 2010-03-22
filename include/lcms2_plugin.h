@@ -28,7 +28,7 @@
 // functions to do low level operations. All plug-in related structures
 // are defined here. Including this file forces to include the standard API too.
 
-#ifndef __lcms_plugin_H
+#ifndef _lcms_plugin_H
 
 // Deal with Microsoft's attempt at deprecating C standard runtime functions
 #ifdef _MSC_VER
@@ -42,7 +42,7 @@
 #    endif
 #endif
 
-#ifndef __lcms2_H
+#ifndef _lcms2_H
 #include "lcms2.h"
 #endif
 
@@ -326,12 +326,12 @@ struct _cmstransform_struct;
 typedef cmsUInt8Number* (* cmsFormatter16)(register struct _cmstransform_struct* CMMcargo,
                                            register cmsUInt16Number Values[],
                                            register cmsUInt8Number*  Buffer,
-										   register cmsUInt32Number  Stride);
+                                           register cmsUInt32Number  Stride);
 
 typedef cmsUInt8Number* (* cmsFormatterFloat)(struct _cmstransform_struct* CMMcargo,
                                               cmsFloat32Number Values[],
                                               cmsUInt8Number*  Buffer,
-											  cmsUInt32Number  Stride);
+                                              cmsUInt32Number  Stride);
 
 // This type holds a pointer to a formatter that can be either 16 bits or cmsFloat32Number
 typedef union {
@@ -499,7 +499,7 @@ typedef void*    (* _cmsOPTdupDataFn)(cmsContext ContextID, const void* Data);
 
 
 typedef cmsBool  (* _cmsOPToptimizeFn)(cmsPipeline** Lut,
-									   cmsUInt32Number  Intent,
+                                       cmsUInt32Number  Intent,
                                        cmsUInt32Number* InputFormat,
                                        cmsUInt32Number* OutputFormat,
                                        cmsUInt32Number* dwFlags);
@@ -529,5 +529,5 @@ typedef struct {
 #   endif
 #endif
 
-#define __lcms_plugin_H
+#define _lcms_plugin_H
 #endif

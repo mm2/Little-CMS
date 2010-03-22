@@ -1682,7 +1682,7 @@ cmsBool CMSEXPORT cmsIT8SaveToFile(cmsHANDLE hIT8, const char* cFileName)
             WriteData(&sd, it8);
     }
     
-    fclose(sd.stream);
+    if (fclose(sd.stream) != 0) return FALSE;
 
     return TRUE;
 }
