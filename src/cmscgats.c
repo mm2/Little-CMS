@@ -2149,7 +2149,9 @@ cmsBool IsMyFile(const char* FileName)
    }
 
    Size = (cmsUInt32Number) fread(Ptr, 1, 132, fp);
-   fclose(fp);
+
+   if (fclose(fp) != 0) 
+	   return FALSE;
 
    Ptr[Size] = '\0';
 
@@ -2239,7 +2241,11 @@ cmsHANDLE  CMSEXPORT cmsIT8LoadFromFile(cmsContext ContextID, const char* cFileN
     CookPointers(it8);
     it8 ->nTable = 0;
 
-    fclose(it8 ->FileStack[0]->Stream);    
+	if (fclose(it8 ->FileStack[0]->Stream)!= 0) {
+		    cmsIT8Free(hIT8); 
+            return NULL; 
+	}
+
     return hIT8;
 
 }
