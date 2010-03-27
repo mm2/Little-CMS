@@ -155,15 +155,15 @@ typedef int                  cmsBool;
 
 // Try to detect windows
 #if defined (_WIN32) || defined(_WIN64) || defined(WIN32) || defined(_WIN32_)
-#  define _CMS_IS_WINDOWS 1
+#  define CMS_IS_WINDOWS_ 1
 #endif
 
 #ifdef _MSC_VER
-#  define _CMS_IS_WINDOWS 1
+#  define CMS_IS_WINDOWS_ 1
 #endif
 
 #ifdef __BORLANDC__
-#  define _CMS_IS_WINDOWS 1
+#  define CMS_IS_WINDOWS_ 1
 #endif
 
 // Try to detect big endian platforms. This list can be endless, so only some checks are performed over here.
@@ -192,7 +192,7 @@ typedef int                  cmsBool;
 #endif
 
 // Calling convention -- this is hardly platform and compiler dependent
-#ifdef _CMS_IS_WINDOWS
+#ifdef CMS_IS_WINDOWS_
 #  if defined(CMS_DLL) || defined(CMS_DLL_BUILD)
 #     ifdef __BORLANDC__
 #        define CMSEXPORT       __stdcall _export

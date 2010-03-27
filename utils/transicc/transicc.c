@@ -26,7 +26,7 @@
 
 #include "utils.h"
 
-#ifdef _CMS_IS_WINDOWS
+#ifdef CMS_IS_WINDOWS_
 #include <io.h>
 #endif
 

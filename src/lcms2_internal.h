@@ -97,7 +97,7 @@ typedef int LCMS_RWLOCK_T;
 #   define LCMS_WRITE_LOCK(x)        
 #   define LCMS_UNLOCK(x)            
 #else
-#ifdef _CMS_IS_WINDOWS
+#ifdef CMS_IS_WINDOWS_
 #   ifndef WIN32_LEAN_AND_MEAN
 #       define WIN32_LEAN_AND_MEAN
 #   endif

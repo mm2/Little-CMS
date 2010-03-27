@@ -504,7 +504,7 @@ cmsPipeline* DefaultICCintents(cmsContext       ContextID,
             Lut = _cmsReadDevicelinkLUT(hProfile, Intent);
             if (Lut == NULL) goto Error;
 
-            //*** What about abstract profiles?
+            // What about abstract profiles?
              if (ClassSig == cmsSigAbstractClass && i > 0) {
                 if (!ComputeConversion(i, hProfiles, Intent, BPC[i], AdaptationStates[i], &m, &off)) goto Error;
              }

@@ -37,7 +37,7 @@
 
 #define DEFAULT_DBL_FORMAT  "%.10g" // Double formatting
 
-#ifdef _CMS_IS_WINDOWS
+#ifdef CMS_IS_WINDOWS_
 #    include <io.h>
 #    define DIR_CHAR    '\\'
 #else
@@ -397,7 +397,7 @@ cmsBool isabsolutepath(const char *path)
     if(ThreeChars[0] == DIR_CHAR)
         return TRUE;
 
-#ifdef  _CMS_IS_WINDOWS
+#ifdef  CMS_IS_WINDOWS_
     if (isalpha((int) ThreeChars[0]) && ThreeChars[1] == ':')
         return TRUE;
 #endif

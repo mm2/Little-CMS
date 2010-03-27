@@ -689,7 +689,7 @@ cmsBool _cmsWriteHeader(_cmsICCPROFILE* Icc, cmsUInt32Number UsedSpace)
 
     Header.magic       = _cmsAdjustEndianess32(cmsMagicNumber);
 
-#ifdef _CMS_IS_WINDOWS
+#ifdef CMS_IS_WINDOWS_
     Header.platform    = (cmsPlatformSignature) _cmsAdjustEndianess32(cmsSigMicrosoft);  
 #else
     Header.platform    = (cmsPlatformSignature) _cmsAdjustEndianess32(cmsSigMacintosh);  
