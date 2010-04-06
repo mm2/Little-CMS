@@ -1,6 +1,6 @@
 //
 //  Little cms
-//  Copyright (C) 1998-2003 Marti Maria
+//  Copyright (C) 1998-2010 Marti Maria
 //
 // Permission is hereby granted, free of charge, to any person obtaining 
 // a copy of this software and associated documentation files (the "Software"), 
@@ -20,10 +20,11 @@
 // OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+// Creates a devicelink that decodes TIFF8 Lab files 
 
-#include "lcms.h"
-
-
+#include "lcms2.h"
+#include <stdlib.h>
+#include <math.h>
 
 static
 double DecodeAbTIFF(double ab)
@@ -36,14 +37,16 @@ double DecodeAbTIFF(double ab)
 	return ab;
 }
 
-
 static
-LPGAMMATABLE CreateStep(void)
+cmsToneCurve* CreateStep(void)
 {
-	LPGAMMATABLE Gamma = cmsAllocGamma(4096);
-	LPWORD Table = Gamma ->GammaTable;
+	cmsToneCurve* Gamma;
+	cmsUInt16Number* Table;
 	int i;
 	double a;
+
+	Table = calloc(4096, sizeof(cmsUInt16Number));
+	if (Table == NULL) return NULL;
 
 	for (i=0; i < 4096; i++) {
 
@@ -51,67 +54,66 @@ LPGAMMATABLE CreateStep(void)
 
 		a = DecodeAbTIFF(a);
 
-		Table[i] = (WORD) floor(a * 257. + 0.5);
+		Table[i] = (cmsUInt16Number) floor(a * 257. + 0.5);
 	}
+
+	Gamma = cmsBuildTabulatedToneCurve16(0, 4096, Table);
+	free(Table);
 
 	return Gamma;
 }
 
 
 static
-LPGAMMATABLE CreateLinear()
+cmsToneCurve* CreateLinear(void)
 {
-	LPGAMMATABLE Gamma = cmsAllocGamma(4096);
-	LPWORD Table = Gamma ->GammaTable;
-	int i;
+	cmsUInt16Number Linear[2] = { 0, 0xffff };
 
-       for (i=0; i < 4096; i++) {
-
-		   Table[i] = _cmsQuantizeVal(i, 4096);              		   
-
-       }
-       return Gamma;
+	return cmsBuildTabulatedToneCurve16(0, 2, Linear);          
 }
 
 
+
+// Set the copyright and description
 static
-int Identity(register WORD In[], register WORD Out[], register LPVOID Cargo)
+cmsBool SetTextTags(cmsHPROFILE hProfile)
 {
-	Out[0] = In[0];
-	Out[1] = In[1];
-	Out[2] = In[2];
-	return TRUE;
-} 
+    cmsMLU *DescriptionMLU, *CopyrightMLU;
+    cmsBool  rc = FALSE;
+  
+    DescriptionMLU  = cmsMLUalloc(0, 1);
+    CopyrightMLU    = cmsMLUalloc(0, 1);
 
+    if (DescriptionMLU == NULL || CopyrightMLU == NULL) goto Error;
 
-static
-int Manolito()
-{
+    if (!cmsMLUsetASCII(DescriptionMLU,  "en", "US", "Little cms Tiff8 CIELab")) goto Error;
+    if (!cmsMLUsetASCII(CopyrightMLU,    "en", "US", "Copyright (c) Marti Maria, 2010. All rights reserved.")) goto Error;
 
-	cmsHPROFILE hManolo = cmsOpenProfileFromFile("manolo.icc", "r");
-	cmsHTRANSFORM xform = cmsCreateMultiprofileTransform(&hManolo, 1, TYPE_RGB_16, TYPE_CMYK_16, 0, 0);
-	WORD RGB[3] = {0xFE51,0xFC87,0xFCD9 }, CMYK[4] = {0,0,0,0};
+    if (!cmsWriteTag(hProfile, cmsSigProfileDescriptionTag,  DescriptionMLU)) goto Error;
+    if (!cmsWriteTag(hProfile, cmsSigCopyrightTag,           CopyrightMLU)) goto Error;     
 
-	cmsDoTransform(xform, RGB, CMYK, 1);
+    rc = TRUE;
 
+Error:
 
-	return 0;
+    if (DescriptionMLU)
+        cmsMLUfree(DescriptionMLU);
+    if (CopyrightMLU)
+        cmsMLUfree(CopyrightMLU);
+    return rc;
 }
 
 
 int main(int argc, char *argv[])
 {
 	cmsHPROFILE hProfile;
-	LPLUT AToB0, BToA0;
-	LPGAMMATABLE PreLinear[3];
-	LPGAMMATABLE Lin, Step;
-
-	return Manolito();
+	cmsPipeline *AToB0;
+	cmsToneCurve* PreLinear[3];
+	cmsToneCurve *Lin, *Step;
 
 	fprintf(stderr, "Creating lcmstiff8.icm...");
-
     
-    unlink("lcmstiff8.icm");
+    remove("lcmstiff8.icm");
 	hProfile = cmsOpenProfileFromFile("lcmstiff8.icm", "w");
 
 	// Create linearization
@@ -122,35 +124,26 @@ int main(int argc, char *argv[])
 	PreLinear[1] = Step;
 	PreLinear[2] = Step;
 
-    AToB0 = cmsAllocLUT();
-	BToA0 = cmsAllocLUT();
+    AToB0 = cmsPipelineAlloc(0, 3, 3);
 
-	cmsAlloc3DGrid(AToB0, 2, 3, 3);
-	cmsAlloc3DGrid(BToA0, 2, 3, 3);
+	cmsPipelineInsertStage(AToB0, 
+		cmsAT_BEGIN, cmsStageAllocToneCurves(0, 3, PreLinear));
 
-	cmsSample3DGrid(AToB0, Identity, NULL, 0);
-	cmsSample3DGrid(BToA0, Identity, NULL, 0);
+	cmsSetColorSpace(hProfile, cmsSigLabData);
+	cmsSetPCS(hProfile, cmsSigLabData);
+	cmsSetDeviceClass(hProfile, cmsSigLinkClass);
+	cmsSetProfileVersion(hProfile, 4.2);
+
+    cmsWriteTag(hProfile, cmsSigAToB0Tag, AToB0);
 	
-	cmsAllocLinearTable(AToB0, PreLinear,  1);   
-	cmsAllocLinearTable(BToA0, PreLinear,  2);   
-
-    cmsAddTag(hProfile, icSigAToB0Tag, AToB0);
-	cmsAddTag(hProfile, icSigBToA0Tag, BToA0);
-
-	cmsAddTag(hProfile, icSigProfileDescriptionTag, "Little cms Tiff8 CIELab");
-    cmsAddTag(hProfile, icSigCopyrightTag,          "Copyright (c) Marti Maria, 2003. All rights reserved.");
-    cmsAddTag(hProfile, icSigDeviceMfgDescTag,      "Little cms");    
-    cmsAddTag(hProfile, icSigDeviceModelDescTag,    "TIFF Lab8");
-	
+    SetTextTags(hProfile);
 
 	cmsCloseProfile(hProfile);
 
-	cmsFreeGamma(Lin);
-	cmsFreeGamma(Step);
-	cmsFreeLUT(AToB0);
-	cmsFreeLUT(BToA0);
-
-	
+	cmsFreeToneCurve(Lin);
+	cmsFreeToneCurve(Step);
+	cmsPipelineFree(AToB0);
+		
 	fprintf(stderr, "Done.\n");
 
 	return 0;

@@ -126,7 +126,7 @@ void FloatXFORM(_cmsTRANSFORM* p,
 
     for (i=0; i < Size; i++) {
 
-		accum = p -> FromInputFloat(p, fIn, accum, Size);         
+        accum = p -> FromInputFloat(p, fIn, accum, Size);         
 
         // Any gamut chack to do?
         if (p ->GamutCheck != NULL) {
@@ -154,7 +154,7 @@ void FloatXFORM(_cmsTRANSFORM* p,
         }
 
         // Back to asked representation
-		output = p -> ToOutputFloat(p, fOut, output, Size);
+        output = p -> ToOutputFloat(p, fOut, output, Size);
     }
 }
 

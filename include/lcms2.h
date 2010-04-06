@@ -45,13 +45,13 @@
 
 // Uncomment this line if you want lcms to use the black point tag in profile,
 // if commented, lcms will compute the black point by its own.
-// It is safer to leve it commented out
+// It is safer to leave it commented out
 // #define CMS_USE_PROFILE_BLACK_POINT_TAG    1
 
 // Uncomment this line if you are compiling as C++ and want a C++ API
 // #define CMS_USE_CPP_API
 
-// Uncomment this line if you need strict CGATS syntax. Makes CGATS file to
+// Uncomment this line if you need strict CGATS syntax. Makes CGATS files to
 // require "KEYWORD" on undefined identifiers, keep it comented out unless needed
 // #define CMS_STRICT_CGATS  1
 

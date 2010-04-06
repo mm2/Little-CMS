@@ -693,8 +693,8 @@ cmsBool CMSEXPORT cmsStageSampleCLut16bit(cmsStage* mpe, cmsSAMPLER16 Sampler, v
     nInputs  = clut->Params ->nInputs;
     nOutputs = clut->Params ->nOutputs;
 
-	if (nInputs >= MAXCHANNELS) return FALSE;
-	if (nOutputs >= MAX_STAGE_CHANNELS) return FALSE;
+    if (nInputs >= MAXCHANNELS) return FALSE;
+    if (nOutputs >= MAX_STAGE_CHANNELS) return FALSE;
 
     nTotalPoints = CubeSize(nSamples, nInputs);
 
@@ -746,8 +746,8 @@ cmsBool CMSEXPORT cmsStageSampleCLutFloat(cmsStage* mpe, cmsSAMPLERFLOAT Sampler
     nInputs  = clut->Params ->nInputs;
     nOutputs = clut->Params ->nOutputs;
 
-	if (nInputs >= MAXCHANNELS) return FALSE;
-	if (nOutputs >= MAX_STAGE_CHANNELS) return FALSE;
+    if (nInputs >= MAXCHANNELS) return FALSE;
+    if (nOutputs >= MAX_STAGE_CHANNELS) return FALSE;
 
     nTotalPoints = CubeSize(nSamples, nInputs);
 
@@ -796,7 +796,7 @@ cmsBool CMSEXPORT cmsSliceSpace16(cmsUInt32Number nInputs, const cmsUInt32Number
     int i, t, nTotalPoints, rest;
     cmsUInt16Number In[MAXCHANNELS];
 
-	if (nInputs >= MAXCHANNELS) return FALSE;
+    if (nInputs >= MAXCHANNELS) return FALSE;
 
     nTotalPoints = CubeSize(clutPoints, nInputs);
 
@@ -825,7 +825,7 @@ cmsInt32Number CMSEXPORT cmsSliceSpaceFloat(cmsUInt32Number nInputs, const cmsUI
     int i, t, nTotalPoints, rest;
     cmsFloat32Number In[MAXCHANNELS];
 
-	if (nInputs >= MAXCHANNELS) return FALSE;
+    if (nInputs >= MAXCHANNELS) return FALSE;
 
     nTotalPoints = CubeSize(clutPoints, nInputs);
 
@@ -1085,16 +1085,16 @@ cmsStage* CMSEXPORT cmsStageDup(cmsStage* mpe)
 static
 void BlessLUT(cmsPipeline* lut)
 {
-	// We can set the input/ouput channels only if we have elements. 
+    // We can set the input/ouput channels only if we have elements. 
     if (lut ->Elements != NULL) {
 
-		cmsStage *First, *Last;
+        cmsStage *First, *Last;
 
-		First  = cmsPipelineGetPtrToFirstStage(lut);
-		Last   = cmsPipelineGetPtrToLastStage(lut);
+        First  = cmsPipelineGetPtrToFirstStage(lut);
+        Last   = cmsPipelineGetPtrToLastStage(lut);
 
-		if (First != NULL)lut ->InputChannels = First ->InputChannels;
-		if (Last != NULL) lut ->OutputChannels = Last ->OutputChannels;
+        if (First != NULL)lut ->InputChannels = First ->InputChannels;
+        if (Last != NULL) lut ->OutputChannels = Last ->OutputChannels;
     }
 }
 
@@ -1157,8 +1157,8 @@ cmsPipeline* CMSEXPORT cmsPipelineAlloc(cmsContext ContextID, cmsUInt32Number In
 {
        cmsPipeline* NewLUT;
 
-	   if (InputChannels >= MAXCHANNELS ||
-		   OutputChannels >= MAXCHANNELS) return NULL;
+       if (InputChannels >= MAXCHANNELS ||
+           OutputChannels >= MAXCHANNELS) return NULL;
 
        NewLUT = (cmsPipeline*) _cmsMallocZero(ContextID, sizeof(cmsPipeline));
        if (NewLUT == NULL) return NULL;

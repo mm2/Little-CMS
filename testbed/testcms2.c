@@ -786,6 +786,18 @@ cmsBool  IsGoodWord(const char *title, cmsUInt16Number in, cmsUInt16Number out)
     return TRUE;
 }
 
+static
+cmsBool  IsGoodWordPrec(const char *title, cmsUInt16Number in, cmsUInt16Number out, cmsUInt16Number maxErr)
+{
+    if ((abs(in - out) > maxErr )) {
+
+        Fail("(%s): Must be %x, But is %x ", title, in, out);
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 // Fixed point ----------------------------------------------------------------------------------------------
 
 static
@@ -1538,6 +1550,464 @@ cmsInt32Number CheckReverseInterpolation4x3(void)
 }
 
 
+
+// Check all interpolation. 
+
+static
+cmsUInt16Number Fn8D1(cmsUInt16Number a1, cmsUInt16Number a2, cmsUInt16Number a3, cmsUInt16Number a4,
+                      cmsUInt16Number a5, cmsUInt16Number a6, cmsUInt16Number a7, cmsUInt16Number a8,
+                      cmsUInt32Number m)
+{
+    return (cmsUInt16Number) ((a1 + a2 + a3 + a4 + a5 + a6 + a7 + a8) / m);
+}
+
+
+static
+cmsUInt16Number Fn8D2(cmsUInt16Number a1, cmsUInt16Number a2, cmsUInt16Number a3, cmsUInt16Number a4,
+                      cmsUInt16Number a5, cmsUInt16Number a6, cmsUInt16Number a7, cmsUInt16Number a8,
+                      cmsUInt32Number m)
+{
+    return (cmsUInt16Number) ((a1 + 3* a2 + 3* a3 + a4 + a5 + a6 + a7 + a8 ) / (m + 4));
+}
+
+
+static
+cmsUInt16Number Fn8D3(cmsUInt16Number a1, cmsUInt16Number a2, cmsUInt16Number a3, cmsUInt16Number a4,
+                      cmsUInt16Number a5, cmsUInt16Number a6, cmsUInt16Number a7, cmsUInt16Number a8,
+                      cmsUInt32Number m)
+{
+    return (cmsUInt16Number) ((3*a1 + 2*a2 + 3*a3 + a4 + a5 + a6 + a7 + a8) / (m + 5));
+}
+
+
+
+
+static
+cmsInt32Number Sampler3D(register const cmsUInt16Number In[],
+               register cmsUInt16Number Out[],
+               register void * Cargo)
+{
+
+    Out[0] = Fn8D1(In[0], In[1], In[2], 0, 0, 0, 0, 0, 3);
+    Out[1] = Fn8D2(In[0], In[1], In[2], 0, 0, 0, 0, 0, 3);
+    Out[2] = Fn8D3(In[0], In[1], In[2], 0, 0, 0, 0, 0, 3);
+
+    return 1;
+}
+
+static
+cmsInt32Number Sampler4D(register const cmsUInt16Number In[],
+               register cmsUInt16Number Out[],
+               register void * Cargo)
+{
+
+    Out[0] = Fn8D1(In[0], In[1], In[2], In[3], 0, 0, 0, 0, 4);
+    Out[1] = Fn8D2(In[0], In[1], In[2], In[3], 0, 0, 0, 0, 4);
+    Out[2] = Fn8D3(In[0], In[1], In[2], In[3], 0, 0, 0, 0, 4);
+
+    return 1;
+}
+
+static
+cmsInt32Number Sampler5D(register const cmsUInt16Number In[],
+               register cmsUInt16Number Out[],
+               register void * Cargo)
+{
+
+    Out[0] = Fn8D1(In[0], In[1], In[2], In[3], In[4], 0, 0, 0, 5);
+    Out[1] = Fn8D2(In[0], In[1], In[2], In[3], In[4], 0, 0, 0, 5);
+    Out[2] = Fn8D3(In[0], In[1], In[2], In[3], In[4], 0, 0, 0, 5);
+
+    return 1;
+}
+
+static
+cmsInt32Number Sampler6D(register const cmsUInt16Number In[],
+               register cmsUInt16Number Out[],
+               register void * Cargo)
+{
+
+    Out[0] = Fn8D1(In[0], In[1], In[2], In[3], In[4], In[5], 0, 0, 6);
+    Out[1] = Fn8D2(In[0], In[1], In[2], In[3], In[4], In[5], 0, 0, 6);
+    Out[2] = Fn8D3(In[0], In[1], In[2], In[3], In[4], In[5], 0, 0, 6);
+
+    return 1;
+}
+
+static
+cmsInt32Number Sampler7D(register const cmsUInt16Number In[],
+               register cmsUInt16Number Out[],
+               register void * Cargo)
+{
+
+    Out[0] = Fn8D1(In[0], In[1], In[2], In[3], In[4], In[5], In[6], 0, 7);
+    Out[1] = Fn8D2(In[0], In[1], In[2], In[3], In[4], In[5], In[6], 0, 7);
+    Out[2] = Fn8D3(In[0], In[1], In[2], In[3], In[4], In[5], In[6], 0, 7);
+
+    return 1;
+}
+
+static
+cmsInt32Number Sampler8D(register const cmsUInt16Number In[],
+               register cmsUInt16Number Out[],
+               register void * Cargo)
+{
+
+    Out[0] = Fn8D1(In[0], In[1], In[2], In[3], In[4], In[5], In[6], In[7], 8);
+    Out[1] = Fn8D2(In[0], In[1], In[2], In[3], In[4], In[5], In[6], In[7], 8);
+    Out[2] = Fn8D3(In[0], In[1], In[2], In[3], In[4], In[5], In[6], In[7], 8);
+
+    return 1;
+}
+
+static 
+cmsBool CheckOne3D(cmsPipeline* lut, cmsUInt16Number a1, cmsUInt16Number a2, cmsUInt16Number a3)
+{
+    cmsUInt16Number In[3], Out1[3], Out2[3];
+
+    In[0] = a1; In[1] = a2; In[2] = a3; 
+
+    // This is the interpolated value
+    cmsPipelineEval16(In, Out1, lut);
+
+    // This is the real value
+    Sampler3D(In, Out2, NULL);
+
+    // Let's see the difference
+
+    if (!IsGoodWordPrec("Channel 1", Out1[0], Out2[0], 2)) return FALSE;
+    if (!IsGoodWordPrec("Channel 2", Out1[1], Out2[1], 2)) return FALSE;
+    if (!IsGoodWordPrec("Channel 3", Out1[2], Out2[2], 2)) return FALSE;
+
+    return TRUE;
+}
+
+static 
+cmsBool CheckOne4D(cmsPipeline* lut, cmsUInt16Number a1, cmsUInt16Number a2, cmsUInt16Number a3, cmsUInt16Number a4)
+{
+    cmsUInt16Number In[4], Out1[3], Out2[3];
+
+    In[0] = a1; In[1] = a2; In[2] = a3; In[3] = a4;
+
+    // This is the interpolated value
+    cmsPipelineEval16(In, Out1, lut);
+
+    // This is the real value
+    Sampler4D(In, Out2, NULL);
+
+    // Let's see the difference
+
+    if (!IsGoodWordPrec("Channel 1", Out1[0], Out2[0], 2)) return FALSE;
+    if (!IsGoodWordPrec("Channel 2", Out1[1], Out2[1], 2)) return FALSE;
+    if (!IsGoodWordPrec("Channel 3", Out1[2], Out2[2], 2)) return FALSE;
+
+    return TRUE;
+}
+
+static 
+cmsBool CheckOne5D(cmsPipeline* lut, cmsUInt16Number a1, cmsUInt16Number a2, 
+                                     cmsUInt16Number a3, cmsUInt16Number a4, cmsUInt16Number a5)
+{
+    cmsUInt16Number In[5], Out1[3], Out2[3];
+
+    In[0] = a1; In[1] = a2; In[2] = a3; In[3] = a4; In[4] = a5;
+
+    // This is the interpolated value
+    cmsPipelineEval16(In, Out1, lut);
+
+    // This is the real value
+    Sampler5D(In, Out2, NULL);
+
+    // Let's see the difference
+
+    if (!IsGoodWordPrec("Channel 1", Out1[0], Out2[0], 2)) return FALSE;
+    if (!IsGoodWordPrec("Channel 2", Out1[1], Out2[1], 2)) return FALSE;
+    if (!IsGoodWordPrec("Channel 3", Out1[2], Out2[2], 2)) return FALSE;
+
+    return TRUE;
+}
+
+static 
+cmsBool CheckOne6D(cmsPipeline* lut, cmsUInt16Number a1, cmsUInt16Number a2, 
+                                     cmsUInt16Number a3, cmsUInt16Number a4, 
+                                     cmsUInt16Number a5, cmsUInt16Number a6)
+{
+    cmsUInt16Number In[6], Out1[3], Out2[3];
+
+    In[0] = a1; In[1] = a2; In[2] = a3; In[3] = a4; In[4] = a5; In[5] = a6;
+
+    // This is the interpolated value
+    cmsPipelineEval16(In, Out1, lut);
+
+    // This is the real value
+    Sampler6D(In, Out2, NULL);
+
+    // Let's see the difference
+
+    if (!IsGoodWordPrec("Channel 1", Out1[0], Out2[0], 2)) return FALSE;
+    if (!IsGoodWordPrec("Channel 2", Out1[1], Out2[1], 2)) return FALSE;
+    if (!IsGoodWordPrec("Channel 3", Out1[2], Out2[2], 2)) return FALSE;
+
+    return TRUE;
+}
+
+
+static 
+cmsBool CheckOne7D(cmsPipeline* lut, cmsUInt16Number a1, cmsUInt16Number a2, 
+                                     cmsUInt16Number a3, cmsUInt16Number a4, 
+                                     cmsUInt16Number a5, cmsUInt16Number a6,
+                                     cmsUInt16Number a7)
+{
+    cmsUInt16Number In[7], Out1[3], Out2[3];
+
+    In[0] = a1; In[1] = a2; In[2] = a3; In[3] = a4; In[4] = a5; In[5] = a6; In[6] = a7;
+
+    // This is the interpolated value
+    cmsPipelineEval16(In, Out1, lut);
+
+    // This is the real value
+    Sampler7D(In, Out2, NULL);
+
+    // Let's see the difference
+
+    if (!IsGoodWordPrec("Channel 1", Out1[0], Out2[0], 2)) return FALSE;
+    if (!IsGoodWordPrec("Channel 2", Out1[1], Out2[1], 2)) return FALSE;
+    if (!IsGoodWordPrec("Channel 3", Out1[2], Out2[2], 2)) return FALSE;
+
+    return TRUE;
+}
+
+
+static 
+cmsBool CheckOne8D(cmsPipeline* lut, cmsUInt16Number a1, cmsUInt16Number a2, 
+                                     cmsUInt16Number a3, cmsUInt16Number a4, 
+                                     cmsUInt16Number a5, cmsUInt16Number a6,
+                                     cmsUInt16Number a7, cmsUInt16Number a8)
+{
+    cmsUInt16Number In[8], Out1[3], Out2[3];
+
+    In[0] = a1; In[1] = a2; In[2] = a3; In[3] = a4; In[4] = a5; In[5] = a6; In[6] = a7; In[7] = a8;
+
+    // This is the interpolated value
+    cmsPipelineEval16(In, Out1, lut);
+
+    // This is the real value
+    Sampler8D(In, Out2, NULL);
+
+    // Let's see the difference
+
+    if (!IsGoodWordPrec("Channel 1", Out1[0], Out2[0], 2)) return FALSE;
+    if (!IsGoodWordPrec("Channel 2", Out1[1], Out2[1], 2)) return FALSE;
+    if (!IsGoodWordPrec("Channel 3", Out1[2], Out2[2], 2)) return FALSE;
+
+    return TRUE;
+}
+
+
+static
+cmsInt32Number Check3Dinterp(void)
+{
+    cmsPipeline* lut;
+    cmsStage* mpe;
+
+    lut = cmsPipelineAlloc(DbgThread(), 3, 3);
+    mpe = cmsStageAllocCLut16bit(DbgThread(), 9, 3, 3, NULL);
+    cmsStageSampleCLut16bit(mpe, Sampler3D, NULL, 0);
+    cmsPipelineInsertStage(lut, cmsAT_BEGIN, mpe);
+
+    // Check accuracy
+
+    if (!CheckOne3D(lut, 0, 0, 0)) return 0;
+    if (!CheckOne3D(lut, 0xffff, 0xffff, 0xffff)) return 0; 
+
+    if (!CheckOne3D(lut, 0x8080, 0x8080, 0x8080)) return 0;
+    if (!CheckOne3D(lut, 0x0000, 0xFE00, 0x80FF)) return 0;
+    if (!CheckOne3D(lut, 0x1111, 0x2222, 0x3333)) return 0;
+    if (!CheckOne3D(lut, 0x0000, 0x0012, 0x0013)) return 0; 
+    if (!CheckOne3D(lut, 0x3141, 0x1415, 0x1592)) return 0; 
+    if (!CheckOne3D(lut, 0xFF00, 0xFF01, 0xFF12)) return 0; 
+
+    cmsPipelineFree(lut);
+
+    return 1;
+}
+
+static
+cmsInt32Number Check3DinterpGranular(void)
+{
+    cmsPipeline* lut;
+    cmsStage* mpe;
+    cmsUInt32Number Dimensions[] = { 7, 8, 9 };
+
+    lut = cmsPipelineAlloc(DbgThread(), 3, 3);
+    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 3, 3, NULL);
+    cmsStageSampleCLut16bit(mpe, Sampler3D, NULL, 0);
+    cmsPipelineInsertStage(lut, cmsAT_BEGIN, mpe);
+
+    // Check accuracy
+
+    if (!CheckOne3D(lut, 0, 0, 0)) return 0;
+    if (!CheckOne3D(lut, 0xffff, 0xffff, 0xffff)) return 0; 
+
+    if (!CheckOne3D(lut, 0x8080, 0x8080, 0x8080)) return 0;
+    if (!CheckOne3D(lut, 0x0000, 0xFE00, 0x80FF)) return 0;
+    if (!CheckOne3D(lut, 0x1111, 0x2222, 0x3333)) return 0;
+    if (!CheckOne3D(lut, 0x0000, 0x0012, 0x0013)) return 0; 
+    if (!CheckOne3D(lut, 0x3141, 0x1415, 0x1592)) return 0; 
+    if (!CheckOne3D(lut, 0xFF00, 0xFF01, 0xFF12)) return 0; 
+
+    cmsPipelineFree(lut);
+
+    return 1;
+}
+
+
+static
+cmsInt32Number Check4Dinterp(void)
+{
+    cmsPipeline* lut;
+    cmsStage* mpe;
+
+    lut = cmsPipelineAlloc(DbgThread(), 4, 3);
+    mpe = cmsStageAllocCLut16bit(DbgThread(), 9, 4, 3, NULL);
+    cmsStageSampleCLut16bit(mpe, Sampler4D, NULL, 0);
+    cmsPipelineInsertStage(lut, cmsAT_BEGIN, mpe);
+
+    // Check accuracy
+
+    if (!CheckOne4D(lut, 0, 0, 0, 0)) return 0;
+    if (!CheckOne4D(lut, 0xffff, 0xffff, 0xffff, 0xffff)) return 0; 
+
+    if (!CheckOne4D(lut, 0x8080, 0x8080, 0x8080, 0x8080)) return 0;
+    if (!CheckOne4D(lut, 0x0000, 0xFE00, 0x80FF, 0x8888)) return 0;
+    if (!CheckOne4D(lut, 0x1111, 0x2222, 0x3333, 0x4444)) return 0;
+    if (!CheckOne4D(lut, 0x0000, 0x0012, 0x0013, 0x0014)) return 0; 
+    if (!CheckOne4D(lut, 0x3141, 0x1415, 0x1592, 0x9261)) return 0; 
+    if (!CheckOne4D(lut, 0xFF00, 0xFF01, 0xFF12, 0xFF13)) return 0; 
+
+    cmsPipelineFree(lut);
+
+    return 1;
+}
+
+
+
+static
+cmsInt32Number Check4DinterpGranular(void)
+{
+    cmsPipeline* lut;
+    cmsStage* mpe;
+    cmsUInt32Number Dimensions[] = { 9, 8, 7, 6 };
+
+    lut = cmsPipelineAlloc(DbgThread(), 4, 3);
+    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 4, 3, NULL);
+    cmsStageSampleCLut16bit(mpe, Sampler4D, NULL, 0);
+    cmsPipelineInsertStage(lut, cmsAT_BEGIN, mpe);
+
+    // Check accuracy
+
+    if (!CheckOne4D(lut, 0, 0, 0, 0)) return 0;
+    if (!CheckOne4D(lut, 0xffff, 0xffff, 0xffff, 0xffff)) return 0; 
+
+    if (!CheckOne4D(lut, 0x8080, 0x8080, 0x8080, 0x8080)) return 0;
+    if (!CheckOne4D(lut, 0x0000, 0xFE00, 0x80FF, 0x8888)) return 0;
+    if (!CheckOne4D(lut, 0x1111, 0x2222, 0x3333, 0x4444)) return 0;
+    if (!CheckOne4D(lut, 0x0000, 0x0012, 0x0013, 0x0014)) return 0; 
+    if (!CheckOne4D(lut, 0x3141, 0x1415, 0x1592, 0x9261)) return 0; 
+    if (!CheckOne4D(lut, 0xFF00, 0xFF01, 0xFF12, 0xFF13)) return 0; 
+
+    cmsPipelineFree(lut);
+
+    return 1;
+}
+
+
+static
+cmsInt32Number Check5DinterpGranular(void)
+{
+    cmsPipeline* lut;
+    cmsStage* mpe;
+    cmsUInt32Number Dimensions[] = { 3, 2, 2, 2, 2 };
+
+    lut = cmsPipelineAlloc(DbgThread(), 5, 3);
+    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 5, 3, NULL);
+    cmsStageSampleCLut16bit(mpe, Sampler5D, NULL, 0);
+    cmsPipelineInsertStage(lut, cmsAT_BEGIN, mpe);
+
+    // Check accuracy
+
+    if (!CheckOne5D(lut, 0, 0, 0, 0, 0)) return 0;
+    if (!CheckOne5D(lut, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff)) return 0; 
+
+    if (!CheckOne5D(lut, 0x8080, 0x8080, 0x8080, 0x8080, 0x1234)) return 0;
+    if (!CheckOne5D(lut, 0x0000, 0xFE00, 0x80FF, 0x8888, 0x8078)) return 0;
+    if (!CheckOne5D(lut, 0x1111, 0x2222, 0x3333, 0x4444, 0x1455)) return 0;
+    if (!CheckOne5D(lut, 0x0000, 0x0012, 0x0013, 0x0014, 0x2333)) return 0; 
+    if (!CheckOne5D(lut, 0x3141, 0x1415, 0x1592, 0x9261, 0x4567)) return 0; 
+    if (!CheckOne5D(lut, 0xFF00, 0xFF01, 0xFF12, 0xFF13, 0xF344)) return 0; 
+
+    cmsPipelineFree(lut);
+
+    return 1;
+}
+
+static
+cmsInt32Number Check6DinterpGranular(void)
+{
+    cmsPipeline* lut;
+    cmsStage* mpe;
+    cmsUInt32Number Dimensions[] = { 4, 3, 3, 2, 2, 2 };
+
+    lut = cmsPipelineAlloc(DbgThread(), 6, 3);
+    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 6, 3, NULL);
+    cmsStageSampleCLut16bit(mpe, Sampler6D, NULL, 0);
+    cmsPipelineInsertStage(lut, cmsAT_BEGIN, mpe);
+
+    // Check accuracy
+
+    if (!CheckOne6D(lut, 0, 0, 0, 0, 0, 0)) return 0;
+    if (!CheckOne6D(lut, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff)) return 0; 
+
+    if (!CheckOne6D(lut, 0x8080, 0x8080, 0x8080, 0x8080, 0x1234, 0x1122)) return 0;
+    if (!CheckOne6D(lut, 0x0000, 0xFE00, 0x80FF, 0x8888, 0x8078, 0x2233)) return 0;
+    if (!CheckOne6D(lut, 0x1111, 0x2222, 0x3333, 0x4444, 0x1455, 0x3344)) return 0;
+    if (!CheckOne6D(lut, 0x0000, 0x0012, 0x0013, 0x0014, 0x2333, 0x4455)) return 0; 
+    if (!CheckOne6D(lut, 0x3141, 0x1415, 0x1592, 0x9261, 0x4567, 0x5566)) return 0; 
+    if (!CheckOne6D(lut, 0xFF00, 0xFF01, 0xFF12, 0xFF13, 0xF344, 0x6677)) return 0; 
+
+    cmsPipelineFree(lut);
+
+    return 1;
+}
+
+static
+cmsInt32Number Check7DinterpGranular(void)
+{
+    cmsPipeline* lut;
+    cmsStage* mpe;
+    cmsUInt32Number Dimensions[] = { 4, 3, 3, 2, 2, 2, 2 };
+
+    lut = cmsPipelineAlloc(DbgThread(), 7, 3);
+    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 7, 3, NULL);
+    cmsStageSampleCLut16bit(mpe, Sampler7D, NULL, 0);
+    cmsPipelineInsertStage(lut, cmsAT_BEGIN, mpe);
+
+    // Check accuracy
+
+    if (!CheckOne7D(lut, 0, 0, 0, 0, 0, 0, 0)) return 0;
+    if (!CheckOne7D(lut, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff)) return 0; 
+
+    if (!CheckOne7D(lut, 0x8080, 0x8080, 0x8080, 0x8080, 0x1234, 0x1122, 0x0056)) return 0;
+    if (!CheckOne7D(lut, 0x0000, 0xFE00, 0x80FF, 0x8888, 0x8078, 0x2233, 0x0088)) return 0;
+    if (!CheckOne7D(lut, 0x1111, 0x2222, 0x3333, 0x4444, 0x1455, 0x3344, 0x1987)) return 0;
+    if (!CheckOne7D(lut, 0x0000, 0x0012, 0x0013, 0x0014, 0x2333, 0x4455, 0x9988)) return 0; 
+    if (!CheckOne7D(lut, 0x3141, 0x1415, 0x1592, 0x9261, 0x4567, 0x5566, 0xfe56)) return 0; 
+    if (!CheckOne7D(lut, 0xFF00, 0xFF01, 0xFF12, 0xFF13, 0xF344, 0x6677, 0xbabe)) return 0; 
+
+    cmsPipelineFree(lut);
+
+    return 1;
+}
 // Colorimetric conversions -------------------------------------------------------------------------------------------------
 
 // Lab to LCh and back should be performed at 1E-12 accuracy at least
@@ -6499,7 +6969,7 @@ void PrintSupportedIntents(void)
 // ZOO checks ------------------------------------------------------------------------------------------------------------
 
 
-#ifdef _CMS_IS_WINDOWS
+#ifdef CMS_IS_WINDOWS_
 
 static char ZOOfolder[cmsMAX_PATH] = "c:\\colormaps\\";
 static char ZOOwrite[cmsMAX_PATH]  = "c:\\colormaps\\write\\";
@@ -6749,8 +7219,8 @@ int main(int argc, char* argv[])
     cmsSetLogErrorHandler(FatalErrorQuit);
     printf("done.\n");
 
-#ifdef _CMS_IS_WINDOWS     
-    // CheckProfileZOO();
+#ifdef CMS_IS_WINDOWS_     
+     // CheckProfileZOO();
 #endif
 
     PrintSupportedIntents();
@@ -6801,6 +7271,18 @@ int main(int argc, char* argv[])
     Check("Reverse interpolation 3 -> 3", CheckReverseInterpolation3x3);
     Check("Reverse interpolation 4 -> 3", CheckReverseInterpolation4x3);
   
+
+    // High dimensionality interpolation
+
+    Check("3D interpolation", Check3Dinterp);
+    Check("3D interpolation with granularity", Check3DinterpGranular);
+    Check("4D interpolation", Check4Dinterp);
+    Check("4D interpolation with granularity", Check4DinterpGranular);
+    Check("5D interpolation with granularity", Check5DinterpGranular);
+    Check("6D interpolation with granularity", Check6DinterpGranular);
+    Check("7D interpolation with granularity", Check7DinterpGranular);
+
+
     // Encoding of colorspaces
     Check("Lab to LCh and back (float only) ", CheckLab2LCh);
     Check("Lab to XYZ and back (float only) ", CheckLab2XYZ);
