@@ -460,6 +460,15 @@ int GetProfileColorSpace(cmsHPROFILE hProfile)
 	return _cmsLCMScolorSpace(ProfileSpace);
 }
 
+static
+int GetDevicelinkColorSpace(cmsHPROFILE hProfile)
+{
+    cmsColorSpaceSignature ProfileSpace = cmsGetPCS(hProfile);
+
+	return _cmsLCMScolorSpace(ProfileSpace);
+}
+
+
 // From TRANSUPP
 
 static 
@@ -718,7 +727,7 @@ int TransformImage(char *cDefInpProf, char *cOutProf)
        // Output colorspace is given by output profile
 
         if (lIsDeviceLink) {
-            OutputColorSpace = T_COLORSPACE(wInput);
+            OutputColorSpace = GetDevicelinkColorSpace(hIn);
         }
         else {
             OutputColorSpace = GetProfileColorSpace(hOut);
