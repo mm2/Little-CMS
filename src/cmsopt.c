@@ -253,7 +253,7 @@ void* Prelin16dup(cmsContext ContextID, const void* ptr)
     Prelin16Data* p16 = (Prelin16Data*) ptr;
     Prelin16Data* Duped = _cmsDupMem(ContextID, p16, sizeof(Prelin16Data));
 
-	if (Duped == NULL) return NULL;
+    if (Duped == NULL) return NULL;
 
     Duped ->StageDEF         = _cmsCalloc(ContextID, p16 ->nOutputs, sizeof(cmsUInt16Number)); 
     Duped ->EvalCurveOut16   = _cmsDupMem(ContextID, p16 ->EvalCurveOut16, p16 ->nOutputs * sizeof(_cmsInterpFn16));
@@ -329,7 +329,7 @@ int XFormSampler16(register const cmsUInt16Number In[], register cmsUInt16Number
     cmsFloat32Number InFloat[MAXCHANNELS], OutFloat[MAXCHANNELS];
     cmsUInt32Number i;
 
-	_cmsAssert(Lut -> InputChannels < MAXCHANNELS);
+    _cmsAssert(Lut -> InputChannels < MAXCHANNELS);
     _cmsAssert(Lut -> OutputChannels < MAXCHANNELS);
 
     // From 16 bit to floating point
@@ -904,10 +904,10 @@ cmsBool OptimizeByComputingLinearization(cmsPipeline** Lut, cmsUInt32Number Inte
     if (T_COLORSPACE(*OutputFormat) != PT_RGB) return FALSE;
 
 
-	// On 16 bits, user has to specify the feature
-	if (!_cmsFormatterIs8bit(*InputFormat)) {
-		if (!(*dwFlags & cmsFLAGS_CLUT_PRE_LINEARIZATION)) return FALSE;
-	}
+    // On 16 bits, user has to specify the feature
+    if (!_cmsFormatterIs8bit(*InputFormat)) {
+        if (!(*dwFlags & cmsFLAGS_CLUT_PRE_LINEARIZATION)) return FALSE;
+    }
 
     OriginalLut = *Lut;
     ColorSpace       = _cmsICCcolorSpace(T_COLORSPACE(*InputFormat));
@@ -1084,7 +1084,7 @@ void* CurvesDup(cmsContext ContextID, const void* ptr)
     Curves16Data* Data = _cmsDupMem(ContextID, ptr, sizeof(Curves16Data));
     int i;
 
-	if (Data == NULL) return NULL;
+    if (Data == NULL) return NULL;
 
     Data ->Curves = _cmsDupMem(ContextID, Data ->Curves, Data ->nCurves * sizeof(cmsUInt16Number*));
 
@@ -1564,8 +1564,8 @@ cmsBool  _cmsRegisterOptimizationPlugin(cmsPluginBase* Data)
         return TRUE;
     }
     
-	// Optimizer callback is required
-	if (Plugin ->OptimizePtr == NULL) return FALSE;
+    // Optimizer callback is required
+    if (Plugin ->OptimizePtr == NULL) return FALSE;
 
     fl = (_cmsOptimizationCollection*) _cmsPluginMalloc(sizeof(_cmsOptimizationCollection));
     if (fl == NULL) return FALSE;

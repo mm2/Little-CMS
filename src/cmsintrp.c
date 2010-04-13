@@ -683,13 +683,13 @@ void Eval4Inputs(register const cmsUInt16Number Input[],
     K1 = K0 + (Input[0] == 0xFFFFU ? 0 : p16->opta[3]);
 
     X0 = p16 -> opta[2] * x0;
-    X1 = X0 + (Input[0] == 0xFFFFU ? 0 : p16->opta[2]);
+    X1 = X0 + (Input[1] == 0xFFFFU ? 0 : p16->opta[2]);
 
     Y0 = p16 -> opta[1] * y0;
-    Y1 = Y0 + (Input[1] == 0xFFFFU ? 0 : p16->opta[1]);
+    Y1 = Y0 + (Input[2] == 0xFFFFU ? 0 : p16->opta[1]);
 
     Z0 = p16 -> opta[0] * z0;
-    Z1 = Z0 + (Input[2] == 0xFFFFU ? 0 : p16->opta[0]);
+    Z1 = Z0 + (Input[3] == 0xFFFFU ? 0 : p16->opta[0]);
 
     LutTable = (cmsUInt16Number*) p16 -> Table;
     LutTable += K0;
