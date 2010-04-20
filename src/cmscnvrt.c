@@ -464,7 +464,7 @@ cmsPipeline* DefaultICCintents(cmsContext       ContextID,
     Result = cmsPipelineAlloc(ContextID, 0, 0);
     if (Result == NULL) return NULL;
 
-    // First profile is used as input unless devicelink or abstract
+ 
     CurrentColorSpace = cmsGetColorSpace(hProfiles[0]);    
 
     for (i=0; i < nProfiles; i++) {
@@ -474,8 +474,16 @@ cmsPipeline* DefaultICCintents(cmsContext       ContextID,
         hProfile      = hProfiles[i];
         ClassSig      = cmsGetDeviceClass(hProfile);
         lIsDeviceLink = (ClassSig == cmsSigLinkClass || ClassSig == cmsSigAbstractClass );
+      
+        // First profile is used as input unless devicelink or abstract
+		if ((i == 0) && !lIsDeviceLink) {
+			lIsInput = TRUE;
+		}
+		else {
+		  // Else use profile in the input direction if current space is not PCS
         lIsInput      = (CurrentColorSpace != cmsSigXYZData) &&
                         (CurrentColorSpace != cmsSigLabData);
+		}
 
         Intent        = TheIntents[i];
 

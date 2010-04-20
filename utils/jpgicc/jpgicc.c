@@ -84,14 +84,39 @@ void my_error_exit (j_common_ptr cinfo)
   FatalError(buffer);
 }
 
+/*
+Definition of the APPn Markers Defined for continuous-tone G3FAX
+
+The application code APP1 initiates identification of the image as 
+a G3FAX application and defines the spatial resolution and subsampling. 
+This marker directly follows the SOI marker. The data format will be as follows:
+
+X'FFE1' (APP1), length, FAX identifier, version, spatial resolution.
+
+The above terms are defined as follows:
+
+Length: (Two octets) Total APP1 field octet count including the octet count itself, but excluding the APP1
+marker.
+
+FAX identifier: (Six octets) X'47', X'33', X'46', X'41', X'58', X'00'. This X'00'-terminated string "G3FAX"
+uniquely identifies this APP1 marker.
+
+Version: (Two octets) X'07CA'. This string specifies the year of approval of the standard, for identification
+in the case of future revision (for example, 1994).
+
+Spatial Resolution: (Two octets) Lightness pixel density in pels/25.4 mm. The basic value is 200. Allowed values are
+100, 200, 300, 400, 600 and 1200 pels/25.4 mm, with square (or equivalent) pels.
+
+NOTE – The functional equivalence of inch-based and mm-based resolutions is maintained. For example, the 200 × 200
+*/
 
 static
 cmsBool IsITUFax(jpeg_saved_marker_ptr ptr)
 {
 	while (ptr) 
 	{
-		if (ptr -> marker == (JPEG_APP0 + 1) && ptr -> data_length > 5)
-		{
+        if (ptr -> marker == (JPEG_APP0 + 1) && ptr -> data_length > 5) {
+            
 			const char* data = (const char*) ptr -> data;
 
 			if (strcmp(data, "G3FAX") == 0) return TRUE;                                
@@ -103,6 +128,7 @@ cmsBool IsITUFax(jpeg_saved_marker_ptr ptr)
 	return FALSE;
 }
 
+// Save a ITU T.42/Fax marker with defaults on boundaries. This is the only mode we support right now.
 static
 void SetITUFax(j_compress_ptr cinfo)
 {    
@@ -141,7 +167,7 @@ void Lab2ITU(const cmsCIELab* Lab, cmsUInt16Number Out[3])
 	Out[2] = (cmsUInt16Number) floor((double) (Lab -> b / 200.)* 65535. + 24576. );
 }
 
-// These are the samplers-- They are passed as callbacks to cmsSample3DGrid()
+// These are the samplers-- They are passed as callbacks to cmsStageSampleCLut16bit()
 // then, cmsSample3DGrid() will sweel whole Lab gamut calling these functions
 // once for each node. In[] will contain the Lab PCS value to convert to ITUFAX
 // on PCS2ITU, or the ITUFAX value to convert to Lab in ITU2PCS
@@ -152,7 +178,7 @@ void Lab2ITU(const cmsCIELab* Lab, cmsUInt16Number Out[3])
 #define GRID_POINTS 33
 
 static
-int PCS2ITU(register cmsUInt16Number In[], register cmsUInt16Number Out[], register void*  Cargo)
+int PCS2ITU(register const cmsUInt16Number In[], register cmsUInt16Number Out[], register void*  Cargo)
 {      
 	cmsCIELab Lab;
 
@@ -164,7 +190,7 @@ int PCS2ITU(register cmsUInt16Number In[], register cmsUInt16Number Out[], regis
 
 
 static
-int ITU2PCS(const register cmsUInt16Number In[], register cmsUInt16Number Out[], register void*  Cargo)
+int ITU2PCS( register const cmsUInt16Number In[], register cmsUInt16Number Out[], register void*  Cargo)
 {   
 	cmsCIELab Lab;
 
@@ -173,8 +199,7 @@ int ITU2PCS(const register cmsUInt16Number In[], register cmsUInt16Number Out[],
 	return TRUE;
 }
 
-// This function does create the virtual input profile, which decoded ITU  
-// to the profile connection space
+// This function does create the virtual input profile, which decodes ITU to the profile connection space
 static
 cmsHPROFILE CreateITU2PCS_ICC(void)
 {	
@@ -204,6 +229,40 @@ cmsHPROFILE CreateITU2PCS_ICC(void)
 	cmsPipelineFree(AToB0);
 
 	return hProfile;
+}
+
+
+// This function does create the virtual output profile, with the necessary gamut mapping 
+static
+cmsHPROFILE CreatePCS2ITU_ICC(void)
+{
+    cmsHPROFILE hProfile;
+    cmsPipeline* BToA0;
+    cmsStage* ColorMap;
+        
+    BToA0 = cmsPipelineAlloc(0, 3, 3);
+    if (BToA0 == NULL) return NULL;
+
+    ColorMap = cmsStageAllocCLut16bit(0, GRID_POINTS, 3, 3, NULL);
+    if (ColorMap == NULL) return NULL;
+
+    cmsPipelineInsertStage(BToA0, cmsAT_BEGIN, ColorMap);
+    cmsStageSampleCLut16bit(ColorMap, PCS2ITU, NULL, 0);
+
+    hProfile = cmsCreateProfilePlaceholder(0);
+    if (hProfile == NULL) {
+        cmsPipelineFree(BToA0);
+        return NULL;
+    }
+
+    cmsWriteTag(hProfile, cmsSigBToA0Tag, BToA0); 
+    cmsSetColorSpace(hProfile, cmsSigLabData);
+    cmsSetPCS(hProfile, cmsSigLabData);
+    cmsSetDeviceClass(hProfile, cmsSigColorSpaceClass); 
+
+    cmsPipelineFree(BToA0);
+
+    return hProfile;
 }
 
 
@@ -345,7 +404,7 @@ cmsBool OpenOutput(const char* FileName)
 }
 
 static
-cmsBool Done()
+cmsBool Done(void)
 {
 	jpeg_destroy_decompress(&Decompressor);
 	jpeg_destroy_compress(&Compressor);
@@ -361,7 +420,6 @@ cmsUInt32Number GetInputPixelType(void)
 {
      int space, bps, extra, ColorChannels, Flavor;
         
-   
      lIsITUFax         = IsITUFax(Decompressor.marker_list);
      lIsPhotoshopApp13 = HandlePhotoshopAPP13(Decompressor.marker_list);
 
@@ -440,7 +498,6 @@ cmsUInt32Number ComputeOutputFormatDescriptor(cmsUInt32Number dwInput, int OutCo
    case PT_CMYK:
 	   if (Compressor.write_Adobe_marker)   // Adobe keeps CMYK inverted, so change flavor to chocolate
 		   Flavor = 1;
-
 	   Channels = 4;
 	   break;
    default:
@@ -555,6 +612,7 @@ void WriteOutputFields(int OutputColorSpace)
     jpeg_set_defaults(&Compressor);
     jpeg_set_colorspace(&Compressor, jpeg_space);
 
+
     // Make sure to pass resolution through
     if (OutputColorSpace == PT_CMYK)
         Compressor.write_JFIF_header = 1;
@@ -598,7 +656,7 @@ void DoEmbedProfile(const char* ProfileFile)
 
 
 static
-int DoTransform(cmsHTRANSFORM hXForm)
+int DoTransform(cmsHTRANSFORM hXForm, int OutputColorSpace)
 {       
     JSAMPROW ScanLineIn;
     JSAMPROW ScanLineOut;
@@ -614,6 +672,9 @@ int DoTransform(cmsHTRANSFORM hXForm)
      
        jpeg_start_decompress(&Decompressor);
        jpeg_start_compress(&Compressor, TRUE);
+
+        if (OutputColorSpace == PT_Lab)
+            SetITUFax(&Compressor);
 
        // Embed the profile if needed
        if (EmbedProfile && cOutProf) 
@@ -675,6 +736,8 @@ int TransformImage(char *cDefInpProf, char *cOutProf)
        if (GamutCheck)
             dwFlags |= cmsFLAGS_GAMUTCHECK;
         
+       // Take input color space
+       wInput = GetInputPixelType();
 
         if (lIsDeviceLink) {
 
@@ -702,11 +765,20 @@ int TransformImage(char *cDefInpProf, char *cOutProf)
         }
         else
         {
+            // Default for ITU/Fax
+            if (cDefInpProf == NULL && T_COLORSPACE(wInput) == PT_Lab)
+                cDefInpProf = "*Lab";
+
+            if (cDefInpProf != NULL && cmsstrcasecmp(cDefInpProf, "*lab") == 0)
+                hIn = CreateITU2PCS_ICC();
+            else
                 hIn = OpenStockProfile(0, cDefInpProf);
        }
 
+        if (cOutProf != NULL && cmsstrcasecmp(cOutProf, "*lab") == 0)
+            hOut = CreatePCS2ITU_ICC();
+        else
         hOut = OpenStockProfile(0, cOutProf);
-
 
        hProof = NULL;
        if (cProofing != NULL) {
@@ -716,8 +788,6 @@ int TransformImage(char *cDefInpProf, char *cOutProf)
           }
        }
 
-       // Take input color space
-       wInput = GetInputPixelType();
 
        // Assure both, input profile and input JPEG are on same colorspace       
        if (cmsGetColorSpace(hIn) != _cmsICCcolorSpace(T_COLORSPACE(wInput)))
@@ -744,7 +814,7 @@ int TransformImage(char *cDefInpProf, char *cOutProf)
                                           hProof, Intent, 
                                           ProofingIntent, dwFlags);
   
-       DoTransform(xform);
+       DoTransform(xform, OutputColorSpace);
 
        
        jcopy_markers_execute(&Decompressor, &Compressor);
@@ -798,12 +868,11 @@ void Help(int level)
      fprintf(stderr, "%cq<0..100> - Output JPEG quality\n", SW);
 
      fprintf(stderr, "\n");
-     fprintf(stderr, "%ch<0,1,2> - More help\n", SW);
+     fprintf(stderr, "%ch<0,1,2,3> - More help\n", SW);
      break;
 
      case 1:
 
-     
      fprintf(stderr, "Examples:\n\n"
                      "To color correct from scanner to sRGB:\n"
                      "\tjpegicc %ciscanner.icm in.jpg out.jpg\n"
@@ -814,11 +883,15 @@ void Help(int level)
                      "To recover sRGB from a CMYK separation:\n"
                      "\tjpegicc %ciprinter.icm incmyk.jpg outrgb.jpg\n"
                      "To convert from CIELab ITU/Fax JPEG to sRGB\n"
-                     "\tjpegicc %ciitufax.icm in.jpg out.jpg\n\n", 
+                     "\tjpegicc in.jpg out.jpg\n\n", 
                      SW, SW, SW, SW, SW, SW);
      break;
 
      case 2:
+		 PrintBuiltins();
+		 break;
+
+     case 3:
 
      fprintf(stderr, "This program is intended to be a demo of the little cms\n"
                      "engine. Both lcms and this program are freeware. You can\n"

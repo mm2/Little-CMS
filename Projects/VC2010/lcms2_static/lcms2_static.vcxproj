@@ -79,6 +79,8 @@
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <OmitFramePointers>true</OmitFramePointers>
       <EnableFiberSafeOptimizations>true</EnableFiberSafeOptimizations>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <ExceptionHandling>false</ExceptionHandling>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>
