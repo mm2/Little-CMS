@@ -211,6 +211,7 @@ cmsStageAllocMatrix                      =    cmsStageAllocMatrix
 _cmsStageAllocPlaceholder                =    _cmsStageAllocPlaceholder
 cmsStageDup                              =    cmsStageDup
 cmsStageFree                             =    cmsStageFree
+cmsStageNext                             =    cmsStageNext
 cmsStageInputChannels                    =    cmsStageInputChannels
 cmsStageOutputChannels                   =    cmsStageOutputChannels
 cmsStageSampleCLut16bit                  =    cmsStageSampleCLut16bit
