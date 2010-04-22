@@ -659,6 +659,7 @@ cmsPipeline*  BlackPreservingKOnlyIntents(cmsContext     ContextID,
         cmsGetColorSpace(hProfiles[nProfiles-1]) != cmsSigCmykData) 
            return DefaultICCintents(ContextID, nProfiles, ICCIntents, hProfiles, BPC, AdaptationStates, dwFlags);
 
+    memset(&bp, 0, sizeof(bp));
 
     // Allocate an empty LUT for holding the result
     Result = cmsPipelineAlloc(ContextID, 4, 4);
@@ -673,6 +674,8 @@ cmsPipeline*  BlackPreservingKOnlyIntents(cmsContext     ContextID,
         AdaptationStates,
         dwFlags);
 
+    if (bp.cmyk2cmyk == NULL) goto Error;
+    
     // Now, compute the tone curve
     bp.KTone = _cmsBuildKToneCurve(ContextID, 
         4096, 
@@ -683,24 +686,36 @@ cmsPipeline*  BlackPreservingKOnlyIntents(cmsContext     ContextID,
         AdaptationStates,
         dwFlags);
     
+    if (bp.KTone == NULL) goto Error;
+
+    
     // How many gridpoints are we going to use?
     nGridPoints = _cmsReasonableGridpointsByColorspace(cmsSigCmykData, dwFlags);
     
     // Create the CLUT. 16 bits
     CLUT = cmsStageAllocCLut16bit(ContextID, nGridPoints, 4, 4, NULL);
-    if (CLUT == NULL) return NULL;
-
-    // Sample it. We cannot afford pre/post linearization this time.
-    if (!cmsStageSampleCLut16bit(CLUT, BlackPreservingGrayOnlySampler, (void*) &bp, 0)) return NULL;
+    if (CLUT == NULL) goto Error;
 
     // This is the one and only MPE in this LUT
     cmsPipelineInsertStage(Result, cmsAT_BEGIN, CLUT);
 
+    // Sample it. We cannot afford pre/post linearization this time.
+    if (!cmsStageSampleCLut16bit(CLUT, BlackPreservingGrayOnlySampler, (void*) &bp, 0)) 
+        goto Error;
+    
     // Get rid of xform and tone curve
     cmsPipelineFree(bp.cmyk2cmyk);
     cmsFreeToneCurve(bp.KTone);
 
     return Result;
+
+Error:
+
+    if (bp.cmyk2cmyk != NULL) cmsPipelineFree(bp.cmyk2cmyk);
+    if (bp.KTone != NULL)  cmsFreeToneCurve(bp.KTone);
+    if (Result != NULL) cmsPipelineFree(Result);
+    return NULL;
+
 }
 
 // K Plane-preserving CMYK to CMYK ------------------------------------------------------------------------------------
