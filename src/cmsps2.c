@@ -870,7 +870,7 @@ int WriteInputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, int Intent, cmsUInt32Nu
     // Does create a device-link based transform. 
     // The DeviceLink is next dumped as working CSA.
     
-    InputFormat = cmsFormatterForColorspaceOfProfile(hProfile, 2);
+    InputFormat = cmsFormatterForColorspaceOfProfile(hProfile, 2, FALSE);
     nChannels   = T_CHANNELS(InputFormat);
 
 	
@@ -1284,7 +1284,7 @@ int WriteOutputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, int Intent, cmsUInt32N
 	hLab = cmsCreateLab4ProfileTHR(m ->ContextID, NULL);
 	if (hLab == NULL) return 0;
 
-    OutputFormat = cmsFormatterForColorspaceOfProfile(hProfile, 2);
+    OutputFormat = cmsFormatterForColorspaceOfProfile(hProfile, 2, FALSE);
 	nChannels    = T_CHANNELS(OutputFormat);
 
 	ColorSpace = cmsGetColorSpace(hProfile);
@@ -1407,7 +1407,7 @@ int WriteNamedColorCRD(cmsIOHANDLER* m, cmsHPROFILE hNamedColor, int Intent, cms
 	cmsNAMEDCOLORLIST* NamedColorList;
 
 	
-    OutputFormat = cmsFormatterForColorspaceOfProfile(hNamedColor, 2);
+    OutputFormat = cmsFormatterForColorspaceOfProfile(hNamedColor, 2, FALSE);
 	nColorant    = T_CHANNELS(OutputFormat);
 
 	

@@ -460,11 +460,13 @@ cmsPipeline* DefaultICCintents(cmsContext       ContextID,
     cmsProfileClassSignature ClassSig;
     cmsUInt32Number  i, Intent;
 
+	// For safety
+	if (nProfiles == 0) return NULL;
+
     // Allocate an empty LUT for holding the result. 0 as channel count means 'undefined'
     Result = cmsPipelineAlloc(ContextID, 0, 0);
     if (Result == NULL) return NULL;
 
- 
     CurrentColorSpace = cmsGetColorSpace(hProfiles[0]);    
 
     for (i=0; i < nProfiles; i++) {
@@ -875,7 +877,8 @@ cmsPipeline* BlackPreservingKPlaneIntents(cmsContext     ContextID,
 
     // Same as anterior, but lab in the 0..1 range
     bp.cmyk2Lab = cmsCreateTransformTHR(ContextID, hProfiles[nProfiles-1], 
-                                         CHANNELS_SH(4)|BYTES_SH(4), hLab, CHANNELS_SH(3)|BYTES_SH(4), 
+                                         FLOAT_SH(1)|CHANNELS_SH(4)|BYTES_SH(4), hLab, 
+										 FLOAT_SH(1)|CHANNELS_SH(3)|BYTES_SH(4), 
                                          INTENT_RELATIVE_COLORIMETRIC, 
                                          cmsFLAGS_NOCACHE|cmsFLAGS_NOOPTIMIZE);
     cmsCloseProfile(hLab);

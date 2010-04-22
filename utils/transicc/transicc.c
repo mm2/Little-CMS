@@ -480,16 +480,16 @@ cmsBool OpenTransforms(void)
 
 
     // Input is always in floating point
-    dwIn  = cmsFormatterForColorspaceOfProfile(hInput, 0);
+    dwIn  = cmsFormatterForColorspaceOfProfile(hInput, 0, TRUE);
 
 	if (lIsDeviceLink) {
 
-		 dwOut = cmsFormatterForPCSOfProfile(hInput, lIsFloat ? 0 : 2);
+		 dwOut = cmsFormatterForPCSOfProfile(hInput, lIsFloat ? 0 : 2, lIsFloat);
 	}
 	else {
     
 		// 16 bits or floating point (only on output)   
-        dwOut = cmsFormatterForColorspaceOfProfile(hOutput, lIsFloat ? 0 : 2);
+        dwOut = cmsFormatterForColorspaceOfProfile(hOutput, lIsFloat ? 0 : 2, lIsFloat);
 	}
 
     // For named color, there is a specialized formatter

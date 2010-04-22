@@ -368,7 +368,7 @@ cmsPipeline* _cmsCreateGamutCheckPipeline(cmsContext ContextID,
 
 
 	// Does create the forward step. Lab double to cmsFloat32Number
-	dwFormat    = (CHANNELS_SH(nChannels)|BYTES_SH(4));
+	dwFormat    = (FLOAT_SH(1)|CHANNELS_SH(nChannels)|BYTES_SH(4));
 	Chain.hForward = cmsCreateTransformTHR(ContextID,
 		hLab, TYPE_Lab_DBL, 
 		hGamut, dwFormat, 
@@ -471,7 +471,7 @@ cmsFloat64Number CMSEXPORT cmsDetectTAC(cmsHPROFILE hProfile)
     }
 
     // Create a fake formatter for result
-    dwFormatter = cmsFormatterForColorspaceOfProfile(hProfile, 4);
+    dwFormatter = cmsFormatterForColorspaceOfProfile(hProfile, 4, TRUE);
 
     bp.nOutputChans = T_CHANNELS(dwFormatter);
     bp.MaxTAC = 0;    // Initial TAC is 0

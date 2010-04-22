@@ -23,7 +23,7 @@
 //
 //---------------------------------------------------------------------------------
 //
-// Version 2.0-beta3
+// Version 2.0-beta4
 //
 
 #ifndef _lcms2_H
@@ -606,8 +606,9 @@ typedef void* cmsHTRANSFORM;
 
 // Format of pixel is defined by one cmsUInt32Number, using bit fields as follows
 //
-//            O TTTTT U Y F P X S EEE CCCC BBB
+//            A O TTTTT U Y F P X S EEE CCCC BBB
 //
+//            A: Floating point -- With this flag we can differentiate 16 bits as float and as int
 //            O: Optimized -- previous optimization already returns the final 8-bit value
 //            T: Pixeltype
 //            F: Flavor  0=MinIsBlack(Chocolate) 1=MinIsWhite(Vanilla)
@@ -619,7 +620,7 @@ typedef void* cmsHTRANSFORM;
 //            B: bytes per sample
 //            Y: Swap first - changes ABGR to BGRA and KCMY to CMYK
 
-
+#define FLOAT_SH(a)            ((a) << 22)
 #define OPTIMIZED_SH(s)        ((s) << 21)
 #define COLORSPACE_SH(s)       ((s) << 16)
 #define SWAPFIRST_SH(s)        ((s) << 14)
@@ -632,6 +633,7 @@ typedef void* cmsHTRANSFORM;
 #define BYTES_SH(b)            (b)
 
 // These macros unpack format specifiers into integers
+#define T_FLOAT(a)            (((a)>>22)&1)
 #define T_OPTIMIZED(o)        (((o)>>21)&1)
 #define T_COLORSPACE(s)       (((s)>>16)&31)
 #define T_SWAPFIRST(s)        (((s)>>14)&1)
@@ -841,18 +843,19 @@ typedef void* cmsHTRANSFORM;
 #define TYPE_NAMED_COLOR_INDEX (CHANNELS_SH(1)|BYTES_SH(2))
 
 // Float formatters.
-#define TYPE_XYZ_FLT          (COLORSPACE_SH(PT_XYZ)|CHANNELS_SH(3)|BYTES_SH(4))
-#define TYPE_Lab_FLT          (COLORSPACE_SH(PT_Lab)|CHANNELS_SH(3)|BYTES_SH(4))
-#define TYPE_GRAY_FLT         (COLORSPACE_SH(PT_GRAY)|CHANNELS_SH(1)|BYTES_SH(4))
-#define TYPE_RGB_FLT          (COLORSPACE_SH(PT_RGB)|CHANNELS_SH(3)|BYTES_SH(4))
-#define TYPE_CMYK_FLT         (COLORSPACE_SH(PT_CMYK)|CHANNELS_SH(4)|BYTES_SH(4))
+#define TYPE_XYZ_FLT          (FLOAT_SH(1)|COLORSPACE_SH(PT_XYZ)|CHANNELS_SH(3)|BYTES_SH(4))
+#define TYPE_Lab_FLT          (FLOAT_SH(1)|COLORSPACE_SH(PT_Lab)|CHANNELS_SH(3)|BYTES_SH(4))
+#define TYPE_GRAY_FLT         (FLOAT_SH(1)|COLORSPACE_SH(PT_GRAY)|CHANNELS_SH(1)|BYTES_SH(4))
+#define TYPE_RGB_FLT          (FLOAT_SH(1)|COLORSPACE_SH(PT_RGB)|CHANNELS_SH(3)|BYTES_SH(4))
+#define TYPE_CMYK_FLT         (FLOAT_SH(1)|COLORSPACE_SH(PT_CMYK)|CHANNELS_SH(4)|BYTES_SH(4))
 
-// Double formatters.  NOTE THAT 'BYTES' FIELD IS SET TO ZERO!
-#define TYPE_XYZ_DBL          (COLORSPACE_SH(PT_XYZ)|CHANNELS_SH(3)|BYTES_SH(0))
-#define TYPE_Lab_DBL          (COLORSPACE_SH(PT_Lab)|CHANNELS_SH(3)|BYTES_SH(0))
-#define TYPE_GRAY_DBL         (COLORSPACE_SH(PT_GRAY)|CHANNELS_SH(1)|BYTES_SH(0))
-#define TYPE_RGB_DBL          (COLORSPACE_SH(PT_RGB)|CHANNELS_SH(3)|BYTES_SH(0))
-#define TYPE_CMYK_DBL         (COLORSPACE_SH(PT_CMYK)|CHANNELS_SH(4)|BYTES_SH(0))
+// Floating point formatters.  
+// NOTE THAT 'BYTES' FIELD IS SET TO ZERO ON DLB because 8 bytes overflows the bitfield
+#define TYPE_XYZ_DBL          (FLOAT_SH(1)|COLORSPACE_SH(PT_XYZ)|CHANNELS_SH(3)|BYTES_SH(0))
+#define TYPE_Lab_DBL          (FLOAT_SH(1)|COLORSPACE_SH(PT_Lab)|CHANNELS_SH(3)|BYTES_SH(0))
+#define TYPE_GRAY_DBL         (FLOAT_SH(1)|COLORSPACE_SH(PT_GRAY)|CHANNELS_SH(1)|BYTES_SH(0))
+#define TYPE_RGB_DBL          (FLOAT_SH(1)|COLORSPACE_SH(PT_RGB)|CHANNELS_SH(3)|BYTES_SH(0))
+#define TYPE_CMYK_DBL         (FLOAT_SH(1)|COLORSPACE_SH(PT_CMYK)|CHANNELS_SH(4)|BYTES_SH(0))
 
 #endif
 
@@ -1356,8 +1359,8 @@ CMSAPI int                      CMSEXPORT _cmsLCMScolorSpace(cmsColorSpaceSignat
 CMSAPI cmsUInt32Number   CMSEXPORT cmsChannelsOf(cmsColorSpaceSignature ColorSpace);
 
 // Build a suitable formatter for the colorspace of this profile
-CMSAPI cmsUInt32Number   CMSEXPORT cmsFormatterForColorspaceOfProfile(cmsHPROFILE hProfile, cmsUInt32Number nBytes);
-CMSAPI cmsUInt32Number   CMSEXPORT cmsFormatterForPCSOfProfile(cmsHPROFILE hProfile, cmsUInt32Number nBytes);
+CMSAPI cmsUInt32Number   CMSEXPORT cmsFormatterForColorspaceOfProfile(cmsHPROFILE hProfile, cmsUInt32Number nBytes, cmsBool lIsFloat);
+CMSAPI cmsUInt32Number   CMSEXPORT cmsFormatterForPCSOfProfile(cmsHPROFILE hProfile, cmsUInt32Number nBytes, cmsBool lIsFloat);
 
 
 // Localized info

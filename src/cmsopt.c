@@ -580,7 +580,6 @@ cmsBool OptimizeByResampling(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
     }
 
     // Allocate the CLUT
-    
     CLUT = cmsStageAllocCLut16bit(Src ->ContextID, nGridPoints, Src ->InputChannels, Src->OutputChannels, NULL);
     if (CLUT == NULL) return FALSE;
 
@@ -611,7 +610,6 @@ cmsBool OptimizeByResampling(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
 
     // Now its time to do the sampling. We have to ignore pre/post linearization 
     // The source LUT whithout pre/post curves is passed as parameter.
-
     if (!cmsStageSampleCLut16bit(CLUT, XFormSampler16, (void*) Src, 0)) {
 
         // Ops, something went wrong, Restore stages
@@ -694,7 +692,6 @@ void SlopeLimiting(cmsToneCurve* g)
     else {
         BeginVal = 0; EndVal = 0xffff;
     }
-
 
     // Compute slope and offset for begin of curve
     Val   = g ->Table16[AtBegin];
@@ -1128,7 +1125,6 @@ Curves16Data* CurvesAlloc(cmsContext ContextID, int nCurves, int nElements, cmsT
                 c16 ->Curves[i][j] = cmsEvalToneCurve16(G[i], (cmsUInt16Number) j);             
             }
         }
-
     }
 
     return c16;
@@ -1261,7 +1257,6 @@ cmsBool OptimizeByJoiningCurves(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUI
              *dwFlags |= cmsFLAGS_NOCACHE;
             _cmsPipelineSetOptimizationParameters(Dest, FastEvaluateCurves16, c16, CurvesFree, CurvesDup);          
         }
-
     }
     else {
 
@@ -1318,7 +1313,7 @@ void* DupMatShaper(cmsContext ContextID, const void* Data)
 
 // A fast matrix-shaper evaluator for 8 bits. This is a bit ticky since I'm using 1.14 signed fixed point 
 // to accomplish some performance. Actually it takes 256x3 16 bits tables and 16385 x 3 tables of 8 bits, 
-// in total about 50K, and the performance boot is huge!
+// in total about 50K, and the performance boost is huge!
 static
 void MatShaperEval16(register const cmsUInt16Number In[], 
                      register cmsUInt16Number Out[], 
@@ -1438,7 +1433,6 @@ cmsBool SetMatShaper(cmsPipeline* Dest, cmsToneCurve* Curve1[3], cmsMAT3* Mat, c
             p ->Off[i] = DOUBLE_TO_1FIXED14(Off->n[i]);
         }
     }
-
 
     // Mark as optimized for faster formatter
     if (Is8Bits)

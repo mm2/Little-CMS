@@ -363,15 +363,19 @@ _cmsTRANSFORM* AllocEmptyTransform(cmsContext ContextID, cmsUInt32Number InputFo
     _cmsTRANSFORM* p = (_cmsTRANSFORM*) _cmsMallocZero(ContextID, sizeof(_cmsTRANSFORM));
     if (!p) return NULL;
 
-    // Create a mutex for shared memory
-    LCMS_CREATE_LOCK(&p->rwlock);
-
     // Check whatever this is a true floating point transform
     if (_cmsFormatterIsFloat(InputFormat) && _cmsFormatterIsFloat(OutputFormat)) {
 
         // Get formatter function always return a valid union, but the contents of this union may be NULL.
         p ->FromInputFloat = _cmsGetFormatter(InputFormat,  cmsFormatterInput, CMS_PACK_FLAGS_FLOAT).FmtFloat;
         p ->ToOutputFloat  = _cmsGetFormatter(OutputFormat, cmsFormatterOutput, CMS_PACK_FLAGS_FLOAT).FmtFloat;
+
+        if (p ->FromInputFloat == NULL || p ->ToOutputFloat == NULL) {
+        
+            cmsSignalError(ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unsupported raster format");
+            _cmsFree(ContextID, p);
+            return NULL;
+        }
 
         // Float transforms don't use caché, always are non-NULL
         p ->xform = FloatXFORM;
@@ -380,6 +384,13 @@ _cmsTRANSFORM* AllocEmptyTransform(cmsContext ContextID, cmsUInt32Number InputFo
 
         p ->FromInput = _cmsGetFormatter(InputFormat,  cmsFormatterInput, CMS_PACK_FLAGS_16BITS).Fmt16;
         p ->ToOutput  = _cmsGetFormatter(OutputFormat, cmsFormatterOutput, CMS_PACK_FLAGS_16BITS).Fmt16;
+
+        if (p ->FromInput == NULL || p ->ToOutput == NULL) {
+        
+            cmsSignalError(ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unsupported raster format");
+            _cmsFree(ContextID, p);
+            return NULL;
+        }
 
         if (dwFlags & cmsFLAGS_NULLTRANSFORM) {
 
@@ -403,6 +414,10 @@ _cmsTRANSFORM* AllocEmptyTransform(cmsContext ContextID, cmsUInt32Number InputFo
             }
         }
     }
+
+    
+    // Create a mutex for shared memory
+    LCMS_CREATE_LOCK(&p->rwlock);
 
     p ->InputFormat     = InputFormat;
     p ->OutputFormat    = OutputFormat;

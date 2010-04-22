@@ -2240,8 +2240,8 @@ static cmsFormatters16 InputFormatters16[] = {
     { TYPE_Lab_DBL,                                          ANYPLANAR,   UnrollLabDoubleTo16},
     { TYPE_XYZ_DBL,                                          ANYPLANAR,   UnrollXYZDoubleTo16},
     { TYPE_GRAY_DBL,                                                 0,   UnrollDouble1Chan},
-    { BYTES_SH(0),             ANYCHANNELS|ANYPLANAR|ANYEXTRA|ANYSPACE,   UnrollDoubleTo16},
-    { BYTES_SH(4),             ANYCHANNELS|ANYPLANAR|ANYEXTRA|ANYSPACE,   UnrollFloatTo16},
+    { FLOAT_SH(1)|BYTES_SH(0), ANYCHANNELS|ANYPLANAR|ANYEXTRA|ANYSPACE,   UnrollDoubleTo16},
+    { FLOAT_SH(1)|BYTES_SH(4), ANYCHANNELS|ANYPLANAR|ANYEXTRA|ANYSPACE,   UnrollFloatTo16},
 
 
     { CHANNELS_SH(1)|BYTES_SH(1),                              ANYSPACE,  Unroll1Byte}, 
@@ -2304,8 +2304,8 @@ static cmsFormattersFloat InputFormattersFloat[] = {
     {     TYPE_XYZ_DBL,                                                    ANYPLANAR,   UnrollXYZDoubleToFloat},
     {     TYPE_XYZ_FLT,                                                    ANYPLANAR,   UnrollXYZFloatToFloat},
 
-    {     BYTES_SH(4),                       ANYPLANAR|ANYEXTRA|ANYCHANNELS|ANYSPACE,   UnrollFloatsToFloat},
-    {     BYTES_SH(0),                       ANYPLANAR|ANYEXTRA|ANYCHANNELS|ANYSPACE,   UnrollDoublesToFloat},
+    {     FLOAT_SH(1)|BYTES_SH(4),           ANYPLANAR|ANYEXTRA|ANYCHANNELS|ANYSPACE,   UnrollFloatsToFloat},
+    {     FLOAT_SH(1)|BYTES_SH(0),           ANYPLANAR|ANYEXTRA|ANYCHANNELS|ANYSPACE,   UnrollDoublesToFloat},
 };
 
 
@@ -2349,8 +2349,8 @@ static cmsFormatters16 OutputFormatters16[] = {
 
     { TYPE_Lab_DBL,                                               ANYPLANAR,  PackLabDoubleFrom16},
     { TYPE_XYZ_DBL,                                               ANYPLANAR,  PackXYZDoubleFrom16},
-    { BYTES_SH(0),                  ANYCHANNELS|ANYPLANAR|ANYEXTRA|ANYSPACE,  PackDoubleFrom16},
-    { BYTES_SH(4),                  ANYCHANNELS|ANYPLANAR|ANYEXTRA|ANYSPACE,  PackFloatFrom16},
+    { FLOAT_SH(1)|BYTES_SH(0),      ANYCHANNELS|ANYPLANAR|ANYEXTRA|ANYSPACE,  PackDoubleFrom16},
+    { FLOAT_SH(1)|BYTES_SH(4),      ANYCHANNELS|ANYPLANAR|ANYEXTRA|ANYSPACE,  PackFloatFrom16},
 
     { CHANNELS_SH(1)|BYTES_SH(1),                                  ANYSPACE,  Pack1Byte},   
     { CHANNELS_SH(1)|BYTES_SH(1)|EXTRA_SH(1),                      ANYSPACE,  Pack1ByteSkip1},
@@ -2428,10 +2428,12 @@ static cmsFormattersFloat OutputFormattersFloat[] = {
     {     TYPE_XYZ_FLT,                                                         ANYPLANAR,   PackXYZFloatFromFloat},
     {     TYPE_Lab_DBL,                                                         ANYPLANAR,   PackLabDoubleFromFloat},
     {     TYPE_XYZ_DBL,                                                         ANYPLANAR,   PackXYZDoubleFromFloat},
-    {     BYTES_SH(4),       ANYFLAVOR|ANYSWAPFIRST|ANYSWAP|ANYEXTRA|ANYCHANNELS|ANYSPACE,   PackChunkyFloatsFromFloat }, 
-    {     BYTES_SH(4)|PLANAR_SH(1),                         ANYEXTRA|ANYCHANNELS|ANYSPACE,   PackPlanarFloatsFromFloat},
-    {     BYTES_SH(0),       ANYFLAVOR|ANYSWAPFIRST|ANYSWAP|ANYEXTRA|ANYCHANNELS|ANYSPACE,   PackChunkyDoublesFromFloat }, 
-    {     BYTES_SH(0)|PLANAR_SH(1),                         ANYEXTRA|ANYCHANNELS|ANYSPACE,   PackPlanarDoublesFromFloat},
+    {     FLOAT_SH(1)|BYTES_SH(4), 
+	                         ANYFLAVOR|ANYSWAPFIRST|ANYSWAP|ANYEXTRA|ANYCHANNELS|ANYSPACE,   PackChunkyFloatsFromFloat }, 
+    {     FLOAT_SH(1)|BYTES_SH(4)|PLANAR_SH(1),             ANYEXTRA|ANYCHANNELS|ANYSPACE,   PackPlanarFloatsFromFloat},
+    {     FLOAT_SH(1)|BYTES_SH(0),
+	                         ANYFLAVOR|ANYSWAPFIRST|ANYSWAP|ANYEXTRA|ANYCHANNELS|ANYSPACE,   PackChunkyDoublesFromFloat }, 
+    {     FLOAT_SH(1)|BYTES_SH(0)|PLANAR_SH(1),             ANYEXTRA|ANYCHANNELS|ANYSPACE,   PackPlanarDoublesFromFloat},
 
 
 };
@@ -2530,9 +2532,7 @@ cmsFormatter _cmsGetFormatter(cmsUInt32Number Type,         // Specific type, i.
 // Return whatever given formatter refers to float values
 cmsBool  _cmsFormatterIsFloat(cmsUInt32Number Type)
 {
-    int Bytes = T_BYTES(Type);
-
-    return (Bytes == 4) || (Bytes == 0);
+	return T_FLOAT(Type) ? TRUE : FALSE;
 }
 
 // Return whatever given formatter refers to 8 bits
@@ -2544,26 +2544,28 @@ cmsBool  _cmsFormatterIs8bit(cmsUInt32Number Type)
 }
 
 // Build a suitable formatter for the colorspace of this profile
-cmsUInt32Number CMSEXPORT cmsFormatterForColorspaceOfProfile(cmsHPROFILE hProfile, cmsUInt32Number nBytes)
+cmsUInt32Number CMSEXPORT cmsFormatterForColorspaceOfProfile(cmsHPROFILE hProfile, cmsUInt32Number nBytes, cmsBool lIsFloat)
 {
  
     cmsColorSpaceSignature ColorSpace      = cmsGetColorSpace(hProfile);
-    int                    ColorSpaceBits  = _cmsLCMScolorSpace(ColorSpace);
+    cmsUInt32Number        ColorSpaceBits  = _cmsLCMScolorSpace(ColorSpace);
     cmsUInt32Number        nOutputChans    = cmsChannelsOf(ColorSpace);
+    cmsUInt32Number        Float           = lIsFloat ? 1 : 0;
 
     // Create a fake formatter for result
-    return COLORSPACE_SH(ColorSpaceBits) | BYTES_SH(nBytes) | CHANNELS_SH(nOutputChans);
+	return FLOAT_SH(Float) | COLORSPACE_SH(ColorSpaceBits) | BYTES_SH(nBytes) | CHANNELS_SH(nOutputChans);
 }
 
 // Build a suitable formatter for the colorspace of this profile
-cmsUInt32Number CMSEXPORT cmsFormatterForPCSOfProfile(cmsHPROFILE hProfile, cmsUInt32Number nBytes)
+cmsUInt32Number CMSEXPORT cmsFormatterForPCSOfProfile(cmsHPROFILE hProfile, cmsUInt32Number nBytes, cmsBool lIsFloat)
 {
  
     cmsColorSpaceSignature ColorSpace      = cmsGetPCS(hProfile);
     int                    ColorSpaceBits  = _cmsLCMScolorSpace(ColorSpace);
     cmsUInt32Number        nOutputChans    = cmsChannelsOf(ColorSpace);
+    cmsUInt32Number        Float           = lIsFloat ? 1 : 0;
 
     // Create a fake formatter for result
-    return COLORSPACE_SH(ColorSpaceBits) | BYTES_SH(nBytes) | CHANNELS_SH(nOutputChans);
+    return FLOAT_SH(Float) | COLORSPACE_SH(ColorSpaceBits) | BYTES_SH(nBytes) | CHANNELS_SH(nOutputChans);
 }
 

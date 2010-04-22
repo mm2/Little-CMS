@@ -82,7 +82,7 @@ cmsBool  BlackPointAsDarkerColorant(cmsHPROFILE    hInput,
     }
     
     // Create a formatter which has n channels and floating point
-    dwFormat = cmsFormatterForColorspaceOfProfile(hInput, 2);
+    dwFormat = cmsFormatterForColorspaceOfProfile(hInput, 2, FALSE);
 
    // Try to get black by using black colorant    
     Space = cmsGetColorSpace(hInput);

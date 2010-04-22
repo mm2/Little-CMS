@@ -66,9 +66,9 @@ long int CMSEXPORT cmsfilelength(FILE* f)
 
 // User may override this behaviour by using a memory plug-in, which basically replaces
 // the default memory management functions. In this case, no check is performed and it 
-// is up to the plug-in writter to keep in the safe side. There are only two functions 
-// required to be implemented: malloc and free, although the user may want to replace
-// the optional mallocZero, realloc, calloc and dup as well.
+// is up to the plug-in writter to keep in the safe side. There are only three functions 
+// required to be implemented: malloc, realloc and free, although the user may want to 
+// replace the optional mallocZero, calloc and dup as well.
 
 cmsBool   _cmsRegisterMemHandlerPlugin(cmsPluginBase* Plugin);
 

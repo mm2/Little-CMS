@@ -463,7 +463,7 @@ cmsHPROFILE CreateFakeCMYK(cmsFloat64Number InkLimit, cmsBool lUseAboveRGB)
     cmsContext ContextID;
     FakeCMYKParams p;
     cmsHPROFILE hLab, hsRGB, hLimit;
-    cmsUInt16Number cmykfrm;
+    cmsUInt32Number cmykfrm;
 
 
     if (lUseAboveRGB)
@@ -474,7 +474,7 @@ cmsHPROFILE CreateFakeCMYK(cmsFloat64Number InkLimit, cmsBool lUseAboveRGB)
     hLab   = cmsCreateLab4Profile(NULL);
     hLimit = cmsCreateInkLimitingDeviceLink(cmsSigCmykData, InkLimit);
 
-    cmykfrm = BYTES_SH(0)|CHANNELS_SH(4);
+    cmykfrm = FLOAT_SH(1) | BYTES_SH(0)|CHANNELS_SH(4);
     p.hLab2sRGB = cmsCreateTransform(hLab,  TYPE_Lab_16,  hsRGB, TYPE_RGB_DBL, INTENT_PERCEPTUAL, cmsFLAGS_NOOPTIMIZE|cmsFLAGS_NOCACHE);
     p.sRGB2Lab  = cmsCreateTransform(hsRGB, TYPE_RGB_DBL, hLab,  TYPE_Lab_16,  INTENT_PERCEPTUAL, cmsFLAGS_NOOPTIMIZE|cmsFLAGS_NOCACHE);
     p.hIlimit   = cmsCreateTransform(hLimit, cmykfrm, NULL, TYPE_CMYK_16, INTENT_PERCEPTUAL, cmsFLAGS_NOOPTIMIZE|cmsFLAGS_NOCACHE);
@@ -7380,7 +7380,7 @@ int main(int argc, char* argv[])
     Check("CMYK roundtrip on perceptual transform",   CheckCMYKRoundtrip);
     
     Check("CMYK perceptual transform",   CheckCMYKPerceptual);
-    //Check("CMYK rel.col. transform",   CheckCMYKRelCol);
+    // Check("CMYK rel.col. transform",   CheckCMYKRelCol);
     
     Check("Black ink only preservation", CheckKOnlyBlackPreserving);
     Check("Black plane preservation", CheckKPlaneBlackPreserving);
