@@ -970,7 +970,10 @@ cmsPipeline* _cmsLinkProfiles(cmsContext     ContextID,
     // preserve primaries. This solution is not perfect, but works well on most cases.
 
     Intent = SearchIntent(TheIntents[0]);
-    if (Intent == NULL) return NULL;
+	if (Intent == NULL) {
+		cmsSignalError(ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unsupported intent '%d'", TheIntents[0]);
+		return NULL;
+	}
 
     // Call the handler
     return Intent ->Link(ContextID, nProfiles, TheIntents, hProfiles, BPC, AdaptationStates, dwFlags);

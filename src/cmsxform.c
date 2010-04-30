@@ -427,11 +427,13 @@ _cmsTRANSFORM* AllocEmptyTransform(cmsContext ContextID, cmsUInt32Number InputFo
 }
 
 static
-void GetXFormColorSpaces(int nProfiles, cmsHPROFILE hProfiles[], cmsColorSpaceSignature* Input, cmsColorSpaceSignature* Output) 
+cmsBool GetXFormColorSpaces(int nProfiles, cmsHPROFILE hProfiles[], cmsColorSpaceSignature* Input, cmsColorSpaceSignature* Output) 
 {    
     cmsColorSpaceSignature ColorSpaceIn, ColorSpaceOut;   
     cmsColorSpaceSignature PostColorSpace;   
     int i;
+
+	if (hProfiles[0] == NULL) return FALSE;
 
     *Input = PostColorSpace = cmsGetColorSpace(hProfiles[0]);
 
@@ -441,6 +443,8 @@ void GetXFormColorSpaces(int nProfiles, cmsHPROFILE hProfiles[], cmsColorSpaceSi
 
         int lIsInput = (PostColorSpace != cmsSigXYZData) &&
                        (PostColorSpace != cmsSigLabData);
+
+		if (hProfile == NULL) return FALSE;
 
         if (lIsInput) {
 
@@ -457,6 +461,8 @@ void GetXFormColorSpaces(int nProfiles, cmsHPROFILE hProfiles[], cmsColorSpaceSi
     }  
 
     *Output = PostColorSpace;
+
+	return TRUE;
 }
 
 // Check colorspace
@@ -508,7 +514,10 @@ cmsHTRANSFORM CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
         dwFlags |= cmsFLAGS_NOCACHE;
 
     // Mark entry/exit spaces
-    GetXFormColorSpaces(nProfiles, hProfiles, &EntryColorSpace, &ExitColorSpace);
+	if (!GetXFormColorSpaces(nProfiles, hProfiles, &EntryColorSpace, &ExitColorSpace)) {
+		cmsSignalError(ContextID, cmsERROR_NULL, "NULL input profiles on transform");        
+		return NULL;
+	}
 
     // Check if proper colorspaces
     if (!IsProperColorSpace(EntryColorSpace, InputFormat)) {        

@@ -4997,6 +4997,69 @@ cmsInt32Number CheckErrReportingOnBadProfiles(void)
 }
 
 
+static
+cmsInt32Number CheckBadTransforms(void)
+{
+    cmsHPROFILE h1 = cmsCreate_sRGBProfile();
+	cmsHTRANSFORM x1;
+
+	x1 = cmsCreateTransform(NULL, 0, NULL, 0, 0, 0);
+	if (x1 != NULL) {
+		cmsDeleteTransform(x1);
+		return 0;
+	}
+
+	x1 = cmsCreateTransform(h1, 0, h1, 0, 0, 0);
+    if (x1 != NULL) {
+		cmsDeleteTransform(x1);
+		return 0;
+	}
+
+	x1 = cmsCreateTransform(h1, TYPE_RGB_8, h1, TYPE_RGB_8, 12345, 0);
+	if (x1 != NULL) {
+		cmsDeleteTransform(x1);
+		return 0;
+	}
+
+    x1 = cmsCreateTransform(h1, TYPE_CMYK_8, h1, TYPE_RGB_8, 0, 0);
+	if (x1 != NULL) {
+		cmsDeleteTransform(x1);
+		return 0;
+	}
+
+	x1 = cmsCreateTransform(h1, TYPE_RGB_8, h1, TYPE_CMYK_8, 1, 0);
+	if (x1 != NULL) {
+		cmsDeleteTransform(x1);
+		return 0;
+	}
+
+	// sRGB does its output as XYZ!
+	x1 = cmsCreateTransform(h1, TYPE_RGB_8, NULL, TYPE_Lab_8, 1, 0);
+	if (x1 != NULL) {
+		cmsDeleteTransform(x1);
+		return 0;
+	}
+
+	cmsCloseProfile(h1);
+	return 1;
+
+}
+
+static
+cmsInt32Number CheckErrReportingOnBadTransforms(void)
+{
+    cmsInt32Number rc;
+
+    cmsSetLogErrorHandler(ErrorReportingFunction);
+    rc = CheckBadTransforms();
+    cmsSetLogErrorHandler(FatalErrorQuit);
+
+    // Reset the error state
+    TrappedError = FALSE;
+    return rc;
+}
+
+
 
 
 // ---------------------------------------------------------------------------------------------------------
@@ -7352,6 +7415,7 @@ int main(int argc, char* argv[])
     
     // Error reporting
     Check("Error reporting on bad profiles", CheckErrReportingOnBadProfiles);
+    Check("Error reporting on bad transforms", CheckErrReportingOnBadTransforms);
     
     // Transforms
     Check("Curves only transforms", CheckCurvesOnlyTransforms);
@@ -7363,8 +7427,8 @@ int main(int argc, char* argv[])
     Check("Matrix-shaper transform (16 bits)", CheckMatrixShaperXFORM16);   
     Check("Matrix-shaper transform (8 bits)",  CheckMatrixShaperXFORM8);
 
-
     Check("Primaries of sRGB", CheckRGBPrimaries);
+
     // Known values
     Check("Known values across matrix-shaper", Chack_sRGB_Float);
     Check("Gray input profile", CheckInputGray);

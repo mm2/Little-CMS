@@ -1064,6 +1064,9 @@ cmsHPROFILE CMSEXPORT cmsTransform2DeviceLink(cmsHTRANSFORM hTransform, cmsFloat
 
 
     // Check if the profile/version can store the result
+    if (dwFlags & cmsFLAGS_FORCE_CLUT)
+        AllowedLUT = NULL;
+    else
     AllowedLUT = FindCombination(LUT, Version >= 4.0);
 
     if (AllowedLUT == NULL) {
