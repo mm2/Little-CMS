@@ -217,7 +217,7 @@ int GamutSampler(register const cmsUInt16Number In[], register cmsUInt16Number O
     GAMUTCHAIN*  t = (GAMUTCHAIN* ) Cargo;          
     cmsCIELab LabIn1, LabOut1;  
     cmsCIELab LabIn2, LabOut2;      
-    cmsFloat32Number Proof[MAXCHANNELS], Proof2[MAXCHANNELS];
+    cmsFloat32Number Proof[cmsMAXCHANNELS], Proof2[cmsMAXCHANNELS];
     cmsFloat64Number dE1, dE2, ErrorRatio;
 
     // Assume in-gamut by default.
@@ -417,7 +417,7 @@ typedef struct {
     cmsUInt32Number  nOutputChans;
     cmsHTRANSFORM    hRoundTrip;               
     cmsFloat32Number MaxTAC;
-    cmsFloat32Number MaxInput[MAXCHANNELS];
+    cmsFloat32Number MaxInput[cmsMAXCHANNELS];
 
 } cmsTACestimator;
 
@@ -428,7 +428,7 @@ static
 int EstimateTAC(register const cmsUInt16Number In[], register cmsUInt16Number Out[], register void * Cargo)
 {
     cmsTACestimator* bp = (cmsTACestimator*) Cargo;
-    cmsFloat32Number RoundTrip[MAXCHANNELS];
+    cmsFloat32Number RoundTrip[cmsMAXCHANNELS];
     cmsUInt32Number i;
     cmsFloat32Number Sum;
 
@@ -477,7 +477,7 @@ cmsFloat64Number CMSEXPORT cmsDetectTAC(cmsHPROFILE hProfile)
     bp.MaxTAC = 0;    // Initial TAC is 0
 
     //  for safety
-    if (bp.nOutputChans >= MAXCHANNELS) return 0;
+    if (bp.nOutputChans >= cmsMAXCHANNELS) return 0;
 
     hLab = cmsCreateLab4ProfileTHR(ContextID, NULL);
     if (hLab == NULL) return 0;

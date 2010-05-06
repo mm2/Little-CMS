@@ -602,7 +602,7 @@ typedef void* cmsHANDLE ;              // Generic handle
 typedef void* cmsHPROFILE;             // Opaque typedefs to hide internals
 typedef void* cmsHTRANSFORM;
 
-#define MAXCHANNELS  16                // Maximum number of channels in ICC profiles
+#define cmsMAXCHANNELS  16                // Maximum number of channels in ICC profiles
 
 // Format of pixel is defined by one cmsUInt32Number, using bit fields as follows
 //
@@ -1234,7 +1234,7 @@ typedef struct {
 typedef struct {
     cmsUInt32Number Flag;
     cmsUInt32Number nChannels;
-    cmsScreeningChannel Channels[MAXCHANNELS];
+    cmsScreeningChannel Channels[cmsMAXCHANNELS];
 
 } cmsScreening;
 
@@ -1252,7 +1252,7 @@ CMSAPI void               CMSEXPORT cmsFreeNamedColorList(cmsNAMEDCOLORLIST* v);
 CMSAPI cmsNAMEDCOLORLIST* CMSEXPORT cmsDupNamedColorList(const cmsNAMEDCOLORLIST* v);
 CMSAPI cmsBool            CMSEXPORT cmsAppendNamedColor(cmsNAMEDCOLORLIST* v, const char* Name,
                                                             cmsUInt16Number PCS[3],
-                                                            cmsUInt16Number Colorant[MAXCHANNELS]);
+                                                            cmsUInt16Number Colorant[cmsMAXCHANNELS]);
 
 CMSAPI cmsUInt32Number    CMSEXPORT cmsNamedColorCount(const cmsNAMEDCOLORLIST* v);
 CMSAPI cmsInt32Number     CMSEXPORT cmsNamedColorIndex(const cmsNAMEDCOLORLIST* v, const char* Name);
@@ -1597,8 +1597,8 @@ CMSAPI void             CMSEXPORT cmsDoTransform(cmsHTRANSFORM Transform,
                                                  void * OutputBuffer,
                                                  cmsUInt32Number Size);
 
-CMSAPI void             CMSEXPORT cmsSetAlarmCodes(cmsUInt16Number NewAlarm[MAXCHANNELS]);
-CMSAPI void             CMSEXPORT cmsGetAlarmCodes(cmsUInt16Number NewAlarm[MAXCHANNELS]);
+CMSAPI void             CMSEXPORT cmsSetAlarmCodes(cmsUInt16Number NewAlarm[cmsMAXCHANNELS]);
+CMSAPI void             CMSEXPORT cmsGetAlarmCodes(cmsUInt16Number NewAlarm[cmsMAXCHANNELS]);
 
 // Adaptation state for absolute colorimetric intent
 CMSAPI cmsFloat64Number CMSEXPORT cmsSetAdaptationState(cmsFloat64Number d);

@@ -3306,7 +3306,7 @@ cmsInt32Number CheckNamedColorLUT(void)
     cmsNAMEDCOLORLIST* nc;
     cmsInt32Number i,j, rc = 1, n2;
     cmsUInt16Number PCS[3];
-    cmsUInt16Number Colorant[MAXCHANNELS];
+    cmsUInt16Number Colorant[cmsMAXCHANNELS];
     char Name[255];
     cmsUInt16Number Inw[3], Outw[3];
 
@@ -3486,10 +3486,10 @@ cmsInt32Number CheckNamedColorList(void)
     cmsInt32Number i, j, rc=1;
     char Name[255];
     cmsUInt16Number PCS[3];
-    cmsUInt16Number Colorant[MAXCHANNELS];
+    cmsUInt16Number Colorant[cmsMAXCHANNELS];
     char CheckName[255];
     cmsUInt16Number CheckPCS[3];
-    cmsUInt16Number CheckColorant[MAXCHANNELS];
+    cmsUInt16Number CheckColorant[cmsMAXCHANNELS];
     cmsHPROFILE h;
 
     nc = cmsAllocNamedColorList(DbgThread(), 0, 4, "prefix", "suffix");
@@ -3580,7 +3580,7 @@ static cmsBool  FormatterFailed;
 static
 void CheckSingleFormatter16(cmsUInt32Number Type, const char* Text)
 {
-    cmsUInt16Number Values[MAXCHANNELS];
+    cmsUInt16Number Values[cmsMAXCHANNELS];
     cmsUInt8Number Buffer[1024];
     cmsFormatter f, b;
     cmsInt32Number i, j, nChannels, bytes;
@@ -3811,7 +3811,7 @@ cmsInt32Number CheckFormatters16(void)
 static
 void CheckSingleFormatterFloat(cmsUInt32Number Type, const char* Text)
 {
-    cmsFloat32Number Values[MAXCHANNELS];
+    cmsFloat32Number Values[cmsMAXCHANNELS];
     cmsUInt8Number Buffer[1024];
     cmsFormatter f, b;
     cmsInt32Number i, j, nChannels;
@@ -4065,10 +4065,10 @@ cmsInt32Number CheckNamedColor(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTa
     cmsInt32Number i, j, rc;
     char Name[255];
     cmsUInt16Number PCS[3];
-    cmsUInt16Number Colorant[MAXCHANNELS];
+    cmsUInt16Number Colorant[cmsMAXCHANNELS];
     char CheckName[255];
     cmsUInt16Number CheckPCS[3];
-    cmsUInt16Number CheckColorant[MAXCHANNELS];
+    cmsUInt16Number CheckColorant[cmsMAXCHANNELS];
 
     switch (Pass) {
 
@@ -4221,13 +4221,13 @@ cmsInt32Number CheckChromaticity(cmsInt32Number Pass,  cmsHPROFILE hProfile, cms
 static
 cmsInt32Number CheckColorantOrder(cmsInt32Number Pass,  cmsHPROFILE hProfile, cmsTagSignature tag)
 {
-    cmsUInt8Number *Pt, c[MAXCHANNELS];
+    cmsUInt8Number *Pt, c[cmsMAXCHANNELS];
     cmsInt32Number i;
 
     switch (Pass) {
 
         case 1:         
-            for (i=0; i < MAXCHANNELS; i++) c[i] = (cmsUInt8Number) (MAXCHANNELS - i - 1);
+            for (i=0; i < cmsMAXCHANNELS; i++) c[i] = (cmsUInt8Number) (cmsMAXCHANNELS - i - 1);
             return cmsWriteTag(hProfile, tag, c);
             
 
@@ -4235,8 +4235,8 @@ cmsInt32Number CheckColorantOrder(cmsInt32Number Pass,  cmsHPROFILE hProfile, cm
             Pt = cmsReadTag(hProfile, tag);
             if (Pt == NULL) return 0;
 
-            for (i=0; i < MAXCHANNELS; i++) {
-                if (Pt[i] != ( MAXCHANNELS - i - 1 )) return 0;
+            for (i=0; i < cmsMAXCHANNELS; i++) {
+                if (Pt[i] != ( cmsMAXCHANNELS - i - 1 )) return 0;
             }
             return 1;
 
@@ -5069,7 +5069,7 @@ static
 cmsInt32Number Check8linearXFORM(cmsHTRANSFORM xform, cmsInt32Number nChan)
 {
     cmsInt32Number n2, i, j;
-    cmsUInt8Number Inw[MAXCHANNELS], Outw[MAXCHANNELS];
+    cmsUInt8Number Inw[cmsMAXCHANNELS], Outw[cmsMAXCHANNELS];
 
     n2=0;
     
@@ -5100,7 +5100,7 @@ static
 cmsInt32Number Compare8bitXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, cmsInt32Number nChan)
 {
     cmsInt32Number n2, i, j;
-    cmsUInt8Number Inw[MAXCHANNELS], Outw1[MAXCHANNELS], Outw2[MAXCHANNELS];;
+    cmsUInt8Number Inw[cmsMAXCHANNELS], Outw1[cmsMAXCHANNELS], Outw2[cmsMAXCHANNELS];;
 
     n2=0;
     
@@ -5135,7 +5135,7 @@ static
 cmsInt32Number Check16linearXFORM(cmsHTRANSFORM xform, cmsInt32Number nChan)
 {
     cmsInt32Number n2, i, j;
-    cmsUInt16Number Inw[MAXCHANNELS], Outw[MAXCHANNELS];
+    cmsUInt16Number Inw[cmsMAXCHANNELS], Outw[cmsMAXCHANNELS];
 
     n2=0;    
     for (j=0; j < 0xFFFF; j++) {
@@ -5167,7 +5167,7 @@ static
 cmsInt32Number Compare16bitXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, cmsInt32Number nChan)
 {
     cmsInt32Number n2, i, j;
-    cmsUInt16Number Inw[MAXCHANNELS], Outw1[MAXCHANNELS], Outw2[MAXCHANNELS];;
+    cmsUInt16Number Inw[cmsMAXCHANNELS], Outw1[cmsMAXCHANNELS], Outw2[cmsMAXCHANNELS];;
 
     n2=0;
     
@@ -5203,7 +5203,7 @@ static
 cmsInt32Number CheckFloatlinearXFORM(cmsHTRANSFORM xform, cmsInt32Number nChan)
 {
     cmsInt32Number n2, i, j;
-    cmsFloat32Number In[MAXCHANNELS], Out[MAXCHANNELS];
+    cmsFloat32Number In[cmsMAXCHANNELS], Out[cmsMAXCHANNELS];
 
     n2=0;
     
@@ -5230,7 +5230,7 @@ static
 cmsInt32Number CompareFloatXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, cmsInt32Number nChan)
 {
     cmsInt32Number n2, i, j;
-    cmsFloat32Number In[MAXCHANNELS], Out1[MAXCHANNELS], Out2[MAXCHANNELS];
+    cmsFloat32Number In[cmsMAXCHANNELS], Out1[cmsMAXCHANNELS], Out2[cmsMAXCHANNELS];
 
     n2=0;
     

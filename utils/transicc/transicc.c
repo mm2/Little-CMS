@@ -274,14 +274,14 @@ cmsNAMEDCOLORLIST* ComponentNames(cmsColorSpaceSignature space)
     cmsNAMEDCOLORLIST* out;
     int i, n;
     char Buffer[cmsMAX_PATH];
-    cmsUInt16Number Range[MAXCHANNELS];
+    cmsUInt16Number Range[cmsMAXCHANNELS];
 
 
     // Empty colorants (to store range in first one)
-    for (i=0; i < MAXCHANNELS; i++)
+    for (i=0; i < cmsMAXCHANNELS; i++)
         Range[i] = 0;
 
-    out = cmsAllocNamedColorList(0, 12, MAXCHANNELS, "", "");
+    out = cmsAllocNamedColorList(0, 12, cmsMAXCHANNELS, "", "");
     if (out == NULL) return NULL;
 
     switch (space) {
@@ -517,12 +517,12 @@ cmsBool OpenTransforms(void)
 
     if (GamutCheck) {
 
-        cmsUInt16Number Alarm[MAXCHANNELS];
+        cmsUInt16Number Alarm[cmsMAXCHANNELS];
 
         if (hProof == NULL)
             FatalError("I need proofing profile -p for gamut checking!");
 
-        for (i=0; i < MAXCHANNELS; i++)
+        for (i=0; i < cmsMAXCHANNELS; i++)
             Alarm[i] = 0xFFFF;
 
         cmsSetAlarmCodes(Alarm);
@@ -614,7 +614,7 @@ void PrintFloatResults(cmsFloat64Number Value[])
 {
     cmsUInt32Number i, n;
     char ChannelName[cmsMAX_PATH];
-    cmsUInt16Number Range[MAXCHANNELS];
+    cmsUInt16Number Range[cmsMAXCHANNELS];
     cmsFloat64Number v;
 
     n = cmsChannelsOf(OutputColorSpace);
@@ -673,7 +673,7 @@ void TakeFloatValues(cmsFloat64Number Float[])
     cmsUInt32Number i, n;
     char ChannelName[cmsMAX_PATH];
     char Buffer[cmsMAX_PATH];
-    cmsUInt16Number Range[MAXCHANNELS];
+    cmsUInt16Number Range[cmsMAXCHANNELS];
 
     if (xisatty(stdin))
         fprintf(stderr, "\nEnter values, 'q' to quit\n");
@@ -1088,9 +1088,9 @@ void OpenCGATSFiles(int argc, char *argv[])
 // The main sink
 int main(int argc, char *argv[])
 {    
-    cmsUInt16Number Output[MAXCHANNELS];
-    cmsFloat64Number OutputFloat[MAXCHANNELS];
-    cmsFloat64Number InputFloat[MAXCHANNELS];
+    cmsUInt16Number Output[cmsMAXCHANNELS];
+    cmsFloat64Number OutputFloat[cmsMAXCHANNELS];
+    cmsFloat64Number InputFloat[cmsMAXCHANNELS];
 
     int nPatch = 0;
 

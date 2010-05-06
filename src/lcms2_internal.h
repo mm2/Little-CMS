@@ -284,7 +284,7 @@ typedef struct {
 
     char Name[cmsMAX_PATH];
     cmsUInt16Number PCS[3];
-    cmsUInt16Number DeviceColorant[MAXCHANNELS];
+    cmsUInt16Number DeviceColorant[cmsMAXCHANNELS];
 
 } _cmsNAMEDCOLOR;
 
@@ -584,8 +584,8 @@ typedef struct _cmstransform_struct {
     cmsFormatterFloat ToOutputFloat;
     
     // 1-pixel cache (16 bits only)
-    cmsUInt16Number CacheIn[MAXCHANNELS];
-    cmsUInt16Number CacheOut[MAXCHANNELS];
+    cmsUInt16Number CacheIn[cmsMAXCHANNELS];
+    cmsUInt16Number CacheOut[cmsMAXCHANNELS];
 
     // Semaphor for cache
     LCMS_RWLOCK_T rwlock;

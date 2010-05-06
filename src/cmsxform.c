@@ -31,7 +31,7 @@
 
 // Alarm codes for 16-bit transformations, because the fixed range of containers there are
 // no values left to mark out of gamut. volatile is C99 per 6.2.5
-static volatile cmsUInt16Number Alarm[MAXCHANNELS];
+static volatile cmsUInt16Number Alarm[cmsMAXCHANNELS];
 static volatile cmsFloat64Number GlobalAdaptationState = 0;
 
 // The adaptation state may be defaulted by this function. If you don't like it, use the extended transform routine
@@ -46,24 +46,24 @@ cmsFloat64Number CMSEXPORT cmsSetAdaptationState(cmsFloat64Number d)
 }
 
 // Alarm codes are always global
-void CMSEXPORT cmsSetAlarmCodes(cmsUInt16Number NewAlarm[MAXCHANNELS])
+void CMSEXPORT cmsSetAlarmCodes(cmsUInt16Number NewAlarm[cmsMAXCHANNELS])
 {
     int i;
 
     _cmsAssert(NewAlarm != NULL);
 
-    for (i=0; i < MAXCHANNELS; i++) 
+    for (i=0; i < cmsMAXCHANNELS; i++) 
         Alarm[i] = NewAlarm[i];
 }
 
 // You can get the codes cas well
-void CMSEXPORT cmsGetAlarmCodes(cmsUInt16Number OldAlarm[MAXCHANNELS])
+void CMSEXPORT cmsGetAlarmCodes(cmsUInt16Number OldAlarm[cmsMAXCHANNELS])
 {
     int i;
 
     _cmsAssert(OldAlarm != NULL);
 
-    for (i=0; i < MAXCHANNELS; i++) 
+    for (i=0; i < cmsMAXCHANNELS; i++) 
         OldAlarm[i] = Alarm[i];
 }
 
@@ -117,7 +117,7 @@ void FloatXFORM(_cmsTRANSFORM* p,
 {
     cmsUInt8Number* accum;
     cmsUInt8Number* output;
-    cmsFloat32Number fIn[MAXCHANNELS], fOut[MAXCHANNELS];
+    cmsFloat32Number fIn[cmsMAXCHANNELS], fOut[cmsMAXCHANNELS];
     cmsFloat32Number OutOfGamut;
     cmsUInt32Number i, j;
 
@@ -138,7 +138,7 @@ void FloatXFORM(_cmsTRANSFORM* p,
             if (OutOfGamut > 0.0) {
 
                 // Certainly, out of gamut
-                for (j=0; j < MAXCHANNELS; j++)
+                for (j=0; j < cmsMAXCHANNELS; j++)
                     fOut[j] = -1.0;
 
             }
@@ -168,7 +168,7 @@ void NullXFORM(_cmsTRANSFORM* p,
 {
     cmsUInt8Number* accum;
     cmsUInt8Number* output;
-    cmsUInt16Number wIn[MAXCHANNELS];
+    cmsUInt16Number wIn[cmsMAXCHANNELS];
     cmsUInt32Number i, n;
 
     accum  = (cmsUInt8Number*)  in;
@@ -191,7 +191,7 @@ void PrecalculatedXFORM(_cmsTRANSFORM* p,
 {
     register cmsUInt8Number* accum;
     register cmsUInt8Number* output;
-    cmsUInt16Number wIn[MAXCHANNELS], wOut[MAXCHANNELS];
+    cmsUInt16Number wIn[cmsMAXCHANNELS], wOut[cmsMAXCHANNELS];
     cmsUInt32Number i, n;
 
     accum  = (cmsUInt8Number*)  in;
@@ -235,7 +235,7 @@ void PrecalculatedXFORMGamutCheck(_cmsTRANSFORM* p,
 {
     cmsUInt8Number* accum;
     cmsUInt8Number* output;
-    cmsUInt16Number wIn[MAXCHANNELS], wOut[MAXCHANNELS];
+    cmsUInt16Number wIn[cmsMAXCHANNELS], wOut[cmsMAXCHANNELS];
     cmsUInt32Number i, n;
 
     accum  = (cmsUInt8Number*)  in;
@@ -259,9 +259,9 @@ void CachedXFORM(_cmsTRANSFORM* p,
 {
     cmsUInt8Number* accum;
     cmsUInt8Number* output;
-    cmsUInt16Number wIn[MAXCHANNELS], wOut[MAXCHANNELS];
+    cmsUInt16Number wIn[cmsMAXCHANNELS], wOut[cmsMAXCHANNELS];
     cmsUInt32Number i, n;
-    cmsUInt16Number CacheIn[MAXCHANNELS], CacheOut[MAXCHANNELS];
+    cmsUInt16Number CacheIn[cmsMAXCHANNELS], CacheOut[cmsMAXCHANNELS];
 
     accum  = (cmsUInt8Number*)  in;
     output = (cmsUInt8Number*)  out;
@@ -312,21 +312,21 @@ void CachedXFORMGamutCheck(_cmsTRANSFORM* p,
 {
        cmsUInt8Number* accum;
        cmsUInt8Number* output;
-       cmsUInt16Number wIn[MAXCHANNELS], wOut[MAXCHANNELS];
+       cmsUInt16Number wIn[cmsMAXCHANNELS], wOut[cmsMAXCHANNELS];
        cmsUInt32Number i, n;
-       cmsUInt16Number CacheIn[MAXCHANNELS], CacheOut[MAXCHANNELS];
+       cmsUInt16Number CacheIn[cmsMAXCHANNELS], CacheOut[cmsMAXCHANNELS];
 
        accum  = (cmsUInt8Number*)  in;
        output = (cmsUInt8Number*)  out;
        n = Size;                    // Buffer len
 
        // Empty buffers for quick memcmp
-       memset(wIn,  0, sizeof(cmsUInt16Number) * MAXCHANNELS);
-       memset(wOut, 0, sizeof(cmsUInt16Number) * MAXCHANNELS);
+       memset(wIn,  0, sizeof(cmsUInt16Number) * cmsMAXCHANNELS);
+       memset(wOut, 0, sizeof(cmsUInt16Number) * cmsMAXCHANNELS);
 
        LCMS_READ_LOCK(&p ->rwlock);
-           memmove(CacheIn,  p ->CacheIn, sizeof(cmsUInt16Number) * MAXCHANNELS);
-           memmove(CacheOut, p ->CacheOut, sizeof(cmsUInt16Number) * MAXCHANNELS);
+           memmove(CacheIn,  p ->CacheIn, sizeof(cmsUInt16Number) * cmsMAXCHANNELS);
+           memmove(CacheOut, p ->CacheOut, sizeof(cmsUInt16Number) * cmsMAXCHANNELS);
        LCMS_UNLOCK(&p ->rwlock);
 
 
@@ -334,21 +334,21 @@ void CachedXFORMGamutCheck(_cmsTRANSFORM* p,
 
             accum = p -> FromInput(p, wIn, accum, Size);
      
-            if (memcmp(wIn, CacheIn, sizeof(cmsUInt16Number) * MAXCHANNELS) == 0) {
-                    memmove(wOut, CacheOut, sizeof(cmsUInt16Number) * MAXCHANNELS);
+            if (memcmp(wIn, CacheIn, sizeof(cmsUInt16Number) * cmsMAXCHANNELS) == 0) {
+                    memmove(wOut, CacheOut, sizeof(cmsUInt16Number) * cmsMAXCHANNELS);
             }
             else {            
                     TransformOnePixelWithGamutCheck(p, wIn, wOut);
-                    memmove(CacheIn, wIn, sizeof(cmsUInt16Number) * MAXCHANNELS);
-                    memmove(CacheOut, wOut, sizeof(cmsUInt16Number) * MAXCHANNELS);
+                    memmove(CacheIn, wIn, sizeof(cmsUInt16Number) * cmsMAXCHANNELS);
+                    memmove(CacheOut, wOut, sizeof(cmsUInt16Number) * cmsMAXCHANNELS);
             }
 
             output = p -> ToOutput(p, wOut, output, Size);
        }
 
         LCMS_WRITE_LOCK(&p ->rwlock);
-           memmove(p->CacheIn,  CacheIn, sizeof(cmsUInt16Number) * MAXCHANNELS);
-           memmove(p->CacheOut, CacheOut, sizeof(cmsUInt16Number) * MAXCHANNELS);
+           memmove(p->CacheIn,  CacheIn, sizeof(cmsUInt16Number) * cmsMAXCHANNELS);
+           memmove(p->CacheOut, CacheOut, sizeof(cmsUInt16Number) * cmsMAXCHANNELS);
         LCMS_UNLOCK(&p ->rwlock);
 }
 

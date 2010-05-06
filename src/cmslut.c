@@ -685,7 +685,7 @@ cmsBool CMSEXPORT cmsStageSampleCLut16bit(cmsStage* mpe, cmsSAMPLER16 Sampler, v
     int i, t, nTotalPoints, index, rest;
     int nInputs, nOutputs;  
     cmsUInt32Number* nSamples;
-    cmsUInt16Number In[MAXCHANNELS], Out[MAX_STAGE_CHANNELS];
+    cmsUInt16Number In[cmsMAXCHANNELS], Out[MAX_STAGE_CHANNELS];
     _cmsStageCLutData* clut = (_cmsStageCLutData*) mpe->Data; 
 
 
@@ -693,7 +693,7 @@ cmsBool CMSEXPORT cmsStageSampleCLut16bit(cmsStage* mpe, cmsSAMPLER16 Sampler, v
     nInputs  = clut->Params ->nInputs;
     nOutputs = clut->Params ->nOutputs;
 
-    if (nInputs >= MAXCHANNELS) return FALSE;
+    if (nInputs >= cmsMAXCHANNELS) return FALSE;
     if (nOutputs >= MAX_STAGE_CHANNELS) return FALSE;
 
     nTotalPoints = CubeSize(nSamples, nInputs);
@@ -739,14 +739,14 @@ cmsBool CMSEXPORT cmsStageSampleCLutFloat(cmsStage* mpe, cmsSAMPLERFLOAT Sampler
     int i, t, nTotalPoints, index, rest;
     int nInputs, nOutputs;
     cmsUInt32Number* nSamples;
-    cmsFloat32Number In[MAXCHANNELS], Out[MAX_STAGE_CHANNELS];   
+    cmsFloat32Number In[cmsMAXCHANNELS], Out[MAX_STAGE_CHANNELS];   
     _cmsStageCLutData* clut = (_cmsStageCLutData*) mpe->Data; 
 
     nSamples = clut->Params ->nSamples;
     nInputs  = clut->Params ->nInputs;
     nOutputs = clut->Params ->nOutputs;
 
-    if (nInputs >= MAXCHANNELS) return FALSE;
+    if (nInputs >= cmsMAXCHANNELS) return FALSE;
     if (nOutputs >= MAX_STAGE_CHANNELS) return FALSE;
 
     nTotalPoints = CubeSize(nSamples, nInputs);
@@ -794,9 +794,9 @@ cmsBool CMSEXPORT cmsSliceSpace16(cmsUInt32Number nInputs, const cmsUInt32Number
                                          cmsSAMPLER16 Sampler, void * Cargo)
 {
     int i, t, nTotalPoints, rest;
-    cmsUInt16Number In[MAXCHANNELS];
+    cmsUInt16Number In[cmsMAXCHANNELS];
 
-    if (nInputs >= MAXCHANNELS) return FALSE;
+    if (nInputs >= cmsMAXCHANNELS) return FALSE;
 
     nTotalPoints = CubeSize(clutPoints, nInputs);
 
@@ -823,9 +823,9 @@ cmsInt32Number CMSEXPORT cmsSliceSpaceFloat(cmsUInt32Number nInputs, const cmsUI
                                             cmsSAMPLERFLOAT Sampler, void * Cargo)
 {
     int i, t, nTotalPoints, rest;
-    cmsFloat32Number In[MAXCHANNELS];
+    cmsFloat32Number In[cmsMAXCHANNELS];
 
-    if (nInputs >= MAXCHANNELS) return FALSE;
+    if (nInputs >= cmsMAXCHANNELS) return FALSE;
 
     nTotalPoints = CubeSize(clutPoints, nInputs);
 
@@ -1157,8 +1157,8 @@ cmsPipeline* CMSEXPORT cmsPipelineAlloc(cmsContext ContextID, cmsUInt32Number In
 {
        cmsPipeline* NewLUT;
 
-       if (InputChannels >= MAXCHANNELS ||
-           OutputChannels >= MAXCHANNELS) return NULL;
+       if (InputChannels >= cmsMAXCHANNELS ||
+           OutputChannels >= cmsMAXCHANNELS) return NULL;
 
        NewLUT = (cmsPipeline*) _cmsMallocZero(ContextID, sizeof(cmsPipeline));
        if (NewLUT == NULL) return NULL;

@@ -1379,8 +1379,8 @@ void BuildColorantList(char *Colorant, int nColorant, cmsUInt16Number Out[])
     int j;
 
     Colorant[0] = 0;
-    if (nColorant > MAXCHANNELS)
-        nColorant = MAXCHANNELS;
+    if (nColorant > cmsMAXCHANNELS)
+        nColorant = cmsMAXCHANNELS;
 
     for (j=0; j < nColorant; j++) {
 
@@ -1428,7 +1428,7 @@ int WriteNamedColorCRD(cmsIOHANDLER* m, cmsHPROFILE hNamedColor, int Intent, cms
     for (i=0; i < nColors; i++) {
         
         cmsUInt16Number In[1];
-        cmsUInt16Number Out[MAXCHANNELS];
+        cmsUInt16Number Out[cmsMAXCHANNELS];
 
         In[0] = (cmsUInt16Number) i;
 

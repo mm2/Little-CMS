@@ -326,11 +326,11 @@ static
 int XFormSampler16(register const cmsUInt16Number In[], register cmsUInt16Number Out[], register void* Cargo)
 {
     cmsPipeline* Lut = (cmsPipeline*) Cargo;
-    cmsFloat32Number InFloat[MAXCHANNELS], OutFloat[MAXCHANNELS];
+    cmsFloat32Number InFloat[cmsMAXCHANNELS], OutFloat[cmsMAXCHANNELS];
     cmsUInt32Number i;
 
-    _cmsAssert(Lut -> InputChannels < MAXCHANNELS);
-    _cmsAssert(Lut -> OutputChannels < MAXCHANNELS);
+    _cmsAssert(Lut -> InputChannels < cmsMAXCHANNELS);
+    _cmsAssert(Lut -> OutputChannels < cmsMAXCHANNELS);
 
     // From 16 bit to floating point
     for (i=0; i < Lut ->InputChannels; i++) 
@@ -452,7 +452,7 @@ static
 cmsBool FixWhiteMisalignment(cmsPipeline* Lut, cmsColorSpaceSignature EntryColorSpace, cmsColorSpaceSignature ExitColorSpace)
 {
     cmsUInt16Number *WhitePointIn, *WhitePointOut;
-    cmsUInt16Number  WhiteIn[MAXCHANNELS], WhiteOut[MAXCHANNELS], ObtainedOut[MAXCHANNELS];
+    cmsUInt16Number  WhiteIn[cmsMAXCHANNELS], WhiteOut[cmsMAXCHANNELS], ObtainedOut[cmsMAXCHANNELS];
     cmsUInt32Number i, nOuts, nIns;
     cmsStage *PreLin = NULL, *CLUT = NULL, *PostLin = NULL;
     
@@ -881,9 +881,9 @@ cmsBool OptimizeByComputingLinearization(cmsPipeline** Lut, cmsUInt32Number Inte
 {
     cmsPipeline* OriginalLut;
     int nGridPoints;
-    cmsToneCurve *Trans[MAXCHANNELS], *TransReverse[MAXCHANNELS];
+    cmsToneCurve *Trans[cmsMAXCHANNELS], *TransReverse[cmsMAXCHANNELS];
     cmsUInt32Number t, i;  
-    cmsFloat32Number v, In[MAXCHANNELS], Out[MAXCHANNELS];
+    cmsFloat32Number v, In[cmsMAXCHANNELS], Out[cmsMAXCHANNELS];
     cmsBool lIsSuitable, lIsLinear;
     cmsPipeline* OptimizedLUT = NULL, *LutPlusCurves = NULL;    
     cmsStage* OptimizedCLUTmpe;
@@ -1181,7 +1181,7 @@ static
 cmsBool OptimizeByJoiningCurves(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt32Number* InputFormat, cmsUInt32Number* OutputFormat, cmsUInt32Number* dwFlags)
 {
     cmsToneCurve** GammaTables = NULL; 
-    cmsFloat32Number InFloat[MAXCHANNELS], OutFloat[MAXCHANNELS];
+    cmsFloat32Number InFloat[cmsMAXCHANNELS], OutFloat[cmsMAXCHANNELS];
     cmsUInt32Number i, j;
     cmsPipeline* Src = *Lut;
     cmsPipeline* Dest = NULL;

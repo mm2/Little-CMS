@@ -117,6 +117,24 @@ cmsTagTypeHandler* GetHandler(cmsTagTypeSignature sig, _cmsTagTypeLinkedList* Li
     return NULL;
 }
 
+
+// Auxiliar to convert UTF-32 to UTF-16 in some cases
+static
+cmsBool _cmsWriteWCharArray(cmsIOHANDLER* io, cmsUInt32Number n, const wchar_t* Array)
+{
+    cmsUInt32Number i;
+
+    _cmsAssert(io != NULL);
+    _cmsAssert(Array != NULL);
+
+    for (i=0; i < n; i++) {
+        if (!_cmsWriteUInt16Number(io, (cmsUInt16Number) Array[i])) return FALSE;
+    }
+
+    return TRUE;
+}
+
+
 // To deal with position tables
 typedef cmsBool (* PositionTableEntryFn)(struct _cms_typehandler_struct* self, 
                                              cmsIOHANDLER* io,
@@ -243,11 +261,10 @@ Error:
 // Type XYZ. Only one value is allowed
 // ********************************************************************************
 
-/*
-The XYZType contains an array of three encoded values for the XYZ tristimulus
-values. Tristimulus values must be non-negative. The signed encoding allows for 
-implementation optimizations by minimizing the number of fixed formats.
-*/
+//The XYZType contains an array of three encoded values for the XYZ tristimulus
+//values. Tristimulus values must be non-negative. The signed encoding allows for 
+//implementation optimizations by minimizing the number of fixed formats.
+
 
 static
 void *Type_XYZ_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag)
@@ -418,13 +435,13 @@ void *Type_ColorantOrderType_Read(struct _cms_typehandler_struct* self, cmsIOHAN
 
     *nItems = 0;
     if (!_cmsReadUInt32Number(io, &Count)) return NULL;
-    if (Count > MAXCHANNELS) return NULL;
+    if (Count > cmsMAXCHANNELS) return NULL;
 
-    ColorantOrder = (cmsUInt8Number*) _cmsCalloc(self ->ContextID, MAXCHANNELS, sizeof(cmsUInt8Number));
+    ColorantOrder = (cmsUInt8Number*) _cmsCalloc(self ->ContextID, cmsMAXCHANNELS, sizeof(cmsUInt8Number));
     if (ColorantOrder == NULL) return NULL;
 
     // We use FF as end marker
-    memset(ColorantOrder, 0xFF, MAXCHANNELS * sizeof(cmsUInt8Number));
+    memset(ColorantOrder, 0xFF, cmsMAXCHANNELS * sizeof(cmsUInt8Number));
 
     if (io ->Read(io, ColorantOrder, sizeof(cmsUInt8Number), Count) != Count) {
 
@@ -445,7 +462,7 @@ cmsBool Type_ColorantOrderType_Write(struct _cms_typehandler_struct* self, cmsIO
     cmsUInt32Number i, sz, Count;
 
     // Get the length
-    for (Count=i=0; i < MAXCHANNELS; i++) {
+    for (Count=i=0; i < cmsMAXCHANNELS; i++) {
         if (ColorantOrder[i] != 0xFF) Count++;
     }
 
@@ -463,7 +480,7 @@ cmsBool Type_ColorantOrderType_Write(struct _cms_typehandler_struct* self, cmsIO
 static
 void* Type_ColorantOrderType_Dup(struct _cms_typehandler_struct* self, const void *Ptr, cmsUInt32Number n)
 {
-    return _cmsDupMem(self ->ContextID, Ptr, MAXCHANNELS * sizeof(cmsUInt8Number));
+    return _cmsDupMem(self ->ContextID, Ptr, cmsMAXCHANNELS * sizeof(cmsUInt8Number));
 
     cmsUNUSED_PARAMETER(n);
 }
@@ -964,7 +981,9 @@ cmsBool  Type_Text_Description_Write(struct _cms_typehandler_struct* self, cmsIO
     // takes 70 bytes, so we need 2 extra bytes to do the alignment
 
     if (!_cmsWriteUInt32Number(io, len_aligned+1)) goto Error;  
-    if (!_cmsWriteUInt16Array(io, len, (cmsUInt16Number*) Wide)) goto Error;            
+
+	// Note that in some compilers sizeof(cmsUInt16Number) != sizeof(wchar_t)
+    if (!_cmsWriteWCharArray(io, len, Wide)) goto Error;            
     if (!_cmsWriteUInt16Array(io, len_filler_alignment+1, (cmsUInt16Number*) Filler)) goto Error;   
 
     // ScriptCode Code & count (unused)
@@ -1221,17 +1240,15 @@ void Type_ParametricCurve_Free(struct _cms_typehandler_struct* self, void* Ptr)
 // Type cmsSigDateTimeType
 // ********************************************************************************
 
-/*
-A 12-byte value representation of the time and date, where the byte usage is assigned 
-as specified in table 1. The actual values are encoded as 16-bit unsigned integers 
-(uInt16Number - see 5.1.6).
-
-All the dateTimeNumber values in a profile shall be in Coordinated Universal Time 
-(UTC, also known as GMT or ZULU Time). Profile writers are required to convert local
-time to UTC when setting these values. Programmes that display these values may show 
-the dateTimeNumber as UTC, show the equivalent local time (at current locale), or 
-display both UTC and local versions of the dateTimeNumber.
-*/
+// A 12-byte value representation of the time and date, where the byte usage is assigned 
+// as specified in table 1. The actual values are encoded as 16-bit unsigned integers 
+// (uInt16Number - see 5.1.6).
+//
+// All the dateTimeNumber values in a profile shall be in Coordinated Universal Time 
+// (UTC, also known as GMT or ZULU Time). Profile writers are required to convert local
+// time to UTC when setting these values. Programmes that display these values may show 
+// the dateTimeNumber as UTC, show the equivalent local time (at current locale), or 
+// display both UTC and local versions of the dateTimeNumber.
 
 static
 void *Type_DateTime_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag)
@@ -1354,6 +1371,7 @@ void Type_Measurement_Free(struct _cms_typehandler_struct* self, void* Ptr)
 //   Max Derhak and Rohit Patil about this: basically the size of the string table should be guessed and cannot be
 //   taken from the size of tag if this tag is embedded as part of bigger structures (profileSequenceDescTag, for instance)
 //
+// FIXME: this doesn't work if sizeof(wchat_t) != 2  !!!
 
 static
 void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag)
@@ -1534,9 +1552,9 @@ cmsBool  Read8bitTables(cmsContext ContextID, cmsIOHANDLER* io, cmsPipeline* lut
     cmsStage* mpe;
     cmsUInt8Number* Temp = NULL;
     int i, j;
-    cmsToneCurve* Tables[MAXCHANNELS];
+    cmsToneCurve* Tables[cmsMAXCHANNELS];
 
-    if (nChannels > MAXCHANNELS) return FALSE;
+    if (nChannels > cmsMAXCHANNELS) return FALSE;
         
     memset(Tables, 0, sizeof(Tables));
 
@@ -1645,8 +1663,8 @@ void *Type_LUT8_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cms
 
     // Do some checking
     if (CLUTpoints > 125) goto Error;
-    if (InputChannels > MAXCHANNELS)  goto Error;
-    if (OutputChannels > MAXCHANNELS) goto Error;
+    if (InputChannels > cmsMAXCHANNELS)  goto Error;
+    if (OutputChannels > cmsMAXCHANNELS) goto Error;
 
    // Allocates an empty Pipeline
     NewLUT = cmsPipelineAlloc(self ->ContextID, InputChannels, OutputChannels);
@@ -1852,13 +1870,13 @@ cmsBool  Read16bitTables(cmsContext ContextID, cmsIOHANDLER* io, cmsPipeline* lu
 {
     cmsStage* mpe;
     int i;
-    cmsToneCurve* Tables[MAXCHANNELS];
+    cmsToneCurve* Tables[cmsMAXCHANNELS];
 
     // Maybe an empty table? (this is a lcms extension)
     if (nEntries <= 0) return TRUE;
 
     // Check for malicious profiles
-    if (nChannels > MAXCHANNELS) return FALSE;
+    if (nChannels > cmsMAXCHANNELS) return FALSE;
     
     // Init table to zero
     memset(Tables, 0, sizeof(Tables));
@@ -1939,8 +1957,8 @@ void *Type_LUT16_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cm
 
     // Do some checking
     if (CLUTpoints > 100) goto Error;
-    if (InputChannels > MAXCHANNELS)  goto Error;
-    if (OutputChannels > MAXCHANNELS) goto Error;
+    if (InputChannels > cmsMAXCHANNELS)  goto Error;
+    if (OutputChannels > cmsMAXCHANNELS) goto Error;
 
     // Allocates an empty LUT
     NewLUT = cmsPipelineAlloc(self ->ContextID, InputChannels, OutputChannels);
@@ -2190,16 +2208,16 @@ cmsStage* ReadMatrix(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cms
 static
 cmsStage* ReadCLUT(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number Offset, int InputChannels, int OutputChannels)
 {
-    cmsUInt8Number  gridPoints8[MAXCHANNELS]; // Number of grid points in each dimension.  
-    cmsUInt32Number GridPoints[MAXCHANNELS], i;
+    cmsUInt8Number  gridPoints8[cmsMAXCHANNELS]; // Number of grid points in each dimension.  
+    cmsUInt32Number GridPoints[cmsMAXCHANNELS], i;
     cmsUInt8Number  Precision;
     cmsStage* CLUT;
     _cmsStageCLutData* Data;
 
     if (!io -> Seek(io, Offset)) return NULL;
-    if (io -> Read(io, gridPoints8, MAXCHANNELS, 1) != 1) return NULL;
+    if (io -> Read(io, gridPoints8, cmsMAXCHANNELS, 1) != 1) return NULL;
 
-    for (i=0; i < MAXCHANNELS; i++)
+    for (i=0; i < cmsMAXCHANNELS; i++)
         GridPoints[i] = gridPoints8[i];
 
     if (!_cmsReadUInt8Number(io, &Precision)) return NULL;
@@ -2268,12 +2286,12 @@ cmsToneCurve* ReadEmbeddedCurve(struct _cms_typehandler_struct* self, cmsIOHANDL
 static
 cmsStage* ReadSetOfCurves(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number Offset, int nCurves)
 {     
-    cmsToneCurve* Curves[MAXCHANNELS];
+    cmsToneCurve* Curves[cmsMAXCHANNELS];
    int i;
     cmsStage* Lin;
 
 
-    if (nCurves > MAXCHANNELS) return FALSE;
+    if (nCurves > cmsMAXCHANNELS) return FALSE;
 
     if (!io -> Seek(io, Offset)) return FALSE;
     
@@ -2460,7 +2478,7 @@ cmsBool WriteSetOfCurves(struct _cms_typehandler_struct* self, cmsIOHANDLER* io,
 static
 cmsBool WriteCLUT(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt8Number  Precision, cmsStage* mpe)
 {
-    cmsUInt8Number  gridPoints[MAXCHANNELS]; // Number of grid points in each dimension.  
+    cmsUInt8Number  gridPoints[cmsMAXCHANNELS]; // Number of grid points in each dimension.  
     cmsUInt32Number i;    
     _cmsStageCLutData* CLUT = ( _cmsStageCLutData*) mpe -> Data;
 
@@ -2468,7 +2486,7 @@ cmsBool WriteCLUT(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUIn
     for (i=0; i < (cmsUInt32Number) CLUT ->Params ->nInputs; i++) 
         gridPoints[i] = (cmsUInt8Number) CLUT ->Params ->nSamples[i];
 
-    if (!io -> Write(io, MAXCHANNELS*sizeof(cmsUInt8Number), gridPoints)) return FALSE;
+    if (!io -> Write(io, cmsMAXCHANNELS*sizeof(cmsUInt8Number), gridPoints)) return FALSE;
 
     if (!_cmsWriteUInt8Number(io, (cmsUInt8Number) Precision)) return FALSE;
     if (!_cmsWriteUInt8Number(io, 0)) return FALSE;
@@ -2811,7 +2829,7 @@ void *Type_ColorantTable_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER
 
     if (!_cmsReadUInt32Number(io, &Count)) return NULL;
 
-    if (Count > MAXCHANNELS) {
+    if (Count > cmsMAXCHANNELS) {
         cmsSignalError(self->ContextID, cmsERROR_RANGE, "Too many colorants '%d'", Count);
         return NULL;
     }
@@ -2933,14 +2951,14 @@ void *Type_NamedColor_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* i
     v = cmsAllocNamedColorList(self ->ContextID, count, nDeviceCoords, prefix, suffix);
     if (v == NULL) return NULL;
 
-    if (nDeviceCoords > MAXCHANNELS) {
+    if (nDeviceCoords > cmsMAXCHANNELS) {
         cmsSignalError(self->ContextID, cmsERROR_RANGE, "Too many device coordinates '%d'", nDeviceCoords);
         return 0;
     }
     for (i=0; i < count; i++) {
 
         cmsUInt16Number PCS[3];
-        cmsUInt16Number Colorant[MAXCHANNELS];
+        cmsUInt16Number Colorant[cmsMAXCHANNELS];
         char Root[33];
 
         memset(Colorant, 0, sizeof(Colorant));
@@ -2988,7 +3006,7 @@ cmsBool Type_NamedColor_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER
     for (i=0; i < nColors; i++) {
 
        cmsUInt16Number PCS[3];
-       cmsUInt16Number Colorant[MAXCHANNELS];
+       cmsUInt16Number Colorant[cmsMAXCHANNELS];
        char Root[33];
 
         if (!cmsNamedColorInfo(NamedColorList, i, Root, NULL, NULL, PCS, Colorant)) return 0;

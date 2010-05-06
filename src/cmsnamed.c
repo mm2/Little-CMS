@@ -524,7 +524,7 @@ cmsNAMEDCOLORLIST* CMSEXPORT cmsDupNamedColorList(const cmsNAMEDCOLORLIST* v)
 // Append a color to a list. List pointer may change if reallocated
 cmsBool  CMSEXPORT cmsAppendNamedColor(cmsNAMEDCOLORLIST* NamedColorList, 
                                        const char* Name, 
-                                       cmsUInt16Number PCS[3], cmsUInt16Number Colorant[MAXCHANNELS])
+                                       cmsUInt16Number PCS[3], cmsUInt16Number Colorant[cmsMAXCHANNELS])
 {    
     cmsUInt32Number i;
 
