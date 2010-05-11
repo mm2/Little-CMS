@@ -65,6 +65,8 @@ cmsBool  _cmsReadMediaWhitePoint(cmsCIEXYZ* Dest, cmsHPROFILE hProfile)
 {
     cmsCIEXYZ* Tag;
 
+    _cmsAssert(Dest != NULL);
+
     Tag = (cmsCIEXYZ*) cmsReadTag(hProfile, cmsSigMediaWhitePointTag);   
 
     // If no wp, take D50
@@ -93,12 +95,18 @@ cmsBool  _cmsReadCHAD(cmsMAT3* Dest, cmsHPROFILE hProfile)
 {
     cmsMAT3* Tag;
 
+    _cmsAssert(Dest != NULL);
+
     Tag = (cmsMAT3*) cmsReadTag(hProfile, cmsSigChromaticAdaptationTag);
 
-    if (Tag == NULL) {
-        _cmsMAT3identity(Dest);
+    if (Tag != NULL) {
+
+        *Dest = *Tag;
         return TRUE;
     }
+
+    // No CHAD available, default it to identity
+    _cmsMAT3identity(Dest);
 
     // V2 display profiles should give D50
     if (cmsGetEncodedICCversion(hProfile) < 0x4000000) {
@@ -117,7 +125,6 @@ cmsBool  _cmsReadCHAD(cmsMAT3* Dest, cmsHPROFILE hProfile)
         }
     }
 
-    *Dest = *Tag;
     return TRUE;
 }
 
@@ -127,6 +134,8 @@ static
 cmsBool ReadICCMatrixRGB2XYZ(cmsMAT3* r, cmsHPROFILE hProfile)
 {
     cmsCIEXYZ *PtrRed, *PtrGreen, *PtrBlue;
+
+    _cmsAssert(r != NULL);
 
     PtrRed   = (cmsCIEXYZ *) cmsReadTag(hProfile, cmsSigRedColorantTag);
     PtrGreen = (cmsCIEXYZ *) cmsReadTag(hProfile, cmsSigGreenColorantTag);

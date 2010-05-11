@@ -1,2 +1,4 @@
 Major version bump
+-------------------
 
+Fixed a bug on V2 CHAD construction, affects absolute colorimetric intent
