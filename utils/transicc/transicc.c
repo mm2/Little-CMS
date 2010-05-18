@@ -71,6 +71,8 @@ static cmsColorSpaceSignature InputColorSpace, OutputColorSpace;
 static cmsNAMEDCOLORLIST* InputColorant = NULL;
 static cmsNAMEDCOLORLIST* OutputColorant = NULL;
 
+static cmsFloat64Number InputRange, OutputRange;
+
 
 // isatty replacement
 #ifdef _MSC_VER
@@ -265,21 +267,26 @@ void HandleSwitches(int argc, char *argv[])
 	}
 }
 
+
+
+static
+void SetRange(cmsFloat64Number range, cmsBool IsInput)
+{
+	if (IsInput)
+		InputRange = range;
+	else
+		OutputRange = range;
+}
+
 // Populate a named color list with usual component names. 
 // I am using the first Colorant channel to store the range, but it works since 
 // this space is not used anyway.
 static
-cmsNAMEDCOLORLIST* ComponentNames(cmsColorSpaceSignature space)
+cmsNAMEDCOLORLIST* ComponentNames(cmsColorSpaceSignature space, cmsBool IsInput)
 {
     cmsNAMEDCOLORLIST* out;
     int i, n;
     char Buffer[cmsMAX_PATH];
-    cmsUInt16Number Range[cmsMAXCHANNELS];
-
-
-    // Empty colorants (to store range in first one)
-    for (i=0; i < cmsMAXCHANNELS; i++)
-        Range[i] = 0;
 
     out = cmsAllocNamedColorList(0, 12, cmsMAXCHANNELS, "", "");
     if (out == NULL) return NULL;
@@ -287,93 +294,92 @@ cmsNAMEDCOLORLIST* ComponentNames(cmsColorSpaceSignature space)
     switch (space) {
 
     case cmsSigXYZData:
-        Range[0] = 100;
-        cmsAppendNamedColor(out, "X", NULL, Range);
-        cmsAppendNamedColor(out, "Y", NULL, Range);
-        cmsAppendNamedColor(out, "Z", NULL, Range);
+        SetRange(100, IsInput);
+        cmsAppendNamedColor(out, "X", NULL, NULL);
+        cmsAppendNamedColor(out, "Y", NULL, NULL);
+        cmsAppendNamedColor(out, "Z", NULL, NULL);
         break;
 
     case cmsSigLabData:
-        Range[0] = 1;
-        cmsAppendNamedColor(out, "L*", NULL, Range);
-        cmsAppendNamedColor(out, "a*", NULL, Range);
-        cmsAppendNamedColor(out, "b*", NULL, Range);
+        SetRange(1, IsInput);
+        cmsAppendNamedColor(out, "L*", NULL, NULL);
+        cmsAppendNamedColor(out, "a*", NULL, NULL);
+        cmsAppendNamedColor(out, "b*", NULL, NULL);
         break;
 
     case cmsSigLuvData:
-        Range[0] = 1;
-        cmsAppendNamedColor(out, "L", NULL, Range);
-        cmsAppendNamedColor(out, "u", NULL, Range);
-        cmsAppendNamedColor(out, "v", NULL, Range);
+        SetRange(1, IsInput);
+        cmsAppendNamedColor(out, "L", NULL, NULL);
+        cmsAppendNamedColor(out, "u", NULL, NULL);
+        cmsAppendNamedColor(out, "v", NULL, NULL);
         break;
 
     case cmsSigYCbCrData:
-        Range[0] = 255;
-        cmsAppendNamedColor(out, "Y", NULL, Range );
-        cmsAppendNamedColor(out, "Cb", NULL, Range);
-        cmsAppendNamedColor(out, "Cr", NULL, Range);
+        SetRange(255, IsInput);
+        cmsAppendNamedColor(out, "Y", NULL, NULL );
+        cmsAppendNamedColor(out, "Cb", NULL, NULL);
+        cmsAppendNamedColor(out, "Cr", NULL, NULL);
         break;
 
 
     case cmsSigYxyData:
-        Range[0] = 1;
-        cmsAppendNamedColor(out, "Y", NULL, Range);
-        cmsAppendNamedColor(out, "x", NULL, Range);
-        cmsAppendNamedColor(out, "y", NULL, Range);
+        SetRange(1, IsInput);
+        cmsAppendNamedColor(out, "Y", NULL, NULL);
+        cmsAppendNamedColor(out, "x", NULL, NULL);
+        cmsAppendNamedColor(out, "y", NULL, NULL);
         break;
 
     case cmsSigRgbData:
-        Range[0] = 255;
-        cmsAppendNamedColor(out, "R", NULL, Range);
-        cmsAppendNamedColor(out, "G", NULL, Range);
-        cmsAppendNamedColor(out, "B", NULL, Range);
+        SetRange(255, IsInput);
+        cmsAppendNamedColor(out, "R", NULL, NULL);
+        cmsAppendNamedColor(out, "G", NULL, NULL);
+        cmsAppendNamedColor(out, "B", NULL, NULL);
         break;
 
     case cmsSigGrayData:
-        Range[0] = 255;
-        cmsAppendNamedColor(out, "G", NULL, Range);      
+        SetRange(255, IsInput);
+        cmsAppendNamedColor(out, "G", NULL, NULL);      
         break;
 
     case cmsSigHsvData:
-        Range[0] = 255;
-        cmsAppendNamedColor(out, "H", NULL, Range);
-        cmsAppendNamedColor(out, "s", NULL, Range);
-        cmsAppendNamedColor(out, "v", NULL, Range);
+        SetRange(255, IsInput);
+        cmsAppendNamedColor(out, "H", NULL, NULL);
+        cmsAppendNamedColor(out, "s", NULL, NULL);
+        cmsAppendNamedColor(out, "v", NULL, NULL);
         break;
 
     case cmsSigHlsData:
-        Range[0] = 255;
-        cmsAppendNamedColor(out, "H", NULL, Range);
-        cmsAppendNamedColor(out, "l", NULL, Range);
-        cmsAppendNamedColor(out, "s", NULL, Range);
+        SetRange(255, IsInput);
+        cmsAppendNamedColor(out, "H", NULL, NULL);
+        cmsAppendNamedColor(out, "l", NULL, NULL);
+        cmsAppendNamedColor(out, "s", NULL, NULL);
         break;
 
     case cmsSigCmykData:
-        Range[0] = 1;
-        cmsAppendNamedColor(out, "C", NULL, Range);
-        cmsAppendNamedColor(out, "M", NULL, Range);
-        cmsAppendNamedColor(out, "Y", NULL, Range);                     
-        cmsAppendNamedColor(out, "K", NULL, Range);
-
+        SetRange(1, IsInput);
+        cmsAppendNamedColor(out, "C", NULL, NULL);
+        cmsAppendNamedColor(out, "M", NULL, NULL);
+        cmsAppendNamedColor(out, "Y", NULL, NULL);                     
+        cmsAppendNamedColor(out, "K", NULL, NULL);
         break;
 
     case cmsSigCmyData:
-        Range[0] = 1;
-        cmsAppendNamedColor(out, "C", NULL, Range);
-        cmsAppendNamedColor(out, "M", NULL, Range);
-        cmsAppendNamedColor(out, "Y", NULL, Range);
+        SetRange(1, IsInput);
+        cmsAppendNamedColor(out, "C", NULL, NULL);
+        cmsAppendNamedColor(out, "M", NULL, NULL);
+        cmsAppendNamedColor(out, "Y", NULL, NULL);
         break;
 
     default:
 
-        Range[0] = 1;
+        SetRange(1, IsInput);
 
         n = cmsChannelsOf(space);
 
         for (i=0; i < n; i++) {
 
             sprintf(Buffer, "Channel #%d", i + 1);
-            cmsAppendNamedColor(out, Buffer, NULL, Range);
+            cmsAppendNamedColor(out, Buffer, NULL, NULL);
         }
     }
 
@@ -408,15 +414,17 @@ cmsBool OpenTransforms(void)
         if (cmsIsTag(hInput, cmsSigColorantTableTag)) {
             List = cmsReadTag(hInput, cmsSigColorantTableTag);
             InputColorant = cmsDupNamedColorList(List);
+			InputRange = 1;
         }
-        else InputColorant = ComponentNames(InputColorSpace);
+        else InputColorant = ComponentNames(InputColorSpace, TRUE);
 
         if (cmsIsTag(hInput, cmsSigColorantTableOutTag)){
 
             List = cmsReadTag(hInput, cmsSigColorantTableOutTag);
             OutputColorant = cmsDupNamedColorList(List);
+			OutputRange = 1;
         }
-        else OutputColorant = ComponentNames(OutputColorSpace);
+        else OutputColorant = ComponentNames(OutputColorSpace, FALSE);
 
     }
     else {
@@ -442,14 +450,14 @@ cmsBool OpenTransforms(void)
             List = cmsReadTag(hInput, cmsSigColorantTableTag);
             InputColorant = cmsDupNamedColorList(List);
         }
-        else InputColorant = ComponentNames(InputColorSpace);
+        else InputColorant = ComponentNames(InputColorSpace, TRUE);
 
         if (cmsIsTag(hOutput, cmsSigColorantTableTag)){
 
             List = cmsReadTag(hInput, cmsSigColorantTableTag);
             OutputColorant = cmsDupNamedColorList(List);
         }
-        else OutputColorant = ComponentNames(OutputColorSpace);
+        else OutputColorant = ComponentNames(OutputColorSpace, FALSE);
 
 
         if (cProofing != NULL) {
@@ -614,7 +622,6 @@ void PrintFloatResults(cmsFloat64Number Value[])
 {
     cmsUInt32Number i, n;
     char ChannelName[cmsMAX_PATH];
-    cmsUInt16Number Range[cmsMAXCHANNELS];
     cmsFloat64Number v;
 
     n = cmsChannelsOf(OutputColorSpace);
@@ -622,14 +629,14 @@ void PrintFloatResults(cmsFloat64Number Value[])
 
         if (OutputColorant != NULL) {
 
-            cmsNamedColorInfo(OutputColorant, i, ChannelName, NULL, NULL, NULL, Range);         
+            cmsNamedColorInfo(OutputColorant, i, ChannelName, NULL, NULL, NULL, NULL);         
         }
         else {
-            Range[0] = 1;
+            OutputRange = 1;
             sprintf(ChannelName, "Channel #%d", i + 1);
         }
 
-        v = (cmsFloat64Number) Value[i]* Range[0];
+        v = (cmsFloat64Number) Value[i]* OutputRange;
 
         if (lQuantize) 
             v = floor(v + 0.5);
@@ -673,7 +680,6 @@ void TakeFloatValues(cmsFloat64Number Float[])
     cmsUInt32Number i, n;
     char ChannelName[cmsMAX_PATH];
     char Buffer[cmsMAX_PATH];
-    cmsUInt16Number Range[cmsMAXCHANNELS];
 
     if (xisatty(stdin))
         fprintf(stderr, "\nEnter values, 'q' to quit\n");
@@ -688,16 +694,16 @@ void TakeFloatValues(cmsFloat64Number Float[])
     for (i=0; i < n; i++) {
 
         if (InputColorant) {
-            cmsNamedColorInfo(InputColorant, i, ChannelName, NULL, NULL, NULL, Range);          
+            cmsNamedColorInfo(InputColorant, i, ChannelName, NULL, NULL, NULL, NULL);          
         }
         else {
-            Range[0] = 1;
+			InputRange = 1;
             sprintf(ChannelName, "Channel #%d", i+1);
         }
 
         GetLine(Buffer, "%s? ", ChannelName);
 
-        Float[i] = (cmsFloat64Number) atof(Buffer) / Range[0];
+        Float[i] = (cmsFloat64Number) atof(Buffer) / InputRange;
     }       
 
     if (xisatty(stdin))
