@@ -382,6 +382,11 @@ _cmsTRANSFORM* AllocEmptyTransform(cmsContext ContextID, cmsUInt32Number InputFo
     }
     else {
 
+        if (InputFormat == 0 && OutputFormat == 0) {
+            p ->FromInput = p ->ToOutput = NULL;
+        }
+        else {
+
         p ->FromInput = _cmsGetFormatter(InputFormat,  cmsFormatterInput, CMS_PACK_FLAGS_16BITS).Fmt16;
         p ->ToOutput  = _cmsGetFormatter(OutputFormat, cmsFormatterOutput, CMS_PACK_FLAGS_16BITS).Fmt16;
 
@@ -390,6 +395,7 @@ _cmsTRANSFORM* AllocEmptyTransform(cmsContext ContextID, cmsUInt32Number InputFo
             cmsSignalError(ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unsupported raster format");
             _cmsFree(ContextID, p);
             return NULL;
+        }
         }
 
         if (dwFlags & cmsFLAGS_NULLTRANSFORM) {

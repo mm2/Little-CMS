@@ -219,8 +219,6 @@ mxArray* AllocateOutputArray(const mxArray* In, int OutputChannels)
 		int *ModifiedDimensions = (int*) mxMalloc(nDimensions * sizeof(int));
 
 
-		mexPrintf("Pepitez nOut=%d\n", OutputChannels);
-
 		memmove(ModifiedDimensions, Dimensions, nDimensions * sizeof(int));
 		ModifiedDimensions[nDimensions - 1] = OutputChannels;
 
@@ -265,8 +263,9 @@ mxArray* AllocateOutputArray(const mxArray* In, int OutputChannels)
 static
 cmsUInt32Number MakeFormatDescriptor(cmsColorSpaceSignature ColorSpace, int Bytes)
 {
+	int IsFloat = (Bytes == 0 || Bytes == 4) ? 1 : 0;
 	int Channels = cmsChannelsOf(ColorSpace);
-	return COLORSPACE_SH(_cmsLCMScolorSpace(ColorSpace))|BYTES_SH(Bytes)|CHANNELS_SH(Channels)|PLANAR_SH(1);
+	return FLOAT_SH(IsFloat)|COLORSPACE_SH(_cmsLCMScolorSpace(ColorSpace))|BYTES_SH(Bytes)|CHANNELS_SH(Channels)|PLANAR_SH(1);
 }
 
 
@@ -276,35 +275,68 @@ static
 cmsHPROFILE OpenProfile(const char* File)
 {   
 
-	if (!File) 
-		return cmsCreate_sRGBProfile();    
+	cmsContext ContextID = 0;
 
-	if (cmsstrcasecmp(File, "*sRGB") == 0)
-		return cmsCreate_sRGBProfile();
+	   if (!File) 
+            return cmsCreate_sRGBProfileTHR(ContextID);    
 
-	if (cmsstrcasecmp(File, "*Lab") == 0)
-		return cmsCreateLab4Profile(NULL);
+       if (cmsstrcasecmp(File, "*Lab2") == 0)
+                return cmsCreateLab2ProfileTHR(ContextID, NULL);
 
-	if (cmsstrcasecmp(File, "*LabD65") == 0) {
+       if (cmsstrcasecmp(File, "*Lab4") == 0)
+                return cmsCreateLab4ProfileTHR(ContextID, NULL);
 
-		cmsCIExyY D65xyY;
+       if (cmsstrcasecmp(File, "*Lab") == 0)
+                return cmsCreateLab4ProfileTHR(ContextID, NULL);
+       
+       if (cmsstrcasecmp(File, "*LabD65") == 0) {
 
-		cmsWhitePointFromTemp(&D65xyY, 6504);           
-		return cmsCreateLab4Profile(&D65xyY);
-	}
+           cmsCIExyY D65xyY;
+           
+           cmsWhitePointFromTemp( &D65xyY, 6504);           
+           return cmsCreateLab4ProfileTHR(ContextID, &D65xyY);
+       }
 
-	if (cmsstrcasecmp(File, "*XYZ") == 0)
-		return cmsCreateXYZProfile();
+       if (cmsstrcasecmp(File, "*XYZ") == 0)
+                return cmsCreateXYZProfileTHR(ContextID);
 
-	if (cmsstrcasecmp(File, "*Gray22") == 0) {
-		cmsToneCurve* Gamma = cmsBuildGamma(NULL, 2.2);
-		cmsHPROFILE hProfile = cmsCreateGrayProfile(cmsD50_xyY(), Gamma);
-		cmsFreeToneCurve(Gamma);
-		return hProfile;
+       if (cmsstrcasecmp(File, "*Gray22") == 0) {
 
-	}
+           cmsToneCurve* Curve = cmsBuildGamma(ContextID, 2.2);
+           cmsHPROFILE hProfile = cmsCreateGrayProfileTHR(ContextID, cmsD50_xyY(), Curve);
+           cmsFreeToneCurve(Curve);
+           return hProfile;
+       }
 
-	return cmsOpenProfileFromFile(File, "r");
+        if (cmsstrcasecmp(File, "*Gray30") == 0) {
+
+           cmsToneCurve* Curve = cmsBuildGamma(ContextID, 3.0);
+           cmsHPROFILE hProfile = cmsCreateGrayProfileTHR(ContextID, cmsD50_xyY(), Curve);
+           cmsFreeToneCurve(Curve);
+           return hProfile;
+       }
+
+       if (cmsstrcasecmp(File, "*srgb") == 0)
+                return cmsCreate_sRGBProfileTHR(ContextID);
+
+       if (cmsstrcasecmp(File, "*null") == 0)
+                return cmsCreateNULLProfileTHR(ContextID);
+
+       
+       if (cmsstrcasecmp(File, "*Lin2222") == 0) {
+
+            cmsToneCurve*  Gamma = cmsBuildGamma(0, 2.2);
+            cmsToneCurve*  Gamma4[4];
+            cmsHPROFILE hProfile; 
+
+            Gamma4[0] = Gamma4[1] = Gamma4[2] = Gamma4[3] = Gamma;
+            hProfile = cmsCreateLinearizationDeviceLink(cmsSigCmykData, Gamma4);
+            cmsFreeToneCurve(Gamma);
+            return hProfile;
+       }
+
+           
+        return cmsOpenProfileFromFileTHR(ContextID, File, "r");
 }
 
 
@@ -505,7 +537,7 @@ void HandleSwitches(int argc, char *argv[])
 		case 't':
 		case 'T':
 			Intent = atoi(xoptarg);
-			if (Intent > 3) Intent = 3;
+			// if (Intent > 3) Intent = 3;
 			if (Intent < 0) Intent = 0;
 			break;
 
@@ -526,7 +558,7 @@ void HandleSwitches(int argc, char *argv[])
 		case 'r':
 		case 'R':
 			ProofingIntent = atoi(xoptarg);
-			if (ProofingIntent > 3) ProofingIntent = 3;
+			// if (ProofingIntent > 3) ProofingIntent = 3;
 			if (ProofingIntent < 0) ProofingIntent = 0;
 			break;
 
@@ -578,11 +610,16 @@ void PrintHelp(void)
 	mexPrintf("\t%cr<0,1,2,3> - Soft proof intent\n", SW);
 
 	mexPrintf("\nYou can use following built-ins as profiles:\n\n");
-	mexPrintf("\t'*sRGB'   -> IEC6 1996-2.1 sRGB\n");
-	mexPrintf("\t'*Lab'    -> D50 based Lab\n");
-	mexPrintf("\t'*LabD65' -> D65 based Lab\n");
-	mexPrintf("\t'*XYZ'    -> XYZ (D50)\n");
-	mexPrintf("\t'*Gray22' -> D50 gamma 2.2 grayscale.\n\n");
+
+	mexPrintf("\t*Lab2  -- D50-based v2 CIEL*a*b\n"
+	"\t*Lab4  -- D50-based v4 CIEL*a*b\n"
+	"\t*Lab   -- D50-based v4 CIEL*a*b\n"
+	"\t*XYZ   -- CIE XYZ (PCS)\n"
+	"\t*sRGB  -- IEC6 1996-2.1 sRGB color space\n" 
+	"\t*Gray22 - Monochrome of Gamma 2.2\n"
+	"\t*Gray30 - Monochrome of Gamma 3.0\n"
+	"\t*null   - Monochrome black for all input\n"
+	"\t*Lin2222- CMYK linearization of gamma 2.2 on each channel\n\n");
 
 	mexPrintf("For suggestions, comments, bug reports etc. send mail to info@littlecms.com\n\n");
 
