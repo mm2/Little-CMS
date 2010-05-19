@@ -580,7 +580,7 @@ cmsBool OptimizeByResampling(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
     }
 
     // Allocate the CLUT
-    CLUT = cmsStageAllocCLut16bit(Src ->ContextID, nGridPoints, Src ->InputChannels, Src->OutputChannels, NULL);
+    CLUT = cmsStageAllocCLut16bit(Src ->ContextID, nGridPoints, Src ->InputChannels, Src->OutputChannels, NULL, 0);
     if (CLUT == NULL) return FALSE;
 
     // Add the CLUT to the destination LUT
@@ -980,7 +980,7 @@ cmsBool OptimizeByComputingLinearization(cmsPipeline** Lut, cmsUInt32Number Inte
     cmsPipelineInsertStage(OptimizedLUT, cmsAT_BEGIN, OptimizedPrelinMpe);
 
     // Allocate the CLUT for result
-    OptimizedCLUTmpe = cmsStageAllocCLut16bit(OriginalLut ->ContextID, nGridPoints, OriginalLut ->InputChannels, OriginalLut ->OutputChannels, NULL);
+    OptimizedCLUTmpe = cmsStageAllocCLut16bit(OriginalLut ->ContextID, nGridPoints, OriginalLut ->InputChannels, OriginalLut ->OutputChannels, NULL, 0);
 
     // Add the CLUT to the destination LUT
     cmsPipelineInsertStage(OptimizedLUT, cmsAT_END, OptimizedCLUTmpe);

@@ -210,7 +210,7 @@ cmsHPROFILE CreateITU2PCS_ICC(void)
 	AToB0 = cmsPipelineAlloc(0, 3, 3);
 	if (AToB0 == NULL) return NULL;
 
-	ColorMap = cmsStageAllocCLut16bit(0, GRID_POINTS, 3, 3, NULL);
+    ColorMap = cmsStageAllocCLut16bit(0, GRID_POINTS, 3, 3, NULL, 0);
 	if (ColorMap == NULL) return NULL;
 
     cmsPipelineInsertStage(AToB0, cmsAT_BEGIN, ColorMap);
@@ -243,7 +243,7 @@ cmsHPROFILE CreatePCS2ITU_ICC(void)
     BToA0 = cmsPipelineAlloc(0, 3, 3);
     if (BToA0 == NULL) return NULL;
 
-    ColorMap = cmsStageAllocCLut16bit(0, GRID_POINTS, 3, 3, NULL);
+    ColorMap = cmsStageAllocCLut16bit(0, GRID_POINTS, 3, 3, NULL, 0);
     if (ColorMap == NULL) return NULL;
 
     cmsPipelineInsertStage(BToA0, cmsAT_BEGIN, ColorMap);

@@ -514,7 +514,8 @@ cmsStage* CMSEXPORT cmsStageAllocCLut16bitGranular(cmsContext ContextID,
                                          const cmsUInt32Number clutPoints[], 
                                          cmsUInt32Number inputChan, 
                                          cmsUInt32Number outputChan, 
-                                         const cmsUInt16Number* Table)
+                                         const cmsUInt16Number* Table,
+                                         cmsUInt32Number dwFlags)
 {
     cmsUInt32Number i, n;
     _cmsStageCLutData* NewElem;
@@ -543,7 +544,8 @@ cmsStage* CMSEXPORT cmsStageAllocCLut16bitGranular(cmsContext ContextID,
         }
     }
 
-    NewElem ->Params = _cmsComputeInterpParamsEx(ContextID, clutPoints, inputChan, outputChan, NewElem ->Tab.T, CMS_LERP_FLAGS_16BITS);
+    NewElem ->Params = _cmsComputeInterpParamsEx(ContextID, clutPoints, inputChan, outputChan, NewElem ->Tab.T, 
+                                                                         CMS_LERP_FLAGS_16BITS|dwFlags);
     if (NewElem ->Params == NULL) {
         cmsStageFree(NewMPE);
         return NULL;
@@ -558,7 +560,8 @@ cmsStage* CMSEXPORT cmsStageAllocCLut16bit(cmsContext ContextID,
                                     cmsUInt32Number nGridPoints, 
                                     cmsUInt32Number inputChan, 
                                     cmsUInt32Number outputChan, 
-                                    const cmsUInt16Number* Table)
+                                    const cmsUInt16Number* Table,
+                                    cmsUInt32Number dwFlags)
 {
     cmsUInt32Number Dimensions[MAX_INPUT_DIMENSIONS];
     int i;
@@ -568,7 +571,7 @@ cmsStage* CMSEXPORT cmsStageAllocCLut16bit(cmsContext ContextID,
         Dimensions[i] = nGridPoints;
 
 
-    return cmsStageAllocCLut16bitGranular(ContextID, Dimensions, inputChan, outputChan, Table);
+    return cmsStageAllocCLut16bitGranular(ContextID, Dimensions, inputChan, outputChan, Table, dwFlags);
 }
 
 
@@ -576,7 +579,8 @@ cmsStage* CMSEXPORT cmsStageAllocCLutFloat(cmsContext ContextID,
                                        cmsUInt32Number nGridPoints, 
                                        cmsUInt32Number inputChan, 
                                        cmsUInt32Number outputChan, 
-                                       const cmsFloat32Number* Table)
+                                       const cmsFloat32Number* Table,
+                                       cmsUInt32Number dwFlags)
 {
    cmsUInt32Number Dimensions[MAX_INPUT_DIMENSIONS];
    int i;
@@ -585,12 +589,15 @@ cmsStage* CMSEXPORT cmsStageAllocCLutFloat(cmsContext ContextID,
     for (i=0; i < MAX_INPUT_DIMENSIONS; i++)
         Dimensions[i] = nGridPoints;
 
-    return cmsStageAllocCLutFloatGranular(ContextID, Dimensions, inputChan, outputChan, Table);
+    return cmsStageAllocCLutFloatGranular(ContextID, Dimensions, inputChan, outputChan, Table, dwFlags);
 }
 
 
 
-cmsStage* CMSEXPORT cmsStageAllocCLutFloatGranular(cmsContext ContextID, const cmsUInt32Number clutPoints[], cmsUInt32Number inputChan, cmsUInt32Number outputChan, const cmsFloat32Number* Table)
+cmsStage* CMSEXPORT cmsStageAllocCLutFloatGranular(cmsContext ContextID, const cmsUInt32Number clutPoints[], 
+                                                   cmsUInt32Number inputChan, cmsUInt32Number outputChan, 
+                                                   const cmsFloat32Number* Table,
+                                                   cmsUInt32Number dwFlags)
 {
     cmsUInt32Number i, n;
     _cmsStageCLutData* NewElem;
@@ -620,7 +627,7 @@ cmsStage* CMSEXPORT cmsStageAllocCLutFloatGranular(cmsContext ContextID, const c
 
     NewMPE ->Data  = (void*) NewElem;
     
-    NewElem ->Params = _cmsComputeInterpParamsEx(ContextID, clutPoints,  inputChan, outputChan, NewElem ->Tab.TFloat, CMS_LERP_FLAGS_FLOAT);
+    NewElem ->Params = _cmsComputeInterpParamsEx(ContextID, clutPoints,  inputChan, outputChan, NewElem ->Tab.TFloat, CMS_LERP_FLAGS_FLOAT|dwFlags);
     if (NewElem ->Params == NULL) {
         cmsStageFree(NewMPE);
         return NULL;
@@ -654,7 +661,7 @@ cmsStage* _cmsStageAllocIdentityCLut(cmsContext ContextID, int nChan)
     for (i=0; i < MAX_INPUT_DIMENSIONS; i++)
         Dimensions[i] = 2;
 
-    mpe = cmsStageAllocCLut16bitGranular(ContextID, Dimensions, nChan, nChan, NULL);
+    mpe = cmsStageAllocCLut16bitGranular(ContextID, Dimensions, nChan, nChan, NULL, 0);
     if (mpe == NULL) return NULL;
     
     if (!cmsStageSampleCLut16bit(mpe, IdentitySampler, &nChan, 0)) {

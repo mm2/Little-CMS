@@ -1131,11 +1131,27 @@ CMSAPI cmsStage*         CMSEXPORT cmsStageAllocIdentity(cmsContext ContextID, c
 CMSAPI cmsStage*         CMSEXPORT cmsStageAllocToneCurves(cmsContext ContextID, cmsUInt32Number nChannels, cmsToneCurve* const Curves[]);
 CMSAPI cmsStage*         CMSEXPORT cmsStageAllocMatrix(cmsContext ContextID, cmsUInt32Number Rows, cmsUInt32Number Cols, const cmsFloat64Number* Matrix, const cmsFloat64Number* Offset);
 
-CMSAPI cmsStage*         CMSEXPORT cmsStageAllocCLut16bit(cmsContext ContextID, cmsUInt32Number nGridPoints, cmsUInt32Number inputChan, cmsUInt32Number outputChan, const cmsUInt16Number* Table);
-CMSAPI cmsStage*         CMSEXPORT cmsStageAllocCLutFloat(cmsContext ContextID, cmsUInt32Number nGridPoints, cmsUInt32Number inputChan, cmsUInt32Number outputChan, const cmsFloat32Number* Table);
+#define cmsCLUT_FLAGS_TRILINEAR_INTERPOLATION   0x0100   
 
-CMSAPI cmsStage*         CMSEXPORT cmsStageAllocCLut16bitGranular(cmsContext ContextID, const cmsUInt32Number clutPoints[], cmsUInt32Number inputChan, cmsUInt32Number outputChan, const cmsUInt16Number* Table);
-CMSAPI cmsStage*         CMSEXPORT cmsStageAllocCLutFloatGranular(cmsContext ContextID, const cmsUInt32Number clutPoints[], cmsUInt32Number inputChan, cmsUInt32Number outputChan, const cmsFloat32Number* Table);
+CMSAPI cmsStage*         CMSEXPORT cmsStageAllocCLut16bit(cmsContext ContextID, cmsUInt32Number nGridPoints, 
+                                                          cmsUInt32Number inputChan, cmsUInt32Number outputChan, 
+                                                          const cmsUInt16Number* Table,
+                                                          cmsUInt32Number dwFlags);
+
+CMSAPI cmsStage*         CMSEXPORT cmsStageAllocCLutFloat(cmsContext ContextID, cmsUInt32Number nGridPoints, 
+                                                          cmsUInt32Number inputChan, cmsUInt32Number outputChan, 
+                                                          const cmsFloat32Number* Table,
+                                                          cmsUInt32Number dwFlags);
+
+CMSAPI cmsStage*         CMSEXPORT cmsStageAllocCLut16bitGranular(cmsContext ContextID, const cmsUInt32Number clutPoints[], 
+                                                                  cmsUInt32Number inputChan, cmsUInt32Number outputChan, 
+                                                                  const cmsUInt16Number* Table,
+                                                                  cmsUInt32Number dwFlags);
+
+CMSAPI cmsStage*         CMSEXPORT cmsStageAllocCLutFloatGranular(cmsContext ContextID, const cmsUInt32Number clutPoints[], 
+                                                                  cmsUInt32Number inputChan, cmsUInt32Number outputChan, 
+                                                                  const cmsFloat32Number* Table,
+                                                                  cmsUInt32Number dwFlags);
 
 CMSAPI cmsStage*         CMSEXPORT cmsStageDup(cmsStage* mpe);
 CMSAPI void              CMSEXPORT cmsStageFree(cmsStage* mpe);
