@@ -2127,7 +2127,7 @@ cmsUInt8Number* PackLabFloatFromFloat(_cmsTRANSFORM* Info,
 
     if (T_PLANAR(Info -> OutputFormat)) {
 
-        Out[0]                  = (cmsFloat32Number) (wOut[0] * 100.0);
+        Out[0]        = (cmsFloat32Number) (wOut[0] * 100.0);
         Out[Stride]   = (cmsFloat32Number) (wOut[1] * 255.0 - 128.0);
         Out[Stride*2] = (cmsFloat32Number) (wOut[2] * 255.0 - 128.0);
 
@@ -2154,7 +2154,7 @@ cmsUInt8Number* PackLabDoubleFromFloat(_cmsTRANSFORM* Info,
 
     if (T_PLANAR(Info -> OutputFormat)) {
 
-        Out[0]                  = (cmsFloat64Number) (wOut[0] * 100.0);
+        Out[0]        = (cmsFloat64Number) (wOut[0] * 100.0);
         Out[Stride]   = (cmsFloat64Number) (wOut[1] * 255.0 - 128.0);
         Out[Stride*2] = (cmsFloat64Number) (wOut[2] * 255.0 - 128.0);
 
@@ -2183,7 +2183,7 @@ cmsUInt8Number* PackXYZFloatFromFloat(_cmsTRANSFORM* Info,
 
     if (T_PLANAR(Info -> OutputFormat)) {
 
-        Out[0]                  = (cmsFloat32Number) (wOut[0] * MAX_ENCODEABLE_XYZ);
+        Out[0]        = (cmsFloat32Number) (wOut[0] * MAX_ENCODEABLE_XYZ);
         Out[Stride]   = (cmsFloat32Number) (wOut[1] * MAX_ENCODEABLE_XYZ);
         Out[Stride*2] = (cmsFloat32Number) (wOut[2] * MAX_ENCODEABLE_XYZ);
 
@@ -2212,7 +2212,7 @@ cmsUInt8Number* PackXYZDoubleFromFloat(_cmsTRANSFORM* Info,
 
     if (T_PLANAR(Info -> OutputFormat)) {
 
-        Out[0]                  = (cmsFloat64Number) (wOut[0] * MAX_ENCODEABLE_XYZ);
+        Out[0]        = (cmsFloat64Number) (wOut[0] * MAX_ENCODEABLE_XYZ);
         Out[Stride]   = (cmsFloat64Number) (wOut[1] * MAX_ENCODEABLE_XYZ);
         Out[Stride*2] = (cmsFloat64Number) (wOut[2] * MAX_ENCODEABLE_XYZ);
 

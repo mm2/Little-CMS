@@ -195,7 +195,7 @@ Error:
 static
 cmsBool WritePositionTable(struct _cms_typehandler_struct* self, 
                                cmsIOHANDLER* io,
-                                cmsUInt32Number SizeOfTag,
+                               cmsUInt32Number SizeOfTag,
                                cmsUInt32Number Count, 
                                cmsUInt32Number BaseOffset, 
                                void *Cargo,

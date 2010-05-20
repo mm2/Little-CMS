@@ -5009,11 +5009,7 @@ cmsInt32Number CheckBadTransforms(void)
 		return 0;
 	}
 
-	x1 = cmsCreateTransform(h1, 0, h1, 0, 0, 0);
-    if (x1 != NULL) {
-		cmsDeleteTransform(x1);
-		return 0;
-	}
+	
 
 	x1 = cmsCreateTransform(h1, TYPE_RGB_8, h1, TYPE_RGB_8, 12345, 0);
 	if (x1 != NULL) {

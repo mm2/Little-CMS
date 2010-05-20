@@ -60,7 +60,7 @@ static struct jpeg_compress_struct   Compressor;
 
 static struct my_error_mgr {
 
-    struct  jpeg_error_mgr pub;  // "public" fields
+    struct  jpeg_error_mgr pub;   // "public" fields
     void*   Cargo;                // "private" fields
 
 } ErrorHandler;

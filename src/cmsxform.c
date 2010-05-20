@@ -387,15 +387,15 @@ _cmsTRANSFORM* AllocEmptyTransform(cmsContext ContextID, cmsUInt32Number InputFo
         }
         else {
 
-        p ->FromInput = _cmsGetFormatter(InputFormat,  cmsFormatterInput, CMS_PACK_FLAGS_16BITS).Fmt16;
-        p ->ToOutput  = _cmsGetFormatter(OutputFormat, cmsFormatterOutput, CMS_PACK_FLAGS_16BITS).Fmt16;
+            p ->FromInput = _cmsGetFormatter(InputFormat,  cmsFormatterInput, CMS_PACK_FLAGS_16BITS).Fmt16;
+            p ->ToOutput  = _cmsGetFormatter(OutputFormat, cmsFormatterOutput, CMS_PACK_FLAGS_16BITS).Fmt16;
 
-        if (p ->FromInput == NULL || p ->ToOutput == NULL) {
-        
-            cmsSignalError(ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unsupported raster format");
-            _cmsFree(ContextID, p);
-            return NULL;
-        }
+            if (p ->FromInput == NULL || p ->ToOutput == NULL) {
+
+                cmsSignalError(ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unsupported raster format");
+                _cmsFree(ContextID, p);
+                return NULL;
+            }
         }
 
         if (dwFlags & cmsFLAGS_NULLTRANSFORM) {
