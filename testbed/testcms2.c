@@ -493,7 +493,7 @@ cmsHPROFILE CreateFakeCMYK(cmsFloat64Number InkLimit, cmsBool lUseAboveRGB)
 
     BToA0 = cmsPipelineAlloc(ContextID, 3, 4);
     if (BToA0 == NULL) return 0;
-    CLUT = cmsStageAllocCLut16bit(ContextID, 17, 3, 4, NULL, 0);
+    CLUT = cmsStageAllocCLut16bit(ContextID, 17, 3, 4, NULL);
     if (CLUT == NULL) return 0;
     if (!cmsStageSampleCLut16bit(CLUT, ForwardSampler, &p, 0)) return 0;
     
@@ -506,7 +506,7 @@ cmsHPROFILE CreateFakeCMYK(cmsFloat64Number InkLimit, cmsBool lUseAboveRGB)
     
     AToB0 = cmsPipelineAlloc(ContextID, 4, 3);
     if (AToB0 == NULL) return 0;
-    CLUT = cmsStageAllocCLut16bit(ContextID, 17, 4, 3, NULL, 0);
+    CLUT = cmsStageAllocCLut16bit(ContextID, 17, 4, 3, NULL);
     if (CLUT == NULL) return 0;
     if (!cmsStageSampleCLut16bit(CLUT, ReverseSampler, &p, 0)) return 0;
 
@@ -1420,7 +1420,7 @@ cmsInt32Number CheckReverseInterpolation3x3(void)
 
    Lut = cmsPipelineAlloc(DbgThread(), 3, 3);
 
-   clut = cmsStageAllocCLut16bit(DbgThread(), 2, 3, 3, Table, 0);
+   clut = cmsStageAllocCLut16bit(DbgThread(), 2, 3, 3, Table);
    cmsPipelineInsertStage(Lut, cmsAT_BEGIN, clut);
  
    Target[0] = 0; Target[1] = 0; Target[2] = 0; 
@@ -1492,7 +1492,7 @@ cmsInt32Number CheckReverseInterpolation4x3(void)
    
    Lut = cmsPipelineAlloc(DbgThread(), 4, 3);
 
-   clut = cmsStageAllocCLut16bit(DbgThread(), 2, 4, 3, Table, 0);
+   clut = cmsStageAllocCLut16bit(DbgThread(), 2, 4, 3, Table);
    cmsPipelineInsertStage(Lut, cmsAT_BEGIN, clut);
  
    // Check if the LUT is behaving as expected
@@ -1811,7 +1811,7 @@ cmsInt32Number Check3Dinterp(void)
     cmsStage* mpe;
 
     lut = cmsPipelineAlloc(DbgThread(), 3, 3);
-    mpe = cmsStageAllocCLut16bit(DbgThread(), 9, 3, 3, NULL, 0);
+    mpe = cmsStageAllocCLut16bit(DbgThread(), 9, 3, 3, NULL);
     cmsStageSampleCLut16bit(mpe, Sampler3D, NULL, 0);
     cmsPipelineInsertStage(lut, cmsAT_BEGIN, mpe);
 
@@ -1840,7 +1840,7 @@ cmsInt32Number Check3DinterpGranular(void)
     cmsUInt32Number Dimensions[] = { 7, 8, 9 };
 
     lut = cmsPipelineAlloc(DbgThread(), 3, 3);
-    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 3, 3, NULL, 0);
+    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 3, 3, NULL);
     cmsStageSampleCLut16bit(mpe, Sampler3D, NULL, 0);
     cmsPipelineInsertStage(lut, cmsAT_BEGIN, mpe);
 
@@ -1869,7 +1869,7 @@ cmsInt32Number Check4Dinterp(void)
     cmsStage* mpe;
 
     lut = cmsPipelineAlloc(DbgThread(), 4, 3);
-    mpe = cmsStageAllocCLut16bit(DbgThread(), 9, 4, 3, NULL, 0);
+    mpe = cmsStageAllocCLut16bit(DbgThread(), 9, 4, 3, NULL);
     cmsStageSampleCLut16bit(mpe, Sampler4D, NULL, 0);
     cmsPipelineInsertStage(lut, cmsAT_BEGIN, mpe);
 
@@ -1900,7 +1900,7 @@ cmsInt32Number Check4DinterpGranular(void)
     cmsUInt32Number Dimensions[] = { 9, 8, 7, 6 };
 
     lut = cmsPipelineAlloc(DbgThread(), 4, 3);
-    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 4, 3, NULL, 0);
+    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 4, 3, NULL);
     cmsStageSampleCLut16bit(mpe, Sampler4D, NULL, 0);
     cmsPipelineInsertStage(lut, cmsAT_BEGIN, mpe);
 
@@ -1930,7 +1930,7 @@ cmsInt32Number Check5DinterpGranular(void)
     cmsUInt32Number Dimensions[] = { 3, 2, 2, 2, 2 };
 
     lut = cmsPipelineAlloc(DbgThread(), 5, 3);
-    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 5, 3, NULL, 0);
+    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 5, 3, NULL);
     cmsStageSampleCLut16bit(mpe, Sampler5D, NULL, 0);
     cmsPipelineInsertStage(lut, cmsAT_BEGIN, mpe);
 
@@ -1959,7 +1959,7 @@ cmsInt32Number Check6DinterpGranular(void)
     cmsUInt32Number Dimensions[] = { 4, 3, 3, 2, 2, 2 };
 
     lut = cmsPipelineAlloc(DbgThread(), 6, 3);
-    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 6, 3, NULL, 0);
+    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 6, 3, NULL);
     cmsStageSampleCLut16bit(mpe, Sampler6D, NULL, 0);
     cmsPipelineInsertStage(lut, cmsAT_BEGIN, mpe);
 
@@ -1988,7 +1988,7 @@ cmsInt32Number Check7DinterpGranular(void)
     cmsUInt32Number Dimensions[] = { 4, 3, 3, 2, 2, 2, 2 };
 
     lut = cmsPipelineAlloc(DbgThread(), 7, 3);
-    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 7, 3, NULL, 0);
+    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 7, 3, NULL);
     cmsStageSampleCLut16bit(mpe, Sampler7D, NULL, 0);
     cmsPipelineInsertStage(lut, cmsAT_BEGIN, mpe);
 
@@ -2967,7 +2967,7 @@ void AddIdentityCLUTfloat(cmsPipeline* lut)
         1.0,    1.0,    1.0
     };
 
-    cmsPipelineInsertStage(lut, cmsAT_END, cmsStageAllocCLutFloat(DbgThread(), 2, 3, 3, Table, 0));
+    cmsPipelineInsertStage(lut, cmsAT_END, cmsStageAllocCLutFloat(DbgThread(), 2, 3, 3, Table));
 }
 
 // Create a MPE for identity cmsFloat32Number CLUT
@@ -2990,7 +2990,7 @@ void AddIdentityCLUT16(cmsPipeline* lut)
     };
    
 
-    cmsPipelineInsertStage(lut, cmsAT_END, cmsStageAllocCLut16bit(DbgThread(), 2, 3, 3, Table, 0));
+    cmsPipelineInsertStage(lut, cmsAT_END, cmsStageAllocCLut16bit(DbgThread(), 2, 3, 3, Table));
 }
 
 
@@ -5009,6 +5009,11 @@ cmsInt32Number CheckBadTransforms(void)
 		return 0;
 	}
 
+	x1 = cmsCreateTransform(h1, 0, h1, 0, 0, 0);
+    if (x1 != NULL) {
+		cmsDeleteTransform(x1);
+		return 0;
+	}
 
 	x1 = cmsCreateTransform(h1, TYPE_RGB_8, h1, TYPE_RGB_8, 12345, 0);
 	if (x1 != NULL) {

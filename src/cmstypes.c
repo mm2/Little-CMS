@@ -1718,9 +1718,7 @@ void *Type_LUT8_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cms
         Temp = NULL;
 
         
-        mpeclut = cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, 
-			InputChannels, OutputChannels, T, cmsCLUT_FLAGS_TRILINEAR_INTERPOLATION);
-
+        mpeclut = cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, InputChannels, OutputChannels, T);
         if (mpeclut == NULL) goto Error;
         cmsPipelineInsertStage(NewLUT, cmsAT_END, mpeclut);
         _cmsFree(self ->ContextID, T);
@@ -2005,9 +2003,7 @@ void *Type_LUT16_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cm
 
         if (!_cmsReadUInt16Array(io, nTabSize, T)) goto Error;      
         
-        mpeclut = cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, 
-			                             InputChannels, OutputChannels, T, cmsCLUT_FLAGS_TRILINEAR_INTERPOLATION);
-
+        mpeclut = cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, InputChannels, OutputChannels, T);
         if (mpeclut == NULL) goto Error;
         cmsPipelineInsertStage(NewLUT, cmsAT_END, mpeclut);
         _cmsFree(self ->ContextID, T);
@@ -2230,8 +2226,7 @@ cmsStage* ReadCLUT(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUI
     if (!_cmsReadUInt8Number(io, NULL)) return NULL;
     if (!_cmsReadUInt8Number(io, NULL)) return NULL;
 
-    CLUT = cmsStageAllocCLut16bitGranular(self ->ContextID, GridPoints,
-		                                  InputChannels, OutputChannels, NULL, cmsCLUT_FLAGS_TRILINEAR_INTERPOLATION);
+    CLUT = cmsStageAllocCLut16bitGranular(self ->ContextID, GridPoints, InputChannels, OutputChannels, NULL);
     Data = (_cmsStageCLutData*) CLUT ->Data;
 
     // Precision can be 1 or 2 bytes
@@ -4116,8 +4111,7 @@ void *Type_MPEclut_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
     for (i=0; i < nMaxGrids; i++) GridPoints[i] = Dimensions8[i];
 
     // Allocate the true CLUT
-    mpe = cmsStageAllocCLutFloatGranular(self ->ContextID, GridPoints, InputChans, 
-		                                 OutputChans, NULL, cmsCLUT_FLAGS_TRILINEAR_INTERPOLATION);
+    mpe = cmsStageAllocCLutFloatGranular(self ->ContextID, GridPoints, InputChans, OutputChans, NULL);
     if (mpe == NULL) goto Error;
 
     // Read the data

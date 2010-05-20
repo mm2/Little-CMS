@@ -260,7 +260,7 @@ typedef union {
 // Flags for interpolator selection
 #define CMS_LERP_FLAGS_16BITS             0x0000        // The default
 #define CMS_LERP_FLAGS_FLOAT              0x0001        // Requires different implementation
-#define CMS_LERP_FLAGS_TRILINEAR          cmsCLUT_FLAGS_TRILINEAR_INTERPOLATION     // Hint only
+#define CMS_LERP_FLAGS_TRILINEAR          0x0100        // Hint only
 
 
 #define MAX_INPUT_DIMENSIONS 8

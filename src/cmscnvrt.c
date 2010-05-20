@@ -693,7 +693,7 @@ cmsPipeline*  BlackPreservingKOnlyIntents(cmsContext     ContextID,
     nGridPoints = _cmsReasonableGridpointsByColorspace(cmsSigCmykData, dwFlags);
     
     // Create the CLUT. 16 bits
-    CLUT = cmsStageAllocCLut16bit(ContextID, nGridPoints, 4, 4, NULL, 0);
+    CLUT = cmsStageAllocCLut16bit(ContextID, nGridPoints, 4, 4, NULL);
     if (CLUT == NULL) goto Error;
 
     // This is the one and only MPE in this LUT
@@ -905,7 +905,7 @@ cmsPipeline* BlackPreservingKPlaneIntents(cmsContext     ContextID,
     nGridPoints = _cmsReasonableGridpointsByColorspace(cmsSigCmykData, dwFlags);
 
     
-    CLUT = cmsStageAllocCLut16bit(ContextID, nGridPoints, 4, 4, NULL, 0);
+    CLUT = cmsStageAllocCLut16bit(ContextID, nGridPoints, 4, 4, NULL);
     if (CLUT == NULL) goto Cleanup;
 
     cmsPipelineInsertStage(Result, cmsAT_BEGIN, CLUT);
