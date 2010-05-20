@@ -367,6 +367,7 @@ void                 _cmsTagSignature2String(char String[5], cmsTagSignature sig
 cmsInterpParams*     _cmsComputeInterpParams(cmsContext ContextID, int nSamples, int InputChan, int OutputChan, const void* Table, cmsUInt32Number dwFlags);
 cmsInterpParams*     _cmsComputeInterpParamsEx(cmsContext ContextID, const cmsUInt32Number nSamples[], int InputChan, int OutputChan, const void* Table, cmsUInt32Number dwFlags);
 void                 _cmsFreeInterpParams(cmsInterpParams* p);
+cmsBool              _cmsSetInterpolationRoutine(cmsInterpParams* p);
 
 // Curves ----------------------------------------------------------------------------------------------------------------
 
