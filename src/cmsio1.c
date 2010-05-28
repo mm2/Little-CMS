@@ -439,12 +439,12 @@ cmsPipeline* _cmsReadOutputLUT(cmsHPROFILE hProfile, int Intent)
 
         // The profile owns the Lut, so we need to copy it
         Lut = cmsPipelineDup(Lut);
+        if (Lut == NULL) return NULL;
 
         // Now it is time for a controversial stuff. I found that for 3D LUTS using 
-        // Lab used as indexer space,  trilinear interpolation should be used 
-        
-		if (cmsGetPCS(hProfile) == cmsSigLabData)
-                             ChangeInterpolationToTrilinear(Lut);		
+        // Lab used as indexer space,  trilinear interpolation should be used         
+        if (cmsGetPCS(hProfile) == cmsSigLabData)
+                             ChangeInterpolationToTrilinear(Lut);       
 
         // We need to adjust data only for Lab and Lut16 type
         if (OriginalType != cmsSigLut16Type || cmsGetPCS(hProfile) != cmsSigLabData) 
@@ -507,6 +507,12 @@ cmsPipeline* _cmsReadDevicelinkLUT(cmsHPROFILE hProfile, int Intent)
 
     // The profile owns the Lut, so we need to copy it
     Lut = cmsPipelineDup(Lut);
+    if (Lut == NULL) return NULL;
+
+     // Now it is time for a controversial stuff. I found that for 3D LUTS using 
+     // Lab used as indexer space,  trilinear interpolation should be used         
+    if (cmsGetColorSpace(hProfile) == cmsSigLabData)
+                        ChangeInterpolationToTrilinear(Lut);    
 
     // After reading it, we have info about the original type
     OriginalType =  _cmsGetTagTrueType(hProfile, tag16);
