@@ -3650,8 +3650,6 @@ void CheckSingleFormatter16(cmsUInt32Number Type, const char* Text)
 #define C(a) CheckSingleFormatter16(a, #a)
 
 
-
-
 // Check all formatters
 static
 cmsInt32Number CheckFormatters16(void)
@@ -3793,6 +3791,9 @@ cmsInt32Number CheckFormatters16(void)
    C( TYPE_GRAY_FLT );
    C( TYPE_RGB_FLT  );
    C( TYPE_CMYK_FLT );
+   C( TYPE_XYZA_FLT );
+   C( TYPE_LabA_FLT );
+   C( TYPE_RGBA_FLT );
 
    C( TYPE_XYZ_DBL  );
    C( TYPE_Lab_DBL  );
@@ -3883,6 +3884,11 @@ cmsInt32Number CheckFormattersFloat(void)
     C( TYPE_GRAY_FLT );
     C( TYPE_RGB_FLT  );
     C( TYPE_CMYK_FLT );
+
+    // User
+    C( TYPE_XYZA_FLT );
+    C( TYPE_LabA_FLT );
+    C( TYPE_RGBA_FLT );
 
     C( TYPE_XYZ_DBL  );
     C( TYPE_Lab_DBL  );
@@ -5001,43 +5007,43 @@ static
 cmsInt32Number CheckBadTransforms(void)
 {
     cmsHPROFILE h1 = cmsCreate_sRGBProfile();
-	cmsHTRANSFORM x1;
+    cmsHTRANSFORM x1;
 
-	x1 = cmsCreateTransform(NULL, 0, NULL, 0, 0, 0);
-	if (x1 != NULL) {
-		cmsDeleteTransform(x1);
-		return 0;
-	}
+    x1 = cmsCreateTransform(NULL, 0, NULL, 0, 0, 0);
+    if (x1 != NULL) {
+        cmsDeleteTransform(x1);
+        return 0;
+    }
 
-	
+    
 
-	x1 = cmsCreateTransform(h1, TYPE_RGB_8, h1, TYPE_RGB_8, 12345, 0);
-	if (x1 != NULL) {
-		cmsDeleteTransform(x1);
-		return 0;
-	}
+    x1 = cmsCreateTransform(h1, TYPE_RGB_8, h1, TYPE_RGB_8, 12345, 0);
+    if (x1 != NULL) {
+        cmsDeleteTransform(x1);
+        return 0;
+    }
 
     x1 = cmsCreateTransform(h1, TYPE_CMYK_8, h1, TYPE_RGB_8, 0, 0);
-	if (x1 != NULL) {
-		cmsDeleteTransform(x1);
-		return 0;
-	}
+    if (x1 != NULL) {
+        cmsDeleteTransform(x1);
+        return 0;
+    }
 
-	x1 = cmsCreateTransform(h1, TYPE_RGB_8, h1, TYPE_CMYK_8, 1, 0);
-	if (x1 != NULL) {
-		cmsDeleteTransform(x1);
-		return 0;
-	}
+    x1 = cmsCreateTransform(h1, TYPE_RGB_8, h1, TYPE_CMYK_8, 1, 0);
+    if (x1 != NULL) {
+        cmsDeleteTransform(x1);
+        return 0;
+    }
 
-	// sRGB does its output as XYZ!
-	x1 = cmsCreateTransform(h1, TYPE_RGB_8, NULL, TYPE_Lab_8, 1, 0);
-	if (x1 != NULL) {
-		cmsDeleteTransform(x1);
-		return 0;
-	}
+    // sRGB does its output as XYZ!
+    x1 = cmsCreateTransform(h1, TYPE_RGB_8, NULL, TYPE_Lab_8, 1, 0);
+    if (x1 != NULL) {
+        cmsDeleteTransform(x1);
+        return 0;
+    }
 
-	cmsCloseProfile(h1);
-	return 1;
+    cmsCloseProfile(h1);
+    return 1;
 
 }
 
