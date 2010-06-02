@@ -134,6 +134,28 @@ cmsBool _cmsWriteWCharArray(cmsIOHANDLER* io, cmsUInt32Number n, const wchar_t* 
     return TRUE;
 }
 
+static
+cmsBool _cmsReadWCharArray(cmsIOHANDLER* io, cmsUInt32Number n, wchar_t* Array)
+{
+    cmsUInt32Number i;
+    cmsUInt16Number tmp;
+
+    _cmsAssert(io != NULL);
+
+    for (i=0; i < n; i++) {
+
+        if (Array != NULL) {
+
+            if (!_cmsReadUInt16Number(io, &tmp)) return FALSE;
+            Array[i] = (wchar_t) tmp;
+        }
+        else {
+            if (!_cmsReadUInt16Number(io, NULL)) return FALSE;
+        }
+
+    }
+    return TRUE;
+}
 
 // To deal with position tables
 typedef cmsBool (* PositionTableEntryFn)(struct _cms_typehandler_struct* self, 
@@ -982,7 +1004,7 @@ cmsBool  Type_Text_Description_Write(struct _cms_typehandler_struct* self, cmsIO
 
     if (!_cmsWriteUInt32Number(io, len_aligned+1)) goto Error;  
 
-	// Note that in some compilers sizeof(cmsUInt16Number) != sizeof(wchar_t)
+    // Note that in some compilers sizeof(cmsUInt16Number) != sizeof(wchar_t)
     if (!_cmsWriteWCharArray(io, len, Wide)) goto Error;            
     if (!_cmsWriteUInt16Array(io, len_filler_alignment+1, (cmsUInt16Number*) Filler)) goto Error;   
 
@@ -1365,13 +1387,11 @@ void Type_Measurement_Free(struct _cms_typehandler_struct* self, void* Ptr)
 // ********************************************************************************
 // Type cmsSigMultiLocalizedUnicodeType
 // ********************************************************************************
-
 //
 //   Do NOT trust SizeOfTag as there is an issue on the definition of profileSequenceDescTag. See the TechNote from 
 //   Max Derhak and Rohit Patil about this: basically the size of the string table should be guessed and cannot be
 //   taken from the size of tag if this tag is embedded as part of bigger structures (profileSequenceDescTag, for instance)
 //
-// FIXME: this doesn't work if sizeof(wchat_t) != 2  !!!
 
 static
 void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag)
@@ -1381,7 +1401,7 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
     cmsUInt32Number SizeOfHeader;
     cmsUInt32Number  Len, Offset;
     cmsUInt32Number  i;
-    cmsUInt16Number* Block;
+    wchar_t*         Block;
     cmsUInt32Number  BeginOfThisString, EndOfThisString, LargestPosition;
 
     *nItems = 0;
@@ -1408,13 +1428,18 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
         if (!_cmsReadUInt16Number(io, &mlu ->Entries[i].Country))  goto Error;           
 
         // Now deal with Len and offset.
-        if (!_cmsReadUInt32Number(io, &Len)) goto Error;
-        mlu ->Entries[i].Len = Len;
-
+        if (!_cmsReadUInt32Number(io, &Len)) goto Error;      
         if (!_cmsReadUInt32Number(io, &Offset)) goto Error;
 
+        // Check for overflow
+        if (Offset < (SizeOfHeader + 8)) goto Error;
+
+        // True begin of the string
         BeginOfThisString = Offset - SizeOfHeader - 8;
-        mlu ->Entries[i].StrW = BeginOfThisString;
+        
+        // Ajust to wchar_t elements
+        mlu ->Entries[i].Len = (Len * sizeof(wchar_t)) / sizeof(cmsUInt16Number);        
+        mlu ->Entries[i].StrW = (BeginOfThisString * sizeof(wchar_t)) / sizeof(cmsUInt16Number);
 
         // To guess maximum size, add offset + len
         EndOfThisString = BeginOfThisString + Len;
@@ -1423,15 +1448,16 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
     }
 
     // Now read the remaining of tag and fill all strings. Substract the directory
-    SizeOfTag   = LargestPosition;
+    SizeOfTag   = (LargestPosition * sizeof(wchar_t)) / sizeof(cmsUInt16Number);
 
-    Block = (cmsUInt16Number*) _cmsMalloc(self ->ContextID, SizeOfTag);
+    Block = (wchar_t*) _cmsMalloc(self ->ContextID, SizeOfTag);
     if (Block == NULL) goto Error;
 
-    NumOfWchar = SizeOfTag / sizeof(cmsUInt16Number);
+    NumOfWchar = SizeOfTag / sizeof(wchar_t);
 
-    if (!_cmsReadUInt16Array(io, NumOfWchar, Block)) goto Error;
-    mlu ->MemPool = Block;
+    if (!_cmsReadWCharArray(io, NumOfWchar, Block)) goto Error;
+
+    mlu ->MemPool  = Block;
     mlu ->PoolSize = SizeOfTag;
     mlu ->PoolUsed = SizeOfTag;
 
@@ -1447,7 +1473,8 @@ static
 cmsBool  Type_MLU_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, void* Ptr, cmsUInt32Number nItems)
 {
     cmsMLU* mlu =(cmsMLU*) Ptr;
-    cmsUInt32Number HeaderSize, Offset;
+    cmsUInt32Number HeaderSize;
+    cmsUInt32Number  Len, Offset;
     int i;
 
     if (!_cmsWriteUInt32Number(io, mlu ->UsedEntries)) return FALSE;           
@@ -1456,17 +1483,20 @@ cmsBool  Type_MLU_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
     HeaderSize = 12 * mlu ->UsedEntries + sizeof(_cmsTagBase);
 
     for (i=0; i < mlu ->UsedEntries; i++) {
+
+        Len    =  mlu ->Entries[i].Len;
+        Offset =  mlu ->Entries[i].StrW;
         
+        Len    = (Len * sizeof(cmsUInt16Number)) / sizeof(wchar_t);
+        Offset = (Offset * sizeof(cmsUInt16Number)) / sizeof(wchar_t) + HeaderSize + 8;
+
         if (!_cmsWriteUInt16Number(io, mlu ->Entries[i].Language)) return FALSE;           
         if (!_cmsWriteUInt16Number(io, mlu ->Entries[i].Country))  return FALSE;  
-        if (!_cmsWriteUInt32Number(io, mlu ->Entries[i].Len)) return FALSE;
-        
-        Offset =  mlu ->Entries[i].StrW + HeaderSize + 8;
-
+        if (!_cmsWriteUInt32Number(io, Len)) return FALSE;
         if (!_cmsWriteUInt32Number(io, Offset)) return FALSE;               
     }
 
-    if (!_cmsWriteUInt16Array(io, mlu ->PoolUsed / sizeof(cmsUInt16Number), (cmsUInt16Number*)  mlu ->MemPool)) return FALSE;
+    if (!_cmsWriteWCharArray(io, mlu ->PoolUsed / sizeof(wchar_t), (wchar_t*)  mlu ->MemPool)) return FALSE;
 
     return TRUE;
 
@@ -4535,71 +4565,71 @@ Error:
 static
 cmsBool Type_vcgt_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, void* Ptr, cmsUInt32Number nItems)
 {
-	cmsToneCurve** Curves =  (cmsToneCurve**) Ptr;
-	cmsUInt32Number i, j;
+    cmsToneCurve** Curves =  (cmsToneCurve**) Ptr;
+    cmsUInt32Number i, j;
 
-	if (cmsGetToneCurveParametricType(Curves[0]) == 5 &&
-		cmsGetToneCurveParametricType(Curves[1]) == 5 &&
-		cmsGetToneCurveParametricType(Curves[2]) == 5) {
+    if (cmsGetToneCurveParametricType(Curves[0]) == 5 &&
+        cmsGetToneCurveParametricType(Curves[1]) == 5 &&
+        cmsGetToneCurveParametricType(Curves[2]) == 5) {
 
-			if (!_cmsWriteUInt32Number(io, cmsVideoCardGammaFormulaType)) return FALSE;  
+            if (!_cmsWriteUInt32Number(io, cmsVideoCardGammaFormulaType)) return FALSE;  
 
-			// Save parameters
-			for (i=0; i < 3; i++) {
+            // Save parameters
+            for (i=0; i < 3; i++) {
 
-				_cmsVCGTGAMMA v;
+                _cmsVCGTGAMMA v;
 
-				v.Gamma = Curves[i] ->Segments[0].Params[0];
-				v.Min   = Curves[i] ->Segments[0].Params[5];
-				v.Max   = pow(Curves[i] ->Segments[0].Params[1], v.Gamma) + v.Min;
+                v.Gamma = Curves[i] ->Segments[0].Params[0];
+                v.Min   = Curves[i] ->Segments[0].Params[5];
+                v.Max   = pow(Curves[i] ->Segments[0].Params[1], v.Gamma) + v.Min;
 
-				if (!_cmsWrite15Fixed16Number(io, v.Gamma)) return FALSE;
-				if (!_cmsWrite15Fixed16Number(io, v.Min)) return FALSE;
-				if (!_cmsWrite15Fixed16Number(io, v.Max)) return FALSE;
-			}
-	}
+                if (!_cmsWrite15Fixed16Number(io, v.Gamma)) return FALSE;
+                if (!_cmsWrite15Fixed16Number(io, v.Min)) return FALSE;
+                if (!_cmsWrite15Fixed16Number(io, v.Max)) return FALSE;
+            }
+    }
 
-	else {
+    else {
 
-		// Always store as a table of 256 words
-		if (!_cmsWriteUInt32Number(io, cmsVideoCardGammaTableType)) return FALSE;    
-		if (!_cmsWriteUInt16Number(io, 3)) return FALSE;    
-		if (!_cmsWriteUInt16Number(io, 256)) return FALSE;    
-		if (!_cmsWriteUInt16Number(io, 2)) return FALSE;    
+        // Always store as a table of 256 words
+        if (!_cmsWriteUInt32Number(io, cmsVideoCardGammaTableType)) return FALSE;    
+        if (!_cmsWriteUInt16Number(io, 3)) return FALSE;    
+        if (!_cmsWriteUInt16Number(io, 256)) return FALSE;    
+        if (!_cmsWriteUInt16Number(io, 2)) return FALSE;    
 
-		for (i=0; i < 3; i++) {
-			for (j=0; j < 256; j++) {
+        for (i=0; i < 3; i++) {
+            for (j=0; j < 256; j++) {
 
-				cmsFloat32Number v = cmsEvalToneCurveFloat(Curves[i], (cmsFloat32Number) (j / 255.0));
-				cmsUInt16Number  n = _cmsQuickSaturateWord(v * 65535.0);
+                cmsFloat32Number v = cmsEvalToneCurveFloat(Curves[i], (cmsFloat32Number) (j / 255.0));
+                cmsUInt16Number  n = _cmsQuickSaturateWord(v * 65535.0);
 
-				if (!_cmsWriteUInt16Number(io, n)) return FALSE;    
-			}
-		}
-	}
+                if (!_cmsWriteUInt16Number(io, n)) return FALSE;    
+            }
+        }
+    }
 
-	return TRUE;
+    return TRUE;
 
-	cmsUNUSED_PARAMETER(self);
-	cmsUNUSED_PARAMETER(nItems);
+    cmsUNUSED_PARAMETER(self);
+    cmsUNUSED_PARAMETER(nItems);
 }
 
 static
 void* Type_vcgt_Dup(struct _cms_typehandler_struct* self, const void *Ptr, cmsUInt32Number n)
 {
-	cmsToneCurve** OldCurves =  (cmsToneCurve**) Ptr;
-	cmsToneCurve** NewCurves;
+    cmsToneCurve** OldCurves =  (cmsToneCurve**) Ptr;
+    cmsToneCurve** NewCurves;
 
-	NewCurves = ( cmsToneCurve**) _cmsCalloc(self ->ContextID, 3, sizeof(cmsToneCurve*));
+    NewCurves = ( cmsToneCurve**) _cmsCalloc(self ->ContextID, 3, sizeof(cmsToneCurve*));
     if (NewCurves == NULL) return NULL;
 
-	NewCurves[0] = cmsDupToneCurve(OldCurves[0]);
+    NewCurves[0] = cmsDupToneCurve(OldCurves[0]);
     NewCurves[1] = cmsDupToneCurve(OldCurves[1]);
-	NewCurves[2] = cmsDupToneCurve(OldCurves[2]);
+    NewCurves[2] = cmsDupToneCurve(OldCurves[2]);
 
     return (void*) NewCurves;
 
-	cmsUNUSED_PARAMETER(n);
+    cmsUNUSED_PARAMETER(n);
 }
 
 

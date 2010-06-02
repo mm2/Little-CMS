@@ -1,6 +1,7 @@
-Major version bump
--------------------
+2.0 Major version bump
+-----------------------
 
 Fixed a bug on V2 CHAD construction, affects absolute colorimetric intent
 Fixed a bug that prevented linkicc to work
 Fixed a bug on transicc that made profiles with output colorants info to malfunction
+Fixed a bug on Lab + Alpha float formatters, added such predefined formatters as well
