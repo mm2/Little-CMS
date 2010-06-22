@@ -380,7 +380,7 @@ typedef enum {
     cmsSigMotionPictureFilmScanner          = 0x6D706673,  // 'mpfs'
     cmsSigMotionPictureFilmRecorder         = 0x6D706672,  // 'mpfr'
     cmsSigDigitalMotionPictureCamera        = 0x646D7063,  // 'dmpc'
-    cmsSigDigitalCinemaProjector            = 0x64636A70,  // 'dcpj'
+    cmsSigDigitalCinemaProjector            = 0x64636A70   // 'dcpj'
 
 } cmsTechnologySignature;
 
@@ -441,7 +441,7 @@ typedef enum {
     cmsSigLinkClass                         = 0x6C696E6B,  // 'link'
     cmsSigAbstractClass                     = 0x61627374,  // 'abst'
     cmsSigColorSpaceClass                   = 0x73706163,  // 'spac'
-    cmsSigNamedColorClass                   = 0x6e6d636c,  // 'nmcl'
+    cmsSigNamedColorClass                   = 0x6e6d636c   // 'nmcl'
 
 } cmsProfileClassSignature;
 
