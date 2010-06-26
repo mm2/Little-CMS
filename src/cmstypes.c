@@ -2442,9 +2442,19 @@ cmsBool  WriteMatrix(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cms
     if (!_cmsWrite15Fixed16Number(io, m -> Double[7])) return FALSE;
     if (!_cmsWrite15Fixed16Number(io, m -> Double[8])) return FALSE;
 
+    if (m ->Offset != NULL) {
+
     if (!_cmsWrite15Fixed16Number(io, m -> Offset[0])) return FALSE;
     if (!_cmsWrite15Fixed16Number(io, m -> Offset[1])) return FALSE;
     if (!_cmsWrite15Fixed16Number(io, m -> Offset[2])) return FALSE;
+    }
+    else {
+        if (!_cmsWrite15Fixed16Number(io, 0)) return FALSE;
+        if (!_cmsWrite15Fixed16Number(io, 0)) return FALSE;
+        if (!_cmsWrite15Fixed16Number(io, 0)) return FALSE;
+
+    }
+
 
     return TRUE;
 
@@ -4467,6 +4477,11 @@ void *Type_vcgt_Read(struct _cms_typehandler_struct* self,
        if (!_cmsReadUInt16Number(io, &nElems)) goto Error;
        if (!_cmsReadUInt16Number(io, &nBytes)) goto Error;
        
+	   // Adobe's quirk fixup. Fixing broken profiles...
+	   if (nElems == 256 && nBytes == 1 && SizeOfTag == 1576)
+		   nBytes = 2;
+
+
        // Populate tone curves
        for (n=0; n < 3; n++) {
 
