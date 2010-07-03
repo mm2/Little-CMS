@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="tiffdiff"
+	Name="tifdiff"
 	ProjectGUID="{75B91835-CCD7-48BE-A606-A9C997D5DBEE}"
-	RootNamespace="tiffdiff"
+	RootNamespace="tifdiff"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libtiff.lib"
-				OutputFile="../../../bin/tiffdiffd.exe"
+				OutputFile="../../../bin/tifdiffd.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -137,7 +137,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libtiff.lib"
-				OutputFile="../../../bin/tiffdiff.exe"
+				OutputFile="../../../bin/tifdiff.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -177,7 +177,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\..\utils\tifficc\tiffdiff.c"
+				RelativePath="..\..\..\utils\tificc\tifdiff.c"
 				>
 			</File>
 			<File

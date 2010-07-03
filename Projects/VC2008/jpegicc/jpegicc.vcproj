@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="jpegicc"
+	Name="jpgicc"
 	ProjectGUID="{62812507-F926-4968-96A9-17678460AD90}"
-	RootNamespace="jpegicc"
+	RootNamespace="jpgicc"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libjpeg.lib"
-				OutputFile="../../../bin/jpegicciccd.exe"
+				OutputFile="../../../bin/jpgicciccd.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -137,7 +137,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libjpeg.lib"
-				OutputFile="../../../bin/jpegicc.exe"
+				OutputFile="../../../bin/jpgicc.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -177,11 +177,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\..\utils\jpegicc\iccjpeg.c"
+				RelativePath="..\..\..\utils\jpgicc\iccjpeg.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\utils\jpegicc\jpegicc.c"
+				RelativePath="..\..\..\utils\jpgicc\jpgicc.c"
 				>
 			</File>
 			<File

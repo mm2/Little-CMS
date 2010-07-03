@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="tifficc"
+	Name="tificc"
 	ProjectGUID="{2256DE16-ED92-4A6F-9C54-F65BB61E64A2}"
-	RootNamespace="tifficc"
+	RootNamespace="tificc"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -62,7 +62,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libtiff.lib"
-				OutputFile="../../../bin/tifficcd.exe"
+				OutputFile="../../../bin/tificcd.exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -137,7 +137,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				AdditionalDependencies="libtiff.lib"
-				OutputFile="../../../bin/tifficc.exe"
+				OutputFile="../../../bin/tificc.exe"
 				LinkIncremental="1"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -177,7 +177,7 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\..\utils\tifficc\tifficc.c"
+				RelativePath="..\..\..\utils\tificc\tificc.c"
 				>
 			</File>
 			<File
