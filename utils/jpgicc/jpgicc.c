@@ -813,6 +813,8 @@ int TransformImage(char *cDefInpProf, char *cOutProf)
                                           hOut, wOutput, 
                                           hProof, Intent, 
                                           ProofingIntent, dwFlags);
+	   if (xform == NULL) 
+                 FatalError("Cannot transform by using the profiles");
   
        DoTransform(xform, OutputColorSpace);
 

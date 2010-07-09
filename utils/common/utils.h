@@ -49,6 +49,10 @@
 #include <math.h>
 #include <wchar.h>
 
+// Avoid warnings
+
+#define UTILS_UNUSED_PARAMETER(x) ((void)x) 
+
 // Init the utility functions
 
 void InitUtils(const char* PName);

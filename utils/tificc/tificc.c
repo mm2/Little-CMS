@@ -143,6 +143,9 @@ unsigned char* UnrollTIFFLab8(struct _cmstransform_struct* CMMcargo,
     wIn[2] = (cmsUInt16Number) FromLabV2ToLabV4(((accum[2] > 127) ? (accum[2] - 128) : (accum[2] + 128)) << 8);
 
     return accum + 3;
+
+    UTILS_UNUSED_PARAMETER(Stride);
+    UTILS_UNUSED_PARAMETER(CMMcargo);
 }
 
 static
@@ -162,6 +165,9 @@ unsigned char* PackTIFFLab8(struct _cmstransform_struct* CMMcargo,
     *output++ = (cmsUInt8Number) ((b < 128) ? (b + 128) : (b - 128));
 
     return output;
+
+    UTILS_UNUSED_PARAMETER(Stride);
+    UTILS_UNUSED_PARAMETER(CMMcargo);
 }
 
 

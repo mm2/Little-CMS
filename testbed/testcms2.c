@@ -3901,6 +3901,75 @@ cmsInt32Number CheckFormattersFloat(void)
 #undef C
 
 
+static
+cmsInt32Number CheckOneRGB(cmsHTRANSFORM xform, cmsUInt32Number R, cmsUInt32Number G, cmsUInt32Number B, cmsUInt32Number Ro, cmsUInt32Number Go, cmsUInt32Number Bo)
+{
+    cmsUInt16Number RGB[3];
+    cmsUInt16Number Out[3];
+
+    RGB[0] = R;
+    RGB[1] = G;
+    RGB[2] = B;
+
+    cmsDoTransform(xform, RGB, Out, 1);
+
+    return IsGoodWord("R", Ro , Out[0]) &&
+           IsGoodWord("G", Go , Out[1]) &&
+           IsGoodWord("B", Bo , Out[2]);
+}
+
+// Check known values going from sRGB to XYZ
+static
+cmsInt32Number CheckOneRGB_double(cmsHTRANSFORM xform, cmsFloat64Number R, cmsFloat64Number G, cmsFloat64Number B, cmsFloat64Number Ro, cmsFloat64Number Go, cmsFloat64Number Bo)
+{
+    cmsFloat64Number RGB[3];
+    cmsFloat64Number Out[3];
+
+    RGB[0] = R;
+    RGB[1] = G;
+    RGB[2] = B;
+
+    cmsDoTransform(xform, RGB, Out, 1);
+
+    return IsGoodVal("R", Ro , Out[0], 0.01) &&
+           IsGoodVal("G", Go , Out[1], 0.01) &&
+           IsGoodVal("B", Bo , Out[2], 0.01);
+}
+
+
+static
+cmsInt32Number CheckChangeBufferFormat(void)
+{
+    cmsHPROFILE hsRGB = cmsCreate_sRGBProfile();
+    cmsHTRANSFORM xform;
+
+
+    xform = cmsCreateTransform(hsRGB, TYPE_RGB_16, hsRGB, TYPE_RGB_16, INTENT_PERCEPTUAL, 0);
+    cmsCloseProfile(hsRGB);
+    if (xform == NULL) return 0;
+
+    
+    if (!CheckOneRGB(xform, 0, 0, 0, 0, 0, 0)) return 0;
+    if (!CheckOneRGB(xform, 120, 0, 0, 120, 0, 0)) return 0;
+    if (!CheckOneRGB(xform, 0, 222, 255, 0, 222, 255)) return 0;
+
+
+    if (!cmsChangeBuffersFormat(xform, TYPE_BGR_16, TYPE_RGB_16)) return 0;
+
+    if (!CheckOneRGB(xform, 0, 0, 123, 123, 0, 0)) return 0;
+    if (!CheckOneRGB(xform, 154, 234, 0, 0, 234, 154)) return 0;
+
+    if (!cmsChangeBuffersFormat(xform, TYPE_RGB_DBL, TYPE_RGB_DBL)) return 0;
+
+    if (!CheckOneRGB_double(xform, 0.20, 0, 0, 0.20, 0, 0)) return 0;
+    if (!CheckOneRGB_double(xform, 0, 0.9, 1, 0, 0.9, 1)) return 0;
+
+    cmsDeleteTransform(xform);
+    
+return 1;
+}
+
+
 // Write tag testbed ----------------------------------------------------------------------------------------
 
 static
@@ -5661,7 +5730,6 @@ cmsInt32Number CheckOneRGB_f(cmsHTRANSFORM xform, cmsInt32Number R, cmsInt32Numb
            IsGoodVal("Z", Z , Out[2], err);
 }
 
-
 static
 cmsInt32Number Chack_sRGB_Float(void)
 {
@@ -7262,7 +7330,6 @@ int main(int argc, char* argv[])
     cmsInt32Number Exhaustive = 0;
     cmsInt32Number DoSpeedTests = 1;
 
-
 #ifdef _MSC_VER
     _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF ); 
 #endif
@@ -7405,6 +7472,9 @@ int main(int argc, char* argv[])
     Check("Usual formatters", CheckFormatters16);
     Check("Floating point formatters", CheckFormattersFloat);
 
+    // ChangeBuffersFormat
+    Check("ChangeBuffersFormat", CheckChangeBufferFormat);
+    
     // MLU    
     Check("Multilocalized Unicode", CheckMLU);
     
