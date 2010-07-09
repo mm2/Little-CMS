@@ -186,6 +186,8 @@ int PCS2ITU(register const cmsUInt16Number In[], register cmsUInt16Number Out[],
 	cmsDesaturateLab(&Lab, 85, -85, 125, -75);    // This function does the necessary gamut remapping  
 	Lab2ITU(&Lab, Out);
 	return TRUE;
+
+    UTILS_UNUSED_PARAMETER(Cargo);
 }
 
 
@@ -197,6 +199,8 @@ int ITU2PCS( register const cmsUInt16Number In[], register cmsUInt16Number Out[]
 	ITU2Lab(In, &Lab);
 	cmsFloat2LabEncoded(Out, &Lab);    
 	return TRUE;
+
+    UTILS_UNUSED_PARAMETER(Cargo);
 }
 
 // This function does create the virtual input profile, which decodes ITU to the profile connection space
@@ -299,9 +303,9 @@ cmsBool ProcessPhotoshopAPP13(JOCTET FAR *data, int datalen)
         
         if (type == 0x03ED && len >= 16) {
             
-            Decompressor.X_density = (int) PS_FIXED_TO_FLOAT(GETJOCTET(data[i]<<8) + GETJOCTET(data[i+1]),
+            Decompressor.X_density = (UINT16) PS_FIXED_TO_FLOAT(GETJOCTET(data[i]<<8) + GETJOCTET(data[i+1]),
                                                  GETJOCTET(data[i+2]<<8) + GETJOCTET(data[i+3]));
-            Decompressor.Y_density = (int) PS_FIXED_TO_FLOAT(GETJOCTET(data[i+8]<<8) + GETJOCTET(data[i+9]),
+            Decompressor.Y_density = (UINT16) PS_FIXED_TO_FLOAT(GETJOCTET(data[i+8]<<8) + GETJOCTET(data[i+9]),
                                                  GETJOCTET(data[i+10]<<8) + GETJOCTET(data[i+11]));
             
             // Set the density unit to 1 since the 
