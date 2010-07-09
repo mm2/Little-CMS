@@ -1659,3 +1659,16 @@ cmsBool CMSEXPORT cmsLinkTag(cmsHPROFILE hProfile, cmsTagSignature sig, cmsTagSi
     return TRUE;
 }
 
+
+// Returns the tag linked to sig, in the case two tags are sharing same resource
+cmsTagSignature  CMSEXPORT cmsTagLinkedTo(cmsHPROFILE hProfile, cmsTagSignature sig)
+{
+    _cmsICCPROFILE* Icc = (_cmsICCPROFILE*) hProfile;  
+    int i;
+
+    // Search for given tag in ICC profile directory
+	i = _cmsSearchTag(Icc, sig, FALSE);
+	if (i < 0) return (cmsTagSignature) 0;                 // Not found, return 0
+
+    return Icc -> TagLinked[i];
+}
