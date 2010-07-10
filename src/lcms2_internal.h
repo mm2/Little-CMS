@@ -545,6 +545,8 @@ cmsPipeline*     _cmsCreateGamutCheckPipeline(cmsContext ContextID,
 
 // Formatters ------------------------------------------------------------------------------------------------------------
 
+#define cmsFLAGS_CAN_CHANGE_FORMATTER     0x02000000   // Allow change buffer format
+
 cmsBool         _cmsFormatterIsFloat(cmsUInt32Number Type);
 cmsBool         _cmsFormatterIs8bit(cmsUInt32Number Type);
 

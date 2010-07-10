@@ -1503,7 +1503,6 @@ CMSAPI cmsUInt32Number  CMSEXPORT cmsGetSupportedIntents(cmsUInt32Number nMax, c
 #define cmsFLAGS_NOOPTIMIZE               0x0100    // Inhibit optimizations
 #define cmsFLAGS_NULLTRANSFORM            0x0200    // Don't transform anyway
 
-
 // Proofing flags
 #define cmsFLAGS_GAMUTCHECK               0x1000    // Out of Gamut alarm
 #define cmsFLAGS_SOFTPROOFING             0x4000    // Do softproofing
@@ -1607,7 +1606,14 @@ CMSAPI void             CMSEXPORT cmsGetAlarmCodes(cmsUInt16Number NewAlarm[cmsM
 // Adaptation state for absolute colorimetric intent
 CMSAPI cmsFloat64Number CMSEXPORT cmsSetAdaptationState(cmsFloat64Number d);
 
+// Grab the ContextID from an open transform. Returns NULL if a NULL transform is passed
 CMSAPI cmsContext       CMSEXPORT cmsGetTransformContextID(cmsHTRANSFORM hTransform);
+
+// For backwards compatibility
+CMSAPI cmsBool          CMSEXPORT cmsChangeBuffersFormat(cmsHTRANSFORM hTransform, 
+                                                         cmsUInt32Number InputFormat, 
+                                                         cmsUInt32Number OutputFormat);
+
 
 
 // PostScript ColorRenderingDictionary and ColorSpaceArray ----------------------------------------------------

@@ -282,6 +282,7 @@ int PixelTypeFromChanCount(int ColorChannels)
         default:
 
             FatalError("What a weird separation of %d channels?!?!", ColorChannels);                
+            return -1;
     }
 }
 
@@ -317,6 +318,7 @@ int ChanCountFromPixelType(int ColorChannels)
       default:
 
           FatalError("Unsupported color space of %d channels", ColorChannels);          
+          return -1;
     }
 }
 
