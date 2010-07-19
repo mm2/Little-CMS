@@ -1317,6 +1317,11 @@ CMSAPI cmsInt32Number    CMSEXPORT cmsReadRawTag(cmsHPROFILE hProfile, cmsTagSig
 CMSAPI cmsBool           CMSEXPORT cmsWriteRawTag(cmsHPROFILE hProfile, cmsTagSignature sig, const void* data, cmsUInt32Number Size);
 
 // Access header data
+#define cmsEmbeddedProfileFalse    0x00000000 
+#define cmsEmbeddedProfileTrue     0x00000001 
+#define cmsUseAnywhere             0x00000000 
+#define cmsUseWithEmbeddedDataOnly 0x00000002
+
 CMSAPI cmsUInt32Number   CMSEXPORT cmsGetHeaderFlags(cmsHPROFILE hProfile);
 CMSAPI void              CMSEXPORT cmsGetHeaderAttributes(cmsHPROFILE hProfile, cmsUInt64Number* Flags);
 CMSAPI void              CMSEXPORT cmsGetHeaderProfileID(cmsHPROFILE hProfile, cmsUInt8Number* ProfileID);
@@ -1352,9 +1357,9 @@ CMSAPI void              CMSEXPORT cmsSetEncodedICCversion(cmsHPROFILE hProfile,
 #define LCMS_USED_AS_OUTPUT     1
 #define LCMS_USED_AS_PROOF      2
 
-CMSAPI cmsBool           CMSEXPORT cmsIsIntentSupported(cmsHPROFILE hProfile, cmsUInt32Number Intent, int UsedDirection);
+CMSAPI cmsBool           CMSEXPORT cmsIsIntentSupported(cmsHPROFILE hProfile, cmsUInt32Number Intent, cmsUInt32Number UsedDirection);
 CMSAPI cmsBool           CMSEXPORT cmsIsMatrixShaper(cmsHPROFILE hProfile);
-CMSAPI cmsBool           CMSEXPORT cmsIsCLUT(cmsHPROFILE hProfile, cmsUInt32Number Intent, int UsedDirection);
+CMSAPI cmsBool           CMSEXPORT cmsIsCLUT(cmsHPROFILE hProfile, cmsUInt32Number Intent, cmsUInt32Number UsedDirection);
 
 // Translate form/to our notation to ICC
 CMSAPI cmsColorSpaceSignature   CMSEXPORT _cmsICCcolorSpace(int OurNotation);

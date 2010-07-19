@@ -562,7 +562,7 @@ cmsBool  CMSEXPORT cmsIsMatrixShaper(cmsHPROFILE hProfile)
 }
 
 // Returns TRUE if the intent is implemented as CLUT
-cmsBool  CMSEXPORT cmsIsCLUT(cmsHPROFILE hProfile, cmsUInt32Number Intent, int UsedDirection)
+cmsBool  CMSEXPORT cmsIsCLUT(cmsHPROFILE hProfile, cmsUInt32Number Intent, cmsUInt32Number UsedDirection)
 {    
     const cmsTagSignature* TagTable;
 
@@ -593,7 +593,7 @@ cmsBool  CMSEXPORT cmsIsCLUT(cmsHPROFILE hProfile, cmsUInt32Number Intent, int U
 
 // Return info about supported intents
 cmsBool  CMSEXPORT cmsIsIntentSupported(cmsHPROFILE hProfile,
-                                        cmsUInt32Number Intent, int UsedDirection)
+                                        cmsUInt32Number Intent, cmsUInt32Number UsedDirection)
 {
 
     if (cmsIsCLUT(hProfile, Intent, UsedDirection)) return TRUE;

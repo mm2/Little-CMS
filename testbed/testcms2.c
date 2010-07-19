@@ -5112,6 +5112,22 @@ cmsInt32Number CheckBadTransforms(void)
     }
 
     cmsCloseProfile(h1);
+
+
+    {
+
+    cmsHPROFILE h1 = cmsOpenProfileFromFile("USWebCoatedSWOP.icc", "r");
+    cmsHPROFILE h2 = cmsCreate_sRGBProfile();
+
+    x1 = cmsCreateTransform(h1, TYPE_BGR_8, h2, TYPE_BGR_8, INTENT_PERCEPTUAL, 0);
+
+    cmsCloseProfile(h1); cmsCloseProfile(h2);
+    if (x1 != NULL) {
+        cmsDeleteTransform(x1);
+        return 0;
+    }
+    }
+
     return 1;
 
 }

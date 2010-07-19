@@ -281,7 +281,7 @@ cmsIOHANDLER* CMSEXPORT cmsOpenIOhandlerFromMem(cmsContext ContextID, void *Buff
         break;
 
     default:
-        cmsSignalError(ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unknow access mode '%c'", *AccessMode);
+        cmsSignalError(ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unknown access mode '%c'", *AccessMode);
         return NULL;
     }
 
@@ -391,7 +391,7 @@ cmsIOHANDLER* CMSEXPORT cmsOpenIOhandlerFromFile(cmsContext ContextID, const cha
 
     default:
         _cmsFree(ContextID, iohandler);
-         cmsSignalError(ContextID, cmsERROR_FILE, "Unknow access mode '%c'", *AccessMode);
+         cmsSignalError(ContextID, cmsERROR_FILE, "Unknown access mode '%c'", *AccessMode);
         return NULL;
     }
 

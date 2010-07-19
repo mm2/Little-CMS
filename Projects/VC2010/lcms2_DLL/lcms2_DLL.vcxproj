@@ -81,12 +81,14 @@
       <WholeProgramOptimization>true</WholeProgramOptimization>
       <AdditionalIncludeDirectories>../../../include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;CMS_DLL_BUILD;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <StringPooling>true</StringPooling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
     </ClCompile>
     <Link>
       <ModuleDefinitionFile>..\..\..\src\lcms2.def</ModuleDefinitionFile>
@@ -95,7 +97,6 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <TargetMachine>MachineX86</TargetMachine>
-      <OutputFile>../../../bin/lcms2.dll</OutputFile>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

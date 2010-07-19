@@ -2277,7 +2277,7 @@ cmsStage* ReadCLUT(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUI
             if (!_cmsReadUInt16Array(io, Data->nEntries, Data ->Tab.T)) return NULL;
     }
     else {
-        cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unknow precision of '%d'", Precision); 
+        cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unknown precision of '%d'", Precision); 
         return NULL;
     }
 
@@ -2305,7 +2305,7 @@ cmsToneCurve* ReadEmbeddedCurve(struct _cms_typehandler_struct* self, cmsIOHANDL
                     char String[5];
 
                     _cmsTagSignature2String(String, (cmsTagSignature) BaseType);
-                    cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unknow curve type '%s'", String);
+                    cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unknown curve type '%s'", String);
                 }
                 return NULL;
     }
@@ -2502,7 +2502,7 @@ cmsBool WriteSetOfCurves(struct _cms_typehandler_struct* self, cmsIOHANDLER* io,
                     char String[5];
 
                     _cmsTagSignature2String(String, (cmsTagSignature) Type);
-                    cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unknow curve type '%s'", String);
+                    cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unknown curve type '%s'", String);
                 }               
                 return FALSE;
         }
@@ -2521,6 +2521,11 @@ cmsBool WriteCLUT(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUIn
     cmsUInt8Number  gridPoints[cmsMAXCHANNELS]; // Number of grid points in each dimension.  
     cmsUInt32Number i;    
     _cmsStageCLutData* CLUT = ( _cmsStageCLutData*) mpe -> Data;
+
+    if (CLUT ->HasFloatValues) {
+         cmsSignalError(self ->ContextID, cmsERROR_NOT_SUITABLE, "Cannot save floating point data, CLUT are 8 or 16 bit only"); 
+         return FALSE;
+    }
 
     memset(gridPoints, 0, sizeof(gridPoints));
     for (i=0; i < (cmsUInt32Number) CLUT ->Params ->nInputs; i++) 
@@ -2547,7 +2552,7 @@ cmsBool WriteCLUT(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUIn
             if (!_cmsWriteUInt16Array(io, CLUT->nEntries, CLUT ->Tab.T)) return FALSE;
         }
         else {
-             cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unknow precision of '%d'", Precision); 
+             cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unknown precision of '%d'", Precision); 
             return FALSE;
         }
 
