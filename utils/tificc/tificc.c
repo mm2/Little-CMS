@@ -198,7 +198,7 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
 {
     uint16 Photometric, bps, spp, extra, PlanarConfig, *info;
     uint16 Compression, reverse = 0;
-    int ColorChannels, IsPlanar = 0, pt = 0;
+    int ColorChannels, IsPlanar = 0, pt = 0, IsFlt;
 
     TIFFGetField(Bank,           TIFFTAG_PHOTOMETRIC,   &Photometric);
     TIFFGetFieldDefaulted(Bank,  TIFFTAG_BITSPERSAMPLE, &bps);
@@ -304,8 +304,9 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
     // Convert bits per sample to bytes per sample
 
     bps >>= 3; 
+    IsFlt = (bps == 0) || (bps == 4);
 
-    return (COLORSPACE_SH(pt)|PLANAR_SH(IsPlanar)|EXTRA_SH(extra)|CHANNELS_SH(ColorChannels)|BYTES_SH(bps)|FLAVOR_SH(reverse));
+    return (FLOAT_SH(IsFlt)|COLORSPACE_SH(pt)|PLANAR_SH(IsPlanar)|EXTRA_SH(extra)|CHANNELS_SH(ColorChannels)|BYTES_SH(bps)|FLAVOR_SH(reverse));
 }
 
 
@@ -316,8 +317,9 @@ cmsUInt32Number ComputeOutputFormatDescriptor(cmsUInt32Number dwInput, int OutCo
 {
     int IsPlanar  = T_PLANAR(dwInput);
     int Channels  = ChanCountFromPixelType(OutColorSpace);
+    int IsFlt = (bps == 0) || (bps == 4);
 
-    return (COLORSPACE_SH(OutColorSpace)|PLANAR_SH(IsPlanar)|CHANNELS_SH(Channels)|BYTES_SH(bps));
+    return (FLOAT_SH(IsFlt)|COLORSPACE_SH(OutColorSpace)|PLANAR_SH(IsPlanar)|CHANNELS_SH(Channels)|BYTES_SH(bps));
 }
 
 
@@ -828,6 +830,8 @@ int TransformImage(TIFF* in, TIFF* out, const char *cDefInpProf)
         cmsCloseProfile(hInkLimit);
     if (hProof) 
         cmsCloseProfile(hProof);
+
+    if (xform == NULL) return 0;
 
     // Planar stuff
     if (T_PLANAR(wInput)) 

@@ -12,3 +12,4 @@ Fixed VC2010, VC2008 projects
 Added cmsTagLinkedTo
 Fixed some typos in error messages
 Peliminary Delphi wrapper 
+Fixed a bug in tificc in floating point formats
