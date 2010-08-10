@@ -36,6 +36,8 @@ type
     procedure Button1Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure Button4Click(Sender: TObject);
+    procedure ComboBoxIntentChange(Sender: TObject);
+    procedure ScrollBar1Change(Sender: TObject);
   private
     { Private declarations }
     function ComputeFlags: DWORD;
@@ -124,7 +126,7 @@ begin
   Combo.Tag := Integer(Files);
 end;
 
-// A rather simple Logger... note the CDECL convention
+// A rather simple Logger... note the "cdecl" convention
 PROCEDURE ErrorLogger(ContextID: cmsContext; ErrorCode: cmsUInt32Number;
   Text: PAnsiChar); Cdecl;
 begin
@@ -134,7 +136,6 @@ end;
 
 constructor TForm1.Create(Owner: TComponent);
 var
-
   IntentNames: array [0 .. 20] of PAnsiChar;
   i, n: Integer;
 begin
@@ -147,7 +148,7 @@ begin
   ScrollBar1.Max := 100;
 
   FillCombo(ComboBoxInput, IS_INPUT OR IS_COLORSPACE OR IS_DISPLAY);
-  FillCombo(ComboBoxOutput, $FFFF { IS_DISPLAY } );
+  FillCombo(ComboBoxOutput, $FFFF  );
 
 
   // Get the supported intents
@@ -161,6 +162,17 @@ begin
 
   ComboBoxIntent.ItemIndex := 0;
   ComboBoxIntent.Items.EndUpdate;
+end;
+
+
+
+procedure TForm1.ScrollBar1Change(Sender: TObject);
+var d: Integer;
+    s: String;
+begin
+     d := ScrollBar1.Position;
+     Str(d, s);
+     Label4.Caption := 'Adaptation state '+s + '% (Abs. col only)';
 end;
 
 procedure TForm1.Button2Click(Sender: TObject);
@@ -190,6 +202,11 @@ begin
     SelectedFile := Combo.Text;
 end;
 
+procedure TForm1.ComboBoxIntentChange(Sender: TObject);
+begin
+   ScrollBar1.Enabled := (ComboBoxIntent.itemIndex = 3);
+end;
+
 function TForm1.ComputeFlags: DWORD;
 var
   dwFlags: DWORD;
@@ -208,7 +225,7 @@ begin
   case RadioGroup1.ItemIndex of
     0:
       dwFlags := dwFlags OR cmsFLAGS_NOOPTIMIZE;
-    2:
+    1:
       dwFlags := dwFlags OR cmsFLAGS_HIGHRESPRECALC;
     3:
       dwFlags := dwFlags OR cmsFLAGS_LOWRESPRECALC;

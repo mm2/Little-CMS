@@ -119,7 +119,7 @@ static int FromLabV2ToLabV4(int x)
 {
     int a;
 
-    a = (x << 8 | x) >> 8;  // * 257 / 256
+    a = ((x << 8) | x) >> 8;  // * 257 / 256
     if ( a > 0xffff) return 0xffff;
     return a;
 }
