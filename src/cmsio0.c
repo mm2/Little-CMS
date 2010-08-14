@@ -1113,6 +1113,8 @@ cmsBool SaveTags(_cmsICCPROFILE* Icc, _cmsICCPROFILE* FileOrig)
             if (!_cmsWriteTypeBase(io, TypeBase)) 
                 return FALSE;
 
+            TypeHandler ->ContextID  = Icc ->ContextID;
+            TypeHandler ->ICCVersion = Icc ->Version;
             if (!TypeHandler ->WritePtr(TypeHandler, io, Data, TagDescriptor ->ElemCount)) {
 
 				char String[5];
@@ -1288,8 +1290,12 @@ cmsBool  CMSEXPORT cmsCloseProfile(cmsHPROFILE hProfile)
 
             cmsTagTypeHandler* TypeHandler = Icc ->TagTypeHandlers[i];
 
-            if (TypeHandler != NULL)
+            if (TypeHandler != NULL) {
+
+                TypeHandler ->ContextID = Icc ->ContextID;              // As an additional parameters
+                TypeHandler ->ICCVersion = Icc ->Version;
                 TypeHandler ->FreePtr(TypeHandler, Icc -> TagPtrs[i]);       
+            }
             else
                 _cmsFree(Icc ->ContextID, Icc ->TagPtrs[i]);
         }
@@ -1377,6 +1383,9 @@ void* CMSEXPORT cmsReadTag(cmsHPROFILE hProfile, cmsTagSignature sig)
 
     // Read the tag
     Icc -> TagTypeHandlers[n] = TypeHandler;
+
+    TypeHandler ->ContextID = Icc ->ContextID;
+    TypeHandler ->ICCVersion = Icc ->Version;
     Icc -> TagPtrs[n] = TypeHandler ->ReadPtr(TypeHandler, io, &ElemCount, TagSize);
 
     // The tag type is supported, but something wrong happend and we cannot read the tag.
@@ -1453,9 +1462,15 @@ cmsBool CMSEXPORT cmsWriteTag(cmsHPROFILE hProfile, cmsTagSignature sig, const v
             }
             else {
                 TypeHandler = Icc ->TagTypeHandlers[i];
+
+                if (TypeHandler != NULL) {
+
+                    TypeHandler ->ContextID = Icc ->ContextID;              // As an additional parameter
+                    TypeHandler ->ICCVersion = Icc ->Version;
                 TypeHandler->FreePtr(TypeHandler, Icc -> TagPtrs[i]);       
             }
         }
+    }
     }
     else  {
         // New one
@@ -1485,6 +1500,7 @@ cmsBool CMSEXPORT cmsWriteTag(cmsHPROFILE hProfile, cmsTagSignature sig, const v
     
     // Now we need to know which type to use. It depends on the version. 
     Version = cmsGetProfileVersion(hProfile);
+
     if (TagDescriptor ->DecideType != NULL) {
 
         // Let the tag descriptor to decide the type base on depending on
@@ -1495,6 +1511,7 @@ cmsBool CMSEXPORT cmsWriteTag(cmsHPROFILE hProfile, cmsTagSignature sig, const v
         Type = TagDescriptor ->DecideType(Version, data);
     }
     else {
+
 
         Type = TagDescriptor ->SupportedTypes[0];
     }
@@ -1512,11 +1529,15 @@ cmsBool CMSEXPORT cmsWriteTag(cmsHPROFILE hProfile, cmsTagSignature sig, const v
         return FALSE;           // Should never happen
     }
 
+
     // Fill fields on icc structure
     Icc ->TagTypeHandlers[i]  = TypeHandler;
     Icc ->TagNames[i]         = sig;
     Icc ->TagSizes[i]         = 0;
     Icc ->TagOffsets[i]       = 0;
+
+    TypeHandler ->ContextID  = Icc ->ContextID;
+    TypeHandler ->ICCVersion = Icc ->Version;
     Icc ->TagPtrs[i]          = TypeHandler ->DupPtr(TypeHandler, data, TagDescriptor ->ElemCount); 
 
     if (Icc ->TagPtrs[i] == NULL)  {
@@ -1607,6 +1628,8 @@ cmsInt32Number CMSEXPORT cmsReadRawTag(cmsHPROFILE hProfile, cmsTagSignature sig
     TagDescriptor = _cmsGetTagDescriptor(sig);
 
     // Serialize
+    TypeHandler ->ContextID  = Icc ->ContextID;
+    TypeHandler ->ICCVersion = Icc ->Version;
     if (!TypeHandler ->WritePtr(TypeHandler, MemIO, Object, TagDescriptor ->ElemCount)) return 0;
 
     // Get Size and close

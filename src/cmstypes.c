@@ -1477,6 +1477,14 @@ cmsBool  Type_MLU_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
     cmsUInt32Number  Len, Offset;
     int i;
 
+    if (Ptr == NULL) {
+
+          // Empty placeholder
+          if (!_cmsWriteUInt32Number(io, 0)) return FALSE;           
+          if (!_cmsWriteUInt32Number(io, 12)) return FALSE;           
+          return TRUE;
+    }
+    
     if (!_cmsWriteUInt32Number(io, mlu ->UsedEntries)) return FALSE;           
     if (!_cmsWriteUInt32Number(io, 12)) return FALSE;           
           
@@ -3092,6 +3100,13 @@ void Type_NamedColor_Free(struct _cms_typehandler_struct* self, void* Ptr)
 // Type cmsSigProfileSequenceDescType
 // ********************************************************************************
 
+// This type is an array of structures, each of which contains information from the 
+// header fields and tags from the original profiles which were combined to create 
+// the final profile. The order of the structures is the order in which the profiles 
+// were combined and includes a structure for the final profile. This provides a 
+// description of the profile sequence from source to destination, 
+// typically used with the DeviceLink profile.
+
 static
 cmsBool ReadEmbeddedText(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsMLU** mlu, cmsUInt32Number SizeOfTag)
 {
@@ -3171,18 +3186,12 @@ void *Type_ProfileSequenceDesc_Read(struct _cms_typehandler_struct* self, cmsIOH
 
 
 // Aux--Embed a text description type. It can be of type text description or multilocalized unicode
+// and it depends of the version number passed on cmsTagDescriptor structure instead of stack
 static
 cmsBool  SaveDescription(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsMLU* Text)
 {
-    if (Text == NULL) {
+    if (self ->ICCVersion < 0x4000000) { 
         
-        // Placeholder for a null entry     
-        if (!_cmsWriteTypeBase(io, cmsSigTextDescriptionType)) return FALSE;            
-        return Type_Text_Description_Write(self, io, NULL, 1);              
-        
-    }
-
-    if (Text->UsedEntries <= 1) {
         if (!_cmsWriteTypeBase(io, cmsSigTextDescriptionType)) return FALSE;
         return Type_Text_Description_Write(self, io, Text, 1);
     }

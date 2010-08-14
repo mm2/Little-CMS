@@ -14,3 +14,4 @@ Fixed some typos in error messages
 Peliminary Delphi wrapper 
 Fixed a bug in tificc in floating point formats
 Fixed a bug in device link creation on v4 profiles 
+Fixed a bug in psid and profile sequence tags 

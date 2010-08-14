@@ -294,7 +294,8 @@ int main(int argc, char *argv[])
 
     // Ink limiting
     if (InkLimit != 400.0) {        
-        Profiles[nargs++] = cmsCreateInkLimitingDeviceLink(cmsGetColorSpace(Profiles[nargs-1]), InkLimit);
+        cmsColorSpaceSignature EndingColorSpace = cmsGetColorSpace(Profiles[nargs-1]);
+        Profiles[nargs++] = cmsCreateInkLimitingDeviceLink(EndingColorSpace, InkLimit);
     }
 
     // Set the flags

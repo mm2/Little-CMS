@@ -4827,6 +4827,7 @@ cmsInt32Number CheckProfileCreation(void)
     h = cmsCreateProfilePlaceholder(DbgThread());
     if (h == NULL) return 0;
 
+    cmsSetProfileVersion(h, 4.2);
     if (cmsGetTagCount(h) != 0) { Fail("Empty profile with nonzero number of tags"); return 0; }
     if (cmsIsTag(h, cmsSigAToB0Tag)) { Fail("Found a tag in an empty profile"); return 0; }
 
@@ -7373,8 +7374,6 @@ int main(int argc, char* argv[])
 
     PrintSupportedIntents();
 
-    CheckRGBPrimaries();
-
     // Create utility profiles
     Check("Creation of test profiles", CreateTestProfiles);    
 
@@ -7561,3 +7560,5 @@ int main(int argc, char* argv[])
     return TotalFail;
 }
  
+
+
