@@ -2361,7 +2361,7 @@ cmsInt32Number CheckGammaWordTable(cmsFloat64Number g)
     for (i=0; i <= 1024; i++) {
 
         in = (cmsFloat32Number) (i / 1024.0);
-        Values[i] = (cmsUInt16Number) floor(powf(in, g) * 65535.0 + 0.5);
+        Values[i] = (cmsUInt16Number) floor(pow(in, g) * 65535.0 + 0.5);
     }
 
     Curve = cmsBuildTabulatedToneCurve16(DbgThread(), 1025, Values);
@@ -7305,7 +7305,7 @@ void CheckProfileZOO(void)
 {
 
     struct _finddata_t c_file;
-    long hFile;
+    intptr_t hFile;
 
     cmsSetLogErrorHandler(NULL);
 
