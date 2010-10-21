@@ -15,3 +15,5 @@ Peliminary Delphi wrapper
 Fixed a bug in tificc in floating point formats
 Fixed a bug in device link creation on v4 profiles 
 Fixed a bug in psid and profile sequence tags 
+Fixed memory leaks on when recovering from errors
+Fixed an issue on curve inversion
