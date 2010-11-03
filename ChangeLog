@@ -18,6 +18,8 @@ Fixed a bug in psid and profile sequence tags
 Fixed memory leaks on when recovering from errors
 Fixed an issue on curve inversion
 Fixed several integer overflow and other integrity checks, thanks to Chris Evans
+linkicc now stores the rendering intent in the profile header
+Fixed delphi interface
 
-2.1 beta1
----------
+2.1 Maintenance release
+-----------------------
