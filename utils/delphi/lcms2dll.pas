@@ -35,6 +35,15 @@ INTERFACE
 USES Windows;
 
  TYPE 
+
+  Uint8   = Byte;
+  Int8    = Shortint;
+  UInt16  = Word;
+  Int16   = Smallint;
+  UInt32  = LongWord;
+  Int32   = Longint;
+
+ TYPE 
      cmsUInt8Number   = Uint8;
      cmsInt8Number    = Int8;
      cmsUInt16Number  = UInt16;
@@ -898,14 +907,31 @@ cmsCurveSegment = PACKED RECORD
 END;
 
 LPcmsToneCurve = Pointer;
+LPcmsCurveSegmentArray = ^cmsCurveSegmentArray;
+cmsCurveSegmentArray = array[0..0] of cmsCurveSegment;
 
-FUNCTION  cmsBuildSegmentedToneCurve(ContextID: cmsContext; nSegments: cmsInt32Number; Segments: array of cmsCurveSegment): LPcmsToneCurve; StdCall;
-FUNCTION  cmsBuildParametricToneCurve(ContextID: cmsContext;  CType: cmsInt32Number; Params: array of cmsFloat64Number): LPcmsToneCurve; StdCall;
+LPcmsFloat64NumberArray = ^cmsFloat64NumberArray;
+cmsFloat64NumberArray = array[0..0] of cmsFloat64Number;
+
+LPcmsUInt16NumberArray = ^cmsUInt16NumberArray;
+cmsUInt16NumberArray = array[0..0] of cmsUInt16Number;
+
+LPcmsFloat32NumberArray = ^cmsFloat32NumberArray;
+cmsFloat32NumberArray = array[0..0] of cmsFloat32Number;
+
+LPLPcmsToneCurveArray = ^LPcmsToneCurveArray;
+LPcmsToneCurveArray = array[0..0] of LPcmsToneCurve;
+
+LPcmsUInt32NumberArray = ^cmsUInt32NumberArray;
+cmsUInt32NumberArray = array[0..0] of cmsUInt32Number;
+
+FUNCTION  cmsBuildSegmentedToneCurve(ContextID: cmsContext; nSegments: cmsInt32Number; Segments: LPcmsCurveSegmentArray): LPcmsToneCurve; StdCall;
+FUNCTION  cmsBuildParametricToneCurve(ContextID: cmsContext;  CType: cmsInt32Number; Params: LPcmsFloat64NumberArray): LPcmsToneCurve; StdCall;
 FUNCTION  cmsBuildGamma(ContextID: cmsContext; Gamma: cmsFloat64Number): LPcmsToneCurve; StdCall;
-FUNCTION  cmsBuildTabulatedToneCurve16(ContextID: cmsContext; nEntries: cmsInt32Number; values: array of cmsUInt16Number): LPcmsToneCurve; StdCall;
-FUNCTION  cmsBuildTabulatedToneCurveFloat(ContextID: cmsContext; nEntries: cmsUInt32Number; values: array of cmsFloat32Number): LPcmsToneCurve; StdCall;
+FUNCTION  cmsBuildTabulatedToneCurve16(ContextID: cmsContext; nEntries: cmsInt32Number; values: LPcmsUInt16NumberArray): LPcmsToneCurve; StdCall;
+FUNCTION  cmsBuildTabulatedToneCurveFloat(ContextID: cmsContext; nEntries: cmsUInt32Number; values: LPcmsFloat32NumberArray): LPcmsToneCurve; StdCall;
 PROCEDURE cmsFreeToneCurve(Curve: LPcmsToneCurve); StdCall;
-PROCEDURE cmsFreeToneCurveTriple(Curve: array of LPcmsToneCurve); StdCall;
+PROCEDURE cmsFreeToneCurveTriple(Curve: LPLPcmsToneCurveArray); StdCall;
 FUNCTION  cmsDupToneCurve(Src: LPcmsToneCurve): LPcmsToneCurve; StdCall;
 FUNCTION  cmsReverseToneCurve(InGamma: LPcmsToneCurve): LPcmsToneCurve; StdCall;
 FUNCTION  cmsReverseToneCurveEx(nResultSamples: cmsInt32Number; InGamma: LPcmsToneCurve): LPcmsToneCurve; StdCall;
@@ -939,10 +965,10 @@ FUNCTION cmsPipelineStageCount(lut: LPcmsPipeline): cmsUInt32Number; StdCall;
 FUNCTION cmsPipelineGetPtrToFirstStage(lut: LPcmsPipeline): LPcmsStage; StdCall;
 FUNCTION cmsPipelineGetPtrToLastStage(lut: LPcmsPipeline): LPcmsStage; StdCall;
 
-PROCEDURE cmsPipelineEval16(Inv, Outv: array of cmsUInt16Number; lut: LPcmsPipeline); StdCall;
-PROCEDURE cmsPipelineEvalFloat(Inv, Outv: array of cmsFloat32Number; lut: LPcmsPipeline); StdCall;
+PROCEDURE cmsPipelineEval16(Inv, Outv: LPcmsUInt16NumberArray; lut: LPcmsPipeline); StdCall;
+PROCEDURE cmsPipelineEvalFloat(Inv, Outv: LPcmsFloat32NumberArray; lut: LPcmsPipeline); StdCall;
 
-FUNCTION cmsPipelineEvalReverseFloat(Target, Result, Hint: array of cmsFloat32Number; lut: LPcmsPipeline): cmsBool; StdCall;
+FUNCTION cmsPipelineEvalReverseFloat(Target, Result, Hint: LPcmsFloat32NumberArray; lut: LPcmsPipeline): cmsBool; StdCall;
 FUNCTION cmsPipelineCat(l1, l2: LPcmsPipeline): cmsBool; StdCall;
 FUNCTION cmsPipelineSetSaveAs8bitsFlag(lut: LPcmsPipeline; On: cmsBool): cmsBool; StdCall;
 
@@ -963,30 +989,30 @@ PROCEDURE cmsPipelineUnlinkStage(lut: LPcmsPipeline; loc: cmsStageLoc; mpe: LPLP
 // Matrix has double precision and CLUT has only float precision. That is because an ICC profile can encode
 // matrices with far more precision that CLUTS
 FUNCTION  cmsStageAllocIdentity(ContextID: cmsContext; nChannels: cmsUInt32Number): LPcmsStage; StdCall;
-FUNCTION  cmsStageAllocToneCurves(ContextID: cmsContext; nChannels: cmsUInt32Number; Curves: array of LPcmsToneCurve): LPcmsStage; StdCall;
-FUNCTION  cmsStageAllocMatrix(ContextID: cmsContext; Rows, Cols: cmsUInt32Number; Matrix, Offset: array of cmsFloat64Number): LPcmsStage; StdCall;
+FUNCTION  cmsStageAllocToneCurves(ContextID: cmsContext; nChannels: cmsUInt32Number; Curves: LPLPcmsToneCurveArray): LPcmsStage; StdCall;
+FUNCTION  cmsStageAllocMatrix(ContextID: cmsContext; Rows, Cols: cmsUInt32Number; Matrix, Offset: LPcmsFloat64NumberArray): LPcmsStage; StdCall;
 
-FUNCTION  cmsStageAllocCLut16bit(ContextID: cmsContext; nGridPoints: cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: array of cmsUInt16Number): LPcmsStage; StdCall;
-FUNCTION  cmsStageAllocCLutFloat(ContextID: cmsContext; nGridPoints: cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: array of cmsFloat32Number): LPcmsStage; StdCall;
+FUNCTION  cmsStageAllocCLut16bit(ContextID: cmsContext; nGridPoints: cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: LPcmsUInt16NumberArray): LPcmsStage; StdCall;
+FUNCTION  cmsStageAllocCLutFloat(ContextID: cmsContext; nGridPoints: cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: LPcmsFloat32NumberArray): LPcmsStage; StdCall;
 
-FUNCTION  cmsStageAllocCLut16bitGranular(ContextID: cmsContext; nGridPoints: array of cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: array of cmsUInt16Number): LPcmsStage; StdCall;
-FUNCTION  cmsStageAllocCLutFloatGranular(ContextID: cmsContext; nGridPoints: array of cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: array of cmsFloat32Number): LPcmsStage; StdCall;
+FUNCTION  cmsStageAllocCLut16bitGranular(ContextID: cmsContext; nGridPoints: LPcmsUInt32NumberArray; inputChan, outputChan: cmsUInt32Number; Table: LPcmsUInt16NumberArray): LPcmsStage; StdCall;
+FUNCTION  cmsStageAllocCLutFloatGranular(ContextID: cmsContext; nGridPoints: LPcmsUInt32NumberArray; inputChan, outputChan: cmsUInt32Number; Table: LPcmsFloat32NumberArray): LPcmsStage; StdCall;
 
 
 FUNCTION  cmsStageDup(mpe: LPcmsStage): LPcmsStage; StdCall;
 PROCEDURE cmsStageFree(mpe: LPcmsStage); StdCall;
 FUNCTION  cmsStageNext(mpe: LPcmsStage): LPcmsStage; StdCall;
 
-FUNCTION cmsStageInputChannels(const mpe: LPcmsStage): cmsUInt32Number; StdCall;
-FUNCTION cmsStageOutputChannels(const mpe: LPcmsStage): cmsUInt32Number; StdCall;
+FUNCTION cmsStageInputChannels(mpe: LPcmsStage): cmsUInt32Number; StdCall;
+FUNCTION cmsStageOutputChannels(mpe: LPcmsStage): cmsUInt32Number; StdCall;
 FUNCTION cmsStageType(mpe: LPcmsStage): cmsStageSignature; StdCall;
 FUNCTION cmsStageData(mpe: LPcmsStage): Pointer; StdCall;
 
 // Sampling
  
 Type
-    cmsSAMPLER16    = FUNCTION (Inp, Outp: array of cmsUInt16Number; Cargo: Pointer): cmsInt32Number; CDecl;
-    cmsSAMPLERFLOAT = FUNCTION (Inp, Outp: array of cmsFloat32Number; Cargo: Pointer): cmsInt32Number; CDecl;
+    cmsSAMPLER16    = FUNCTION (Inp, Outp: LPcmsUInt16NumberArray; Cargo: Pointer): cmsInt32Number; CDecl;
+    cmsSAMPLERFLOAT = FUNCTION (Inp, Outp: LPcmsFloat32NumberArray; Cargo: Pointer): cmsInt32Number; CDecl;
 
 // Use this flag to prevent changes being written to destination
 
@@ -1001,10 +1027,10 @@ FUNCTION cmsStageSampleCLutFloat(mpe: LPcmsStage;  Sampler: cmsSAMPLERFLOAT; Car
 
 
 // Slicers
-FUNCTION  cmsSliceSpace16(nInputs: cmsUInt32Number; clutPoints: array of cmsUInt32Number;
+FUNCTION  cmsSliceSpace16(nInputs: cmsUInt32Number; clutPoints: LPcmsUInt32NumberArray;
                                                    Sampler: cmsSAMPLER16; Cargo: Pointer): cmsBool; StdCall;
 
-FUNCTION cmsSliceSpaceFloat(nInputs: cmsUInt32Number; clutPoints: array of cmsUInt32Number;
+FUNCTION cmsSliceSpaceFloat(nInputs: cmsUInt32Number; clutPoints: LPcmsUInt32NumberArray;
                                                    Sampler: cmsSAMPLERFLOAT; Cargo: Pointer): cmsBool; StdCall;
 
 // Multilocalized Unicode management ---------------------------------------------------------------------------------------
@@ -1014,8 +1040,8 @@ Type
 
 Const
 
-cmsNoLanguage = '\0\0';
-cmsNoCountry  = '\0\0';
+cmsNoLanguage = #0#0#0;
+cmsNoCountry  = #0#0#0;
 
 
 FUNCTION  cmsMLUalloc(ContextID: cmsContext; nItems: cmsUInt32Number): LPcmsMLU; StdCall; 
@@ -1088,14 +1114,14 @@ FUNCTION cmsAllocNamedColorList(ContextID: cmsContext; n, ColorantCount :cmsUInt
 PROCEDURE cmsFreeNamedColorList(v: LPcmsNAMEDCOLORLIST); StdCall;
 FUNCTION  cmsDupNamedColorList(v: LPcmsNAMEDCOLORLIST): LPcmsNAMEDCOLORLIST; StdCall;
 FUNCTION  cmsAppendNamedColor(v: LPcmsNAMEDCOLORLIST; Name: PAnsiChar;
-                                                             PCS, Colorant : array of cmsUInt16Number): cmsBool; StdCall;
+                                                             PCS, Colorant : LPcmsUInt16NumberArray): cmsBool; StdCall;
 
 FUNCTION cmsNamedColorCount(v: LPcmsNAMEDCOLORLIST): cmsUInt32Number; StdCall;
 FUNCTION cmsNamedColorIndex(v: LPcmsNAMEDCOLORLIST; Name: PAnsiChar): cmsInt32Number; StdCall;
 
 FUNCTION cmsNamedColorInfo(v: LPcmsNAMEDCOLORLIST; nColor : cmsUInt32Number;
                                                       Name,Prefix, Suffix : PAnsiChar;
-                                                       PCS, Colorant : array of cmsUInt16Number): cmsBool; StdCall;
+                                                       PCS, Colorant : LPcmsUInt16NumberArray): cmsBool; StdCall;
 
 // Retrieve named color list from transform
 FUNCTION cmsGetNamedColorList(xform: cmsHTRANSFORM ): LPcmsNAMEDCOLORLIST; StdCall;
@@ -1263,11 +1289,11 @@ FUNCTION   cmsSaveProfileToIOhandler(hProfile: cmsHPROFILE; io: LPcmsIOHANDLER):
 FUNCTION  cmsCreateRGBProfileTHR(ContextID: cmsContext;
                                                    WhitePoint: LPcmsCIExyY;
                                                    Primaries: LPcmsCIExyYTRIPLE;
-                                                   TransferFunction: array of LPcmsToneCurve): cmsHPROFILE; StdCall;
+                                                   TransferFunction: LPLPcmsToneCurveArray): cmsHPROFILE; StdCall;
 
 FUNCTION  cmsCreateRGBProfile(WhitePoint: LPcmsCIExyY;
                                                    Primaries: LPcmsCIExyYTRIPLE;
-                                                   TransferFunction: array of LPcmsToneCurve): cmsHPROFILE; StdCall;
+                                                   TransferFunction: LPLPcmsToneCurveArray): cmsHPROFILE; StdCall;
 
 FUNCTION cmsCreateGrayProfileTHR(ContextID: cmsContext;
                                                     WhitePoint: LPcmsCIExyY;
@@ -1278,10 +1304,10 @@ FUNCTION cmsCreateGrayProfile(WhitePoint: LPcmsCIExyY;
 
 FUNCTION cmsCreateLinearizationDeviceLinkTHR(ContextID: cmsContext;
                                                                  ColorSpace: cmsColorSpaceSignature;
-                                                                 TransferFunctions: array of LPcmsToneCurve): cmsHPROFILE; StdCall;
+                                                                 TransferFunctions: LPLPcmsToneCurveArray): cmsHPROFILE; StdCall;
 
 FUNCTION cmsCreateLinearizationDeviceLink(ColorSpace: cmsColorSpaceSignature;
-                                                                 TransferFunctions: array of LPcmsToneCurve): cmsHPROFILE; StdCall;
+                                                                 TransferFunctions: LPLPcmsToneCurveArray): cmsHPROFILE; StdCall;
 
 FUNCTION cmsCreateInkLimitingDeviceLinkTHR(ContextID: cmsContext;
                                                               ColorSpace: cmsColorSpaceSignature; Limit: cmsFloat64Number): cmsHPROFILE; StdCall;
@@ -1384,6 +1410,13 @@ FUNCTION cmsFLAGS_GRIDPOINTS(n: Integer): Integer;
 
 // Transforms ---------------------------------------------------------------------------------------------------
 
+type
+  LPcmsHPROFILEArray = ^cmsHPROFILEArray;
+  cmsHPROFILEArray = array[0..0] of cmsHPROFILE;
+
+  LPcmsBoolArray = ^cmsBoolArray;
+  cmsBoolArray = array[0..0] of cmsBool;
+
 FUNCTION   cmsCreateTransformTHR(ContextID: cmsContext;
                                                   Input: cmsHPROFILE;
                                                   InputFormat: cmsUInt32Number;
@@ -1419,7 +1452,7 @@ FUNCTION   cmsCreateProofingTransform(Input: cmsHPROFILE;
                                                   dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall;
 
 FUNCTION   cmsCreateMultiprofileTransformTHR(ContextID: cmsContext;
-                                                  hProfiles: array of cmsHPROFILE;
+                                                  hProfiles: LPcmsHPROFILEArray;
                                                   nProfiles: cmsUInt32Number;
                                                   InputFormat: cmsUInt32Number;
                                                   OutputFormat: cmsUInt32Number;
@@ -1427,7 +1460,7 @@ FUNCTION   cmsCreateMultiprofileTransformTHR(ContextID: cmsContext;
                                                   dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall;
 
 
-FUNCTION   cmsCreateMultiprofileTransform( hProfiles: array of cmsHPROFILE;
+FUNCTION   cmsCreateMultiprofileTransform( hProfiles: LPcmsHPROFILEArray;
                                                   nProfiles: cmsUInt32Number;
                                                   InputFormat: cmsUInt32Number;
                                                   OutputFormat: cmsUInt32Number;
@@ -1437,10 +1470,10 @@ FUNCTION   cmsCreateMultiprofileTransform( hProfiles: array of cmsHPROFILE;
 
 FUNCTION   cmsCreateExtendedTransform(ContextID: cmsContext;
                                                    nProfiles: cmsUInt32Number;
-                                                   hProfiles: array of cmsHPROFILE;
-                                                   BPC: array of cmsBool;
-                                                   Intents: array of cmsUInt32Number;
-                                                   AdaptationStates: array of cmsFloat64Number;
+                                                   hProfiles: LPcmsHPROFILEArray;
+                                                   BPC: LPcmsBoolArray;
+                                                   Intents: LPcmsUInt32NumberArray;
+                                                   AdaptationStates: LPcmsFloat64NumberArray;
                                                    hGamutProfile: cmsHPROFILE;
                                                    nGamutPCSposition: cmsUInt32Number;
                                                    InputFormat,
@@ -1451,8 +1484,8 @@ PROCEDURE  cmsDeleteTransform(hTransform: cmsHTRANSFORM); StdCall;
 
 PROCEDURE  cmsDoTransform(Transform: cmsHTRANSFORM; InputBuffer, OutputBuffer: Pointer; size: cmsUInt32Number);  StdCall;
 
-PROCEDURE  cmsSetAlarmCodes( NewAlarm: array of cmsUInt16Number);  StdCall;
-PROCEDURE  cmsGetAlarmCodes(NewAlarm: array of cmsUInt16Number); StdCall;
+PROCEDURE  cmsSetAlarmCodes( NewAlarm: LPcmsUInt16NumberArray);  StdCall;
+PROCEDURE  cmsGetAlarmCodes(NewAlarm: LPcmsUInt16NumberArray); StdCall;
 
 // Adaptation state for absolute colorimetric intent
 FUNCTION  cmsSetAdaptationState(d: cmsFloat64Number):cmsFloat64Number; StdCall;
@@ -1631,13 +1664,13 @@ FUNCTION    cmsCIECAM02Init(pVC : LPcmsViewingConditions ) : Pointer; external '
 PROCEDURE   cmsCIECAM02Done(hModel : Pointer); external 'lcms2.dll';
 PROCEDURE   cmsCIECAM02Forward(hModel: Pointer; pIn: LPcmsCIEXYZ; pOut: LPcmsJCh ); external 'lcms2.dll';
 PROCEDURE   cmsCIECAM02Reverse(hModel: Pointer; pIn: LPcmsJCh;   pOut: LPcmsCIEXYZ ); external 'lcms2.dll';
-FUNCTION  cmsBuildSegmentedToneCurve(ContextID: cmsContext; nSegments: cmsInt32Number; Segments: array of cmsCurveSegment): LPcmsToneCurve; external 'lcms2.dll';
-FUNCTION  cmsBuildParametricToneCurve(ContextID: cmsContext;  CType: cmsInt32Number; Params: array of cmsFloat64Number): LPcmsToneCurve; external 'lcms2.dll';
+FUNCTION  cmsBuildSegmentedToneCurve(ContextID: cmsContext; nSegments: cmsInt32Number; Segments: LPcmsCurveSegmentArray): LPcmsToneCurve; external 'lcms2.dll';
+FUNCTION  cmsBuildParametricToneCurve(ContextID: cmsContext;  CType: cmsInt32Number; Params: LPcmsFloat64NumberArray): LPcmsToneCurve; external 'lcms2.dll';
 FUNCTION  cmsBuildGamma(ContextID: cmsContext; Gamma: cmsFloat64Number): LPcmsToneCurve; external 'lcms2.dll';
-FUNCTION  cmsBuildTabulatedToneCurve16(ContextID: cmsContext; nEntries: cmsInt32Number; values: array of cmsUInt16Number): LPcmsToneCurve; external 'lcms2.dll';
-FUNCTION  cmsBuildTabulatedToneCurveFloat(ContextID: cmsContext; nEntries: cmsUInt32Number; values: array of cmsFloat32Number): LPcmsToneCurve; external 'lcms2.dll';
+FUNCTION  cmsBuildTabulatedToneCurve16(ContextID: cmsContext; nEntries: cmsInt32Number; values: LPcmsUInt16NumberArray): LPcmsToneCurve; external 'lcms2.dll';
+FUNCTION  cmsBuildTabulatedToneCurveFloat(ContextID: cmsContext; nEntries: cmsUInt32Number; values: LPcmsFloat32NumberArray): LPcmsToneCurve; external 'lcms2.dll';
 PROCEDURE cmsFreeToneCurve(Curve: LPcmsToneCurve); external 'lcms2.dll';
-PROCEDURE cmsFreeToneCurveTriple(Curve: array of LPcmsToneCurve); external 'lcms2.dll';
+PROCEDURE cmsFreeToneCurveTriple(Curve: LPLPcmsToneCurveArray); external 'lcms2.dll';
 FUNCTION  cmsDupToneCurve(Src: LPcmsToneCurve): LPcmsToneCurve; external 'lcms2.dll';
 FUNCTION  cmsReverseToneCurve(InGamma: LPcmsToneCurve): LPcmsToneCurve; external 'lcms2.dll';
 FUNCTION  cmsReverseToneCurveEx(nResultSamples: cmsInt32Number; InGamma: LPcmsToneCurve): LPcmsToneCurve; external 'lcms2.dll';
@@ -1660,34 +1693,34 @@ FUNCTION cmsPipelineStageCount(lut: LPcmsPipeline): cmsUInt32Number; external 'l
 FUNCTION cmsPipelineGetPtrToFirstStage(lut: LPcmsPipeline): LPcmsStage; external 'lcms2.dll';
 FUNCTION cmsPipelineGetPtrToLastStage(lut: LPcmsPipeline): LPcmsStage; external 'lcms2.dll';
 
-PROCEDURE cmsPipelineEval16(Inv, Outv: array of cmsUInt16Number; lut: LPcmsPipeline); external 'lcms2.dll';
-PROCEDURE cmsPipelineEvalFloat(Inv, Outv: array of cmsFloat32Number; lut: LPcmsPipeline); external 'lcms2.dll';
+PROCEDURE cmsPipelineEval16(Inv, Outv: LPcmsUInt16NumberArray; lut: LPcmsPipeline); external 'lcms2.dll';
+PROCEDURE cmsPipelineEvalFloat(Inv, Outv: LPcmsFloat32NumberArray; lut: LPcmsPipeline); external 'lcms2.dll';
 
-FUNCTION cmsPipelineEvalReverseFloat(Target, Result, Hint: array of cmsFloat32Number; lut: LPcmsPipeline): cmsBool; external 'lcms2.dll';
+FUNCTION cmsPipelineEvalReverseFloat(Target, Result, Hint: LPcmsFloat32NumberArray; lut: LPcmsPipeline): cmsBool; external 'lcms2.dll';
 FUNCTION cmsPipelineCat(l1, l2: LPcmsPipeline): cmsBool; external 'lcms2.dll';
 FUNCTION cmsPipelineSetSaveAs8bitsFlag(lut: LPcmsPipeline; On: cmsBool): cmsBool; external 'lcms2.dll';
 PROCEDURE cmsPipelineInsertStage(lut: LPcmsPipeline; loc: cmsStageLoc; mpe: LPcmsStage); external 'lcms2.dll';
 PROCEDURE cmsPipelineUnlinkStage(lut: LPcmsPipeline; loc: cmsStageLoc; mpe: LPLPcmsStage); external 'lcms2.dll';
 FUNCTION  cmsStageAllocIdentity(ContextID: cmsContext; nChannels: cmsUInt32Number): LPcmsStage; external 'lcms2.dll';
-FUNCTION  cmsStageAllocToneCurves(ContextID: cmsContext; nChannels: cmsUInt32Number; Curves: array of LPcmsToneCurve): LPcmsStage; external 'lcms2.dll';
-FUNCTION  cmsStageAllocMatrix(ContextID: cmsContext; Rows, Cols: cmsUInt32Number; Matrix, Offset: array of cmsFloat64Number): LPcmsStage; external 'lcms2.dll';
-FUNCTION  cmsStageAllocCLut16bit(ContextID: cmsContext; nGridPoints: cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: array of cmsUInt16Number): LPcmsStage; external 'lcms2.dll';
-FUNCTION  cmsStageAllocCLutFloat(ContextID: cmsContext; nGridPoints: cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: array of cmsFloat32Number): LPcmsStage; external 'lcms2.dll';
-FUNCTION  cmsStageAllocCLut16bitGranular(ContextID: cmsContext; nGridPoints: array of cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: array of cmsUInt16Number): LPcmsStage; external 'lcms2.dll';
-FUNCTION  cmsStageAllocCLutFloatGranular(ContextID: cmsContext; nGridPoints: array of cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: array of cmsFloat32Number): LPcmsStage; external 'lcms2.dll';
+FUNCTION  cmsStageAllocToneCurves(ContextID: cmsContext; nChannels: cmsUInt32Number; Curves: LPLPcmsToneCurveArray): LPcmsStage; external 'lcms2.dll';
+FUNCTION  cmsStageAllocMatrix(ContextID: cmsContext; Rows, Cols: cmsUInt32Number; Matrix, Offset: LPcmsFloat64NumberArray): LPcmsStage; external 'lcms2.dll';
+FUNCTION  cmsStageAllocCLut16bit(ContextID: cmsContext; nGridPoints: cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: LPcmsUInt16NumberArray): LPcmsStage; external 'lcms2.dll';
+FUNCTION  cmsStageAllocCLutFloat(ContextID: cmsContext; nGridPoints: cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: LPcmsFloat32NumberArray): LPcmsStage; external 'lcms2.dll';
+FUNCTION  cmsStageAllocCLut16bitGranular(ContextID: cmsContext; nGridPoints: LPcmsUInt32NumberArray; inputChan, outputChan: cmsUInt32Number; Table: LPcmsUInt16NumberArray): LPcmsStage; external 'lcms2.dll';
+FUNCTION  cmsStageAllocCLutFloatGranular(ContextID: cmsContext; nGridPoints: LPcmsUInt32NumberArray; inputChan, outputChan: cmsUInt32Number; Table: LPcmsFloat32NumberArray): LPcmsStage; external 'lcms2.dll';
 FUNCTION  cmsStageDup(mpe: LPcmsStage): LPcmsStage; external 'lcms2.dll';
 PROCEDURE cmsStageFree(mpe: LPcmsStage); external 'lcms2.dll';
 FUNCTION  cmsStageNext(mpe: LPcmsStage): LPcmsStage; external 'lcms2.dll';
-FUNCTION cmsStageInputChannels(const mpe: LPcmsStage): cmsUInt32Number; external 'lcms2.dll';
-FUNCTION cmsStageOutputChannels(const mpe: LPcmsStage): cmsUInt32Number; external 'lcms2.dll';
+FUNCTION cmsStageInputChannels(mpe: LPcmsStage): cmsUInt32Number; external 'lcms2.dll';
+FUNCTION cmsStageOutputChannels(mpe: LPcmsStage): cmsUInt32Number; external 'lcms2.dll';
 FUNCTION cmsStageType(mpe: LPcmsStage): cmsStageSignature; external 'lcms2.dll';
 FUNCTION cmsStageData(mpe: LPcmsStage): Pointer; external 'lcms2.dll';
 FUNCTION cmsStageSampleCLut16bit(mpe: LPcmsStage;  Sampler: cmsSAMPLER16;    Cargo: Pointer; dwFlags: cmsUInt32Number): cmsBool; external 'lcms2.dll';
 FUNCTION cmsStageSampleCLutFloat(mpe: LPcmsStage;  Sampler: cmsSAMPLERFLOAT; Cargo: Pointer; dwFlags: cmsUInt32Number): cmsBool; external 'lcms2.dll';
-FUNCTION  cmsSliceSpace16(nInputs: cmsUInt32Number; clutPoints: array of cmsUInt32Number;
+FUNCTION  cmsSliceSpace16(nInputs: cmsUInt32Number; clutPoints: LPcmsUInt32NumberArray;
                                                    Sampler: cmsSAMPLER16; Cargo: Pointer): cmsBool; external 'lcms2.dll';
 
-FUNCTION cmsSliceSpaceFloat(nInputs: cmsUInt32Number; clutPoints: array of cmsUInt32Number;
+FUNCTION cmsSliceSpaceFloat(nInputs: cmsUInt32Number; clutPoints: LPcmsUInt32NumberArray;
                                                    Sampler: cmsSAMPLERFLOAT; Cargo: Pointer): cmsBool; external 'lcms2.dll';
 FUNCTION  cmsMLUalloc(ContextID: cmsContext; nItems: cmsUInt32Number): LPcmsMLU; external 'lcms2.dll'; 
 PROCEDURE cmsMLUfree(mlu: LPcmsMLU); external 'lcms2.dll';
@@ -1708,14 +1741,14 @@ FUNCTION cmsAllocNamedColorList(ContextID: cmsContext; n, ColorantCount :cmsUInt
 PROCEDURE cmsFreeNamedColorList(v: LPcmsNAMEDCOLORLIST); external 'lcms2.dll';
 FUNCTION  cmsDupNamedColorList(v: LPcmsNAMEDCOLORLIST): LPcmsNAMEDCOLORLIST; external 'lcms2.dll';
 FUNCTION  cmsAppendNamedColor(v: LPcmsNAMEDCOLORLIST; Name: PAnsiChar;
-                                                             PCS, Colorant : array of cmsUInt16Number): cmsBool; external 'lcms2.dll';
+                                                             PCS, Colorant : LPcmsUInt16NumberArray): cmsBool; external 'lcms2.dll';
 
 FUNCTION cmsNamedColorCount(v: LPcmsNAMEDCOLORLIST): cmsUInt32Number; external 'lcms2.dll';
 FUNCTION cmsNamedColorIndex(v: LPcmsNAMEDCOLORLIST; Name: PAnsiChar): cmsInt32Number; external 'lcms2.dll';
 
 FUNCTION cmsNamedColorInfo(v: LPcmsNAMEDCOLORLIST; nColor : cmsUInt32Number;
                                                       Name,Prefix, Suffix : PAnsiChar;
-                                                       PCS, Colorant : array of cmsUInt16Number): cmsBool; external 'lcms2.dll';
+                                                       PCS, Colorant : LPcmsUInt16NumberArray): cmsBool; external 'lcms2.dll';
 
 FUNCTION cmsGetNamedColorList(xform: cmsHTRANSFORM ): LPcmsNAMEDCOLORLIST; external 'lcms2.dll';
 
@@ -1808,11 +1841,11 @@ FUNCTION   cmsSaveProfileToIOhandler(hProfile: cmsHPROFILE; io: LPcmsIOHANDLER):
 FUNCTION  cmsCreateRGBProfileTHR(ContextID: cmsContext;
                                                    WhitePoint: LPcmsCIExyY;
                                                    Primaries: LPcmsCIExyYTRIPLE;
-                                                   TransferFunction: array of LPcmsToneCurve): cmsHPROFILE; external 'lcms2.dll';
+                                                   TransferFunction: LPLPcmsToneCurveArray): cmsHPROFILE; external 'lcms2.dll';
 
 FUNCTION  cmsCreateRGBProfile(WhitePoint: LPcmsCIExyY;
                                                    Primaries: LPcmsCIExyYTRIPLE;
-                                                   TransferFunction: array of LPcmsToneCurve): cmsHPROFILE; external 'lcms2.dll';
+                                                   TransferFunction: LPLPcmsToneCurveArray): cmsHPROFILE; external 'lcms2.dll';
 
 FUNCTION cmsCreateGrayProfileTHR(ContextID: cmsContext;
                                                     WhitePoint: LPcmsCIExyY;
@@ -1823,10 +1856,10 @@ FUNCTION cmsCreateGrayProfile(WhitePoint: LPcmsCIExyY;
 
 FUNCTION cmsCreateLinearizationDeviceLinkTHR(ContextID: cmsContext;
                                                                  ColorSpace: cmsColorSpaceSignature;
-                                                                 TransferFunctions: array of LPcmsToneCurve): cmsHPROFILE; external 'lcms2.dll';
+                                                                 TransferFunctions: LPLPcmsToneCurveArray): cmsHPROFILE; external 'lcms2.dll';
 
 FUNCTION cmsCreateLinearizationDeviceLink(ColorSpace: cmsColorSpaceSignature;
-                                                                 TransferFunctions: array of LPcmsToneCurve): cmsHPROFILE; external 'lcms2.dll';
+                                                                 TransferFunctions: LPLPcmsToneCurveArray): cmsHPROFILE; external 'lcms2.dll';
 
 FUNCTION cmsCreateInkLimitingDeviceLinkTHR(ContextID: cmsContext;
                                                               ColorSpace: cmsColorSpaceSignature; Limit: cmsFloat64Number): cmsHPROFILE; external 'lcms2.dll';
@@ -1909,7 +1942,7 @@ FUNCTION   cmsCreateProofingTransform(Input: cmsHPROFILE;
                                                   dwFlags: cmsUInt32Number): cmsHTRANSFORM; external 'lcms2.dll';
 
 FUNCTION   cmsCreateMultiprofileTransformTHR(ContextID: cmsContext;
-                                                  hProfiles: array of cmsHPROFILE;
+                                                  hProfiles: LPcmsHPROFILEArray;
                                                   nProfiles: cmsUInt32Number;
                                                   InputFormat: cmsUInt32Number;
                                                   OutputFormat: cmsUInt32Number;
@@ -1917,7 +1950,7 @@ FUNCTION   cmsCreateMultiprofileTransformTHR(ContextID: cmsContext;
                                                   dwFlags: cmsUInt32Number): cmsHTRANSFORM; external 'lcms2.dll';
 
 
-FUNCTION   cmsCreateMultiprofileTransform( hProfiles: array of cmsHPROFILE;
+FUNCTION   cmsCreateMultiprofileTransform( hProfiles: LPcmsHPROFILEArray;
                                                   nProfiles: cmsUInt32Number;
                                                   InputFormat: cmsUInt32Number;
                                                   OutputFormat: cmsUInt32Number;
@@ -1927,10 +1960,10 @@ FUNCTION   cmsCreateMultiprofileTransform( hProfiles: array of cmsHPROFILE;
 
 FUNCTION   cmsCreateExtendedTransform(ContextID: cmsContext;
                                                    nProfiles: cmsUInt32Number;
-                                                   hProfiles: array of cmsHPROFILE;
-                                                   BPC: array of cmsBool;
-                                                   Intents: array of cmsUInt32Number;
-                                                   AdaptationStates: array of cmsFloat64Number;
+                                                   hProfiles: LPcmsHPROFILEArray;
+                                                   BPC: LPcmsBoolArray;
+                                                   Intents: LPcmsUInt32NumberArray;
+                                                   AdaptationStates: LPcmsFloat64NumberArray;
                                                    hGamutProfile: cmsHPROFILE;
                                                    nGamutPCSposition: cmsUInt32Number;
                                                    InputFormat,
@@ -1941,8 +1974,8 @@ PROCEDURE  cmsDeleteTransform(hTransform: cmsHTRANSFORM); external 'lcms2.dll';
 
 PROCEDURE  cmsDoTransform(Transform: cmsHTRANSFORM; InputBuffer, OutputBuffer: Pointer; size: cmsUInt32Number);  external 'lcms2.dll';
 
-PROCEDURE  cmsSetAlarmCodes( NewAlarm: array of cmsUInt16Number);  external 'lcms2.dll';
-PROCEDURE  cmsGetAlarmCodes(NewAlarm: array of cmsUInt16Number); external 'lcms2.dll';
+PROCEDURE  cmsSetAlarmCodes( NewAlarm: LPcmsUInt16NumberArray);  external 'lcms2.dll';
+PROCEDURE  cmsGetAlarmCodes(NewAlarm: LPcmsUInt16NumberArray); external 'lcms2.dll';
 
 // Adaptation state for absolute colorimetric intent
 FUNCTION  cmsSetAdaptationState(d: cmsFloat64Number):cmsFloat64Number; external 'lcms2.dll';

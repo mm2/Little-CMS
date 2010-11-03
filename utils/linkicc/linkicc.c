@@ -342,6 +342,7 @@ int main(int argc, char *argv[])
     }
 
     SetTextTags(hProfile);
+    cmsSetHeaderRenderingIntent(hProfile, Intent);
 
     if (cmsSaveProfileToFile(hProfile, cOutProf)) {
 
