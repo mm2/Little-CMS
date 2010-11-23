@@ -1,8 +1,8 @@
 
 
 1 VERSIONINFO
-FILEVERSION 2, 0, 0, 0
-PRODUCTVERSION 2, 0, 0, 0
+FILEVERSION 2, 1, 0, 0
+PRODUCTVERSION 2, 1, 0, 0
 FILEOS VOS_NT_WINDOWS32
 FILETYPE VFT_DLL
 {
@@ -12,7 +12,7 @@ FILETYPE VFT_DLL
   {
    VALUE "CompanyName", "Marti Maria\000\000"
    VALUE "FileDescription", "lcms color engine\000"
-   VALUE "FileVersion", "2.00\000\000"
+   VALUE "FileVersion", "2.01\000\000"
    VALUE "InternalName", "lcms\000"
    VALUE "LegalCopyright", "Copyright © Marti Maria 2010\000\000"
    VALUE "OriginalFilename", "lcms.dll\000"

@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
 // Microsoft Developer Studio generated include file.
-// Used by lcms.rc
+// Used by lcms2.rc
 //
 
 // Next default values for new objects

@@ -36,6 +36,7 @@ static cmsBool IgnoreEmbedded         = FALSE;
 static cmsBool GamutCheck             = FALSE;
 static cmsBool lIsITUFax              = FALSE;
 static cmsBool lIsPhotoshopApp13      = FALSE;
+static cmsBool lIsEXIF;
 static cmsBool lIsDeviceLink          = FALSE;
 static cmsBool EmbedProfile           = FALSE;
 
@@ -66,6 +67,7 @@ static struct my_error_mgr {
 } ErrorHandler;
 
 
+cmsUInt16Number Alarm[4] = {128,128,128,0};
 
 // Out of mem
 static
@@ -354,6 +356,187 @@ cmsBool HandlePhotoshopAPP13(jpeg_saved_marker_ptr ptr)
 }
 
 
+typedef unsigned short uint16_t;
+typedef unsigned char uint8_t;
+typedef unsigned int uint32_t;
+
+#define INTEL_BYTE_ORDER 0x4949
+#define XRESOLUTION 0x011a
+#define YRESOLUTION 0x011b
+#define RESOLUTION_UNIT 0x128
+
+// Read a 16-bit word
+static
+uint16_t read16(uint8_t* arr, int pos,  int swapBytes) 
+{ 
+    uint8_t b1 = arr[pos];
+    uint8_t b2 = arr[pos+1];
+    
+    return (swapBytes) ?  ((b2 << 8) | b1) : ((b1 << 8) | b2);
+}
+
+
+// Read a 32-bit word
+static
+uint32_t read32(uint8_t* arr, int pos,  int swapBytes)
+{
+  
+    if(!swapBytes) {
+
+        return (arr[pos]   << 24) | 
+               (arr[pos+1] << 16) | 
+               (arr[pos+2] << 8) | 
+                arr[pos+3];
+    }
+
+    return arr[pos] | 
+           (arr[pos+1] << 8) | 
+           (arr[pos+2] << 16) | 
+           (arr[pos+3] << 24);
+}
+
+
+
+static
+int read_tag(uint8_t* arr, int pos,  int swapBytes, void* dest)
+{
+        // Format should be 5 over here (rational)
+    uint32_t format = read16(arr, pos + 2, swapBytes);
+    // Components should be 1
+    uint32_t components = read32(arr, pos + 4, swapBytes);
+    // Points to the value
+    uint32_t offset;
+    
+    // sanity
+    if (components != 1) return 0;
+
+    if (format == 3) 
+        offset = pos + 8;
+    else
+        offset =  read32(arr, pos + 8, swapBytes);
+
+    switch (format) {
+
+    case 5: // Rational
+          {
+          double num = read32(arr, offset, swapBytes);
+          double den = read32(arr, offset + 4, swapBytes);
+          *(double *) dest = num / den;
+          }
+          break;
+
+    case 3: // uint 16
+        *(int*) dest = read16(arr, offset, swapBytes);
+        break;
+
+    default:  return 0;
+    }
+
+    return 1;
+}
+
+
+
+// Handler for EXIF data
+static
+    cmsBool HandleEXIF(struct jpeg_decompress_struct* cinfo)
+{
+    jpeg_saved_marker_ptr ptr;
+    uint32_t ifd_ofs;
+    int pos = 0, swapBytes = 0;
+    uint32_t i, numEntries;
+    double XRes = -1, YRes = -1;
+    int Unit = 2; // Inches
+
+
+    for (ptr = cinfo ->marker_list; ptr; ptr = ptr ->next) {
+
+        if ((ptr ->marker == JPEG_APP0+1) && ptr ->data_length > 6) {
+            JOCTET FAR* data = ptr -> data;   
+
+            if (memcmp(data, "Exif\0\0", 6) == 0) {
+
+                data += 6; // Skip EXIF marker
+
+                // 8 byte TIFF header
+                // first two determine byte order
+                pos = 0;
+                if (read16(data, pos, 0) == INTEL_BYTE_ORDER) {
+                    swapBytes = 1;
+                }
+
+                pos += 2;
+
+                // next two bytes are always 0x002A (TIFF version)
+                pos += 2;
+
+                // offset to Image File Directory (includes the previous 8 bytes)
+                ifd_ofs = read32(data, pos, swapBytes);
+
+                // Search the directory for resolution tags          
+                numEntries = read16(data, ifd_ofs, swapBytes);
+
+                for (i=0; i < numEntries; i++) {
+
+                    uint32_t entryOffset = ifd_ofs + 2 + (12 * i);
+                    uint32_t tag = read16(data, entryOffset, swapBytes);
+
+                    switch (tag) {
+
+                    case RESOLUTION_UNIT:
+                        if (!read_tag(data, entryOffset, swapBytes, &Unit)) return FALSE;
+                        break;
+
+                    case XRESOLUTION:
+                        if (!read_tag(data, entryOffset, swapBytes, &XRes)) return FALSE;
+                        break;
+
+                    case YRESOLUTION:
+                        if (!read_tag(data, entryOffset, swapBytes, &YRes)) return FALSE;
+                        break;
+
+                    default:;
+                    }
+
+                }
+
+                // Proceed if all found
+
+                if (XRes != -1 && YRes != -1) 
+                {
+
+                    // 1 = None 
+                    // 2 = inches 
+                    // 3 = cm
+
+                    switch (Unit) {
+
+                    case 2:
+                    
+                        cinfo ->X_density = (UINT16) floor(XRes + 0.5);
+                        cinfo ->Y_density = (UINT16) floor(YRes + 0.5);
+                        break;
+
+                    case 1:
+
+                        cinfo ->X_density = (UINT16) floor(XRes * 2.54 + 0.5);
+                        cinfo ->Y_density = (UINT16) floor(YRes * 2.54 + 0.5);
+                        break;
+
+                    default: return FALSE;
+                    }
+
+                    cinfo ->density_unit = 1;  /* 1 for dots/inch, or 2 for dots/cm.*/
+
+                }
+
+
+            }
+        }    
+    }
+    return FALSE;
+}
+
 
 static
 cmsBool OpenInput(const char* FileName)
@@ -426,6 +609,7 @@ cmsUInt32Number GetInputPixelType(void)
         
      lIsITUFax         = IsITUFax(Decompressor.marker_list);
      lIsPhotoshopApp13 = HandlePhotoshopAPP13(Decompressor.marker_list);
+     lIsEXIF           = HandleEXIF(&Decompressor);
 
      ColorChannels = Decompressor.num_components;
      extra  = 0;            // Alpha = None
@@ -737,8 +921,10 @@ int TransformImage(char *cDefInpProf, char *cOutProf)
        }
         
 
-       if (GamutCheck)
+       if (GamutCheck) {
             dwFlags |= cmsFLAGS_GAMUTCHECK;
+            cmsSetAlarmCodes(Alarm);
+       }
         
        // Take input color space
        wInput = GetInputPixelType();
@@ -788,10 +974,17 @@ int TransformImage(char *cDefInpProf, char *cOutProf)
        if (cProofing != NULL) {
 
            hProof = OpenStockProfile(0, cProofing);
+           if (hProof == NULL) {
+            FatalError("Proofing profile couldn't be read.");
+           }
            dwFlags |= cmsFLAGS_SOFTPROOFING;
           }
        }
 
+        if (!hIn)
+            FatalError("Input profile couldn't be read.");
+        if (!hOut)
+            FatalError("Output profile couldn't be read.");
 
        // Assure both, input profile and input JPEG are on same colorspace       
        if (cmsGetColorSpace(hIn) != _cmsICCcolorSpace(T_COLORSPACE(wInput)))
@@ -813,6 +1006,7 @@ int TransformImage(char *cDefInpProf, char *cOutProf)
        
        wOutput      = ComputeOutputFormatDescriptor(wInput, OutputColorSpace);
        
+      
        xform = cmsCreateProofingTransform(hIn, wInput, 
                                           hOut, wOutput, 
                                           hProof, Intent, 
@@ -839,7 +1033,7 @@ int TransformImage(char *cDefInpProf, char *cOutProf)
 static
 void Help(int level)
 {
-	 fprintf(stderr, "little cms ICC profile applier for JPEG - v3.0 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
+     fprintf(stderr, "little cms ICC profile applier for JPEG - v3.1 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
 
      switch(level) {
 
@@ -869,6 +1063,7 @@ void Help(int level)
      fprintf(stderr, "%cp<profile> - Soft proof profile\n", SW);
      fprintf(stderr, "%cm<0,1,2,3> - SoftProof intent\n", SW);
      fprintf(stderr, "%cg - Marks out-of-gamut colors on softproof\n", SW);
+     fprintf(stderr, "%c!<r>,<g>,<b> - Out-of-gamut marker channel values\n", SW);
 
      fprintf(stderr, "\n");
      fprintf(stderr, "%cq<0..100> - Output JPEG quality\n", SW);
@@ -918,7 +1113,7 @@ void HandleSwitches(int argc, char *argv[])
 {
     int s;
     
-    while ((s=xgetopt(argc,argv,"bBnNvVGgh:H:i:I:o:O:P:p:t:T:c:C:Q:q:M:m:L:l:eEs:S:")) != EOF) {
+    while ((s=xgetopt(argc,argv,"bBnNvVGgh:H:i:I:o:O:P:p:t:T:c:C:Q:q:M:m:L:l:eEs:S:!:")) != EOF) {
         
         switch (s)
         {
@@ -1015,6 +1210,14 @@ void HandleSwitches(int argc, char *argv[])
         case 'S': SaveEmbedded = xoptarg;
             break;
             
+        case '!':       
+            if (sscanf(xoptarg, "%hu,%hu,%hu", &Alarm[0], &Alarm[1], &Alarm[2]) == 3) {
+                int i;
+                for (i=0; i < 3; i++) {
+                    Alarm[i] = (Alarm[i] << 8) | Alarm[i];
+                }
+            }
+            break;
             
         default:
             
@@ -1032,12 +1235,12 @@ int main(int argc, char* argv[])
 	HandleSwitches(argc, argv);
 
 	if ((argc - xoptind) != 2) {
-
 		Help(0);              
 	}
 
 	OpenInput(argv[xoptind]);
 	OpenOutput(argv[xoptind+1]);
+
 	TransformImage(cInpProf, cOutProf);
 
 

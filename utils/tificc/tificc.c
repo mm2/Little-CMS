@@ -501,6 +501,9 @@ void WriteOutputTags(TIFF *out, int Colorspace, int BytesPerSample)
 
 
       // Multi-ink separations
+  case PT_MCH2:
+  case PT_MCH3:
+  case PT_MCH4:
   case PT_MCH5:
   case PT_MCH6:
   case PT_MCH7:
@@ -516,12 +519,15 @@ void WriteOutputTags(TIFF *out, int Colorspace, int BytesPerSample)
       TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_SEPARATED);
       TIFFSetField(out, TIFFTAG_SAMPLESPERPIXEL, nChannels);
 
-      if (StoreAsAlpha) {                                     
+      if (StoreAsAlpha && nChannels >= 4) {                                     
           // CMYK plus extra alpha
           TIFFSetField(out, TIFFTAG_EXTRASAMPLES, nChannels - 4, Extra);            
+          TIFFSetField(out, TIFFTAG_INKSET, 1);
+          TIFFSetField(out, TIFFTAG_NUMBEROFINKS, 4);
       }
       else {            
           TIFFSetField(out, TIFFTAG_INKSET, 2);
+          TIFFSetField(out, TIFFTAG_NUMBEROFINKS, nChannels);
       }
 
       TIFFSetField(out, TIFFTAG_BITSPERSAMPLE, BitsPerSample);
@@ -862,7 +868,7 @@ int TransformImage(TIFF* in, TIFF* out, const char *cDefInpProf)
 static
 void Help(int level)
 {
-    fprintf(stderr, "little cms ICC profile applier for TIFF - v6.0 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
+    fprintf(stderr, "little cms ICC profile applier for TIFF - v6.1 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
     fflush(stderr);
 
     switch(level) {

@@ -266,6 +266,9 @@ int PixelTypeFromChanCount(int ColorChannels)
 {
     switch (ColorChannels) {
 
+        case 1: return PT_GRAY;
+        case 2: return PT_MCH2;
+        case 3: return PT_MCH3;
         case 4: return PT_CMYK;
         case 5: return PT_MCH5;
         case 6: return PT_MCH6;
@@ -303,6 +306,9 @@ int ChanCountFromPixelType(int ColorChannels)
       case PT_YCbCr: return 3;
 
       case PT_CMYK: return 4 ;
+      case PT_MCH2: return 2 ;
+      case PT_MCH3: return 3 ;
+      case PT_MCH4: return 4 ;
       case PT_MCH5: return 5 ;
       case PT_MCH6: return 6 ;
       case PT_MCH7: return 7 ;

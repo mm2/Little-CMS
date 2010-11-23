@@ -297,3 +297,4 @@ cmsXYZ2xyY                               =   cmsXYZ2xyY
 cmsXYZEncoded2Float                      =   cmsXYZEncoded2Float
 cmsSliceSpace16                          =   cmsSliceSpace16
 cmsSliceSpaceFloat                       =   cmsSliceSpaceFloat
+cmsChangeBuffersFormat                   =   cmsChangeBuffersFormat

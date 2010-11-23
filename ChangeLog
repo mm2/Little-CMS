@@ -20,6 +20,7 @@ Fixed an issue on curve inversion
 Fixed several integer overflow and other integrity checks, thanks to Chris Evans
 linkicc now stores the rendering intent in the profile header
 Fixed delphi interface
+Added Duotone support (Bilinear interpolation)
 
 2.1 Maintenance release
 -----------------------
