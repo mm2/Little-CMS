@@ -826,8 +826,8 @@ FUNCTION cmsD50_xyY: LPcmsCIExyY; StdCall;
 // Colorimetric space conversions
 PROCEDURE cmsXYZ2xyY(Dest: LPcmsCIExyY; Source: LPcmsCIEXYZ); StdCall;
 PROCEDURE cmsxyY2XYZ(Dest: LPcmsCIEXYZ; Source: LPcmsCIExyY); StdCall;
-PROCEDURE cmsXYZ2Lab(WhitePoint: LPcmsCIEXYZ; xyz: LPcmsCIEXYZ; Lab: LPcmsCIELab); StdCall;
-PROCEDURE cmsLab2XYZ(WhitePoint: LPcmsCIEXYZ; Lab: LPcmsCIELab; xyz: LPcmsCIEXYZ); StdCall;
+PROCEDURE cmsLab2XYZ(WhitePoint: LPcmsCIEXYZ; xyz: LPcmsCIEXYZ; Lab: LPcmsCIELab); StdCall;
+PROCEDURE cmsXYZ2Lab(WhitePoint: LPcmsCIEXYZ; Lab: LPcmsCIELab; xyz: LPcmsCIEXYZ); StdCall;
 PROCEDURE cmsLab2LCh(LCh: LPcmsCIELCh; Lab: LPcmsCIELab); StdCall;
 PROCEDURE cmsLCh2Lab(Lab: LPcmsCIELab; LCh: LPcmsCIELCh); StdCall;
 
@@ -1641,8 +1641,8 @@ FUNCTION cmsD50_XYZ: LPcmsCIEXYZ; external 'lcms2.dll';
 FUNCTION cmsD50_xyY: LPcmsCIExyY; external 'lcms2.dll';
 PROCEDURE cmsXYZ2xyY(Dest: LPcmsCIExyY; Source: LPcmsCIEXYZ); external 'lcms2.dll';
 PROCEDURE cmsxyY2XYZ(Dest: LPcmsCIEXYZ; Source: LPcmsCIExyY); external 'lcms2.dll';
-PROCEDURE cmsXYZ2Lab(WhitePoint: LPcmsCIEXYZ; xyz: LPcmsCIEXYZ; Lab: LPcmsCIELab); external 'lcms2.dll';
-PROCEDURE cmsLab2XYZ(WhitePoint: LPcmsCIEXYZ; Lab: LPcmsCIELab; xyz: LPcmsCIEXYZ); external 'lcms2.dll';
+PROCEDURE cmsLab2XYZ(WhitePoint: LPcmsCIEXYZ; xyz: LPcmsCIEXYZ; Lab: LPcmsCIELab); external 'lcms2.dll';
+PROCEDURE cmsXYZ2Lab(WhitePoint: LPcmsCIEXYZ; Lab: LPcmsCIELab; xyz: LPcmsCIEXYZ); external 'lcms2.dll';
 PROCEDURE cmsLab2LCh(LCh: LPcmsCIELCh; Lab: LPcmsCIELab); external 'lcms2.dll';
 PROCEDURE cmsLCh2Lab(Lab: LPcmsCIELab; LCh: LPcmsCIELCh); external 'lcms2.dll';
 PROCEDURE cmsLabEncoded2Float(Lab: LPcmsCIELab; wLab: Pointer); external 'lcms2.dll';
