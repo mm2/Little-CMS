@@ -48,6 +48,9 @@ static int PrecalcMode             = 1;
 
 static int jpegQuality             = 75;
 
+static cmsFloat64Number ObserverAdaptationState = 0;
+
+
 static char *cInpProf  = NULL;
 static char *cOutProf  = NULL;
 static char *cProofing = NULL;
@@ -906,6 +909,8 @@ int TransformImage(char *cDefInpProf, char *cOutProf)
        cmsUInt8Number* EmbedBuffer;
 
 
+       cmsSetAdaptationState(ObserverAdaptationState);
+
        if (BlackPointCompensation) {
 
             dwFlags |= cmsFLAGS_BLACKPOINTCOMPENSATION;            
@@ -1051,6 +1056,7 @@ void Help(int level)
 
      
      fprintf(stderr, "%cb - Black point compensation\n", SW);     
+     fprintf(stderr, "%cd<0..1> - Observer adaptation state (abs.col. only)\n", SW);
      fprintf(stderr, "%cn - Ignore embedded profile\n", SW);
      fprintf(stderr, "%ce - Embed destination profile\n", SW);
      fprintf(stderr, "%cs<new profile> - Save embedded profile as <new profile>\n", SW);
@@ -1113,7 +1119,7 @@ void HandleSwitches(int argc, char *argv[])
 {
     int s;
     
-    while ((s=xgetopt(argc,argv,"bBnNvVGgh:H:i:I:o:O:P:p:t:T:c:C:Q:q:M:m:L:l:eEs:S:!:")) != EOF) {
+    while ((s=xgetopt(argc,argv,"bBnNvVGgh:H:i:I:o:O:P:p:t:T:c:C:Q:q:M:m:L:l:eEs:S:!:D:d:")) != EOF) {
         
         switch (s)
         {
@@ -1121,6 +1127,13 @@ void HandleSwitches(int argc, char *argv[])
         case 'b':
         case 'B':
             BlackPointCompensation = TRUE;
+            break;
+            
+        case 'd':
+        case 'D': ObserverAdaptationState = atof(xoptarg);
+            if (ObserverAdaptationState < 0 || 
+                ObserverAdaptationState > 1.0)
+                FatalError("Adaptation state should be 0..1");
             break;
             
         case 'v':

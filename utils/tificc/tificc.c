@@ -977,9 +977,9 @@ void HandleSwitches(int argc, char *argv[])
 
         case 'd':
         case 'D': ObserverAdaptationState = atof(xoptarg);
-            if (ObserverAdaptationState != 0 && 
-                ObserverAdaptationState != 1.0)
-                Warning("Adaptation states other that 0 or 1 are not yet implemented");
+            if (ObserverAdaptationState < 0 || 
+                ObserverAdaptationState > 1.0)
+                Warning("Adaptation state should be 0..1");
             break;
 
         case 'e':
