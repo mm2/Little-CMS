@@ -39,7 +39,7 @@ AC_SUBST(LIBRARY_REVISION)dnl
 AC_SUBST(LIBRARY_AGE)dnl
 
 # Obtain system type by running config.guess
-AC_CANONICAL_SYSTEM
+AC_CANONICAL_HOST
 
 AM_INIT_AUTOMAKE([foreign 1.7.2 no-define dist-zip])
 
