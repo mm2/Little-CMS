@@ -848,7 +848,7 @@ cmsPipeline* BlackPreservingKPlaneIntents(cmsContext     ContextID,
     // Check for non-cmyk profiles
     if (cmsGetColorSpace(hProfiles[0]) != cmsSigCmykData ||
         cmsGetColorSpace(hProfiles[nProfiles-1]) != cmsSigCmykData ||
-        cmsGetDeviceClass(hProfiles[nProfiles-1]) != cmsSigOutputClass)) 
+        cmsGetDeviceClass(hProfiles[nProfiles-1]) != cmsSigOutputClass) 
            return  DefaultICCintents(ContextID, nProfiles, ICCIntents, hProfiles, BPC, AdaptationStates, dwFlags);
 
     // Allocate an empty LUT for holding the result
