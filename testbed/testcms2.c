@@ -3311,6 +3311,7 @@ cmsInt32Number CheckNamedColorLUT(void)
     cmsUInt16Number Inw[3], Outw[3];
 
 
+
     nc = cmsAllocNamedColorList(DbgThread(), 256, 3, "pre", "post");
     if (nc == NULL) return 0;
 
@@ -3323,7 +3324,7 @@ cmsInt32Number CheckNamedColorLUT(void)
         if (!cmsAppendNamedColor(nc, Name, PCS, Colorant)) { rc = 0; break; }
     }
 
-    cmsPipelineInsertStage(lut, cmsAT_END, _cmsStageAllocNamedColor(nc));
+    cmsPipelineInsertStage(lut, cmsAT_END, _cmsStageAllocNamedColor(nc, FALSE));
 
     cmsFreeNamedColorList(nc);
     if (rc == 0) return 0;
@@ -5680,6 +5681,7 @@ cmsInt32Number CheckMatrixShaperXFORM16(void)
     hAbove = Create_AboveRGB();
     xform = cmsCreateTransformTHR(DbgThread(), hAbove, TYPE_RGB_16, hAbove, TYPE_RGB_16,  INTENT_RELATIVE_COLORIMETRIC, 0);
     cmsCloseProfile(hAbove);
+
     rc1 = Check16linearXFORM(xform, 3);
     cmsDeleteTransform(xform);
 
