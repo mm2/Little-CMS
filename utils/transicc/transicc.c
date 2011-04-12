@@ -261,10 +261,10 @@ void HandleSwitches(int argc, char *argv[])
     }
 
 
-	// If output CGATS involved, switch to float
-	if ((argc - xoptind) > 2) {
-		lIsFloat = TRUE;
-	}
+    // If output CGATS involved, switch to float
+    if ((argc - xoptind) > 2) {
+        lIsFloat = TRUE;
+    }
 }
 
 
@@ -272,10 +272,10 @@ void HandleSwitches(int argc, char *argv[])
 static
 void SetRange(cmsFloat64Number range, cmsBool IsInput)
 {
-	if (IsInput)
-		InputRange = range;
-	else
-		OutputRange = range;
+    if (IsInput)
+        InputRange = range;
+    else
+        OutputRange = range;
 }
 
 // Populate a named color list with usual component names. 
@@ -407,14 +407,20 @@ cmsBool OpenTransforms(void)
         hOutput = NULL;
         hProof  = NULL;
 
-        InputColorSpace  = cmsGetColorSpace(hInput);
-        OutputColorSpace = cmsGetPCS(hInput);
+        if (cmsGetDeviceClass(hInput) == cmsSigNamedColorClass) {
+            OutputColorSpace  = cmsGetColorSpace(hInput);
+            InputColorSpace = cmsGetPCS(hInput);
+        }
+        else {
+            InputColorSpace  = cmsGetColorSpace(hInput);
+            OutputColorSpace = cmsGetPCS(hInput);
+        }
 
         // Read colorant tables if present
         if (cmsIsTag(hInput, cmsSigColorantTableTag)) {
             List = cmsReadTag(hInput, cmsSigColorantTableTag);
             InputColorant = cmsDupNamedColorList(List);
-			InputRange = 1;
+            InputRange = 1;
         }
         else InputColorant = ComponentNames(InputColorSpace, TRUE);
 
@@ -422,7 +428,7 @@ cmsBool OpenTransforms(void)
 
             List = cmsReadTag(hInput, cmsSigColorantTableOutTag);
             OutputColorant = cmsDupNamedColorList(List);
-			OutputRange = 1;
+            OutputRange = 1;
         }
         else OutputColorant = ComponentNames(OutputColorSpace, FALSE);
 
@@ -490,18 +496,19 @@ cmsBool OpenTransforms(void)
     // Input is always in floating point
     dwIn  = cmsFormatterForColorspaceOfProfile(hInput, 0, TRUE);
 
-	if (lIsDeviceLink) {
+    if (lIsDeviceLink) {
 
-		 dwOut = cmsFormatterForPCSOfProfile(hInput, lIsFloat ? 0 : 2, lIsFloat);
-	}
-	else {
-    
-		// 16 bits or floating point (only on output)   
+        dwOut = cmsFormatterForPCSOfProfile(hInput, lIsFloat ? 0 : 2, lIsFloat);
+    }
+    else {
+
+        // 16 bits or floating point (only on output)   
         dwOut = cmsFormatterForColorspaceOfProfile(hOutput, lIsFloat ? 0 : 2, lIsFloat);
-	}
+    }
 
     // For named color, there is a specialized formatter
     if (cmsGetDeviceClass(hInput) == cmsSigNamedColorClass) {
+        dwOut = dwIn;
         dwIn = TYPE_NAMED_COLOR_INDEX;
         InputNamedColor = TRUE;
     }
@@ -657,8 +664,12 @@ cmsUInt16Number GetIndex(void)
 {
     char Buffer[4096], Name[40], Prefix[40], Suffix[40];
     int index, max;
+    const cmsNAMEDCOLORLIST* NamedColorList;
+    
+    NamedColorList = cmsGetNamedColorList(hTrans);
+    if (NamedColorList == NULL) return 0;
 
-    max = cmsNamedColorCount(hTrans)-1;
+    max = cmsNamedColorCount(NamedColorList)-1;
 
     GetLine(Buffer, "Color index (0..%d)? ", max);
     index = atoi(Buffer);
@@ -666,9 +677,9 @@ cmsUInt16Number GetIndex(void)
     if (index > max)
         FatalError("Named color %d out of range!", index);
 
-    cmsNamedColorInfo(hTrans, index, Name, Prefix, Suffix, NULL, NULL);
+    cmsNamedColorInfo(NamedColorList, index, Name, Prefix, Suffix, NULL, NULL);
 
-    printf("\n%s %s %s: ", Prefix, Name, Suffix);
+    printf("\n%s %s %s\n", Prefix, Name, Suffix);
 
     return (cmsUInt16Number) index;
 }
@@ -686,7 +697,9 @@ void TakeFloatValues(cmsFloat64Number Float[])
 
     if (InputNamedColor) {
 
-        Float[0] = GetIndex();
+        // This is named color index, which is always cmsUInt16Number
+        cmsUInt16Number index = GetIndex();
+        memcpy(Float, &index, sizeof(cmsUInt16Number));
         return;
     }
 
@@ -697,7 +710,7 @@ void TakeFloatValues(cmsFloat64Number Float[])
             cmsNamedColorInfo(InputColorant, i, ChannelName, NULL, NULL, NULL, NULL);          
         }
         else {
-			InputRange = 1;
+            InputRange = 1;
             sprintf(ChannelName, "Channel #%d", i+1);
         }
 
@@ -830,8 +843,15 @@ void TakeCGATSValues(int nPatch, cmsFloat64Number Float[])
 
     if (InputNamedColor) {
 
-        int index = cmsNamedColorIndex(hTrans, CGATSPatch);
-        if (index < 0) 
+      const cmsNAMEDCOLORLIST* NamedColorList;
+      int index;
+
+      NamedColorList = cmsGetNamedColorList(hTrans);
+      if (NamedColorList == NULL) 
+          FatalError("Malformed named color profile");
+      
+      index = cmsNamedColorIndex(NamedColorList, CGATSPatch);
+      if (index < 0) 
             FatalError("Named color '%s' not found in the profile", CGATSPatch); 
 
         Float[0] = index;
@@ -982,7 +1002,7 @@ void PutCGATSValues(cmsFloat64Number Float[])
 static
 void SetOutputDataFormat(void) 
 {
-	cmsIT8DefineDblFormat(hIT8out, "%.4g");
+    cmsIT8DefineDblFormat(hIT8out, "%.4g");
     cmsIT8SetPropertyStr(hIT8out, "ORIGINATOR", "icctrans");
 
     if (IncludePart != NULL) 
@@ -1104,7 +1124,7 @@ int main(int argc, char *argv[])
 
     InitUtils("transicc");
 
-	Verbose = 1;
+    Verbose = 1;
 
     if (argc == 1) {
 
