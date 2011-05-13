@@ -165,7 +165,7 @@ typedef cmsBool (* PositionTableEntryFn)(struct _cms_typehandler_struct* self,
                                              cmsUInt32Number SizeOfTag);
 
 // Helper function to deal with position tables as decribed in several addendums to ICC spec 4.2
-// A table of n elements is written, where first comes n records containing offsets and sizes and
+// A table of n elements is readed, where first comes n records containing offsets and sizes and
 // then a block containing the data itself. This allows to reuse same data in more than one entry
 static
 cmsBool ReadPositionTable(struct _cms_typehandler_struct* self, 
@@ -4733,6 +4733,48 @@ void Type_vcgt_Free(struct _cms_typehandler_struct* self, void* Ptr)
     _cmsFree(self ->ContextID, Ptr);
 }
 
+
+
+
+// ********************************************************************************
+// Type cmsSigDictType
+// ********************************************************************************
+
+static
+void *Type_Dictionary_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag)
+{
+   
+}
+
+
+static
+cmsBool Type_Dictionary_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, void* Ptr, cmsUInt32Number nItems)
+{
+}
+
+
+static
+void* Type_Dictionary_Dup(struct _cms_typehandler_struct* self, const void *Ptr, cmsUInt32Number n)
+{   
+}
+
+
+static
+void Type_Dictionary_Free(struct _cms_typehandler_struct* self, void* Ptr)
+{
+}
+
+/*
+cmsHANDLE cmsDictAlloc();
+cmsHANDLE cmsDictFree(cmsHANDLE hDict);
+cmsUInt32Number cmsDictPut(cmsHANDLE hDict,  const char LanguageCode[3],  const char CountryCode[3], 
+                                             wchar_t* DisplayName, wchar_t* DisplayValue, const wchar_t* Name, const wchar_t* Value);
+cmsUInt32Number cmsDictCount(cmsHANDLE hDict);
+cmsBool cmsDictGetData(cmsHANDLE hDict, cmsUInt32Number n, wchar_t* Name, wchar_t* Value);
+cmsBool cmsDictGetDisplayData(cmsHANDLE hDict, cmsUInt32Number n, const char LanguageCode[3],  const char CountryCode[3], 
+                                             wchar_t* DisplayName, wchar_t* DisplayValue);
+*/
+
 // ********************************************************************************
 // Type support main routines
 // ********************************************************************************
@@ -4770,6 +4812,7 @@ static _cmsTagTypeLinkedList SupportedTagTypes[] = {
 {TYPE_HANDLER(cmsCorbisBrokenXYZtype,          XYZ),                 &SupportedTagTypes[27] },
 {TYPE_HANDLER(cmsMonacoBrokenCurveType,        Curve),               &SupportedTagTypes[28] },
 {TYPE_HANDLER(cmsSigProfileSequenceIdType,     ProfileSequenceId),   &SupportedTagTypes[29] },
+{TYPE_HANDLER(cmsSigDictType,                  Dictionary),          &SupportedTagTypes[30] }, 
 {TYPE_HANDLER(cmsSigVcgtType,                  vcgt),                NULL }
 };
 
@@ -4889,6 +4932,7 @@ static _cmsTagLinkedList SupportedTags[] = {
 
     { cmsSigScreeningTag,           { 1, 1, { cmsSigScreeningType},          NULL }, &SupportedTags[59]},  
     { cmsSigVcgtTag,                { 1, 1, { cmsSigVcgtType},               NULL }, &SupportedTags[60]}, 
+    { cmsSigMetaTag,                { 1, 1, { cmsSigDictType},               NULL }, &SupportedTags[61]},
     { cmsSigProfileSequenceIdTag,   { 1, 1, { cmsSigProfileSequenceIdType},  NULL},  NULL}  
 
 };
