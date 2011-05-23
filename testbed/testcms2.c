@@ -2008,6 +2008,37 @@ cmsInt32Number Check7DinterpGranular(void)
 
     return 1;
 }
+
+
+static
+cmsInt32Number Check8DinterpGranular(void)
+{
+    cmsPipeline* lut;
+    cmsStage* mpe;
+    cmsUInt32Number Dimensions[] = { 4, 3, 3, 2, 2, 2, 2, 2 };
+
+    lut = cmsPipelineAlloc(DbgThread(), 8, 3);
+    mpe = cmsStageAllocCLut16bitGranular(DbgThread(), Dimensions, 8, 3, NULL);
+    cmsStageSampleCLut16bit(mpe, Sampler8D, NULL, 0);
+    cmsPipelineInsertStage(lut, cmsAT_BEGIN, mpe);
+
+    // Check accuracy
+
+    if (!CheckOne8D(lut, 0, 0, 0, 0, 0, 0, 0, 0)) return 0;
+    if (!CheckOne8D(lut, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff, 0xffff)) return 0; 
+
+    if (!CheckOne8D(lut, 0x8080, 0x8080, 0x8080, 0x8080, 0x1234, 0x1122, 0x0056, 0x0011)) return 0;
+    if (!CheckOne8D(lut, 0x0000, 0xFE00, 0x80FF, 0x8888, 0x8078, 0x2233, 0x0088, 0x2020)) return 0;
+    if (!CheckOne8D(lut, 0x1111, 0x2222, 0x3333, 0x4444, 0x1455, 0x3344, 0x1987, 0x4532)) return 0;
+    if (!CheckOne8D(lut, 0x0000, 0x0012, 0x0013, 0x0014, 0x2333, 0x4455, 0x9988, 0x1200)) return 0; 
+    if (!CheckOne8D(lut, 0x3141, 0x1415, 0x1592, 0x9261, 0x4567, 0x5566, 0xfe56, 0x6666)) return 0; 
+    if (!CheckOne8D(lut, 0xFF00, 0xFF01, 0xFF12, 0xFF13, 0xF344, 0x6677, 0xbabe, 0xface)) return 0; 
+
+    cmsPipelineFree(lut);
+
+    return 1;
+}
+
 // Colorimetric conversions -------------------------------------------------------------------------------------------------
 
 // Lab to LCh and back should be performed at 1E-12 accuracy at least
@@ -4795,6 +4826,42 @@ cmsInt32Number CheckVCGT(cmsInt32Number Pass,  cmsHPROFILE hProfile)
     return 0;
 }
 
+static
+cmsInt32Number CheckDictionary16(cmsInt32Number Pass,  cmsHPROFILE hProfile)
+{
+      cmsHANDLE hDict;
+      const cmsDICTentry* e;
+      switch (Pass) {
+
+        case 1:     
+            hDict = cmsDictAlloc(DbgThread());
+
+            cmsDictAddEntry(hDict, L"Name",  L"String", NULL, NULL);
+            cmsDictAddEntry(hDict, L"Name2", L"12",    NULL, NULL);
+            if (!cmsWriteTag(hProfile, cmsSigMetaTag, hDict)) return 0;    
+            cmsDictFree(hDict);
+            return 1;
+
+
+        case 2:
+
+             hDict = cmsReadTag(hProfile, cmsSigMetaTag);
+             if (hDict == NULL) return 0;
+
+             e = cmsDictGetEntryList(hDict);
+             if (memcmp(e ->Name, L"Name2", sizeof(wchar_t) * 5) != 0) return 0;
+             if (memcmp(e ->Value, L"12",  sizeof(wchar_t) * 2) != 0) return 0;
+             e = cmsDictNextEntry(e);         
+              if (memcmp(e ->Name, L"Name", sizeof(wchar_t) * 4) != 0) return 0;
+             if (memcmp(e ->Value, L"String",  sizeof(wchar_t) * 5) != 0) return 0;
+             return 1;
+
+        default:;
+    }
+
+    return 0;
+}
+
 
 static
 cmsInt32Number CheckRAWtags(cmsInt32Number Pass,  cmsHPROFILE hProfile)
@@ -4957,6 +5024,8 @@ cmsInt32Number CheckProfileCreation(void)
         SubTest("RAW tags");
         if (!CheckRAWtags(Pass, h)) return 0;
 
+        SubTest("Dictionary meta tags");
+        if (!CheckDictionary16(Pass, h)) return 0;
 
         if (Pass == 1) {
             cmsSaveProfileToFile(h, "alltags.icc");
@@ -6726,6 +6795,33 @@ cmsInt32Number CheckGBD(void)
 }
 
 
+static
+int CheckMD5(void)
+{
+    _cmsICCPROFILE* h;
+    cmsHPROFILE pProfile = cmsOpenProfileFromFile("sRGBlcms2.icc", "r"); 
+    cmsProfileID ProfileID1, ProfileID2, ProfileID3, ProfileID4;
+
+    h =(_cmsICCPROFILE*) pProfile;
+    if (cmsMD5computeID(pProfile)) cmsGetHeaderProfileID(pProfile, ProfileID1.ID8); 
+    if (cmsMD5computeID(pProfile)) cmsGetHeaderProfileID(pProfile,ProfileID2.ID8); 
+
+    cmsCloseProfile(pProfile);
+    
+
+     pProfile = cmsOpenProfileFromFile("sRGBlcms2.icc", "r");  
+
+      h =(_cmsICCPROFILE*) pProfile;
+    if (cmsMD5computeID(pProfile)) cmsGetHeaderProfileID(pProfile, ProfileID3.ID8); 
+    if (cmsMD5computeID(pProfile)) cmsGetHeaderProfileID(pProfile,ProfileID4.ID8); 
+
+    cmsCloseProfile(pProfile);
+
+    return ((memcmp(ProfileID1.ID8, ProfileID3.ID8, sizeof(ProfileID1)) == 0) && 
+            (memcmp(ProfileID2.ID8, ProfileID4.ID8, sizeof(ProfileID2)) == 0));
+}
+
+
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
 // --------------------------------------------------------------------------------------------------
@@ -7342,12 +7438,46 @@ void CheckProfileZOO(void)
 
 #endif
 
+
+
+#define TYPE_709 709 
+static double Rec709Math(int Type, const double Params[], double R) 
+{ double Fun; 
+
+switch (Type) 
+{ 
+case 709: 
+
+if (R <= (Params[3]*Params[4])) Fun = R / Params[3]; 
+else Fun = pow(((R - Params[2])/Params[1]), Params[0]); 
+break; 
+
+case -709: 
+
+if (R <= Params[4]) Fun = R * Params[3]; 
+else Fun = Params[1] * pow(R, (1/Params[0])) + Params[2]; 
+break; 
+} 
+return Fun; 
+}
+
+
+// Add nonstandard TRC curves -> Rec709 
+cmsPluginParametricCurves NewCurvePlugin = { 
+{ cmsPluginMagicNumber, 2000, cmsPluginParametricCurveSig, NULL }, 
+1, {TYPE_709}, {5}, Rec709Math}; 
+
+
+
+
+
 // ---------------------------------------------------------------------------------------
 
 int main(int argc, char* argv[])
 {
     cmsInt32Number Exhaustive = 0;
     cmsInt32Number DoSpeedTests = 1;
+
 
 #ifdef _MSC_VER
     _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF ); 
@@ -7430,7 +7560,7 @@ int main(int argc, char* argv[])
     Check("5D interpolation with granularity", Check5DinterpGranular);
     Check("6D interpolation with granularity", Check6DinterpGranular);
     Check("7D interpolation with granularity", Check7DinterpGranular);
-
+    Check("8D interpolation with granularity", Check8DinterpGranular);
 
     // Encoding of colorspaces
     Check("Lab to LCh and back (float only) ", CheckLab2LCh);
@@ -7547,6 +7677,7 @@ int main(int argc, char* argv[])
     Check("CGATS parser", CheckCGATS);
     Check("PostScript generator", CheckPostScript);
     Check("Segment maxima GBD", CheckGBD);
+    Check("MD5 digest", CheckMD5);
 
 
     if (DoSpeedTests)
@@ -7557,9 +7688,9 @@ int main(int argc, char* argv[])
     cmsUnregisterPlugins();
 
     // Cleanup
-    RemoveTestProfiles();
-    
-    return TotalFail;
+   RemoveTestProfiles();
+
+   return TotalFail;
 }
  
 
