@@ -4826,6 +4826,8 @@ cmsInt32Number CheckVCGT(cmsInt32Number Pass,  cmsHPROFILE hProfile)
     return 0;
 }
 
+
+// Only one of the two following may be used, as they share the same tag
 static
 cmsInt32Number CheckDictionary16(cmsInt32Number Pass,  cmsHPROFILE hProfile)
 {
@@ -4835,7 +4837,8 @@ cmsInt32Number CheckDictionary16(cmsInt32Number Pass,  cmsHPROFILE hProfile)
 
         case 1:     
             hDict = cmsDictAlloc(DbgThread());
-
+            cmsDictAddEntry(hDict, L"Name0",  NULL, NULL, NULL);
+            cmsDictAddEntry(hDict, L"Name1",  L"", NULL, NULL);
             cmsDictAddEntry(hDict, L"Name",  L"String", NULL, NULL);
             cmsDictAddEntry(hDict, L"Name2", L"12",    NULL, NULL);
             if (!cmsWriteTag(hProfile, cmsSigMetaTag, hDict)) return 0;    
@@ -4847,14 +4850,21 @@ cmsInt32Number CheckDictionary16(cmsInt32Number Pass,  cmsHPROFILE hProfile)
 
              hDict = cmsReadTag(hProfile, cmsSigMetaTag);
              if (hDict == NULL) return 0;
-
              e = cmsDictGetEntryList(hDict);
              if (memcmp(e ->Name, L"Name2", sizeof(wchar_t) * 5) != 0) return 0;
              if (memcmp(e ->Value, L"12",  sizeof(wchar_t) * 2) != 0) return 0;
              e = cmsDictNextEntry(e);         
-              if (memcmp(e ->Name, L"Name", sizeof(wchar_t) * 4) != 0) return 0;
+             if (memcmp(e ->Name, L"Name", sizeof(wchar_t) * 4) != 0) return 0;
              if (memcmp(e ->Value, L"String",  sizeof(wchar_t) * 5) != 0) return 0;
+             e = cmsDictNextEntry(e);         
+             if (memcmp(e ->Name, L"Name1", sizeof(wchar_t) *5) != 0) return 0;
+             if (e ->Value == NULL) return 0;
+             if (*e->Value != 0) return 0;
+             e = cmsDictNextEntry(e);         
+             if (memcmp(e ->Name, L"Name0", sizeof(wchar_t) * 5) != 0) return 0;
+             if (e ->Value != NULL) return 0;
              return 1;
+
 
         default:;
     }
@@ -5094,7 +5104,7 @@ cmsInt32Number CheckProfileCreation(void)
         if (!CheckRAWtags(Pass, h)) return 0;
 
         SubTest("Dictionary meta tags");
-        if (!CheckDictionary16(Pass, h)) return 0;
+        // if (!CheckDictionary16(Pass, h)) return 0;
         if (!CheckDictionary24(Pass, h)) return 0;
 
         if (Pass == 1) {
