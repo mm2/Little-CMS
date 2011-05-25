@@ -110,6 +110,7 @@ cmsTagTypeSignature = (
   cmsSigCrdInfoType                       = $63726469,  // 'crdi'
   cmsSigCurveType                         = $63757276,  // 'curv'
   cmsSigDataType                          = $64617461,  // 'data'
+  cmsSigDictType                          = $64696374,  // 'dict'
   cmsSigDateTimeType                      = $6474696D,  // 'dtim'
   cmsSigDeviceSettingsType                = $64657673,  // 'devs'
   cmsSigLut16Type                         = $6d667432,  // 'mft2'
@@ -210,7 +211,8 @@ cmsTagSignature = (
     cmsSigUcrBgTag                          = $62666420,  // 'bfd '
     cmsSigViewingCondDescTag                = $76756564,  // 'vued'
     cmsSigViewingConditionsTag              = $76696577,  // 'view'
-    cmsSigVcgtTag                           = $76636774   // 'vcgt'
+    cmsSigVcgtTag                           = $76636774,  // 'vcgt'
+    cmsSigMetaTag                           = $6D657461   // 'meta'
 );
 
 // ICC Technology tag
@@ -1158,6 +1160,28 @@ LPcmsSEQ = ^cmsSEQ;
 FUNCTION   cmsAllocProfileSequenceDescription(ContextID: cmsContext; n: cmsUInt32Number):LPcmsSEQ; StdCall;
 FUNCTION   cmsDupProfileSequenceDescription(pseq: LPcmsSEQ):LPcmsSEQ; StdCall;
 PROCEDURE  cmsFreeProfileSequenceDescription(pseq: LPcmsSEQ); StdCall;
+
+// Dictionaries --------------------------------------------------------------------------------------------------------
+
+TYPE
+
+ LPcmsDICTentry = ^cmsDICTentry;
+
+cmsDICTentry = PACKED RECORD 
+
+    Next: LPcmsDICTentry;
+
+    DisplayName, DisplayValue: LPcmsMLU;    
+    Name, Value : PWChar;
+END;
+
+FUNCTION  cmsDictAlloc(ContextID: cmsContext): cmsHANDLE;
+PROCEDURE cmsDictFree(hDict: cmsHANDLE);
+FUNCTION  cmsDictDup(hDict: cmsHANDLE): cmsHANDLE;
+
+FUNCTION cmsDictAddEntry(hDict: cmsHANDLE; Name, Value: PWChar; DisplayName, DisplayValue : LPcmsMLU): cmsBool;
+FUNCTION cmsDictGetEntryList(hDict: cmsHANDLE): LPcmsDICTentry;
+FUNCTION cmsDictNextEntry(e : LPcmsDICTentry): LPcmsDICTentry;
 
 // Access to Profile data ----------------------------------------------------------------------------------------------
 FUNCTION cmsCreateProfilePlaceholder(ContextID: cmsContext): cmsHPROFILE; StdCall;
