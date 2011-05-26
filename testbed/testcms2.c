@@ -5267,7 +5267,7 @@ cmsInt32Number CheckBadTransforms(void)
 
     {
 
-    cmsHPROFILE h1 = cmsOpenProfileFromFile("USWebCoatedSWOP.icc", "r");
+    cmsHPROFILE h1 = cmsOpenProfileFromFile("test1.icc", "r");
     cmsHPROFILE h2 = cmsCreate_sRGBProfile();
 
     x1 = cmsCreateTransform(h1, TYPE_BGR_8, h2, TYPE_BGR_8, INTENT_PERCEPTUAL, 0);
@@ -6084,14 +6084,14 @@ cmsInt32Number CheckCMYK(cmsInt32Number Intent, const char *Profile1, const char
 static
 cmsInt32Number CheckCMYKRoundtrip(void)
 {
-    return CheckCMYK(INTENT_RELATIVE_COLORIMETRIC, "USWebCoatedSWOP.icc", "USWebCoatedSWOP.icc");
+    return CheckCMYK(INTENT_RELATIVE_COLORIMETRIC, "test1.icc", "test1.icc");
 }
 
 
 static
 cmsInt32Number CheckCMYKPerceptual(void)
 {
-    return CheckCMYK(INTENT_PERCEPTUAL, "USWebCoatedSWOP.icc", "UncoatedFOGRA29.icc");
+    return CheckCMYK(INTENT_PERCEPTUAL, "test1.icc", "test2.icc");
 }
 
 
@@ -6099,7 +6099,7 @@ cmsInt32Number CheckCMYKPerceptual(void)
 static
 cmsInt32Number CheckCMYKRelCol(void)
 {
-    return CheckCMYK(INTENT_RELATIVE_COLORIMETRIC, "USWebCoatedSWOP.icc", "UncoatedFOGRA29.icc");
+    return CheckCMYK(INTENT_RELATIVE_COLORIMETRIC, "test1.icc", "test2.icc");
 }
 
 
@@ -6107,8 +6107,8 @@ cmsInt32Number CheckCMYKRelCol(void)
 static
 cmsInt32Number CheckKOnlyBlackPreserving(void)
 {
-    cmsHPROFILE hSWOP  = cmsOpenProfileFromFileTHR(DbgThread(), "USWebCoatedSWOP.icc", "r");
-    cmsHPROFILE hFOGRA = cmsOpenProfileFromFileTHR(DbgThread(), "UncoatedFOGRA29.icc", "r");
+    cmsHPROFILE hSWOP  = cmsOpenProfileFromFileTHR(DbgThread(), "test1.icc", "r");
+    cmsHPROFILE hFOGRA = cmsOpenProfileFromFileTHR(DbgThread(), "test2.icc", "r");
     cmsHTRANSFORM xform, swop_lab, fogra_lab;
     cmsFloat32Number CMYK1[4], CMYK2[4];
     cmsCIELab Lab1, Lab2;
@@ -6188,8 +6188,8 @@ cmsInt32Number CheckKOnlyBlackPreserving(void)
 static
 cmsInt32Number CheckKPlaneBlackPreserving(void)
 {
-    cmsHPROFILE hSWOP  = cmsOpenProfileFromFileTHR(DbgThread(), "USWebCoatedSWOP.icc", "r");
-    cmsHPROFILE hFOGRA = cmsOpenProfileFromFileTHR(DbgThread(), "UncoatedFOGRA29.icc", "r");
+    cmsHPROFILE hSWOP  = cmsOpenProfileFromFileTHR(DbgThread(), "test1.icc", "r");
+    cmsHPROFILE hFOGRA = cmsOpenProfileFromFileTHR(DbgThread(), "test2.icc", "r");
     cmsHTRANSFORM xform, swop_lab, fogra_lab;
     cmsFloat32Number CMYK1[4], CMYK2[4];
     cmsCIELab Lab1, Lab2;
@@ -6353,12 +6353,12 @@ cmsInt32Number CheckBlackPoint(void)
     cmsCIEXYZ Black;
     cmsCIELab Lab;
 
-    hProfile  = cmsOpenProfileFromFileTHR(DbgThread(), "sRGB_Color_Space_Profile.icm", "r");  
+    hProfile  = cmsOpenProfileFromFileTHR(DbgThread(), "test5.icc", "r");  
     cmsDetectBlackPoint(&Black, hProfile, INTENT_RELATIVE_COLORIMETRIC, 0);
     cmsCloseProfile(hProfile);
 
 
-    hProfile = cmsOpenProfileFromFileTHR(DbgThread(), "USWebCoatedSWOP.icc", "r");
+    hProfile = cmsOpenProfileFromFileTHR(DbgThread(), "test1.icc", "r");
     cmsDetectBlackPoint(&Black, hProfile, INTENT_RELATIVE_COLORIMETRIC, 0);
     cmsXYZ2Lab(NULL, &Lab, &Black);
     cmsCloseProfile(hProfile);
@@ -6368,12 +6368,12 @@ cmsInt32Number CheckBlackPoint(void)
     cmsXYZ2Lab(NULL, &Lab, &Black);
     cmsCloseProfile(hProfile);
 
-    hProfile = cmsOpenProfileFromFileTHR(DbgThread(), "UncoatedFOGRA29.icc", "r");
+    hProfile = cmsOpenProfileFromFileTHR(DbgThread(), "test2.icc", "r");
     cmsDetectBlackPoint(&Black, hProfile, INTENT_RELATIVE_COLORIMETRIC, 0);
     cmsXYZ2Lab(NULL, &Lab, &Black);
     cmsCloseProfile(hProfile);
 
-    hProfile = cmsOpenProfileFromFileTHR(DbgThread(), "USWebCoatedSWOP.icc", "r");
+    hProfile = cmsOpenProfileFromFileTHR(DbgThread(), "test1.icc", "r");
     cmsDetectBlackPoint(&Black, hProfile, INTENT_PERCEPTUAL, 0);
     cmsXYZ2Lab(NULL, &Lab, &Black);
     cmsCloseProfile(hProfile);
@@ -6569,18 +6569,18 @@ void GenerateCRD(const char* cOutProf, const char* FileName)
 static 
 cmsInt32Number CheckPostScript(void)
 {
-    GenerateCSA("sRGB_Color_Space_Profile.icm", "sRGB_CSA.ps");
+    GenerateCSA("test5.icc", "sRGB_CSA.ps");
     GenerateCSA("aRGBlcms2.icc", "aRGB_CSA.ps");
-    GenerateCSA("sRGB_v4_ICC_preference.icc", "sRGBV4_CSA.ps");
-    GenerateCSA("USWebCoatedSWOP.icc", "SWOP_CSA.ps");
+    GenerateCSA("test4.icc", "sRGBV4_CSA.ps");
+    GenerateCSA("test1.icc", "SWOP_CSA.ps");
     GenerateCSA(NULL, "Lab_CSA.ps");
     GenerateCSA("graylcms2.icc", "gray_CSA.ps");
     
-    GenerateCRD("sRGB_Color_Space_Profile.icm", "sRGB_CRD.ps");
+    GenerateCRD("test5.icc", "sRGB_CRD.ps");
     GenerateCRD("aRGBlcms2.icc", "aRGB_CRD.ps");
     GenerateCRD(NULL, "Lab_CRD.ps");
-    GenerateCRD("USWebCoatedSWOP.icc", "SWOP_CRD.ps");
-    GenerateCRD("sRGB_v4_ICC_preference.icc", "sRGBV4_CRD.ps");
+    GenerateCRD("test1.icc", "SWOP_CRD.ps");
+    GenerateCRD("test4.icc", "sRGBV4_CRD.ps");
     GenerateCRD("graylcms2.icc", "gray_CRD.ps");
 
     return 1;
@@ -7208,31 +7208,31 @@ void SpeedTest(void)
     fflush(stdout);
 
     SpeedTest16bits("16 bits on CLUT profiles", 
-        cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"),
-        cmsOpenProfileFromFile("sRGBSpac.icm", "r"), INTENT_PERCEPTUAL);
+        cmsOpenProfileFromFile("test5.icc", "r"),
+        cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
 
     SpeedTest8bits("8 bits on CLUT profiles", 
-        cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"),
-        cmsOpenProfileFromFile("sRGBSpac.icm", "r"),
+        cmsOpenProfileFromFile("test5.icc", "r"),
+        cmsOpenProfileFromFile("test3.icc", "r"),
         INTENT_PERCEPTUAL);
     
     SpeedTest8bits("8 bits on Matrix-Shaper profiles", 
-        cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"), 
+        cmsOpenProfileFromFile("test5.icc", "r"), 
         cmsOpenProfileFromFile("aRGBlcms2.icc", "r"),
         INTENT_PERCEPTUAL);
 
     SpeedTest8bits("8 bits on SAME Matrix-Shaper profiles",
-        cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"),
-        cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"),
+        cmsOpenProfileFromFile("test5.icc", "r"),
+        cmsOpenProfileFromFile("test5.icc", "r"),
         INTENT_PERCEPTUAL);
 
     SpeedTest8bits("8 bits on Matrix-Shaper profiles (AbsCol)", 
-       cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"),
+       cmsOpenProfileFromFile("test5.icc", "r"),
        cmsOpenProfileFromFile("aRGBlcms2.icc", "r"),
         INTENT_ABSOLUTE_COLORIMETRIC);  
 
     SpeedTest16bits("16 bits on Matrix-Shaper profiles", 
-       cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"),
+       cmsOpenProfileFromFile("test5.icc", "r"),
         cmsOpenProfileFromFile("aRGBlcms2.icc", "r"),
         INTENT_PERCEPTUAL);
 
@@ -7242,7 +7242,7 @@ void SpeedTest(void)
         INTENT_PERCEPTUAL);
 
     SpeedTest16bits("16 bits on Matrix-Shaper profiles (AbsCol)", 
-       cmsOpenProfileFromFile("sRGB_Color_Space_Profile.icm", "r"),
+       cmsOpenProfileFromFile("test5.icc", "r"),
        cmsOpenProfileFromFile("aRGBlcms2.icc", "r"),
         INTENT_ABSOLUTE_COLORIMETRIC);
 
@@ -7257,12 +7257,12 @@ void SpeedTest(void)
         INTENT_PERCEPTUAL);
 
     SpeedTest8bitsCMYK("8 bits on CMYK profiles", 
-        cmsOpenProfileFromFile("USWebCoatedSWOP.icc", "r"),
-        cmsOpenProfileFromFile("UncoatedFOGRA29.icc", "r"));
+        cmsOpenProfileFromFile("test1.icc", "r"),
+        cmsOpenProfileFromFile("test2.icc", "r"));
 
     SpeedTest16bitsCMYK("16 bits on CMYK profiles", 
-        cmsOpenProfileFromFile("USWebCoatedSWOP.icc", "r"),
-        cmsOpenProfileFromFile("UncoatedFOGRA29.icc", "r"));
+        cmsOpenProfileFromFile("test1.icc", "r"),
+        cmsOpenProfileFromFile("test2.icc", "r"));
 
     SpeedTest8bitsGray("8 bits on gray-to-gray",
         cmsOpenProfileFromFile("graylcms2.icc", "r"), 
