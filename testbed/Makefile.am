@@ -15,9 +15,9 @@ testcms_LDADD = $(top_builddir)/src/liblcms2.la
 testcms_LDFLAGS = @LDFLAGS@
 testcms_SOURCES = testcms2.c
 
-EXTRA_DIST = sRGBSpac.icm bad.icc toosmall.icc UncoatedFOGRA29.icc \
-             USWebCoatedSWOP.icc sRGB_v4_ICC_preference.icc \
-             sRGB_Color_Space_Profile.icm 
+EXTRA_DIST = test1.icc bad.icc toosmall.icc test2.icc \
+             test3.icc test4.icc \
+             test5.icc  
 
 check:
 	if [ $(top_srcdir) != $(top_builddir) ]; then \
