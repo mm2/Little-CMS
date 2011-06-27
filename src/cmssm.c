@@ -567,7 +567,7 @@ cmsBool CMSEXPORT cmsGDBCompute(cmsHANDLE hGBD, cmsUInt32Number dwFlags)
 
     // Interpolate Mid
     for (theta = 1; theta < SECTORS; theta++) {
-        for (alpha = 0; alpha <= SECTORS; alpha++) {
+        for (alpha = 0; alpha < SECTORS; alpha++) {
 
             if (!InterpolateMissingSector(gbd, alpha, theta)) return FALSE;
         }
