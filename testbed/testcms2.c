@@ -73,10 +73,10 @@ static cmsUInt32Number SingleHit, MaxAllocated=0, TotalMemory=0;
 // I'm hidding the size before the block. This is a well-known technique and probably the blocks coming from
 // malloc are built in a way similar to that, but I do on my own to be portable.
 typedef struct { 
-    cmsUInt32Number KeepSize;
-    cmsUInt32Number Align8;
-    cmsContext WhoAllocated; // Some systems do need pointers aligned to 8-byte boundaries.
-
+    cmsUInt32Number KeepSize;    
+    cmsContext      WhoAllocated; 
+    cmsUInt32Number Align8_1;             // Some systems do need pointers aligned to 8-byte boundaries.
+    cmsUInt32Number Align8_2;        
 } _cmsMemoryBlock;
 
 #define SIZE_OF_MEM_HEADER (sizeof(_cmsMemoryBlock))
