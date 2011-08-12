@@ -75,8 +75,13 @@ static cmsUInt32Number SingleHit, MaxAllocated=0, TotalMemory=0;
 typedef struct { 
     cmsUInt32Number KeepSize;    
     cmsContext      WhoAllocated; 
-    cmsUInt32Number Align8_1;             // Some systems do need pointers aligned to 8-byte boundaries.
-    cmsUInt32Number Align8_2;        
+    union {
+        cmsUInt64Number HiSparc;
+        // '_cmsMemoryBlock' block is prepended by the
+        // allocator for any requested size. Thus, union holds
+        // "widest" type to guarantee proper '_cmsMemoryBlock'
+        // alignment for any requested size.
+    } alignment;
 } _cmsMemoryBlock;
 
 #define SIZE_OF_MEM_HEADER (sizeof(_cmsMemoryBlock))
