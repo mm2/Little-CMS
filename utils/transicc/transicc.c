@@ -459,6 +459,11 @@ cmsBool OpenTransforms(void)
         if (cmsIsTag(hInput, cmsSigColorantTableTag)) {
             List = cmsReadTag(hInput, cmsSigColorantTableTag);
             InputColorant = cmsDupNamedColorList(List);
+            if (cmsNamedColorCount(InputColorant) <= 3) 
+                SetRange(255, TRUE);
+            else
+                SetRange(100, TRUE);
+
         }
         else InputColorant = ComponentNames(InputColorSpace, TRUE);
 
@@ -1124,7 +1129,7 @@ int main(int argc, char *argv[])
 
     int nPatch = 0;
 
-    fprintf(stderr, "LittleCMS ColorSpace conversion calculator - 4.0 [LittleCMS %2.2f]\n", LCMS_VERSION / 1000.0);
+    fprintf(stderr, "LittleCMS ColorSpace conversion calculator - 4.1 [LittleCMS %2.2f]\n", LCMS_VERSION / 1000.0);
 
     InitUtils("transicc");
 
