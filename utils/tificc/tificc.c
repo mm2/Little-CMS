@@ -77,8 +77,10 @@ void ConsoleErrorHandler(const char* module, const char* fmt, va_list ap)
 {
     char e[512] = { '\0' };
 
-    if (module != NULL)
-        strcat(strcpy(e, module), ": ");
+    if (module != NULL) {
+        if (strlen(module) < 500)
+               strcat(strcpy(e, module), ": ");
+    }
 
     vsprintf(e+strlen(e), fmt, ap);
     strcat(e, ".");

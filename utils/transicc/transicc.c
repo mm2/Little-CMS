@@ -462,7 +462,7 @@ cmsBool OpenTransforms(void)
             if (cmsNamedColorCount(InputColorant) <= 3) 
                 SetRange(255, TRUE);
             else
-                SetRange(100, TRUE);
+                SetRange(1, TRUE);  // Inks are already divided by 100 in the formatter
 
         }
         else InputColorant = ComponentNames(InputColorSpace, TRUE);
