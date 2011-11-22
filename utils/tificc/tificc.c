@@ -46,7 +46,7 @@ static int ProofingIntent          = INTENT_PERCEPTUAL;
 static int PrecalcMode             = 1;
 static cmsFloat64Number InkLimit   = 400;
 
-static cmsFloat64Number ObserverAdaptationState  = 1.0;  // According ICC 4.2 this is the default
+static cmsFloat64Number ObserverAdaptationState  = 1.0;  // According ICC 4.3 this is the default
 
 static const char *cInpProf  = NULL;
 static const char *cOutProf  = NULL;

@@ -51,14 +51,16 @@ void MyErrorLogHandler(cmsContext ContextID, cmsUInt32Number ErrorCode, const ch
     if (Verbose >= 0)
         fprintf(stderr, "[%s]: %s\n", ProgramName, Text);   
 
-	UTILS_UNUSED_PARAMETER(ErrorCode);
-	UTILS_UNUSED_PARAMETER(ContextID);
+    UTILS_UNUSED_PARAMETER(ErrorCode);
+    UTILS_UNUSED_PARAMETER(ContextID);
 }
 
 
 void InitUtils(const char* PName)
 {
       strncpy(ProgramName, PName, sizeof(ProgramName));
+      ProgramName[sizeof(ProgramName)-1] = 0;
+
       cmsSetLogErrorHandler(MyErrorLogHandler);
 }
 

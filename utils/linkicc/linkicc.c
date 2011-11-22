@@ -42,7 +42,7 @@ static cmsFloat64Number InkLimit   = 400;
 static cmsBool lUse8bits           = FALSE;
 static cmsBool TagResult           = FALSE;
 static cmsBool KeepLinearization   = FALSE;
-static cmsFloat64Number Version    = 4.2;
+static cmsFloat64Number Version    = 4.3;
 
 
 // The manual
@@ -275,7 +275,7 @@ int main(int argc, char *argv[])
     cmsHTRANSFORM hTransform = NULL;
 
     // Here we are
-    fprintf(stderr, "little cms ICC device link generator - v2.1 [LittleCMS %2.2f]\n", LCMS_VERSION / 1000.0);
+    fprintf(stderr, "little cms ICC device link generator - v2.2 [LittleCMS %2.2f]\n", LCMS_VERSION / 1000.0);
     fflush(stderr);
 
     // Initialize
