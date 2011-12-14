@@ -495,7 +495,7 @@ cmsHPROFILE CreateFakeCMYK(cmsFloat64Number InkLimit, cmsBool lUseAboveRGB)
     hICC = cmsCreateProfilePlaceholder(ContextID);
     if (!hICC) return NULL;
 
-    cmsSetProfileVersion(hICC, 4.2);
+    cmsSetProfileVersion(hICC, 4.3);
 
     cmsSetDeviceClass(hICC, cmsSigOutputClass);
     cmsSetColorSpace(hICC,  cmsSigCmykData);
@@ -3482,7 +3482,7 @@ cmsInt32Number CheckMLU(void)
 
     h = cmsOpenProfileFromFileTHR(DbgThread(), "mlucheck.icc", "w");
         
-    cmsSetProfileVersion(h, 4.2);
+    cmsSetProfileVersion(h, 4.3);
 
     cmsWriteTag(h, cmsSigProfileDescriptionTag, mlu2);
     cmsCloseProfile(h);
@@ -4984,7 +4984,7 @@ cmsInt32Number CheckProfileCreation(void)
     h = cmsCreateProfilePlaceholder(DbgThread());
     if (h == NULL) return 0;
 
-    cmsSetProfileVersion(h, 4.2);
+    cmsSetProfileVersion(h, 4.3);
     if (cmsGetTagCount(h) != 0) { Fail("Empty profile with nonzero number of tags"); return 0; }
     if (cmsIsTag(h, cmsSigAToB0Tag)) { Fail("Found a tag in an empty profile"); return 0; }
 
@@ -5747,7 +5747,7 @@ cmsInt32Number CheckStoredIdentities(void)
     cmsSaveProfileToFile(hLink, "abstractv2.icc");
     cmsCloseProfile(hLink);
 
-    hLink = cmsTransform2DeviceLink(xform, 4.2, 0);
+    hLink = cmsTransform2DeviceLink(xform, 4.3, 0);
     cmsSaveProfileToFile(hLink, "abstractv4.icc");
     cmsCloseProfile(hLink);
 
@@ -6735,7 +6735,7 @@ cmsInt32Number CheckV4gamma(void)
     if (h == NULL) return 0;
 
     
-    cmsSetProfileVersion(h, 4.2);
+    cmsSetProfileVersion(h, 4.3);
 
     if (!cmsWriteTag(h, cmsSigGrayTRCTag, g)) return 0;
     cmsCloseProfile(h);
