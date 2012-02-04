@@ -909,6 +909,36 @@ void TakeCGATSValues(int nPatch, cmsFloat64Number Float[])
         Float[2] = GetIT8Val("CMY_Y", 1.0);
         break;
 
+    case cmsSig1colorData:
+    case cmsSig2colorData:
+    case cmsSig3colorData:
+    case cmsSig4colorData:
+    case cmsSig5colorData:
+    case cmsSig6colorData:
+    case cmsSig7colorData:
+    case cmsSig8colorData:
+    case cmsSig9colorData:
+    case cmsSig10colorData:
+    case cmsSig11colorData:
+    case cmsSig12colorData:
+    case cmsSig13colorData:
+    case cmsSig14colorData:
+    case cmsSig15colorData:
+        {
+            cmsUInt32Number i, n;
+
+            n = cmsChannelsOf(InputColorSpace);
+            for (i=0; i < n; i++) { 
+
+                char Buffer[255];
+
+                sprintf(Buffer, "%dCLR_%d", n, i+1);
+                Float[i] = GetIT8Val(Buffer, 100.0);
+            }
+
+        }
+	break;
+
     default: 
         {
             cmsUInt32Number i, n;
@@ -986,6 +1016,37 @@ void PutCGATSValues(cmsFloat64Number Float[])
         SetCGATSfld("CMY_M", Float[1]);
         SetCGATSfld("CMY_Y", Float[2]);                 
         break;
+
+    case cmsSig1colorData:
+    case cmsSig2colorData:
+    case cmsSig3colorData:
+    case cmsSig4colorData:
+    case cmsSig5colorData:
+    case cmsSig6colorData:
+    case cmsSig7colorData:
+    case cmsSig8colorData:
+    case cmsSig9colorData:
+    case cmsSig10colorData:
+    case cmsSig11colorData:
+    case cmsSig12colorData:
+    case cmsSig13colorData:
+    case cmsSig14colorData:
+    case cmsSig15colorData:
+        {
+
+            cmsUInt32Number i, n;
+
+            n = cmsChannelsOf(InputColorSpace);
+            for (i=0; i < n; i++) { 
+
+                char Buffer[255];
+
+                sprintf(Buffer, "%dCLR_%d", n, i+1);
+
+                SetCGATSfld(Buffer, Float[i] * 100.0);
+            }
+        }
+	break;
 
     default: 
         {
@@ -1073,6 +1134,36 @@ void SetOutputDataFormat(void)
         cmsIT8SetDataFormat(hIT8out, 2, "CMY_M");
         cmsIT8SetDataFormat(hIT8out, 3, "CMY_Y");                   
         break;
+
+    case cmsSig1colorData:
+    case cmsSig2colorData:
+    case cmsSig3colorData:
+    case cmsSig4colorData:
+    case cmsSig5colorData:
+    case cmsSig6colorData:
+    case cmsSig7colorData:
+    case cmsSig8colorData:
+    case cmsSig9colorData:
+    case cmsSig10colorData:
+    case cmsSig11colorData:
+    case cmsSig12colorData:
+    case cmsSig13colorData:
+    case cmsSig14colorData:
+    case cmsSig15colorData:
+	{
+	    int i, n;
+	    char Buffer[255];
+
+	    n = cmsChannelsOf(OutputColorSpace);
+	    cmsIT8SetPropertyDbl(hIT8out, "NUMBER_OF_FIELDS", n+1);
+	    cmsIT8SetDataFormat(hIT8out, 0, "SAMPLE_ID");
+
+	    for (i=1; i <= n; i++) {
+		sprintf(Buffer, "%dCLR_%d", n, i);
+		cmsIT8SetDataFormat(hIT8out, i, Buffer);
+	    }
+	}
+	break;
 
     default: {
 
