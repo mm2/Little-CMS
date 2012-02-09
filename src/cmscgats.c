@@ -43,6 +43,7 @@
 #else
 #    define DIR_CHAR    '/'
 #endif
+#include <stdio.h>
 
 // Symbols
 typedef enum { 
@@ -406,11 +407,29 @@ cmsBool isabsolutepath(const char *path)
 }
 
 // Parses float number
+// This can not call directly atof because it uses locale dependant
+// parsing, while CCMX files always use . as decimal separator
 static
 cmsFloat64Number ParseFloatNumber(const char *Buffer)
 {
+    char *tmp, *pos, number[10];
+    cmsFloat64Number ret;
+
     if (Buffer) {
-        return atof(Buffer);
+        // Try to detect which decimal separator current locale uses
+        sprintf(number, "%f", 0.5);
+        // Is locale specific comma different? 
+        if (number[1] == '.') {
+            return atof(Buffer);
+        } else {
+            tmp = strdup(Buffer);
+            while ((pos = strchr(tmp, '.')) != NULL) {
+                *pos = number[1];
+            }
+            ret = atof(tmp);
+            free(tmp);
+            return ret;
+        }
     } else {
         return 0.0;
     }
