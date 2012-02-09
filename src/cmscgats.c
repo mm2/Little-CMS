@@ -43,6 +43,7 @@
 #else
 #    define DIR_CHAR    '/'
 #endif
+#include <stdio.h>
 
 // Symbols
 typedef enum { 
@@ -404,6 +405,36 @@ cmsBool isabsolutepath(const char *path)
 #endif
     return FALSE;
 }
+
+// Parses float number
+// This can not call directly atof because it uses locale dependant
+// parsing, while CCMX files always use . as decimal separator
+static
+cmsFloat64Number ParseFloatNumber(const char *Buffer)
+{
+    char *tmp, *pos, number[10];
+    cmsFloat64Number ret;
+
+    if (Buffer) {
+        // Try to detect which decimal separator current locale uses
+        sprintf(number, "%f", 0.5);
+        // Is locale specific comma different? 
+        if (number[1] == '.') {
+            return atof(Buffer);
+        } else {
+            tmp = strdup(Buffer);
+            while ((pos = strchr(tmp, '.')) != NULL) {
+                *pos = number[1];
+            }
+            ret = atof(tmp);
+            free(tmp);
+            return ret;
+        }
+    } else {
+        return 0.0;
+    }
+}
+
 
 // Makes a file path based on a given reference path
 // NOTE: this function doesn't check if the path exists or even if it's legal
@@ -1320,8 +1351,7 @@ cmsFloat64Number CMSEXPORT cmsIT8GetPropertyDbl(cmsHANDLE hIT8, const char* cPro
 {
     const char *v = cmsIT8GetProperty(hIT8, cProp);
 
-    if (v) return atof(v);
-    else return 0.0;
+    return ParseFloatNumber(v);
 }
 
 const char* CMSEXPORT cmsIT8GetPropertyMulti(cmsHANDLE hIT8, const char* Key, const char *SubKey)
@@ -2461,13 +2491,7 @@ cmsFloat64Number CMSEXPORT cmsIT8GetDataRowColDbl(cmsHANDLE hIT8, int row, int c
 
     Buffer = cmsIT8GetDataRowCol(hIT8, row, col);
     
-    if (Buffer) {
-
-        return atof(Buffer);
-        
-    } else
-        return 0;
-
+    return ParseFloatNumber(Buffer);
 }
 
 
@@ -2522,14 +2546,7 @@ cmsFloat64Number CMSEXPORT cmsIT8GetDataDbl(cmsHANDLE  it8, const char* cPatch, 
 
     Buffer = cmsIT8GetData(it8, cPatch, cSample);
     
-    if (Buffer) {
-
-        return atof(Buffer);
-        
-    } else {
-        
-        return 0;
-    }
+    return ParseFloatNumber(Buffer);
 }
 
 
