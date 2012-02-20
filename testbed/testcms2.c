@@ -6500,6 +6500,20 @@ cmsInt32Number CheckCGATS(void)
         return 0;
     }
 
+
+     cmsIT8SetPropertyDbl(it8, "DBL_PROP", 123E+12);
+     if ((cmsIT8GetPropertyDbl(it8, "DBL_PROP") - 123E+12) > 1 ) {
+         
+        return 0;
+    }
+
+    cmsIT8SetPropertyDbl(it8, "DBL_PROP_NEG", 123E-45);
+     if ((cmsIT8GetPropertyDbl(it8, "DBL_PROP_NEG") - 123E-45) > 1E-45 ) {
+         
+        return 0;
+    }
+
+
     cmsIT8Free(it8);
 
     remove("TEST.IT8");
@@ -7568,6 +7582,8 @@ int main(int argc, char* argv[])
 {
     cmsInt32Number Exhaustive = 0;
     cmsInt32Number DoSpeedTests = 1;
+    cmsInt32Number DoCheckTests = 1;
+
 
 
 #ifdef _MSC_VER
@@ -7597,9 +7613,13 @@ int main(int argc, char* argv[])
 
     PrintSupportedIntents();
 
-    // Create utility profiles
-    Check("Creation of test profiles", CreateTestProfiles);    
+   
 
+    // Create utility profiles
+    Check("Creation of test profiles", CreateTestProfiles);  
+
+    if (DoCheckTests) 
+    {
     Check("Base types", CheckBaseTypes);
     Check("endianess", CheckEndianess);
     Check("quick floor", CheckQuickFloor);
@@ -7769,6 +7789,7 @@ int main(int argc, char* argv[])
     Check("PostScript generator", CheckPostScript);
     Check("Segment maxima GBD", CheckGBD);
     Check("MD5 digest", CheckMD5);
+    }
 
 
     if (DoSpeedTests)

@@ -43,7 +43,7 @@
 #else
 #    define DIR_CHAR    '/'
 #endif
-#include <stdio.h>
+
 
 // Symbols
 typedef enum { 
@@ -406,34 +406,6 @@ cmsBool isabsolutepath(const char *path)
     return FALSE;
 }
 
-// Parses float number
-// This can not call directly atof because it uses locale dependant
-// parsing, while CCMX files always use . as decimal separator
-static
-cmsFloat64Number ParseFloatNumber(const char *Buffer)
-{
-    char *tmp, *pos, number[10];
-    cmsFloat64Number ret;
-
-    if (Buffer) {
-        // Try to detect which decimal separator current locale uses
-        sprintf(number, "%f", 0.5);
-        // Is locale specific comma different? 
-        if (number[1] == '.') {
-            return atof(Buffer);
-        } else {
-            tmp = strdup(Buffer);
-            while ((pos = strchr(tmp, '.')) != NULL) {
-                *pos = number[1];
-            }
-            ret = atof(tmp);
-            free(tmp);
-            return ret;
-        }
-    } else {
-        return 0.0;
-    }
-}
 
 
 // Makes a file path based on a given reference path
@@ -577,7 +549,7 @@ void ReadReal(cmsIT8* it8, int inum)
     if (it8->ch == '.') {        // Decimal point
 
         cmsFloat64Number frac = 0.0;      // fraction
-        int prec = 0;           // precision
+        int prec = 0;                     // precision
 
         NextCh(it8);               // Eats dec. point
 
@@ -624,6 +596,74 @@ void ReadReal(cmsIT8* it8, int inum)
     }
 }
 
+// Parses a float number
+// This can not call directly atof because it uses locale dependant
+// parsing, while CCMX files always use . as decimal separator
+static
+cmsFloat64Number ParseFloatNumber(const char *Buffer)
+{
+    cmsFloat64Number dnum = 0.0;
+
+    while (*Buffer && isdigit(*Buffer)) {
+
+        dnum = dnum * 10.0 + (*Buffer - '0');
+        if (*Buffer) Buffer++;
+    }
+
+    if (*Buffer == '.') {     
+
+        cmsFloat64Number frac = 0.0;      // fraction
+        int prec = 0;                     // precission
+
+        if (*Buffer) Buffer++; 
+
+        while (*Buffer && isdigit(*Buffer)) {
+
+            frac = frac * 10.0 + (*Buffer - '0');
+            prec++;
+            if (*Buffer) Buffer++; 
+        }
+
+        dnum = dnum + (frac / xpow10(prec));
+    }
+
+    // Exponent, example 34.00E+20
+    if (*Buffer && toupper(*Buffer) == 'E') {
+
+        int e;
+        int sgn;
+
+        if (*Buffer) Buffer++; 
+        sgn = 1;
+
+        if (*Buffer == '-') {
+
+            sgn = -1; 
+            if (*Buffer) Buffer++; 
+        }
+        else
+            if (*Buffer == '+') {
+
+                sgn = +1;
+                if (*Buffer) Buffer++; 
+            }
+
+            e = 0;
+            while (*Buffer && isdigit(*Buffer)) {
+
+                if ((cmsFloat64Number) e * 10L < INT_MAX)
+                    e = e * 10 + (*Buffer - '0');
+
+                if (*Buffer) Buffer++; 
+            }
+
+            e = sgn*e;
+            dnum = dnum * xpow10(e);
+    }
+
+
+    return dnum;
+}
 
 
 // Reads next symbol
@@ -1285,8 +1325,6 @@ cmsBool CMSEXPORT cmsIT8SetComment(cmsHANDLE hIT8, const char* Val)
     return AddToList(it8, &GetTable(it8)->HeaderList, "# ", NULL, Val, WRITE_UNCOOKED) != NULL;
 }
 
-
-
 // Sets a property
 cmsBool CMSEXPORT cmsIT8SetPropertyStr(cmsHANDLE hIT8, const char* Key, const char *Val)
 {
@@ -1297,7 +1335,6 @@ cmsBool CMSEXPORT cmsIT8SetPropertyStr(cmsHANDLE hIT8, const char* Key, const ch
 
     return AddToList(it8, &GetTable(it8)->HeaderList, Key, NULL, Val, WRITE_STRINGIFY) != NULL;
 }
-
 
 cmsBool CMSEXPORT cmsIT8SetPropertyDbl(cmsHANDLE hIT8, const char* cProp, cmsFloat64Number Val)
 {
