@@ -1615,6 +1615,8 @@ FUNCTION  cmsGDBCheckPoint(hGBD: cmsHANDLE; Lab: LPcmsCIELab): cmsBool; StdCall;
 
 // Estimate the black point
 FUNCTION cmsDetectBlackPoint( BlackPoint: LPcmsCIEXYZ; hProfile: cmsHPROFILE; Intent: cmsUInt32Number; dwFlags: cmsUInt32Number): cmsBool; StdCall;
+FUNCTION cmsDetectDestinationBlackPoint( BlackPoint: LPcmsCIEXYZ; hProfile: cmsHPROFILE; Intent: cmsUInt32Number; dwFlags: cmsUInt32Number): cmsBool; StdCall;
+
 
 // Estimate total area coverage
 FUNCTION cmsDetectTAC(hProfile: cmsHPROFILE): cmsFloat64Number; StdCall;
@@ -2100,6 +2102,7 @@ FUNCTION  cmsGDBCompute(hGDB: cmsHANDLE; dwFlags: cmsUInt32Number): cmsBool; Std
 FUNCTION  cmsGDBCheckPoint(hGBD: cmsHANDLE; Lab: LPcmsCIELab): cmsBool; StdCall; external 'lcms2.dll';
 
 FUNCTION cmsDetectBlackPoint( BlackPoint: LPcmsCIEXYZ; hProfile: cmsHPROFILE; Intent: cmsUInt32Number; dwFlags: cmsUInt32Number): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION cmsDetectDestinationBlackPoint( BlackPoint: LPcmsCIEXYZ; hProfile: cmsHPROFILE; Intent: cmsUInt32Number; dwFlags: cmsUInt32Number): cmsBool; StdCall; external 'lcms2.dll';
 
 FUNCTION cmsDetectTAC(hProfile: cmsHPROFILE): cmsFloat64Number; StdCall; external 'lcms2.dll';
 
