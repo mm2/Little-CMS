@@ -187,6 +187,10 @@ static
 void FatalErrorQuit(cmsContext ContextID, cmsUInt32Number ErrorCode, const char *Text)
 {
     Die(Text); 
+
+    cmsUNUSED_PARAMETER(ContextID);
+    cmsUNUSED_PARAMETER(ErrorCode);
+
 }
 
 // Print a dot for gauging
@@ -334,6 +338,20 @@ cmsHPROFILE Create_Gray22(void)
 {
     cmsHPROFILE hProfile;
     cmsToneCurve* Curve = cmsBuildGamma(DbgThread(), 2.2);
+    if (Curve == NULL) return NULL;
+
+    hProfile = cmsCreateGrayProfileTHR(DbgThread(), cmsD50_xyY(), Curve);
+    cmsFreeToneCurve(Curve);
+
+    return hProfile;
+}
+
+// A gamma-3.0 gray space
+static
+cmsHPROFILE Create_Gray30(void)
+{
+    cmsHPROFILE hProfile;
+    cmsToneCurve* Curve = cmsBuildGamma(DbgThread(), 3.0);
     if (Curve == NULL) return NULL;
 
     hProfile = cmsCreateGrayProfileTHR(DbgThread(), cmsD50_xyY(), Curve);
@@ -585,6 +603,11 @@ cmsInt32Number CreateTestProfiles(void)
 
     // ----
 
+    h = Create_Gray30();
+    if (!OneVirtual(h, "Gray 3.0 profile", "gray3lcms2.icc")) return 0;
+
+    // ----
+
     h = Create_GrayLab();
     if (!OneVirtual(h, "Gray Lab profile", "glablcms2.icc")) return 0;
     
@@ -637,6 +660,7 @@ void RemoveTestProfiles(void)
     remove("sRGBlcms2.icc");
     remove("aRGBlcms2.icc");
     remove("graylcms2.icc");
+    remove("gray3lcms2.icc");
     remove("linlcms2.icc");
     remove("limitlcms2.icc");
     remove("labv2lcms2.icc");
@@ -654,6 +678,11 @@ void RemoveTestProfiles(void)
 static
 cmsInt32Number CheckBaseTypes(void)
 {
+    // Ignore warnings about conditional expression
+#ifdef _MSC_VER
+#pragma warning(disable: 4127)
+#endif
+
     if (sizeof(cmsUInt8Number) != 1) return 0;
     if (sizeof(cmsInt8Number) != 1) return 0;
     if (sizeof(cmsUInt16Number) != 2) return 0;
@@ -1603,6 +1632,9 @@ cmsInt32Number Sampler3D(register const cmsUInt16Number In[],
     Out[2] = Fn8D3(In[0], In[1], In[2], 0, 0, 0, 0, 0, 3);
 
     return 1;
+
+    cmsUNUSED_PARAMETER(Cargo);
+
 }
 
 static
@@ -1616,6 +1648,8 @@ cmsInt32Number Sampler4D(register const cmsUInt16Number In[],
     Out[2] = Fn8D3(In[0], In[1], In[2], In[3], 0, 0, 0, 0, 4);
 
     return 1;
+
+    cmsUNUSED_PARAMETER(Cargo);
 }
 
 static
@@ -1629,6 +1663,8 @@ cmsInt32Number Sampler5D(register const cmsUInt16Number In[],
     Out[2] = Fn8D3(In[0], In[1], In[2], In[3], In[4], 0, 0, 0, 5);
 
     return 1;
+
+    cmsUNUSED_PARAMETER(Cargo);
 }
 
 static
@@ -1642,6 +1678,8 @@ cmsInt32Number Sampler6D(register const cmsUInt16Number In[],
     Out[2] = Fn8D3(In[0], In[1], In[2], In[3], In[4], In[5], 0, 0, 6);
 
     return 1;
+    
+    cmsUNUSED_PARAMETER(Cargo);
 }
 
 static
@@ -1655,6 +1693,8 @@ cmsInt32Number Sampler7D(register const cmsUInt16Number In[],
     Out[2] = Fn8D3(In[0], In[1], In[2], In[3], In[4], In[5], In[6], 0, 7);
 
     return 1;
+
+    cmsUNUSED_PARAMETER(Cargo);
 }
 
 static
@@ -1668,6 +1708,8 @@ cmsInt32Number Sampler8D(register const cmsUInt16Number In[],
     Out[2] = Fn8D3(In[0], In[1], In[2], In[3], In[4], In[5], In[6], In[7], 8);
 
     return 1;
+
+    cmsUNUSED_PARAMETER(Cargo);
 }
 
 static 
@@ -3635,16 +3677,16 @@ void CheckSingleFormatter16(cmsUInt32Number Type, const char* Text)
     info.OutputFormat = info.InputFormat = Type;
 
     // Go forth and back
-    f = _cmsGetFormatter(Type,  cmsFormatterInput, 0);
-    b = _cmsGetFormatter(Type,  cmsFormatterOutput, 0);
+    f = _cmsGetFormatter(Type,  cmsFormatterInput, CMS_PACK_FLAGS_16BITS);
+    b = _cmsGetFormatter(Type,  cmsFormatterOutput, CMS_PACK_FLAGS_16BITS);
 
     if (f.Fmt16 == NULL || b.Fmt16 == NULL) {
         Fail("no formatter for %s", Text);
         FormatterFailed = TRUE;
 
         // Useful for debug
-        f = _cmsGetFormatter(Type,  cmsFormatterInput, 0);
-        b = _cmsGetFormatter(Type,  cmsFormatterOutput, 0);
+        f = _cmsGetFormatter(Type,  cmsFormatterInput, CMS_PACK_FLAGS_16BITS);
+        b = _cmsGetFormatter(Type,  cmsFormatterOutput, CMS_PACK_FLAGS_16BITS);
         return;
     }
 
@@ -3724,12 +3766,15 @@ cmsInt32Number CheckFormatters16(void)
    C( TYPE_RGBA_16_PLANAR    );
    C( TYPE_RGBA_16_SE        );
    C( TYPE_ARGB_8            );
+   C( TYPE_ARGB_8_PLANAR     );
    C( TYPE_ARGB_16           );
    C( TYPE_ABGR_8            );
+   C( TYPE_ABGR_8_PLANAR     );
    C( TYPE_ABGR_16           );
    C( TYPE_ABGR_16_PLANAR    );
    C( TYPE_ABGR_16_SE        );
    C( TYPE_BGRA_8            );
+   C( TYPE_BGRA_8_PLANAR     );
    C( TYPE_BGRA_16           );
    C( TYPE_BGRA_16_SE        );
    C( TYPE_CMY_8             );
@@ -3943,8 +3988,9 @@ cmsInt32Number CheckFormattersFloat(void)
 #undef C
 
 
+
 static
-cmsInt32Number CheckOneRGB(cmsHTRANSFORM xform, cmsUInt32Number R, cmsUInt32Number G, cmsUInt32Number B, cmsUInt32Number Ro, cmsUInt32Number Go, cmsUInt32Number Bo)
+cmsInt32Number CheckOneRGB(cmsHTRANSFORM xform, cmsUInt16Number R, cmsUInt16Number G, cmsUInt16Number B, cmsUInt16Number Ro, cmsUInt16Number Go, cmsUInt16Number Bo)
 {
     cmsUInt16Number RGB[3];
     cmsUInt16Number Out[3];
@@ -5148,7 +5194,10 @@ void ErrorReportingFunction(cmsContext ContextID, cmsUInt32Number ErrorCode, con
 {
     TrappedError = TRUE;
     SimultaneousErrors++;
-    strncpy(ReasonToFailBuffer, Text, TEXT_ERROR_BUFFER_SIZE-1);    
+    strncpy(ReasonToFailBuffer, Text, TEXT_ERROR_BUFFER_SIZE-1);   
+
+    cmsUNUSED_PARAMETER(ContextID);
+    cmsUNUSED_PARAMETER(ErrorCode);
 }
 
 
@@ -6365,27 +6414,27 @@ cmsInt32Number CheckBlackPoint(void)
     cmsCIELab Lab;
 
     hProfile  = cmsOpenProfileFromFileTHR(DbgThread(), "test5.icc", "r");  
-    cmsDetectBlackPoint(&Black, hProfile, INTENT_RELATIVE_COLORIMETRIC, 0);
+    cmsDetectDestinationBlackPoint(&Black, hProfile, INTENT_RELATIVE_COLORIMETRIC, 0);
     cmsCloseProfile(hProfile);
 
 
     hProfile = cmsOpenProfileFromFileTHR(DbgThread(), "test1.icc", "r");
-    cmsDetectBlackPoint(&Black, hProfile, INTENT_RELATIVE_COLORIMETRIC, 0);
+    cmsDetectDestinationBlackPoint(&Black, hProfile, INTENT_RELATIVE_COLORIMETRIC, 0);
     cmsXYZ2Lab(NULL, &Lab, &Black);
     cmsCloseProfile(hProfile);
 
     hProfile = cmsOpenProfileFromFileTHR(DbgThread(), "lcms2cmyk.icc", "r");
-    cmsDetectBlackPoint(&Black, hProfile, INTENT_RELATIVE_COLORIMETRIC, 0);
+    cmsDetectDestinationBlackPoint(&Black, hProfile, INTENT_RELATIVE_COLORIMETRIC, 0);
     cmsXYZ2Lab(NULL, &Lab, &Black);
     cmsCloseProfile(hProfile);
 
     hProfile = cmsOpenProfileFromFileTHR(DbgThread(), "test2.icc", "r");
-    cmsDetectBlackPoint(&Black, hProfile, INTENT_RELATIVE_COLORIMETRIC, 0);
+    cmsDetectDestinationBlackPoint(&Black, hProfile, INTENT_RELATIVE_COLORIMETRIC, 0);
     cmsXYZ2Lab(NULL, &Lab, &Black);
     cmsCloseProfile(hProfile);
 
     hProfile = cmsOpenProfileFromFileTHR(DbgThread(), "test1.icc", "r");
-    cmsDetectBlackPoint(&Black, hProfile, INTENT_PERCEPTUAL, 0);
+    cmsDetectDestinationBlackPoint(&Black, hProfile, INTENT_PERCEPTUAL, 0);
     cmsXYZ2Lab(NULL, &Lab, &Black);
     cmsCloseProfile(hProfile);
 
@@ -6438,7 +6487,7 @@ cmsInt32Number CheckCGATS(void)
     cmsHANDLE  it8;
     cmsInt32Number i;
     
-
+    SubTest("IT8 creation");
     it8 = cmsIT8Alloc(DbgThread());
     if (it8 == NULL) return 0;
 
@@ -6458,6 +6507,7 @@ cmsInt32Number CheckCGATS(void)
     cmsIT8SetDataFormat(it8, 2, "RGB_G");
     cmsIT8SetDataFormat(it8, 3, "RGB_B");
 
+    SubTest("Table creation");
     for (i=0; i < NPOINTS_IT8; i++) {
 
           char Patch[20];
@@ -6470,18 +6520,25 @@ cmsInt32Number CheckCGATS(void)
           cmsIT8SetDataRowColDbl(it8, i, 3, i);
     }
 
+    SubTest("Save to file");
+    cmsIT8SaveToFile(it8, "TEST.IT8");
+    cmsIT8Free(it8);
+
+    SubTest("Load from file");
+    it8 = cmsIT8LoadFromFile(DbgThread(), "TEST.IT8");
+    if (it8 == NULL) return 0;
+
+    SubTest("Save again file");
     cmsIT8SaveToFile(it8, "TEST.IT8");
     cmsIT8Free(it8);
 
 
+    SubTest("Load from file (II)");
     it8 = cmsIT8LoadFromFile(DbgThread(), "TEST.IT8");
-    cmsIT8SaveToFile(it8, "TEST.IT8");
-    cmsIT8Free(it8);
+    if (it8 == NULL) return 0;
 
 
-
-    it8 = cmsIT8LoadFromFile(DbgThread(), "TEST.IT8");
-
+     SubTest("Change prop value");
     if (cmsIT8GetPropertyDbl(it8, "DESCRIPTOR") != 1234) {
    
         return 0;
@@ -6489,30 +6546,39 @@ cmsInt32Number CheckCGATS(void)
 
 
     cmsIT8SetPropertyDbl(it8, "DESCRIPTOR", 5678);
-
     if (cmsIT8GetPropertyDbl(it8, "DESCRIPTOR") != 5678) {
          
         return 0;
     }
 
+     SubTest("Positive numbers");
     if (cmsIT8GetDataDbl(it8, "P3", "RGB_G") != 3) {
    
         return 0;
     }
 
 
+     SubTest("Positive exponent numbers");
      cmsIT8SetPropertyDbl(it8, "DBL_PROP", 123E+12);
      if ((cmsIT8GetPropertyDbl(it8, "DBL_PROP") - 123E+12) > 1 ) {
          
         return 0;
     }
 
+    SubTest("Negative exponent numbers");
     cmsIT8SetPropertyDbl(it8, "DBL_PROP_NEG", 123E-45);
      if ((cmsIT8GetPropertyDbl(it8, "DBL_PROP_NEG") - 123E-45) > 1E-45 ) {
          
         return 0;
     }
 
+
+    SubTest("Negative numbers");
+    cmsIT8SetPropertyDbl(it8, "DBL_NEG_VAL", -123);
+    if ((cmsIT8GetPropertyDbl(it8, "DBL_NEG_VAL")) != -123 ) {
+         
+        return 0;
+    }
 
     cmsIT8Free(it8);
 
@@ -7289,7 +7355,11 @@ void SpeedTest(void)
         cmsOpenProfileFromFile("test1.icc", "r"),
         cmsOpenProfileFromFile("test2.icc", "r"));
 
-    SpeedTest8bitsGray("8 bits on gray-to-gray",
+    SpeedTest8bitsGray("8 bits on gray-to gray",
+        cmsOpenProfileFromFile("gray3lcms2.icc", "r"), 
+        cmsOpenProfileFromFile("graylcms2.icc", "r"), INTENT_RELATIVE_COLORIMETRIC);
+
+    SpeedTest8bitsGray("8 bits on gray-to-lab gray",
         cmsOpenProfileFromFile("graylcms2.icc", "r"), 
         cmsOpenProfileFromFile("glablcms2.icc", "r"), INTENT_RELATIVE_COLORIMETRIC);
 
@@ -7435,10 +7505,10 @@ void ReadAllLUTS(cmsHPROFILE h)
     if (a) cmsPipelineFree(a);
 
 
-    cmsDetectBlackPoint(&Black, h, INTENT_PERCEPTUAL, 0);
-    cmsDetectBlackPoint(&Black, h, INTENT_RELATIVE_COLORIMETRIC, 0);
-    cmsDetectBlackPoint(&Black, h, INTENT_SATURATION, 0);
-    cmsDetectBlackPoint(&Black, h, INTENT_ABSOLUTE_COLORIMETRIC, 0);
+    cmsDetectDestinationBlackPoint(&Black, h, INTENT_PERCEPTUAL, 0);
+    cmsDetectDestinationBlackPoint(&Black, h, INTENT_RELATIVE_COLORIMETRIC, 0);
+    cmsDetectDestinationBlackPoint(&Black, h, INTENT_SATURATION, 0);
+    cmsDetectDestinationBlackPoint(&Black, h, INTENT_ABSOLUTE_COLORIMETRIC, 0);
     cmsDetectTAC(h);
 }
 
@@ -7608,7 +7678,7 @@ int main(int argc, char* argv[])
     printf("done.\n");
 
 #ifdef CMS_IS_WINDOWS_     
-     // CheckProfileZOO();
+      // CheckProfileZOO();
 #endif
 
     PrintSupportedIntents();
@@ -7805,5 +7875,6 @@ int main(int argc, char* argv[])
    return TotalFail;
 }
  
+
 
 
