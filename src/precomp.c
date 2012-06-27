@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2010 Marti Maria Saguer
+//  Copyright (c) 1998-2012 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -24,42 +24,6 @@
 //---------------------------------------------------------------------------------
 //
 
-#include "lcms2.h"
-#include <string.h>
-#include <math.h>
+// precompiled headers support
 
-static
-int PrintUsage(void)
-{
-    fprintf(stderr, "Sets profile version\n\nUsage: vericc --r<version> iccprofile.icc\n");
-    return 0;
-}
-
-int main(int argc, char *argv[])
-{
-       cmsHPROFILE hProfile;
-       char* ptr;
-       cmsFloat64Number Version;
-
-       if (argc != 3)  return PrintUsage();
-
-       ptr = argv[1];
-       if (strncmp(ptr, "--r", 3) != 0) return PrintUsage();
-       ptr += 3;
-       if (!*ptr) { fprintf(stderr, "Wrong version number\n"); return 1; }
-
-       Version = atof(ptr);
-
-       hProfile = cmsOpenProfileFromFile(argv[2], "r");
-       if (hProfile == NULL) { fprintf(stderr, "'%s': cannot open\n", argv[2]); return 1; }
-
-       cmsSetProfileVersion(hProfile, Version);
-       cmsSaveProfileToFile(hProfile, "$$tmp.icc");
-       cmsCloseProfile(hProfile);
-
-       remove(argv[2]);
-       rename("$$tmp.icc", argv[2]);
-       return 0;
-
-
-}
+#include "lcms2_internal.h"

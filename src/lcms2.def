@@ -1,7 +1,4 @@
-LIBRARY     LCMS2.DLL
-
 EXPORTS
-
 _cms15Fixed16toDouble                    =   _cms15Fixed16toDouble
 _cms8Fixed8toDouble                      =   _cms8Fixed8toDouble
 cmsAdaptToIlluminant                     =    cmsAdaptToIlluminant
@@ -308,12 +305,10 @@ cmsXYZEncoded2Float                      =   cmsXYZEncoded2Float
 cmsSliceSpace16                          =   cmsSliceSpace16
 cmsSliceSpaceFloat                       =   cmsSliceSpaceFloat
 cmsChangeBuffersFormat                   =   cmsChangeBuffersFormat
-cmsDictAlloc                             =   cmsDictAlloc 
+cmsDictAlloc                             =   cmsDictAlloc
 cmsDictFree                              =   cmsDictFree
 cmsDictDup                               =   cmsDictDup
 cmsDictAddEntry                          =   cmsDictAddEntry
 cmsDictGetEntryList                      =   cmsDictGetEntryList
 cmsDictNextEntry                         =   cmsDictNextEntry
 _cmsGetTransformUserData                 =   _cmsGetTransformUserData
-                                         
-                                         

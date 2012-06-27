@@ -3,22 +3,22 @@
 //  Little Color Management System
 //  Copyright (c) 1998-2011 Marti Maria Saguer
 //
-// Permission is hereby granted, free of charge, to any person obtaining 
-// a copy of this software and associated documentation files (the "Software"), 
-// to deal in the Software without restriction, including without limitation 
-// the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-// and/or sell copies of the Software, and to permit persons to whom the Software 
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in 
+// The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
-// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //---------------------------------------------------------------------------------
@@ -54,20 +54,20 @@ int Help(int level)
      default:
      case 0:
 
-         fprintf(stderr, "\nlinkicc: Links profiles into a single devicelink.\n");     
+         fprintf(stderr, "\nlinkicc: Links profiles into a single devicelink.\n");
 
-         fprintf(stderr, "\n");     
+         fprintf(stderr, "\n");
          fprintf(stderr, "usage: linkicc [flags] <profiles>\n\n");
-         fprintf(stderr, "flags:\n\n");         
-         fprintf(stderr, "%co<profile> - Output devicelink profile. [defaults to 'devicelink.icc']\n", SW);     
+         fprintf(stderr, "flags:\n\n");
+         fprintf(stderr, "%co<profile> - Output devicelink profile. [defaults to 'devicelink.icc']\n", SW);
 
          PrintRenderingIntents();
 
-         fprintf(stderr, "%cc<0,1,2> - Precision (0=LowRes, 1=Normal, 2=Hi-res) [defaults to 1]\n", SW);     
-         fprintf(stderr, "%cn<gridpoints> - Alternate way to set precision, number of CLUT points\n", SW);     
-         fprintf(stderr, "%cd<description> - description text (quotes can be used)\n", SW);     
-         fprintf(stderr, "%cy<copyright> - copyright notice (quotes can be used)\n", SW);    
-         
+         fprintf(stderr, "%cc<0,1,2> - Precision (0=LowRes, 1=Normal, 2=Hi-res) [defaults to 1]\n", SW);
+         fprintf(stderr, "%cn<gridpoints> - Alternate way to set precision, number of CLUT points\n", SW);
+         fprintf(stderr, "%cd<description> - description text (quotes can be used)\n", SW);
+         fprintf(stderr, "%cy<copyright> - copyright notice (quotes can be used)\n", SW);
+
          fprintf(stderr, "\n%ck<0..400> - Ink-limiting in %% (CMYK only)\n", SW);
          fprintf(stderr, "%c8 - Creates 8-bit devicelink\n", SW);
          fprintf(stderr, "%cx - Creatively, guess deviceclass of resulting profile.\n", SW);
@@ -75,7 +75,7 @@ int Help(int level)
          fprintf(stderr, "%ca<0..1> - Observer adaptation state (abs.col. only)\n\n", SW);
          fprintf(stderr, "%cl - Use linearization curves (may affect accuracy)\n", SW);
          fprintf(stderr, "%cr<v.r> - Profile version. (CAUTION: may change the profile implementation)\n", SW);
-         fprintf(stderr, "\n");    
+         fprintf(stderr, "\n");
          fprintf(stderr, "Colorspaces must be paired except Lab/XYZ, that can be interchanged.\n\n");
 
          fprintf(stderr, "%ch<0,1,2,3> - More help\n", SW);
@@ -101,8 +101,8 @@ int Help(int level)
              "To create a 'grayer' sRGB input profile:\n"
              "\tlinkicc -x -o grayer.icc *sRGB gray.icc gray.icc *Lab\n\n"
              "To embed ink limiting into a cmyk output profile:\n"
-             "\tlinkicc -x -o cmyklimited.icc -k 250 cmyk.icc *Lab\n\n");                     
-         break;                       
+             "\tlinkicc -x -o cmyklimited.icc -k 250 cmyk.icc *Lab\n\n");
+         break;
 
      case 3:
 
@@ -128,12 +128,12 @@ void HandleSwitches(int argc, char *argv[])
 
 
         case 'a':
-        case 'A':             
+        case 'A':
             ObserverAdaptationState = atof(xoptarg);
-            if (ObserverAdaptationState < 0 || 
+            if (ObserverAdaptationState < 0 ||
                 ObserverAdaptationState > 1.0)
                        FatalError("Adaptation state should be 0..1");
-            break;      
+            break;
 
         case 'b':
         case 'B':
@@ -226,11 +226,11 @@ void HandleSwitches(int argc, char *argv[])
            break;
 
 
-           
+
        default:
 
-           FatalError("Unknown option - run without args to see valid ones.\n");          
-        }       
+           FatalError("Unknown option - run without args to see valid ones.\n");
+        }
     }
 }
 
@@ -251,7 +251,7 @@ cmsBool SetTextTags(cmsHPROFILE hProfile)
     if (!cmsMLUsetASCII(CopyrightMLU,    "en", "US", Copyright)) goto Error;
 
     if (!cmsWriteTag(hProfile, cmsSigProfileDescriptionTag,  DescriptionMLU)) goto Error;
-    if (!cmsWriteTag(hProfile, cmsSigCopyrightTag,           CopyrightMLU)) goto Error;     
+    if (!cmsWriteTag(hProfile, cmsSigCopyrightTag,           CopyrightMLU)) goto Error;
 
     rc = TRUE;
 
@@ -281,14 +281,14 @@ int main(int argc, char *argv[])
     // Initialize
     InitUtils("linkicc");
     rc = 0;
-    
+
     // Get the options
     HandleSwitches(argc, argv);
 
     // How many profiles to link?
     nargs = (argc - xoptind);
     if (nargs < 1)
-        return Help(0); 
+        return Help(0);
 
     if (nargs > 255) {
         FatalError("Holy profile! what are you trying to do with so many profiles!?");
@@ -300,7 +300,7 @@ int main(int argc, char *argv[])
     for (i=0; i < nargs; i++) {
 
         Profiles[i] = OpenStockProfile(0, argv[i + xoptind]);
-        if (Profiles[i] == NULL) goto Cleanup;      
+        if (Profiles[i] == NULL) goto Cleanup;
 
         if (Verbose >= 1) {
             PrintProfileInformation(Profiles[i]);
@@ -308,7 +308,7 @@ int main(int argc, char *argv[])
     }
 
     // Ink limiting
-    if (InkLimit != 400.0) {        
+    if (InkLimit != 400.0) {
         cmsColorSpaceSignature EndingColorSpace = cmsGetColorSpace(Profiles[nargs-1]);
         Profiles[nargs++] = cmsCreateInkLimitingDeviceLink(EndingColorSpace, InkLimit);
     }
@@ -319,12 +319,12 @@ int main(int argc, char *argv[])
 
         case 0: dwFlags |= cmsFLAGS_LOWRESPRECALC; break;
         case 2: dwFlags |= cmsFLAGS_HIGHRESPRECALC; break;
-        case 1: 
+        case 1:
             if (NumOfGridPoints > 0)
                 dwFlags |= cmsFLAGS_GRIDPOINTS(NumOfGridPoints);
             break;
 
-        default: 
+        default:
             {
                 FatalError("Unknown precalculation mode '%d'", PrecalcMode);
                 goto Cleanup;
@@ -343,8 +343,8 @@ int main(int argc, char *argv[])
     if (lUse8bits) dwFlags |= cmsFLAGS_8BITS_DEVICELINK;
 
      cmsSetAdaptationState(ObserverAdaptationState);
-     
-    // Create the color transform. Specify 0 for the format is safe as the transform 
+
+    // Create the color transform. Specify 0 for the format is safe as the transform
     // is intended to be used only for the devicelink.
     hTransform = cmsCreateMultiprofileTransform(Profiles, nargs, 0, 0, Intent, dwFlags);
     if (hTransform == NULL) {
@@ -363,10 +363,10 @@ int main(int argc, char *argv[])
 
     if (cmsSaveProfileToFile(hProfile, cOutProf)) {
 
-        if (Verbose > 0) 
+        if (Verbose > 0)
             fprintf(stderr, "Ok");
     }
-    else 
+    else
         FatalError("Error saving file!");
 
     cmsCloseProfile(hProfile);
@@ -380,5 +380,5 @@ Cleanup:
         if (Profiles[i] != NULL) cmsCloseProfile(Profiles[i]);
     }
 
-    return rc;     
+    return rc;
 }
