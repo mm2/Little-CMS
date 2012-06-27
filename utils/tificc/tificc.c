@@ -206,7 +206,7 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
     TIFFGetFieldDefaulted(Bank,  TIFFTAG_BITSPERSAMPLE, &bps);
 
     if (bps == 1)
-        FatalError("Sorry, bilevel TIFFs has nothig to do with ICC profiles");
+        FatalError("Sorry, bilevel TIFFs has nothing to do with ICC profiles");
 
     if (bps != 8 && bps != 16 && bps != 32)
         FatalError("Sorry, 8, 16 or 32 bits per sample only");
@@ -870,7 +870,7 @@ int TransformImage(TIFF* in, TIFF* out, const char *cDefInpProf)
 static
 void Help(int level)
 {
-    fprintf(stderr, "little cms ICC profile applier for TIFF - v6.1 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
+    fprintf(stderr, "little cms ICC profile applier for TIFF - v6.2 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
     fflush(stderr);
 
     switch(level) {
@@ -878,7 +878,7 @@ void Help(int level)
      default:
      case 0:
 
-         fprintf(stderr, "usage: tifficc [flags] input.tif output.tif\n");
+         fprintf(stderr, "usage: tificc [flags] input.tif output.tif\n");
 
          fprintf(stderr, "\nflags:\n\n");
          fprintf(stderr, "%cv - Verbose\n", SW);
@@ -918,15 +918,15 @@ void Help(int level)
 
          fprintf(stderr, "Examples:\n\n"
              "To color correct from scanner to sRGB:\n"
-             "\ttifficc %ciscanner.icm in.tif out.tif\n"
+             "\ttificc %ciscanner.icm in.tif out.tif\n"
              "To convert from monitor1 to monitor2:\n"
-             "\ttifficc %cimon1.icm %comon2.icm in.tif out.tif\n"
+             "\ttificc %cimon1.icm %comon2.icm in.tif out.tif\n"
              "To make a CMYK separation:\n"
-             "\ttifficc %coprinter.icm inrgb.tif outcmyk.tif\n"
+             "\ttificc %coprinter.icm inrgb.tif outcmyk.tif\n"
              "To recover sRGB from a CMYK separation:\n"
-             "\ttifficc %ciprinter.icm incmyk.tif outrgb.tif\n"
+             "\ttificc %ciprinter.icm incmyk.tif outrgb.tif\n"
              "To convert from CIELab TIFF to sRGB\n"
-             "\ttifficc %ci*Lab in.tif out.tif\n\n", 
+             "\ttificc %ci*Lab in.tif out.tif\n\n", 
              SW, SW, SW, SW, SW, SW);
          break;
 
@@ -1088,7 +1088,7 @@ int main(int argc, char* argv[])
    
     cmsPlugin(&TiffLabPlugin);
 
-    InitUtils("tifficc");
+    InitUtils("tificc");
 
     HandleSwitches(argc, argv);
 

@@ -27,5 +27,5 @@ liblcms2_la_SOURCES = \
   cmscnvrt.c cmserr.c cmsgamma.c cmsgmt.c cmsintrp.c cmsio0.c cmsio1.c cmslut.c \
   cmsplugin.c cmssm.c cmsmd5.c cmsmtrx.c cmspack.c cmspcs.c cmswtpnt.c cmsxform.c \
   cmssamp.c cmsnamed.c cmscam02.c cmsvirt.c cmstypes.c cmscgats.c cmsps2.c cmsopt.c \
-  lcms2_internal.h
+  cmshalf.c lcms2_internal.h
 

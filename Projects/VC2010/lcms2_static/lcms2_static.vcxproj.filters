@@ -87,6 +87,9 @@
     <ClCompile Include="..\..\..\src\cmsxform.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\..\src\cmshalf.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\include\lcms2.h">

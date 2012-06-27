@@ -1038,14 +1038,14 @@ int TransformImage(char *cDefInpProf, char *cOutProf)
 static
 void Help(int level)
 {
-     fprintf(stderr, "little cms ICC profile applier for JPEG - v3.1 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
+     fprintf(stderr, "little cms ICC profile applier for JPEG - v3.2 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
 
      switch(level) {
 
      default:
      case 0:
 
-     fprintf(stderr, "usage: jpegicc [flags] input.jpg output.jpg\n");
+     fprintf(stderr, "usage: jpgicc [flags] input.jpg output.jpg\n");
 
      fprintf(stderr, "\nflags:\n\n");
      fprintf(stderr, "%cv - Verbose\n", SW);
@@ -1082,15 +1082,15 @@ void Help(int level)
 
      fprintf(stderr, "Examples:\n\n"
                      "To color correct from scanner to sRGB:\n"
-                     "\tjpegicc %ciscanner.icm in.jpg out.jpg\n"
+                     "\tjpgicc %ciscanner.icm in.jpg out.jpg\n"
                      "To convert from monitor1 to monitor2:\n"
-                     "\tjpegicc %cimon1.icm %comon2.icm in.jpg out.jpg\n"
+                     "\tjpgicc %cimon1.icm %comon2.icm in.jpg out.jpg\n"
                      "To make a CMYK separation:\n"
-                     "\tjpegicc %coprinter.icm inrgb.jpg outcmyk.jpg\n"
+                     "\tjpgicc %coprinter.icm inrgb.jpg outcmyk.jpg\n"
                      "To recover sRGB from a CMYK separation:\n"
-                     "\tjpegicc %ciprinter.icm incmyk.jpg outrgb.jpg\n"
+                     "\tjpgicc %ciprinter.icm incmyk.jpg outrgb.jpg\n"
                      "To convert from CIELab ITU/Fax JPEG to sRGB\n"
-                     "\tjpegicc in.jpg out.jpg\n\n", 
+                     "\tjpgicc in.jpg out.jpg\n\n", 
                      SW, SW, SW, SW, SW, SW);
      break;
 
@@ -1243,7 +1243,7 @@ void HandleSwitches(int argc, char *argv[])
 
 int main(int argc, char* argv[])
 {
-	InitUtils("jpegicc");
+	InitUtils("jpgicc");
 
 	HandleSwitches(argc, argv);
 
