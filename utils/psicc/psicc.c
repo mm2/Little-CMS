@@ -3,22 +3,22 @@
 //  Little Color Management System
 //  Copyright (c) 1998-2010 Marti Maria Saguer
 //
-// Permission is hereby granted, free of charge, to any person obtaining 
-// a copy of this software and associated documentation files (the "Software"), 
-// to deal in the Software without restriction, including without limitation 
-// the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-// and/or sell copies of the Software, and to permit persons to whom the Software 
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in 
+// The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
-// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //---------------------------------------------------------------------------------
@@ -43,12 +43,12 @@ static
 void HandleSwitches(int argc, char *argv[])
 {
        int s;
-      
+
        while ((s = xgetopt(argc,argv,"uUbBI:i:O:o:T:t:c:C:n:N:")) != EOF) {
 
        switch (s){
 
-	 
+
        case 'i':
        case 'I':
             cInProf = xoptarg;
@@ -70,7 +70,7 @@ void HandleSwitches(int argc, char *argv[])
             if (Intent > 3) Intent = 3;
             if (Intent < 0) Intent = 0;
             break;
-     
+
        case 'U':
        case 'u':
             Undecorated = TRUE;
@@ -95,30 +95,30 @@ void HandleSwitches(int argc, char *argv[])
   default:
 
        FatalError("Unknown option - run without args to see valid ones.\n");
-    }       
+    }
     }
 }
 
 static
 void Help(void)
 {
-	 fprintf(stderr, "little cms ICC PostScript generator - v2.0 [LittleCMS %2.2f]\n", LCMS_VERSION / 1000.0);
-   
+     fprintf(stderr, "little cms ICC PostScript generator - v2.0 [LittleCMS %2.2f]\n", LCMS_VERSION / 1000.0);
+
      fprintf(stderr, "usage: psicc [flags]\n\n");
 
      fprintf(stderr, "flags:\n\n");
-     
+
      fprintf(stderr, "%ci<profile> - Input profile: Generates Color Space Array (CSA)\n", SW);
-     fprintf(stderr, "%co<profile> - Output profile: Generates Color Rendering Dictionary(CRD)\n", SW);   
-     
-     fprintf(stderr, "%ct<0,1,2,3> - Intent (0=Perceptual, 1=Colorimetric, 2=Saturation, 3=Absolute)\n", SW);    
-          
-     fprintf(stderr, "%cb - Black point compensation (CRD only)\n", SW);    
-     fprintf(stderr, "%cu - Do NOT generate resource name on CRD\n", SW);    
-     fprintf(stderr, "%cc<0,1,2> - Precision (0=LowRes, 1=Normal (default), 2=Hi-res) (CRD only)\n", SW);     
-     fprintf(stderr, "%cn<gridpoints> - Alternate way to set precission, number of CLUT points (CRD only)\n", SW);     
-     
-	 fprintf(stderr, "\n");
+     fprintf(stderr, "%co<profile> - Output profile: Generates Color Rendering Dictionary(CRD)\n", SW);
+
+     fprintf(stderr, "%ct<0,1,2,3> - Intent (0=Perceptual, 1=Colorimetric, 2=Saturation, 3=Absolute)\n", SW);
+
+     fprintf(stderr, "%cb - Black point compensation (CRD only)\n", SW);
+     fprintf(stderr, "%cu - Do NOT generate resource name on CRD\n", SW);
+     fprintf(stderr, "%cc<0,1,2> - Precision (0=LowRes, 1=Normal (default), 2=Hi-res) (CRD only)\n", SW);
+     fprintf(stderr, "%cn<gridpoints> - Alternate way to set precission, number of CLUT points (CRD only)\n", SW);
+
+     fprintf(stderr, "\n");
      fprintf(stderr, "This program is intended to be a demo of the little cms\n"
                      "engine. Both lcms and this program are freeware. You can\n"
                      "obtain both in source code at http://www.littlecms.com\n"
@@ -131,98 +131,98 @@ void Help(void)
 static
 void GenerateCSA(void)
 {
-	cmsHPROFILE hProfile = OpenStockProfile(0, cInProf);
-	size_t n;
-	char* Buffer;
+    cmsHPROFILE hProfile = OpenStockProfile(0, cInProf);
+    size_t n;
+    char* Buffer;
 
-	if (hProfile == NULL) return;
+    if (hProfile == NULL) return;
 
-	n = cmsGetPostScriptCSA(0, hProfile, Intent, 0, NULL, 0);
-	if (n == 0) return;
+    n = cmsGetPostScriptCSA(0, hProfile, Intent, 0, NULL, 0);
+    if (n == 0) return;
 
-	Buffer = (char*) malloc(n + 1);
-	cmsGetPostScriptCSA(0, hProfile, Intent, 0, Buffer, n);
-	Buffer[n] = 0;
+    Buffer = (char*) malloc(n + 1);
+    cmsGetPostScriptCSA(0, hProfile, Intent, 0, Buffer, n);
+    Buffer[n] = 0;
 
-	fprintf(OutFile, "%s", Buffer);	
-	
-	free(Buffer);
-	cmsCloseProfile(hProfile);
+    fprintf(OutFile, "%s", Buffer);
+
+    free(Buffer);
+    cmsCloseProfile(hProfile);
 }
 
 
 static
 void GenerateCRD(void)
 {
-	cmsHPROFILE hProfile = OpenStockProfile(0, cOutProf);
-	size_t n;
-	char* Buffer;
+    cmsHPROFILE hProfile = OpenStockProfile(0, cOutProf);
+    size_t n;
+    char* Buffer;
     cmsUInt32Number dwFlags = 0;
-    
-	if (hProfile == NULL) return;
+
+    if (hProfile == NULL) return;
 
     if (BlackPointCompensation) dwFlags |= cmsFLAGS_BLACKPOINTCOMPENSATION;
     if (Undecorated)            dwFlags |= cmsFLAGS_NODEFAULTRESOURCEDEF;
 
     switch (PrecalcMode) {
-           	
-	    case 0: dwFlags |= cmsFLAGS_LOWRESPRECALC; break;
-		case 2: dwFlags |= cmsFLAGS_HIGHRESPRECALC; break;
-		case 1: 
+
+        case 0: dwFlags |= cmsFLAGS_LOWRESPRECALC; break;
+        case 2: dwFlags |= cmsFLAGS_HIGHRESPRECALC; break;
+        case 1:
             if (NumOfGridPoints > 0)
                 dwFlags |= cmsFLAGS_GRIDPOINTS(NumOfGridPoints);
             break;
 
-		default: FatalError("ERROR: Unknown precalculation mode '%d'", PrecalcMode);
-	 }
+        default: FatalError("ERROR: Unknown precalculation mode '%d'", PrecalcMode);
+     }
 
-	n = cmsGetPostScriptCRD(0, hProfile, Intent, dwFlags, NULL, 0);
-	if (n == 0) return;
+    n = cmsGetPostScriptCRD(0, hProfile, Intent, dwFlags, NULL, 0);
+    if (n == 0) return;
 
-	Buffer = (char*) malloc(n + 1);
+    Buffer = (char*) malloc(n + 1);
     cmsGetPostScriptCRD(0, hProfile, Intent, dwFlags, Buffer, n);
-	Buffer[n] = 0;
+    Buffer[n] = 0;
 
-	fprintf(OutFile, "%s", Buffer);			
-	free(Buffer);
-	cmsCloseProfile(hProfile);
+    fprintf(OutFile, "%s", Buffer);
+    free(Buffer);
+    cmsCloseProfile(hProfile);
 }
 
 
 int main(int argc, char *argv[])
 {
-	int nargs;
+    int nargs;
 
-	// Initialize
-	InitUtils("psicc");
+    // Initialize
+    InitUtils("psicc");
 
-	 HandleSwitches(argc, argv);
+     HandleSwitches(argc, argv);
 
      nargs = (argc - xoptind);
-	 if (nargs != 0 && nargs != 1)
-				Help();            
-	
-	 if (nargs == 0) 
-			OutFile = stdout;
-	 else
-			OutFile = fopen(argv[xoptind], "wt");
-	   		
+     if (nargs != 0 && nargs != 1)
+                Help();
 
-	 if (cInProf == NULL && cOutProf == NULL)
-				Help();
+     if (nargs == 0)
+            OutFile = stdout;
+     else
+            OutFile = fopen(argv[xoptind], "wt");
 
-    
-	  if (cInProf != NULL)
-			GenerateCSA();
-		  
-	  if (cOutProf != NULL)
-			GenerateCRD();
-		
-	  if (nargs == 1) {
-		  fclose(OutFile);
-	  }
 
-      return 0;     
+     if (cInProf == NULL && cOutProf == NULL)
+                Help();
+
+
+      if (cInProf != NULL)
+            GenerateCSA();
+
+      if (cOutProf != NULL)
+            GenerateCRD();
+
+      if (nargs == 1) {
+          fclose(OutFile);
+      }
+
+      return 0;
 }
 
 

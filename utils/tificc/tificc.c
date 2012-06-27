@@ -3,22 +3,22 @@
 //  Little Color Management System
 //  Copyright (c) 1998-2010 Marti Maria Saguer
 //
-// Permission is hereby granted, free of charge, to any person obtaining 
-// a copy of this software and associated documentation files (the "Software"), 
-// to deal in the Software without restriction, including without limitation 
-// the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-// and/or sell copies of the Software, and to permit persons to whom the Software 
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in 
+// The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
-// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //---------------------------------------------------------------------------------
@@ -107,17 +107,17 @@ void Warning(const char *frm, ...)
 static
 void OutOfMem(cmsUInt32Number size)
 {
-    FatalError("Out of memory on allocating %d bytes.", size);  
+    FatalError("Out of memory on allocating %d bytes.", size);
 }
 
 
 // -----------------------------------------------------------------------------------------------
 
-// In TIFF, Lab is encoded in a different way, so let's use the plug-in 
-// capabilities of lcms2 to change the meaning of TYPE_Lab_8.  
+// In TIFF, Lab is encoded in a different way, so let's use the plug-in
+// capabilities of lcms2 to change the meaning of TYPE_Lab_8.
 
 // * 0xffff / 0xff00 = (255 * 257) / (255 * 256) = 257 / 256
-static int FromLabV2ToLabV4(int x) 
+static int FromLabV2ToLabV4(int x)
 {
     int a;
 
@@ -127,7 +127,7 @@ static int FromLabV2ToLabV4(int x)
 }
 
 // * 0xf00 / 0xffff = * 256 / 257
-static int FromLabV4ToLabV2(int x) 
+static int FromLabV4ToLabV2(int x)
 {
     return ((x << 8) + 0x80) / 257;
 }
@@ -136,8 +136,8 @@ static int FromLabV4ToLabV2(int x)
 // Formatter for 8bit Lab TIFF (photometric 8)
 static
 unsigned char* UnrollTIFFLab8(struct _cmstransform_struct* CMMcargo,
-                              register cmsUInt16Number wIn[], 
-                              register cmsUInt8Number* accum, 
+                              register cmsUInt16Number wIn[],
+                              register cmsUInt8Number* accum,
                               register cmsUInt32Number Stride)
 {
     wIn[0] = (cmsUInt16Number) FromLabV2ToLabV4((accum[0]) << 8);
@@ -151,9 +151,9 @@ unsigned char* UnrollTIFFLab8(struct _cmstransform_struct* CMMcargo,
 }
 
 static
-unsigned char* PackTIFFLab8(struct _cmstransform_struct* CMMcargo, 
-                            register cmsUInt16Number wOut[], 
-                            register cmsUInt8Number* output, 
+unsigned char* PackTIFFLab8(struct _cmstransform_struct* CMMcargo,
+                            register cmsUInt16Number wOut[],
+                            register cmsUInt8Number* output,
                             register cmsUInt32Number Stride)
 {
     int a, b;
@@ -174,8 +174,8 @@ unsigned char* PackTIFFLab8(struct _cmstransform_struct* CMMcargo,
 
 
 static
-cmsFormatter TiffFormatterFactory(cmsUInt32Number Type, 
-                                  cmsFormatterDirection Dir, 
+cmsFormatter TiffFormatterFactory(cmsUInt32Number Type,
+                                  cmsFormatterDirection Dir,
                                   cmsUInt32Number dwFlags)
 {
     cmsFormatter Result = { NULL };
@@ -250,20 +250,20 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
 
          // ... fall through ...
 
-     case PHOTOMETRIC_MINISBLACK:                                   
-         pt = PT_GRAY;                                
+     case PHOTOMETRIC_MINISBLACK:
+         pt = PT_GRAY;
          break;
 
-     case PHOTOMETRIC_RGB:                                   
+     case PHOTOMETRIC_RGB:
          pt = PT_RGB;
          break;
 
 
-     case PHOTOMETRIC_PALETTE:                                             
-         FatalError("Sorry, palette images not supported"); 
+     case PHOTOMETRIC_PALETTE:
+         FatalError("Sorry, palette images not supported");
          break;
 
-     case PHOTOMETRIC_SEPARATED: 
+     case PHOTOMETRIC_SEPARATED:
 
          pt = PixelTypeFromChanCount(ColorChannels);
          break;
@@ -292,7 +292,7 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
          break;
 
 
-     case PHOTOMETRIC_LOGLUV:      // CIE Log2(L) (u',v') 
+     case PHOTOMETRIC_LOGLUV:      // CIE Log2(L) (u',v')
 
          TIFFSetField(Bank, TIFFTAG_SGILOGDATAFMT, SGILOGDATAFMT_16BIT);
          pt = PT_YUV;             // *ICCSpace = icSigLuvData;
@@ -305,7 +305,7 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
 
     // Convert bits per sample to bytes per sample
 
-    bps >>= 3; 
+    bps >>= 3;
     IsFlt = (bps == 0) || (bps == 4);
 
     return (FLOAT_SH(IsFlt)|COLORSPACE_SH(pt)|PLANAR_SH(IsPlanar)|EXTRA_SH(extra)|CHANNELS_SH(ColorChannels)|BYTES_SH(bps)|FLAVOR_SH(reverse));
@@ -354,7 +354,7 @@ int TileBasedXform(cmsHTRANSFORM hXForm, TIFF* in, TIFF* out, int nPlanes)
 
         for (j=0; j < nPlanes; j++) {
 
-            if (TIFFReadEncodedTile(in, i + (j* TileCount), 
+            if (TIFFReadEncodedTile(in, i + (j* TileCount),
                 BufferIn + (j*BufSizeIn), BufSizeIn) < 0)   goto cleanup;
         }
 
@@ -415,7 +415,7 @@ int StripBasedXform(cmsHTRANSFORM hXForm, TIFF* in, TIFF* out, int nPlanes)
 
         for (j=0; j < nPlanes; j++) {
 
-            if (TIFFReadEncodedStrip(in, i + (j * StripCount), 
+            if (TIFFReadEncodedStrip(in, i + (j * StripCount),
                 BufferIn + (j * BufSizeIn), BufSizeIn) < 0)   goto cleanup;
         }
 
@@ -425,7 +425,7 @@ int StripBasedXform(cmsHTRANSFORM hXForm, TIFF* in, TIFF* out, int nPlanes)
         cmsDoTransform(hXForm, BufferIn, BufferOut, PixelCount);
 
         for (j=0; j < nPlanes; j++) {
-            if (TIFFWriteEncodedStrip(out, i + (j * StripCount), 
+            if (TIFFWriteEncodedStrip(out, i + (j * StripCount),
                 BufferOut + j * BufSizeOut, BufSizeOut) < 0) goto cleanup;
         }
 
@@ -450,12 +450,12 @@ void WriteOutputTags(TIFF *out, int Colorspace, int BytesPerSample)
     int BitsPerSample = (8 * BytesPerSample);
     int nChannels     = ChanCountFromPixelType(Colorspace);
 
-    uint16 Extra[] = { EXTRASAMPLE_UNASSALPHA, 
-                       EXTRASAMPLE_UNASSALPHA, 
+    uint16 Extra[] = { EXTRASAMPLE_UNASSALPHA,
                        EXTRASAMPLE_UNASSALPHA,
                        EXTRASAMPLE_UNASSALPHA,
-                       EXTRASAMPLE_UNASSALPHA, 
-                       EXTRASAMPLE_UNASSALPHA, 
+                       EXTRASAMPLE_UNASSALPHA,
+                       EXTRASAMPLE_UNASSALPHA,
+                       EXTRASAMPLE_UNASSALPHA,
                        EXTRASAMPLE_UNASSALPHA,
                        EXTRASAMPLE_UNASSALPHA,
                        EXTRASAMPLE_UNASSALPHA,
@@ -493,7 +493,7 @@ void WriteOutputTags(TIFF *out, int Colorspace, int BytesPerSample)
       break;
 
   case PT_Lab:
-      if (BitsPerSample == 16) 
+      if (BitsPerSample == 16)
           TIFFSetField(out, TIFFTAG_PHOTOMETRIC, 9);
       else
           TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_CIELAB);
@@ -521,13 +521,13 @@ void WriteOutputTags(TIFF *out, int Colorspace, int BytesPerSample)
       TIFFSetField(out, TIFFTAG_PHOTOMETRIC, PHOTOMETRIC_SEPARATED);
       TIFFSetField(out, TIFFTAG_SAMPLESPERPIXEL, nChannels);
 
-      if (StoreAsAlpha && nChannels >= 4) {                                     
+      if (StoreAsAlpha && nChannels >= 4) {
           // CMYK plus extra alpha
-          TIFFSetField(out, TIFFTAG_EXTRASAMPLES, nChannels - 4, Extra);            
+          TIFFSetField(out, TIFFTAG_EXTRASAMPLES, nChannels - 4, Extra);
           TIFFSetField(out, TIFFTAG_INKSET, 1);
           TIFFSetField(out, TIFFTAG_NUMBEROFINKS, 4);
       }
-      else {            
+      else {
           TIFFSetField(out, TIFFTAG_INKSET, 2);
           TIFFSetField(out, TIFFTAG_NUMBEROFINKS, nChannels);
       }
@@ -540,7 +540,7 @@ void WriteOutputTags(TIFF *out, int Colorspace, int BytesPerSample)
       FatalError("Unsupported output colorspace");
     }
 
-  if (Width == 32) 
+  if (Width == 32)
       TIFFSetField(out, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
 }
 
@@ -571,7 +571,7 @@ void CopyOtherTags(TIFF* in, TIFF* out)
     CopyField(TIFFTAG_PLANARCONFIG, shortv);
     CopyField(TIFFTAG_COMPRESSION, shortv);
 
-    if (Width != 32) 
+    if (Width != 32)
         CopyField(TIFFTAG_PREDICTOR, shortv);
 
     CopyField(TIFFTAG_THRESHHOLDING, shortv);
@@ -618,14 +618,14 @@ void DoEmbedProfile(TIFF* Out, const char* ProfileFile)
 
     size = cmsfilelength(f);
     EmbedBuffer = (cmsUInt8Number*) malloc(size + 1);
-    if (EmbedBuffer == NULL) { 
+    if (EmbedBuffer == NULL) {
         OutOfMem(size+1);
         return;
     }
 
     EmbedLen = fread(EmbedBuffer, 1, size, f);
 
-    if (EmbedLen != size) 
+    if (EmbedLen != size)
         FatalError("Cannot read %ld bytes to %s", size, ProfileFile);
 
     fclose(f);
@@ -639,13 +639,13 @@ void DoEmbedProfile(TIFF* Out, const char* ProfileFile)
 
 static
 cmsHPROFILE GetTIFFProfile(TIFF* in)
-{    
+{
     cmsCIExyYTRIPLE Primaries;
     cmsFloat32Number* chr;
     cmsCIExyY WhitePoint;
     cmsFloat32Number* wp;
-    int i;       
-    cmsToneCurve* Curve[3]; 
+    int i;
+    cmsToneCurve* Curve[3];
     cmsUInt16Number *gmr, *gmg, *gmb;
     cmsHPROFILE hProfile;
     cmsUInt32Number EmbedLen;
@@ -661,7 +661,7 @@ cmsHPROFILE GetTIFFProfile(TIFF* in)
         if (Verbose) {
 
             fprintf(stdout, "\n[Embedded profile]\n");
-            PrintProfileInformation(hProfile);                       
+            PrintProfileInformation(hProfile);
             fflush(stdout);
         }
 
@@ -693,7 +693,7 @@ cmsHPROFILE GetTIFFProfile(TIFF* in)
             // Transferfunction is a bit harder....
 
             TIFFGetFieldDefaulted(in, TIFFTAG_TRANSFERFUNCTION,
-                &gmr, 
+                &gmr,
                 &gmg,
                 &gmb);
 
@@ -728,18 +728,18 @@ int TransformImage(TIFF* in, TIFF* out, const char *cDefInpProf)
     cmsUInt32Number wInput, wOutput;
     int OutputColorSpace;
     int bps = Width / 8;
-    cmsUInt32Number dwFlags = 0;        
+    cmsUInt32Number dwFlags = 0;
     int nPlanes;
 
     // Observer adaptation state (only meaningful on absolute colorimetric intent)
 
     cmsSetAdaptationState(ObserverAdaptationState);
 
-    if (EmbedProfile && cOutProf) 
+    if (EmbedProfile && cOutProf)
         DoEmbedProfile(out, cOutProf);
 
-    if (BlackWhiteCompensation) 
-        dwFlags |= cmsFLAGS_BLACKPOINTCOMPENSATION;           
+    if (BlackWhiteCompensation)
+        dwFlags |= cmsFLAGS_BLACKPOINTCOMPENSATION;
 
 
     switch (PrecalcMode) {
@@ -761,14 +761,14 @@ int TransformImage(TIFF* in, TIFF* out, const char *cDefInpProf)
 
     if (lIsDeviceLink) {
 
-        hIn = cmsOpenProfileFromFile(cDefInpProf, "r");                  
+        hIn = cmsOpenProfileFromFile(cDefInpProf, "r");
     }
     else {
 
         hIn =  GetTIFFProfile(in);
 
-        if (hIn == NULL)                    
-            hIn = OpenStockProfile(NULL, cDefInpProf);               
+        if (hIn == NULL)
+            hIn = OpenStockProfile(NULL, cDefInpProf);
 
         hOut = OpenStockProfile(NULL, cOutProf);
 
@@ -789,9 +789,9 @@ int TransformImage(TIFF* in, TIFF* out, const char *cDefInpProf)
         FatalError("Input profile is not operating in proper color space");
 
 
-    if (!lIsDeviceLink) 
+    if (!lIsDeviceLink)
         OutputColorSpace = _cmsLCMScolorSpace(cmsGetColorSpace(hOut));
-    else 
+    else
         OutputColorSpace = _cmsLCMScolorSpace(cmsGetPCS(hIn));
 
     wOutput  = ComputeOutputFormatDescriptor(wInput, OutputColorSpace, bps);
@@ -800,7 +800,7 @@ int TransformImage(TIFF* in, TIFF* out, const char *cDefInpProf)
     CopyOtherTags(in, out);
 
     // Ink limit
-    if (InkLimit != 400.0 && 
+    if (InkLimit != 400.0 &&
         (OutputColorSpace == PT_CMYK || OutputColorSpace == PT_CMY)) {
 
             cmsHPROFILE hProfiles[10];
@@ -818,31 +818,31 @@ int TransformImage(TIFF* in, TIFF* out, const char *cDefInpProf)
             hProfiles[nProfiles++] = hOut;
             hProfiles[nProfiles++] = hInkLimit;
 
-            xform = cmsCreateMultiprofileTransform(hProfiles, nProfiles, 
+            xform = cmsCreateMultiprofileTransform(hProfiles, nProfiles,
                                                    wInput, wOutput, Intent, dwFlags);
 
     }
     else {
 
-        xform = cmsCreateProofingTransform(hIn, wInput, 
-                                           hOut, wOutput, 
-                                           hProof, Intent, 
-                                           ProofingIntent, 
+        xform = cmsCreateProofingTransform(hIn, wInput,
+                                           hOut, wOutput,
+                                           hProof, Intent,
+                                           ProofingIntent,
                                            dwFlags);
     }
 
     cmsCloseProfile(hIn);
     cmsCloseProfile(hOut);
 
-    if (hInkLimit) 
+    if (hInkLimit)
         cmsCloseProfile(hInkLimit);
-    if (hProof) 
+    if (hProof)
         cmsCloseProfile(hProof);
 
     if (xform == NULL) return 0;
 
     // Planar stuff
-    if (T_PLANAR(wInput)) 
+    if (T_PLANAR(wInput))
         nPlanes = T_CHANNELS(wInput) + T_EXTRA(wInput);
     else
         nPlanes = 1;
@@ -883,15 +883,15 @@ void Help(int level)
          fprintf(stderr, "\nflags:\n\n");
          fprintf(stderr, "%cv - Verbose\n", SW);
          fprintf(stderr, "%ci<profile> - Input profile (defaults to sRGB)\n", SW);
-         fprintf(stderr, "%co<profile> - Output profile (defaults to sRGB)\n", SW);   
-         fprintf(stderr, "%cl<profile> - Transform by device-link profile\n", SW); 
+         fprintf(stderr, "%co<profile> - Output profile (defaults to sRGB)\n", SW);
+         fprintf(stderr, "%cl<profile> - Transform by device-link profile\n", SW);
 
          PrintRenderingIntents();
 
          fprintf(stderr, "%cb - Black point compensation\n", SW);
          fprintf(stderr, "%cd<0..1> - Observer adaptation state (abs.col. only)\n", SW);
 
-         fprintf(stderr, "%cc<0,1,2,3> - Precalculates transform (0=Off, 1=Normal, 2=Hi-res, 3=LoRes)\n", SW);     
+         fprintf(stderr, "%cc<0,1,2,3> - Precalculates transform (0=Off, 1=Normal, 2=Hi-res, 3=LoRes)\n", SW);
          fprintf(stderr, "\n");
 
          fprintf(stderr, "%cw<8,16,32> - Output depth. Use 32 for floating-point\n\n", SW);
@@ -907,9 +907,9 @@ void Help(int level)
          fprintf(stderr, "%cm<n> - Soft proof intent\n", SW);
          fprintf(stderr, "%cg - Marks out-of-gamut colors on softproof\n", SW);
 
-         fprintf(stderr, "\n"); 
-   
-         fprintf(stderr, "%ck<0..400> - Ink-limiting in %% (CMYK only)\n", SW);       
+         fprintf(stderr, "\n");
+
+         fprintf(stderr, "%ck<0..400> - Ink-limiting in %% (CMYK only)\n", SW);
          fprintf(stderr, "\n");
          fprintf(stderr, "%ch<0,1,2,3> - More help\n", SW);
          break;
@@ -926,7 +926,7 @@ void Help(int level)
              "To recover sRGB from a CMYK separation:\n"
              "\ttificc %ciprinter.icm incmyk.tif outrgb.tif\n"
              "To convert from CIELab TIFF to sRGB\n"
-             "\ttificc %ci*Lab in.tif out.tif\n\n", 
+             "\ttificc %ci*Lab in.tif out.tif\n\n",
              SW, SW, SW, SW, SW, SW);
          break;
 
@@ -979,7 +979,7 @@ void HandleSwitches(int argc, char *argv[])
 
         case 'd':
         case 'D': ObserverAdaptationState = atof(xoptarg);
-            if (ObserverAdaptationState < 0 || 
+            if (ObserverAdaptationState < 0 ||
                 ObserverAdaptationState > 1.0)
                 Warning("Adaptation state should be 0..1");
             break;
@@ -1002,7 +1002,7 @@ void HandleSwitches(int argc, char *argv[])
         case 'i':
         case 'I':
             if (lIsDeviceLink)
-                FatalError("Device-link already specified"); 
+                FatalError("Device-link already specified");
 
             cInpProf = xoptarg;
             break;
@@ -1010,14 +1010,14 @@ void HandleSwitches(int argc, char *argv[])
         case 'o':
         case 'O':
             if (lIsDeviceLink)
-                FatalError("Device-link already specified"); 
+                FatalError("Device-link already specified");
 
             cOutProf = xoptarg;
             break;
 
         case 'l':
-        case 'L': 
-            if (cInpProf != NULL || cOutProf != NULL) 
+        case 'L':
+            if (cInpProf != NULL || cOutProf != NULL)
                 FatalError("input/output profiles already specified");
 
             cInpProf = xoptarg;
@@ -1067,7 +1067,7 @@ void HandleSwitches(int argc, char *argv[])
         case 'h':  {
 
             int a =  atoi(xoptarg);
-            Help(a); 
+            Help(a);
             }
             break;
 
@@ -1085,7 +1085,7 @@ void HandleSwitches(int argc, char *argv[])
 int main(int argc, char* argv[])
 {
     TIFF *in, *out;
-   
+
     cmsPlugin(&TiffLabPlugin);
 
     InitUtils("tificc");
@@ -1094,9 +1094,9 @@ int main(int argc, char* argv[])
 
     if ((argc - xoptind) != 2) {
 
-        Help(0);              
+        Help(0);
     }
-   
+
 
     TIFFSetErrorHandler(ConsoleErrorHandler);
     TIFFSetWarningHandler(ConsoleWarningHandler);

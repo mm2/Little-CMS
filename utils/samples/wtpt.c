@@ -37,26 +37,26 @@
 
 static
 void ShowWhitePoint(LPcmsCIEXYZ WtPt)
-{       
-	   cmsCIELab Lab;
-	   cmsCIELCh LCh;
-	   cmsCIExyY xyY;
+{
+       cmsCIELab Lab;
+       cmsCIELCh LCh;
+       cmsCIExyY xyY;
        char Buffer[1024];
 
-		
-	   _cmsIdentifyWhitePoint(Buffer, WtPt);
-       printf("%s\n", Buffer);
-       
-       cmsXYZ2Lab(NULL, &Lab, WtPt);
-	   cmsLab2LCh(&LCh, &Lab);
-	   cmsXYZ2xyY(&xyY, WtPt);
 
-	   printf("XYZ=(%3.1f, %3.1f, %3.1f)\n", WtPt->X, WtPt->Y, WtPt->Z);
+       _cmsIdentifyWhitePoint(Buffer, WtPt);
+       printf("%s\n", Buffer);
+
+       cmsXYZ2Lab(NULL, &Lab, WtPt);
+       cmsLab2LCh(&LCh, &Lab);
+       cmsXYZ2xyY(&xyY, WtPt);
+
+       printf("XYZ=(%3.1f, %3.1f, %3.1f)\n", WtPt->X, WtPt->Y, WtPt->Z);
        printf("Lab=(%3.3f, %3.3f, %3.3f)\n", Lab.L, Lab.a, Lab.b);
-	   printf("(x,y)=(%3.3f, %3.3f)\n", xyY.x, xyY.y);
-	   printf("Hue=%3.2f, Chroma=%3.2f\n", LCh.h, LCh.C);
+       printf("(x,y)=(%3.3f, %3.3f)\n", xyY.x, xyY.y);
+       printf("Hue=%3.2f, Chroma=%3.2f\n", LCh.h, LCh.C);
        printf("\n");
-       
+
 }
 
 
@@ -66,18 +66,18 @@ int main (int argc, char *argv[])
 
 
        if (argc == 2) {
-				  cmsCIEXYZ WtPt;
-		          cmsHPROFILE hProfile = cmsOpenProfileFromFile(argv[1], "r");
+                  cmsCIEXYZ WtPt;
+                  cmsHPROFILE hProfile = cmsOpenProfileFromFile(argv[1], "r");
 
-				  printf("%s\n", cmsTakeProductName(hProfile));
-				  cmsTakeMediaWhitePoint(&WtPt, hProfile);
-				  ShowWhitePoint(&WtPt);
-				  cmsCloseProfile(hProfile);
+                  printf("%s\n", cmsTakeProductName(hProfile));
+                  cmsTakeMediaWhitePoint(&WtPt, hProfile);
+                  ShowWhitePoint(&WtPt);
+                  cmsCloseProfile(hProfile);
               }
        else
               {
               cmsCIEXYZ xyz;
-              
+
               printf("usage:\n\nIf no parameters are given, then this program will\n");
               printf("ask for XYZ value of media white. If parameter given, it must be\n");
               printf("the profile to inspect.\n\n");
@@ -86,9 +86,9 @@ int main (int argc, char *argv[])
               printf("Y? "); scanf("%lf", &xyz.Y);
               printf("Z? "); scanf("%lf", &xyz.Z);
 
-			  ShowWhitePoint(&xyz);
+              ShowWhitePoint(&xyz);
               }
 
-	   return 0;
+       return 0;
 }
 
