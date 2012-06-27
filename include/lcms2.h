@@ -75,47 +75,47 @@ extern "C" {
 #ifndef CMS_BASIC_TYPES_ALREADY_DEFINED
 
 // Base types
-typedef unsigned char        cmsUInt8Number;   // That is guaranteed by the C99 spec
-typedef signed char          cmsInt8Number;    // That is guaranteed by the C99 spec
+typedef unsigned char       cmsUInt8Number;   // That is guaranteed by the C99 spec
+typedef signed char         cmsInt8Number;    // That is guaranteed by the C99 spec
 
 #if CHAR_BIT != 8
 #  error "Unable to find 8 bit type, unsupported compiler"
 #endif
 
 // IEEE float storage numbers
-typedef float                cmsFloat32Number;
-typedef double               cmsFloat64Number;
+typedef float               cmsFloat32Number;
+typedef double              cmsFloat64Number;
 
 // 16-bit base types
 #if (USHRT_MAX == 65535U)
- typedef unsigned short      cmsUInt16Number;
+ typedef unsigned short     cmsUInt16Number;
 #elif (UINT_MAX == 65535U)
- typedef unsigned int        cmsUInt16Number;
+ typedef unsigned int       cmsUInt16Number;
 #else
 #  error "Unable to find 16 bits unsigned type, unsupported compiler"
 #endif
 
 #if (SHRT_MAX == 32767)
-  typedef  short             cmsInt16Number;
+  typedef short             cmsInt16Number;
 #elif (INT_MAX == 32767)
-  typedef  int               cmsInt16Number;
+  typedef int               cmsInt16Number;
 #else
 #  error "Unable to find 16 bits signed type, unsupported compiler"
 #endif
 
 // 32-bit base type
 #if (UINT_MAX == 4294967295U)
- typedef unsigned int        cmsUInt32Number;
+ typedef unsigned int       cmsUInt32Number;
 #elif (ULONG_MAX == 4294967295U)
- typedef unsigned long       cmsUInt32Number;
+ typedef unsigned long      cmsUInt32Number;
 #else
 #  error "Unable to find 32 bit unsigned type, unsupported compiler"
 #endif
 
 #if (INT_MAX == +2147483647)
- typedef  int                cmsInt32Number;
+ typedef int                cmsInt32Number;
 #elif (LONG_MAX == +2147483647)
- typedef  long               cmsInt32Number;
+ typedef long               cmsInt32Number;
 #else
 #  error "Unable to find 32 bit signed type, unsupported compiler"
 #endif
@@ -125,14 +125,14 @@ typedef double               cmsFloat64Number;
 #  if (ULONG_MAX  == 18446744073709551615U)
     typedef unsigned long   cmsUInt64Number;
 #  elif (ULLONG_MAX == 18446744073709551615U)
-      typedef unsigned long long   cmsUInt64Number;
+      typedef unsigned long long    cmsUInt64Number;
 #  else
 #     define CMS_DONT_USE_INT64 1
 #  endif
 #  if (LONG_MAX == +9223372036854775807)
-      typedef  long          cmsInt64Number;
+      typedef long          cmsInt64Number;
 #  elif (LLONG_MAX == +9223372036854775807)
-      typedef  long long     cmsInt64Number;
+      typedef long long     cmsInt64Number;
 #  else
 #     define CMS_DONT_USE_INT64 1
 #  endif
@@ -141,18 +141,18 @@ typedef double               cmsFloat64Number;
 
 // In the case 64 bit numbers are not supported by the compiler
 #ifdef CMS_DONT_USE_INT64
-    typedef cmsUInt32Number      cmsUInt64Number[2];
-    typedef cmsInt32Number       cmsInt64Number[2];
+    typedef cmsUInt32Number cmsUInt64Number[2];
+    typedef cmsInt32Number  cmsInt64Number[2];
 #endif
 
 // Derivative types
-typedef cmsUInt32Number      cmsSignature;
-typedef cmsUInt16Number      cmsU8Fixed8Number;
-typedef cmsInt32Number       cmsS15Fixed16Number;
-typedef cmsUInt32Number      cmsU16Fixed16Number;
+typedef cmsUInt32Number     cmsSignature;
+typedef cmsUInt16Number     cmsU8Fixed8Number;
+typedef cmsInt32Number      cmsS15Fixed16Number;
+typedef cmsUInt32Number     cmsU16Fixed16Number;
 
 // Boolean type, which will be using the native integer
-typedef int                  cmsBool;
+typedef int                 cmsBool;
 
 // Try to detect windows
 #if defined (_WIN32) || defined(_WIN64) || defined(WIN32) || defined(_WIN32_)
@@ -218,7 +218,7 @@ typedef int                  cmsBool;
 #endif
 
 // Some common definitions
-#define cmsMAX_PATH     256
+#define cmsMAX_PATH  256
 
 #ifndef FALSE
 #       define FALSE 0
@@ -228,9 +228,9 @@ typedef int                  cmsBool;
 #endif
 
 // D50 XYZ normalized to Y=1.0
-#define cmsD50X             0.9642
-#define cmsD50Y             1.0
-#define cmsD50Z             0.8249
+#define cmsD50X     0.9642
+#define cmsD50Y     1.0
+#define cmsD50Z     0.8249
 
 // V4 perceptual black
 #define cmsPERCEPTUAL_BLACK_X  0.00336
@@ -530,29 +530,29 @@ typedef struct {
 
 // ICC date time
 typedef struct {
-    cmsUInt16Number      year;
-    cmsUInt16Number      month;
-    cmsUInt16Number      day;
-    cmsUInt16Number      hours;
-    cmsUInt16Number      minutes;
-    cmsUInt16Number      seconds;
+    cmsUInt16Number year;
+    cmsUInt16Number month;
+    cmsUInt16Number day;
+    cmsUInt16Number hours;
+    cmsUInt16Number minutes;
+    cmsUInt16Number seconds;
 
 } cmsDateTimeNumber;
 
 // ICC XYZ
 typedef struct {
-    cmsS15Fixed16Number  X;
-    cmsS15Fixed16Number  Y;
-    cmsS15Fixed16Number  Z;
+    cmsS15Fixed16Number X;
+    cmsS15Fixed16Number Y;
+    cmsS15Fixed16Number Z;
 
 } cmsEncodedXYZNumber;
 
 
 // Profile ID as computed by MD5 algorithm
 typedef union {
-    cmsUInt8Number       ID8[16];
-    cmsUInt16Number      ID16[8];
-    cmsUInt32Number      ID32[4];
+    cmsUInt8Number  ID8[16];
+    cmsUInt16Number ID16[8];
+    cmsUInt32Number ID32[4];
 
 } cmsProfileID;
 
@@ -608,7 +608,7 @@ typedef void* cmsHANDLE ;              // Generic handle
 typedef void* cmsHPROFILE;             // Opaque typedefs to hide internals
 typedef void* cmsHTRANSFORM;
 
-#define cmsMAXCHANNELS  16                // Maximum number of channels in ICC profiles
+#define cmsMAXCHANNELS  16             // Maximum number of channels in ICC profiles
 
 // Format of pixel is defined by one cmsUInt32Number, using bit fields as follows
 //
@@ -628,30 +628,30 @@ typedef void* cmsHTRANSFORM;
 //            B: bytes per sample
 //            Y: Swap first - changes ABGR to BGRA and KCMY to CMYK
 
-#define FLOAT_SH(a)            ((a) << 22)
-#define OPTIMIZED_SH(s)        ((s) << 21)
-#define COLORSPACE_SH(s)       ((s) << 16)
-#define SWAPFIRST_SH(s)        ((s) << 14)
-#define FLAVOR_SH(s)           ((s) << 13)
-#define PLANAR_SH(p)           ((p) << 12)
-#define ENDIAN16_SH(e)         ((e) << 11)
-#define DOSWAP_SH(e)           ((e) << 10)
-#define EXTRA_SH(e)            ((e) << 7)
-#define CHANNELS_SH(c)         ((c) << 3)
-#define BYTES_SH(b)            (b)
+#define FLOAT_SH(a)             ((a) << 22)
+#define OPTIMIZED_SH(s)         ((s) << 21)
+#define COLORSPACE_SH(s)        ((s) << 16)
+#define SWAPFIRST_SH(s)         ((s) << 14)
+#define FLAVOR_SH(s)            ((s) << 13)
+#define PLANAR_SH(p)            ((p) << 12)
+#define ENDIAN16_SH(e)          ((e) << 11)
+#define DOSWAP_SH(e)            ((e) << 10)
+#define EXTRA_SH(e)             ((e) << 7)
+#define CHANNELS_SH(c)          ((c) << 3)
+#define BYTES_SH(b)             (b)
 
 // These macros unpack format specifiers into integers
-#define T_FLOAT(a)            (((a)>>22)&1)
-#define T_OPTIMIZED(o)        (((o)>>21)&1)
-#define T_COLORSPACE(s)       (((s)>>16)&31)
-#define T_SWAPFIRST(s)        (((s)>>14)&1)
-#define T_FLAVOR(s)           (((s)>>13)&1)
-#define T_PLANAR(p)           (((p)>>12)&1)
-#define T_ENDIAN16(e)         (((e)>>11)&1)
-#define T_DOSWAP(e)           (((e)>>10)&1)
-#define T_EXTRA(e)            (((e)>>7)&7)
-#define T_CHANNELS(c)         (((c)>>3)&15)
-#define T_BYTES(b)            ((b)&7)
+#define T_FLOAT(a)              (((a) >> 22) & 1)
+#define T_OPTIMIZED(o)          (((o) >> 21) & 1)
+#define T_COLORSPACE(s)         (((s) >> 16) & 31)
+#define T_SWAPFIRST(s)          (((s) >> 14) & 1)
+#define T_FLAVOR(s)             (((s) >> 13) & 1)
+#define T_PLANAR(p)             (((p) >> 12) & 1)
+#define T_ENDIAN16(e)           (((e) >> 11) & 1)
+#define T_DOSWAP(e)             (((e) >> 10) & 1)
+#define T_EXTRA(e)              (((e) >>  7) & 7)
+#define T_CHANNELS(c)           (((c) >>  3) & 15)
+#define T_BYTES(b)              ((b) & 7)
 
 
 // Pixel types
@@ -1173,12 +1173,12 @@ CMSAPI void*             CMSEXPORT cmsStageData(const cmsStage* mpe);
 
 // Sampling
 typedef cmsInt32Number (* cmsSAMPLER16)   (register const cmsUInt16Number In[],
-                                            register cmsUInt16Number Out[],
-                                            register void * Cargo);
+                                           register cmsUInt16Number Out[],
+                                           register void * Cargo);
 
 typedef cmsInt32Number (* cmsSAMPLERFLOAT)(register const cmsFloat32Number In[],
-                                            register cmsFloat32Number Out[],
-                                            register void * Cargo);
+                                           register cmsFloat32Number Out[],
+                                           register void * Cargo);
 
 // Use this flag to prevent changes being written to destination
 #define SAMPLER_INSPECT     0x01000000
@@ -1192,7 +1192,7 @@ CMSAPI cmsBool           CMSEXPORT cmsSliceSpace16(cmsUInt32Number nInputs, cons
                                                    cmsSAMPLER16 Sampler, void * Cargo);
 
 CMSAPI cmsBool           CMSEXPORT cmsSliceSpaceFloat(cmsUInt32Number nInputs, const cmsUInt32Number clutPoints[],
-                                                   cmsSAMPLERFLOAT Sampler, void * Cargo);
+                                                      cmsSAMPLERFLOAT Sampler, void * Cargo);
 
 // Multilocalized Unicode management ---------------------------------------------------------------------------------------
 
@@ -1209,8 +1209,8 @@ CMSAPI cmsBool           CMSEXPORT cmsMLUsetASCII(cmsMLU* mlu,
                                                   const char LanguageCode[3], const char CountryCode[3],
                                                   const char* ASCIIString);
 CMSAPI cmsBool           CMSEXPORT cmsMLUsetWide(cmsMLU* mlu,
-                                                  const char LanguageCode[3], const char CountryCode[3],
-                                                  const wchar_t* WideString);
+                                                 const char LanguageCode[3], const char CountryCode[3],
+                                                 const wchar_t* WideString);
 
 CMSAPI cmsUInt32Number   CMSEXPORT cmsMLUgetASCII(const cmsMLU* mlu,
                                                   const char LanguageCode[3], const char CountryCode[3],
@@ -1221,8 +1221,8 @@ CMSAPI cmsUInt32Number   CMSEXPORT cmsMLUgetWide(const cmsMLU* mlu,
                                                  wchar_t* Buffer, cmsUInt32Number BufferSize);
 
 CMSAPI cmsBool           CMSEXPORT cmsMLUgetTranslation(const cmsMLU* mlu,
-                                                         const char LanguageCode[3], const char CountryCode[3],
-                                                         char ObtainedLanguage[3], char ObtainedCountry[3]);
+                                                        const char LanguageCode[3], const char CountryCode[3],
+                                                        char ObtainedLanguage[3], char ObtainedCountry[3]);
 
 // Undercolorremoval & black generation -------------------------------------------------------------------------------------
 
@@ -1316,9 +1316,9 @@ typedef struct {
 
 } cmsSEQ;
 
-CMSAPI cmsSEQ*           CMSEXPORT cmsAllocProfileSequenceDescription(cmsContext ContextID, cmsUInt32Number n);
-CMSAPI cmsSEQ*           CMSEXPORT cmsDupProfileSequenceDescription(const cmsSEQ* pseq);
-CMSAPI void              CMSEXPORT cmsFreeProfileSequenceDescription(cmsSEQ* pseq);
+CMSAPI cmsSEQ*  CMSEXPORT cmsAllocProfileSequenceDescription(cmsContext ContextID, cmsUInt32Number n);
+CMSAPI cmsSEQ*  CMSEXPORT cmsDupProfileSequenceDescription(const cmsSEQ* pseq);
+CMSAPI void     CMSEXPORT cmsFreeProfileSequenceDescription(cmsSEQ* pseq);
 
 // Dictionaries --------------------------------------------------------------------------------------------------------
 
@@ -1579,22 +1579,22 @@ CMSAPI cmsUInt32Number  CMSEXPORT cmsGetSupportedIntents(cmsUInt32Number nMax, c
 
 // Transforms ---------------------------------------------------------------------------------------------------
 
-CMSAPI cmsHTRANSFORM    CMSEXPORT cmsCreateTransformTHR(cmsContext ContextID,
-                                                  cmsHPROFILE Input,
+CMSAPI cmsHTRANSFORM CMSEXPORT cmsCreateTransformTHR(cmsContext ContextID,
+                                                     cmsHPROFILE Input,
+                                                     cmsUInt32Number InputFormat,
+                                                     cmsHPROFILE Output,
+                                                     cmsUInt32Number OutputFormat,
+                                                     cmsUInt32Number Intent,
+                                                     cmsUInt32Number dwFlags);
+
+CMSAPI cmsHTRANSFORM CMSEXPORT cmsCreateTransform(cmsHPROFILE Input,
                                                   cmsUInt32Number InputFormat,
                                                   cmsHPROFILE Output,
                                                   cmsUInt32Number OutputFormat,
                                                   cmsUInt32Number Intent,
                                                   cmsUInt32Number dwFlags);
 
-CMSAPI cmsHTRANSFORM    CMSEXPORT cmsCreateTransform(cmsHPROFILE Input,
-                                                  cmsUInt32Number InputFormat,
-                                                  cmsHPROFILE Output,
-                                                  cmsUInt32Number OutputFormat,
-                                                  cmsUInt32Number Intent,
-                                                  cmsUInt32Number dwFlags);
-
-CMSAPI cmsHTRANSFORM    CMSEXPORT cmsCreateProofingTransformTHR(cmsContext ContextID,
+CMSAPI cmsHTRANSFORM CMSEXPORT cmsCreateProofingTransformTHR(cmsContext ContextID,
                                                   cmsHPROFILE Input,
                                                   cmsUInt32Number InputFormat,
                                                   cmsHPROFILE Output,
@@ -1604,7 +1604,7 @@ CMSAPI cmsHTRANSFORM    CMSEXPORT cmsCreateProofingTransformTHR(cmsContext Conte
                                                   cmsUInt32Number ProofingIntent,
                                                   cmsUInt32Number dwFlags);
 
-CMSAPI cmsHTRANSFORM    CMSEXPORT cmsCreateProofingTransform(cmsHPROFILE Input,
+CMSAPI cmsHTRANSFORM CMSEXPORT cmsCreateProofingTransform(cmsHPROFILE Input,
                                                   cmsUInt32Number InputFormat,
                                                   cmsHPROFILE Output,
                                                   cmsUInt32Number OutputFormat,
@@ -1613,7 +1613,7 @@ CMSAPI cmsHTRANSFORM    CMSEXPORT cmsCreateProofingTransform(cmsHPROFILE Input,
                                                   cmsUInt32Number ProofingIntent,
                                                   cmsUInt32Number dwFlags);
 
-CMSAPI cmsHTRANSFORM    CMSEXPORT cmsCreateMultiprofileTransformTHR(cmsContext ContextID,
+CMSAPI cmsHTRANSFORM CMSEXPORT cmsCreateMultiprofileTransformTHR(cmsContext ContextID,
                                                   cmsHPROFILE hProfiles[],
                                                   cmsUInt32Number nProfiles,
                                                   cmsUInt32Number InputFormat,
@@ -1622,7 +1622,7 @@ CMSAPI cmsHTRANSFORM    CMSEXPORT cmsCreateMultiprofileTransformTHR(cmsContext C
                                                   cmsUInt32Number dwFlags);
 
 
-CMSAPI cmsHTRANSFORM    CMSEXPORT cmsCreateMultiprofileTransform(cmsHPROFILE hProfiles[],
+CMSAPI cmsHTRANSFORM CMSEXPORT cmsCreateMultiprofileTransform(cmsHPROFILE hProfiles[],
                                                   cmsUInt32Number nProfiles,
                                                   cmsUInt32Number InputFormat,
                                                   cmsUInt32Number OutputFormat,
@@ -1630,7 +1630,7 @@ CMSAPI cmsHTRANSFORM    CMSEXPORT cmsCreateMultiprofileTransform(cmsHPROFILE hPr
                                                   cmsUInt32Number dwFlags);
 
 
-CMSAPI cmsHTRANSFORM    CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
+CMSAPI cmsHTRANSFORM CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
                                                    cmsUInt32Number nProfiles, cmsHPROFILE hProfiles[],
                                                    cmsBool  BPC[],
                                                    cmsUInt32Number Intents[],
@@ -1641,37 +1641,37 @@ CMSAPI cmsHTRANSFORM    CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextI
                                                    cmsUInt32Number OutputFormat,
                                                    cmsUInt32Number dwFlags);
 
-CMSAPI void             CMSEXPORT cmsDeleteTransform(cmsHTRANSFORM hTransform);
+CMSAPI void          CMSEXPORT cmsDeleteTransform(cmsHTRANSFORM hTransform);
 
-CMSAPI void             CMSEXPORT cmsDoTransform(cmsHTRANSFORM Transform,
-                                                 const void * InputBuffer,
-                                                 void * OutputBuffer,
-                                                 cmsUInt32Number Size);
+CMSAPI void          CMSEXPORT cmsDoTransform(cmsHTRANSFORM Transform,
+                                              const void * InputBuffer,
+                                              void * OutputBuffer,
+                                              cmsUInt32Number Size);
 
-CMSAPI void             CMSEXPORT cmsDoTransformStride(cmsHTRANSFORM Transform,
-                                                 const void * InputBuffer,
-                                                 void * OutputBuffer,
-                                                 cmsUInt32Number Size,
-                                                 cmsUInt32Number Stride);
+CMSAPI void          CMSEXPORT cmsDoTransformStride(cmsHTRANSFORM Transform,
+                                                    const void * InputBuffer,
+                                                    void * OutputBuffer,
+                                                    cmsUInt32Number Size,
+                                                    cmsUInt32Number Stride);
 
 
-CMSAPI void             CMSEXPORT cmsSetAlarmCodes(cmsUInt16Number NewAlarm[cmsMAXCHANNELS]);
-CMSAPI void             CMSEXPORT cmsGetAlarmCodes(cmsUInt16Number NewAlarm[cmsMAXCHANNELS]);
+CMSAPI void          CMSEXPORT cmsSetAlarmCodes(cmsUInt16Number NewAlarm[cmsMAXCHANNELS]);
+CMSAPI void          CMSEXPORT cmsGetAlarmCodes(cmsUInt16Number NewAlarm[cmsMAXCHANNELS]);
 
 // Adaptation state for absolute colorimetric intent
 CMSAPI cmsFloat64Number CMSEXPORT cmsSetAdaptationState(cmsFloat64Number d);
 
 // Grab the ContextID from an open transform. Returns NULL if a NULL transform is passed
-CMSAPI cmsContext       CMSEXPORT cmsGetTransformContextID(cmsHTRANSFORM hTransform);
+CMSAPI cmsContext    CMSEXPORT cmsGetTransformContextID(cmsHTRANSFORM hTransform);
 
 // Grab the input/output formats
 CMSAPI cmsUInt32Number CMSEXPORT cmsGetTransformInputFormat(cmsHTRANSFORM hTransform);
 CMSAPI cmsUInt32Number CMSEXPORT cmsGetTransformOutputFormat(cmsHTRANSFORM hTransform);
 
 // For backwards compatibility
-CMSAPI cmsBool          CMSEXPORT cmsChangeBuffersFormat(cmsHTRANSFORM hTransform,
-                                                         cmsUInt32Number InputFormat,
-                                                         cmsUInt32Number OutputFormat);
+CMSAPI cmsBool       CMSEXPORT cmsChangeBuffersFormat(cmsHTRANSFORM hTransform,
+                                                      cmsUInt32Number InputFormat,
+                                                      cmsUInt32Number OutputFormat);
 
 
 
@@ -1732,10 +1732,10 @@ CMSAPI const char*      CMSEXPORT cmsIT8GetDataRowCol(cmsHANDLE hIT8, int row, i
 CMSAPI cmsFloat64Number CMSEXPORT cmsIT8GetDataRowColDbl(cmsHANDLE hIT8, int row, int col);
 
 CMSAPI cmsBool          CMSEXPORT cmsIT8SetDataRowCol(cmsHANDLE hIT8, int row, int col,
-                                                const char* Val);
+                                                      const char* Val);
 
 CMSAPI cmsBool          CMSEXPORT cmsIT8SetDataRowColDbl(cmsHANDLE hIT8, int row, int col,
-                                                cmsFloat64Number Val);
+                                                         cmsFloat64Number Val);
 
 CMSAPI const char*      CMSEXPORT cmsIT8GetData(cmsHANDLE hIT8, const char* cPatch, const char* cSample);
 
@@ -1747,8 +1747,8 @@ CMSAPI cmsBool          CMSEXPORT cmsIT8SetData(cmsHANDLE hIT8, const char* cPat
                                                 const char *Val);
 
 CMSAPI cmsBool          CMSEXPORT cmsIT8SetDataDbl(cmsHANDLE hIT8, const char* cPatch,
-                                                const char* cSample,
-                                                cmsFloat64Number Val);
+                                                   const char* cSample,
+                                                   cmsFloat64Number Val);
 
 CMSAPI int              CMSEXPORT cmsIT8FindDataFormat(cmsHANDLE hIT8, const char* cSample);
 CMSAPI cmsBool          CMSEXPORT cmsIT8SetDataFormat(cmsHANDLE hIT8, int n, const char *Sample);
@@ -1784,9 +1784,9 @@ CMSAPI cmsFloat64Number CMSEXPORT cmsDetectTAC(cmsHPROFILE hProfile);
 
 
 // Poor man's gamut mapping
-CMSAPI cmsBool          CMSEXPORT cmsDesaturateLab(cmsCIELab* Lab,
-                                                   double amax, double amin,
-                                                   double bmax, double bmin);
+CMSAPI cmsBool CMSEXPORT cmsDesaturateLab(cmsCIELab* Lab,
+                                          double amax, double amin,
+                                          double bmax, double bmin);
 
 #ifndef CMS_USE_CPP_API
 #   ifdef __cplusplus
