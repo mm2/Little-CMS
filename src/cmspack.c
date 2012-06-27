@@ -2567,7 +2567,6 @@ cmsUInt8Number* PackHalfFrom16(register _cmsTRANSFORM* Info,
 {
     cmsUInt16Number* Inks = (cmsUInt16Number*) output;
     int nChan    = T_CHANNELS(Info -> OutputFormat);
-    int Reverse  = T_FLAVOR(Info -> OutputFormat);
 
     int i;
     cmsFloat32Number maximum = IsInkSpace(Info ->OutputFormat) ? 655.35F : 65535.0F;
