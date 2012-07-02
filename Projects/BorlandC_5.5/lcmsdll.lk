@@ -5,6 +5,7 @@ cmscnvrt.obj+
 cmserr.obj+
 cmsgamma.obj+
 cmsgmt.obj+
+cmshalf.obj+
 cmsintrp.obj+
 cmsio0.obj+
 cmsio1.obj+

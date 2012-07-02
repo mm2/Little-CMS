@@ -25,3 +25,4 @@
 ..\..\src\cmsvirt.c
 ..\..\src\cmswtpnt.c
 ..\..\src\cmsxform.c
+..\..\src\cmshalf.c
