@@ -308,12 +308,11 @@ cmsXYZEncoded2Float                      =   cmsXYZEncoded2Float
 cmsSliceSpace16                          =   cmsSliceSpace16
 cmsSliceSpaceFloat                       =   cmsSliceSpaceFloat
 cmsChangeBuffersFormat                   =   cmsChangeBuffersFormat
-cmsDictAlloc                             =   cmsDictAlloc 
+cmsDictAlloc                             =   cmsDictAlloc
 cmsDictFree                              =   cmsDictFree
 cmsDictDup                               =   cmsDictDup
 cmsDictAddEntry                          =   cmsDictAddEntry
 cmsDictGetEntryList                      =   cmsDictGetEntryList
 cmsDictNextEntry                         =   cmsDictNextEntry
 _cmsGetTransformUserData                 =   _cmsGetTransformUserData
-                                         
-                                         
+

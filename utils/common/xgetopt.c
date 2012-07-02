@@ -1,16 +1,16 @@
 /*
-    getopt.c 
+    getopt.c
 
 */
 
 #include <errno.h>
 #include <string.h>
 #include <stdio.h>
- 
+
 int     xoptind = 1;    /* index of which argument is next  */
 char   *xoptarg;        /* pointer to argument of current option */
 int     xopterr = 0;    /* allow error message  */
- 
+
 static  char   *letP = NULL;    /* remember next option char's location */
 char    SW = '-';				/* DOS switch character, either '-' or '/' */
 

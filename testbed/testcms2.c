@@ -3892,6 +3892,11 @@ cmsInt32Number CheckFormatters16(void)
    C( TYPE_ALabV2_8 );
    C( TYPE_LabV2_16 );
 
+   C( TYPE_GRAY_HALF_FLT );
+   C( TYPE_RGB_HALF_FLT  );
+   C( TYPE_CMYK_HALF_FLT );
+   C( TYPE_RGBA_HALF_FLT );
+
    return FormatterFailed == 0 ? 1 : 0;
 }
 #undef C
@@ -3982,6 +3987,11 @@ cmsInt32Number CheckFormattersFloat(void)
     C( TYPE_GRAY_DBL );
     C( TYPE_RGB_DBL  );
     C( TYPE_CMYK_DBL );
+
+   C( TYPE_GRAY_HALF_FLT );
+   C( TYPE_RGB_HALF_FLT  );
+   C( TYPE_CMYK_HALF_FLT );
+   C( TYPE_RGBA_HALF_FLT );
 
     return FormatterFailed == 0 ? 1 : 0;
 }
@@ -7293,7 +7303,6 @@ cmsHPROFILE CreateCurves(void)
 static
 void SpeedTest(void)
 {
-
     printf("\n\nP E R F O R M A N C E   T E S T S\n");
     printf(    "=================================\n\n");
     fflush(stdout);

@@ -3,22 +3,22 @@
 //  Little Color Management System
 //  Copyright (c) 1998-2010 Marti Maria Saguer
 //
-// Permission is hereby granted, free of charge, to any person obtaining 
-// a copy of this software and associated documentation files (the "Software"), 
-// to deal in the Software without restriction, including without limitation 
-// the rights to use, copy, modify, merge, publish, distribute, sublicense, 
-// and/or sell copies of the Software, and to permit persons to whom the Software 
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the Software
 // is furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in 
+// The above copyright notice and this permission notice shall be included in
 // all copies or substantial portions of the Software.
 //
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, 
-// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO 
-// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND 
-// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE 
-// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION 
-// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION 
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
 //---------------------------------------------------------------------------------
@@ -39,7 +39,7 @@ void FatalError(const char *frm, ...)
     fprintf(stderr, "[%s fatal error]: ", ProgramName);
     vfprintf(stderr, frm, args);
     fprintf(stderr, "\n");
-    va_end(args);   
+    va_end(args);
 
     exit(1);
 }
@@ -49,7 +49,7 @@ static
 void MyErrorLogHandler(cmsContext ContextID, cmsUInt32Number ErrorCode, const char *Text)
 {
     if (Verbose >= 0)
-        fprintf(stderr, "[%s]: %s\n", ProgramName, Text);   
+        fprintf(stderr, "[%s]: %s\n", ProgramName, Text);
 
     UTILS_UNUSED_PARAMETER(ErrorCode);
     UTILS_UNUSED_PARAMETER(ContextID);
@@ -67,10 +67,10 @@ void InitUtils(const char* PName)
 
 // Virtual profiles are handled here.
 cmsHPROFILE OpenStockProfile(cmsContext ContextID, const char* File)
-{   
-       if (!File) 
-            return cmsCreate_sRGBProfileTHR(ContextID);    
-       
+{
+       if (!File)
+            return cmsCreate_sRGBProfileTHR(ContextID);
+
        if (cmsstrcasecmp(File, "*Lab2") == 0)
                 return cmsCreateLab2ProfileTHR(ContextID, NULL);
 
@@ -79,12 +79,12 @@ cmsHPROFILE OpenStockProfile(cmsContext ContextID, const char* File)
 
        if (cmsstrcasecmp(File, "*Lab") == 0)
                 return cmsCreateLab4ProfileTHR(ContextID, NULL);
-       
+
        if (cmsstrcasecmp(File, "*LabD65") == 0) {
 
            cmsCIExyY D65xyY;
-           
-           cmsWhitePointFromTemp( &D65xyY, 6504);           
+
+           cmsWhitePointFromTemp( &D65xyY, 6504);
            return cmsCreateLab4ProfileTHR(ContextID, &D65xyY);
        }
 
@@ -113,12 +113,12 @@ cmsHPROFILE OpenStockProfile(cmsContext ContextID, const char* File)
        if (cmsstrcasecmp(File, "*null") == 0)
                 return cmsCreateNULLProfileTHR(ContextID);
 
-       
+
        if (cmsstrcasecmp(File, "*Lin2222") == 0) {
 
             cmsToneCurve*  Gamma = cmsBuildGamma(0, 2.2);
             cmsToneCurve*  Gamma4[4];
-            cmsHPROFILE hProfile; 
+            cmsHPROFILE hProfile;
 
             Gamma4[0] = Gamma4[1] = Gamma4[2] = Gamma4[3] = Gamma;
             hProfile = cmsCreateLinearizationDeviceLink(cmsSigCmykData, Gamma4);
@@ -126,7 +126,7 @@ cmsHPROFILE OpenStockProfile(cmsContext ContextID, const char* File)
             return hProfile;
        }
 
-           
+
         return cmsOpenProfileFromFileTHR(ContextID, File, "r");
 }
 
@@ -138,7 +138,7 @@ void PrintBuiltins(void)
                      "\t*Lab4  -- D50-based v4 CIEL*a*b\n"
                      "\t*Lab   -- D50-based v4 CIEL*a*b\n"
                      "\t*XYZ   -- CIE XYZ (PCS)\n"
-                     "\t*sRGB  -- sRGB color space\n" 
+                     "\t*sRGB  -- sRGB color space\n"
                      "\t*Gray22 - Monochrome of Gamma 2.2\n"
                      "\t*Gray30 - Monochrome of Gamma 3.0\n"
                      "\t*null   - Monochrome black for all input\n"
@@ -161,8 +161,8 @@ void PrintInfo(cmsHPROFILE h, cmsInfoType Info)
 
     cmsGetProfileInfoASCII(h, Info, "en", "US", text, len);
 
-    if (strlen(text) > 0) 
-        printf("%s\n", text);   
+    if (strlen(text) > 0)
+        printf("%s\n", text);
 
     free(text);
 }
@@ -177,9 +177,9 @@ void PrintColorantTable(cmsHPROFILE hInput, cmsTagSignature Sig, const char* Tit
     int i, n;
 
     if (cmsIsTag(hInput, Sig)) {
-        
+
         printf("%s:\n", Title);
-        
+
         list = cmsReadTag(hInput, Sig);
         if (list == NULL) {
             printf("(Unavailable)\n");
@@ -194,10 +194,10 @@ void PrintColorantTable(cmsHPROFILE hInput, cmsTagSignature Sig, const char* Tit
             cmsNamedColorInfo(list, i, Name, NULL, NULL, NULL, NULL);
             printf("\t%s\n", Name);
         }
-            
+
         printf("\n");
     }
-    
+
 }
 
 
@@ -205,13 +205,13 @@ void PrintProfileInformation(cmsHPROFILE hInput)
 {
     PrintInfo(hInput, cmsInfoDescription);
     PrintInfo(hInput, cmsInfoManufacturer);
-    PrintInfo(hInput, cmsInfoModel);       
-    PrintInfo(hInput, cmsInfoCopyright);   
+    PrintInfo(hInput, cmsInfoModel);
+    PrintInfo(hInput, cmsInfoCopyright);
 
     if (Verbose > 2) {
-        
+
         PrintColorantTable(hInput, cmsSigColorantTableTag,    "Input colorant table");
-        PrintColorantTable(hInput, cmsSigColorantTableOutTag, "Input colorant out table");      
+        PrintColorantTable(hInput, cmsSigColorantTableOutTag, "Input colorant out table");
     }
 
     printf("\n");
@@ -253,7 +253,7 @@ cmsBool SaveMemoryBlock(const cmsUInt8Number* Buffer, cmsUInt32Number dwLen, con
         return FALSE;
     }
 
-    if (fclose(out) != 0) { 
+    if (fclose(out) != 0) {
         FatalError("Error flushing file '%s'", Filename);
         return FALSE;
     }
@@ -286,7 +286,7 @@ int PixelTypeFromChanCount(int ColorChannels)
 
         default:
 
-            FatalError("What a weird separation of %d channels?!?!", ColorChannels);                
+            FatalError("What a weird separation of %d channels?!?!", ColorChannels);
             return -1;
     }
 }
@@ -301,7 +301,7 @@ int ChanCountFromPixelType(int ColorChannels)
 
       case PT_GRAY: return 1;
 
-      case PT_RGB: 
+      case PT_RGB:
       case PT_CMY:
       case PT_Lab:
       case PT_YUV:
@@ -325,7 +325,7 @@ int ChanCountFromPixelType(int ColorChannels)
 
       default:
 
-          FatalError("Unsupported color space of %d channels", ColorChannels);          
+          FatalError("Unsupported color space of %d channels", ColorChannels);
           return -1;
     }
 }
