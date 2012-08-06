@@ -9,7 +9,7 @@ INCLUDES	=  -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/sr
 
 check_PROGRAMS = testcms
 
-CFLAGS = --pedantic -Wall -std=c99 -O2
+# CFLAGS = --pedantic -Wall -std=c99 -O2
 
 testcms_LDADD = $(top_builddir)/src/liblcms2.la 
 testcms_LDFLAGS = @LDFLAGS@

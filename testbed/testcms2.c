@@ -670,6 +670,8 @@ void RemoveTestProfiles(void)
     remove("bchslcms2.icc");
     remove("lcms2cmyk.icc");
     remove("glablcms2.icc");
+    remove("lcms2link.icc");
+    remove("lcms2link2.icc");
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -7040,6 +7042,56 @@ int CheckMD5(void)
 }
 
 
+
+static
+int CheckLinking(void)
+{
+    cmsHPROFILE h;
+    cmsPipeline * pipeline;
+    cmsStage *stageBegin, *stageEnd;
+
+    // Create a CLUT based profile
+     h = cmsCreateInkLimitingDeviceLinkTHR(DbgThread(), cmsSigCmykData, 150);
+
+     // link a second tag
+     cmsLinkTag(h, cmsSigAToB1Tag, cmsSigAToB0Tag);
+
+     // Save the linked devicelink
+    if (!cmsSaveProfileToFile(h, "lcms2link.icc")) return 0;
+    cmsCloseProfile(h);
+
+    // Now open the profile and read the pipeline
+    h = cmsOpenProfileFromFile("lcms2link.icc", "r");
+    if (h == NULL) return 0;
+
+    pipeline = (cmsPipeline*) cmsReadTag(h, cmsSigAToB1Tag);
+    if (pipeline == NULL)
+    {
+        return 0;
+    }
+
+    pipeline = cmsPipelineDup(pipeline);
+
+    // extract stage from pipe line
+    cmsPipelineUnlinkStage(pipeline, cmsAT_BEGIN, &stageBegin);
+    cmsPipelineUnlinkStage(pipeline, cmsAT_END,   &stageEnd);
+    cmsPipelineInsertStage(pipeline, cmsAT_END,    stageEnd);
+    cmsPipelineInsertStage(pipeline, cmsAT_BEGIN,  stageBegin);
+    
+    if (cmsTagLinkedTo(h, cmsSigAToB1Tag) != cmsSigAToB0Tag) return 0;
+
+    cmsWriteTag(h, cmsSigAToB0Tag, pipeline);
+    cmsPipelineFree(pipeline);
+
+	if (!cmsSaveProfileToFile(h, "lcms2link2.icc")) return 0;
+    cmsCloseProfile(h);
+
+
+    return 1;
+
+}
+
+
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
 // --------------------------------------------------------------------------------------------------
@@ -7904,6 +7956,7 @@ int main(int argc, char* argv[])
     Check("PostScript generator", CheckPostScript);
     Check("Segment maxima GBD", CheckGBD);
     Check("MD5 digest", CheckMD5);
+    Check("Linking", CheckLinking);
     }
 
 
