@@ -315,4 +315,6 @@ cmsDictAddEntry                          =   cmsDictAddEntry
 cmsDictGetEntryList                      =   cmsDictGetEntryList
 cmsDictNextEntry                         =   cmsDictNextEntry
 _cmsGetTransformUserData                 =   _cmsGetTransformUserData
-
+_cmsSetTransformUserData                 =   _cmsSetTransformUserData
+_cmsGetTransformFormatters16             =   _cmsGetTransformFormatters16
+_cmsGetTransformFormattersFloat          =   _cmsGetTransformFormattersFloat

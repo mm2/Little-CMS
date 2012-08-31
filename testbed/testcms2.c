@@ -3881,7 +3881,6 @@ cmsInt32Number CheckFormatters16(void)
    C( TYPE_RGB_FLT  );
    C( TYPE_BGR_FLT  );
    C( TYPE_CMYK_FLT );
-   C( TYPE_XYZA_FLT );
    C( TYPE_LabA_FLT );
    C( TYPE_RGBA_FLT );
    C( TYPE_ARGB_FLT );
@@ -3904,6 +3903,13 @@ cmsInt32Number CheckFormatters16(void)
    C( TYPE_RGB_HALF_FLT  );
    C( TYPE_CMYK_HALF_FLT );
    C( TYPE_RGBA_HALF_FLT );
+
+   C( TYPE_RGBA_HALF_FLT );
+   C( TYPE_ARGB_HALF_FLT );
+   C( TYPE_BGR_HALF_FLT  );
+   C( TYPE_BGRA_HALF_FLT );
+   C( TYPE_ABGR_HALF_FLT );
+
 
    return FormatterFailed == 0 ? 1 : 0;
 }
@@ -3986,7 +3992,6 @@ cmsInt32Number CheckFormattersFloat(void)
     C( TYPE_BGR_FLT  );
     C( TYPE_CMYK_FLT );
 
-    C( TYPE_XYZA_FLT );
     C( TYPE_LabA_FLT );
     C( TYPE_RGBA_FLT );
 
@@ -4001,16 +4006,23 @@ cmsInt32Number CheckFormattersFloat(void)
     C( TYPE_BGR_DBL  );
     C( TYPE_CMYK_DBL );
 
-
    C( TYPE_GRAY_HALF_FLT );
    C( TYPE_RGB_HALF_FLT  );
    C( TYPE_CMYK_HALF_FLT );
    C( TYPE_RGBA_HALF_FLT );
 
+   C( TYPE_RGBA_HALF_FLT );
+   C( TYPE_ARGB_HALF_FLT );
+   C( TYPE_BGR_HALF_FLT  );
+   C( TYPE_BGRA_HALF_FLT );
+   C( TYPE_ABGR_HALF_FLT );
+
+
     return FormatterFailed == 0 ? 1 : 0;
 }
 #undef C
 
+#ifndef CMS_NO_HALF_SUPPORT 
 
 // Check half float
 #define my_isfinite(x) ((x) != (x))
@@ -4037,6 +4049,8 @@ cmsInt32Number CheckFormattersHalf(void)
 
     return 1;
 }
+
+#endif
 
 static
 cmsInt32Number CheckOneRGB(cmsHTRANSFORM xform, cmsUInt16Number R, cmsUInt16Number G, cmsUInt16Number B, cmsUInt16Number Ro, cmsUInt16Number Go, cmsUInt16Number Bo)
@@ -7091,6 +7105,190 @@ int CheckLinking(void)
 
 }
 
+//  TestMPE
+//
+//  Created by Paul Miller on 30/08/2012.
+//
+static 
+cmsHPROFILE IdentityMatrixProfile( cmsColorSpaceSignature dataSpace)
+{
+    cmsContext ctx = 0;
+    cmsVEC3 zero = {{0,0,0}};
+    cmsMAT3 identity;
+    cmsPipeline* forward;
+    cmsPipeline* reverse;
+    cmsHPROFILE identityProfile = cmsCreateProfilePlaceholder( ctx);
+    
+
+    cmsSetProfileVersion(identityProfile, 4.3);
+    
+    cmsSetDeviceClass( identityProfile,     cmsSigColorSpaceClass);
+    cmsSetColorSpace(identityProfile,       dataSpace);
+    cmsSetPCS(identityProfile,              cmsSigXYZData);
+    
+    cmsSetHeaderRenderingIntent(identityProfile,  INTENT_RELATIVE_COLORIMETRIC);
+    
+    cmsWriteTag(identityProfile, cmsSigMediaWhitePointTag, cmsD50_XYZ());
+    
+   
+    
+    _cmsMAT3identity( &identity);
+    
+    // build forward transform.... (RGB to PCS)
+    forward = cmsPipelineAlloc( 0, 3, 3);
+    cmsPipelineInsertStage( forward, cmsAT_END, cmsStageAllocMatrix( ctx, 3, 3, (cmsFloat64Number*)&identity, (cmsFloat64Number*)&zero));
+    cmsWriteTag( identityProfile, cmsSigDToB1Tag, forward);
+    
+    cmsPipelineFree( forward);
+    
+    reverse = cmsPipelineAlloc( 0, 3, 3);
+    cmsPipelineInsertStage( reverse, cmsAT_END, cmsStageAllocMatrix( ctx, 3, 3, (cmsFloat64Number*)&identity, (cmsFloat64Number*)&zero));
+    cmsWriteTag( identityProfile, cmsSigBToD1Tag, reverse);
+    
+    cmsPipelineFree( reverse);
+    
+    return identityProfile;
+}
+
+static
+cmsInt32Number CheckFloatXYZ(void)
+{
+    cmsHPROFILE input;
+    cmsHPROFILE xyzProfile = cmsCreateXYZProfile();
+    cmsHTRANSFORM xform;
+    cmsFloat32Number in[3];
+    cmsFloat32Number out[3];
+    
+    in[0] = 1.0;
+    in[1] = 1.0;
+    in[2] = 1.0;
+    
+    // RGB to XYZ
+    input = IdentityMatrixProfile( cmsSigRgbData);
+    
+    xform = cmsCreateTransform( input, TYPE_RGB_FLT, xyzProfile, TYPE_XYZ_FLT, INTENT_RELATIVE_COLORIMETRIC, 0);
+    cmsCloseProfile(input);
+    
+    cmsDoTransform( xform, in, out, 1);
+    cmsDeleteTransform( xform);
+    
+    if (!IsGoodVal("Float RGB->XYZ", in[0], out[0], FLOAT_PRECISSION) ||
+        !IsGoodVal("Float RGB->XYZ", in[1], out[1], FLOAT_PRECISSION) ||
+        !IsGoodVal("Float RGB->XYZ", in[2], out[2], FLOAT_PRECISSION))
+           return 0;
+    
+    
+    // XYZ to XYZ
+    input = IdentityMatrixProfile( cmsSigXYZData);
+    
+    xform = cmsCreateTransform( input, TYPE_XYZ_FLT, xyzProfile, TYPE_XYZ_FLT, INTENT_RELATIVE_COLORIMETRIC, 0);
+    cmsCloseProfile(input);
+
+    cmsDoTransform( xform, in, out, 1);
+    
+    
+    cmsDeleteTransform( xform);
+    
+     if (!IsGoodVal("Float XYZ->XYZ", in[0], out[0], FLOAT_PRECISSION) ||
+         !IsGoodVal("Float XYZ->XYZ", in[1], out[1], FLOAT_PRECISSION) ||
+         !IsGoodVal("Float XYZ->XYZ", in[2], out[2], FLOAT_PRECISSION))
+           return 0;
+   
+    
+    // XYZ to RGB
+    input = IdentityMatrixProfile( cmsSigRgbData);
+    
+    xform = cmsCreateTransform( xyzProfile, TYPE_XYZ_FLT, input, TYPE_RGB_FLT, INTENT_RELATIVE_COLORIMETRIC, 0);
+    cmsCloseProfile(input);
+    
+    cmsDoTransform( xform, in, out, 1);
+   
+    cmsDeleteTransform( xform);
+
+       if (!IsGoodVal("Float XYZ->RGB", in[0], out[0], FLOAT_PRECISSION) ||
+           !IsGoodVal("Float XYZ->RGB", in[1], out[1], FLOAT_PRECISSION) ||
+           !IsGoodVal("Float XYZ->RGB", in[2], out[2], FLOAT_PRECISSION))
+           return 0;
+        
+
+    // Now the optimizer should remove a stage
+
+    // XYZ to RGB
+    input = IdentityMatrixProfile( cmsSigRgbData);
+    
+    xform = cmsCreateTransform( input, TYPE_RGB_FLT, input, TYPE_RGB_FLT, INTENT_RELATIVE_COLORIMETRIC, 0);
+    cmsCloseProfile(input);
+    
+    cmsDoTransform( xform, in, out, 1);
+   
+    cmsDeleteTransform( xform);
+
+       if (!IsGoodVal("Float RGB->RGB", in[0], out[0], FLOAT_PRECISSION) ||
+           !IsGoodVal("Float RGB->RGB", in[1], out[1], FLOAT_PRECISSION) ||
+           !IsGoodVal("Float RGB->RGB", in[2], out[2], FLOAT_PRECISSION))
+           return 0;
+    
+    cmsCloseProfile(xyzProfile);
+
+
+    return 1;
+}
+
+
+/*
+Bug reported
+
+        1)
+        sRGB built-in V4.3 -> Lab identity built-in V4.3
+        Flags: "cmsFLAGS_NOCACHE", "cmsFLAGS_NOOPTIMIZE"
+        Input format: TYPE_RGBA_FLT
+        Output format: TYPE_LabA_FLT
+
+        2) and back
+        Lab identity built-in V4.3 -> sRGB built-in V4.3 
+        Flags: "cmsFLAGS_NOCACHE", "cmsFLAGS_NOOPTIMIZE"
+        Input format: TYPE_LabA_FLT
+        Output format: TYPE_RGBA_FLT
+
+*/
+static
+cmsInt32Number ChecksRGB2LabFLT(void)
+{
+    cmsHPROFILE hSRGB = cmsCreate_sRGBProfile();
+    cmsHPROFILE hLab  = cmsCreateLab4Profile(NULL);
+
+    cmsHTRANSFORM xform1 = cmsCreateTransform(hSRGB, TYPE_RGBA_FLT, hLab, TYPE_LabA_FLT, 0, cmsFLAGS_NOCACHE|cmsFLAGS_NOOPTIMIZE);
+    cmsHTRANSFORM xform2 = cmsCreateTransform(hLab, TYPE_LabA_FLT, hSRGB, TYPE_RGBA_FLT, 0, cmsFLAGS_NOCACHE|cmsFLAGS_NOOPTIMIZE);
+
+    cmsFloat32Number RGBA1[4], RGBA2[4], LabA[4];
+    int i;
+
+
+    for (i = 0; i <= 100; i++)
+    {
+        RGBA1[0] = i / 100.0F;
+        RGBA1[1] = i / 100.0F;
+        RGBA1[2] = i / 100.0F;
+        RGBA1[3] = 0;
+
+        cmsDoTransform(xform1, RGBA1, LabA,  1);
+        cmsDoTransform(xform2, LabA, RGBA2, 1);
+
+        if (!IsGoodVal("Float RGB->RGB", RGBA1[0], RGBA2[0], FLOAT_PRECISSION) ||
+            !IsGoodVal("Float RGB->RGB", RGBA1[1], RGBA2[1], FLOAT_PRECISSION) ||
+            !IsGoodVal("Float RGB->RGB", RGBA1[2], RGBA2[2], FLOAT_PRECISSION))
+            return 0;
+    }
+
+
+    cmsDeleteTransform(xform1);
+    cmsDeleteTransform(xform2);
+    cmsCloseProfile(hSRGB);
+    cmsCloseProfile(hLab);
+
+    return 1;
+}
+
 
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
@@ -7895,8 +8093,10 @@ int main(int argc, char* argv[])
     Check("Named Color LUT", CheckNamedColorLUT);
     Check("Usual formatters", CheckFormatters16);
     Check("Floating point formatters", CheckFormattersFloat);
-    Check("HALF formatters", CheckFormattersHalf);
 
+#ifndef CMS_NO_HALF_SUPPORT 
+    Check("HALF formatters", CheckFormattersHalf);
+#endif
     // ChangeBuffersFormat
     Check("ChangeBuffersFormat", CheckChangeBufferFormat);
 
@@ -7957,6 +8157,8 @@ int main(int argc, char* argv[])
     Check("Segment maxima GBD", CheckGBD);
     Check("MD5 digest", CheckMD5);
     Check("Linking", CheckLinking);
+    Check("floating point tags on XYZ", CheckFloatXYZ);
+    Check("RGB->Lab->RGB with alpha on FLT", ChecksRGB2LabFLT);
     }
 
 
