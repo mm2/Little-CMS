@@ -2672,9 +2672,9 @@ cmsUInt8Number* UnrollHalfTo16(register _cmsTRANSFORM* info,
     }
 
     if (T_PLANAR(info -> InputFormat))
-        return accum + sizeof(cmsFloat32Number);
+        return accum + sizeof(cmsUInt16Number);
     else
-        return accum + (nChan + Extra) * sizeof(cmsFloat32Number);
+        return accum + (nChan + Extra) * sizeof(cmsUInt16Number);
 }
 
 // Decodes an stream of half floats to wIn[] described by input format
@@ -2724,9 +2724,9 @@ cmsUInt8Number* UnrollHalfToFloat(_cmsTRANSFORM* info,
     }
 
     if (T_PLANAR(info -> InputFormat))
-        return accum + sizeof(cmsFloat32Number);
+        return accum + sizeof(cmsUInt16Number);
     else
-        return accum + (nChan + Extra) * sizeof(cmsFloat32Number);
+        return accum + (nChan + Extra) * sizeof(cmsUInt16Number);
 }
 
 
