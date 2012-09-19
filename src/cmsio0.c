@@ -1058,6 +1058,7 @@ cmsBool SaveTags(_cmsICCPROFILE* Icc, _cmsICCPROFILE* FileOrig)
     cmsTagTypeSignature Type;
     cmsTagTypeHandler* TypeHandler;
     cmsFloat64Number   Version = cmsGetProfileVersion((cmsHPROFILE) Icc);
+    cmsTagTypeHandler LocalTypeHandler;
 
     for (i=0; i < Icc -> TagCount; i++) {
 
@@ -1133,9 +1134,10 @@ cmsBool SaveTags(_cmsICCPROFILE* Icc, _cmsICCPROFILE* FileOrig)
             if (!_cmsWriteTypeBase(io, TypeBase))
                 return FALSE;
 
-            TypeHandler ->ContextID  = Icc ->ContextID;
-            TypeHandler ->ICCVersion = Icc ->Version;
-            if (!TypeHandler ->WritePtr(TypeHandler, io, Data, TagDescriptor ->ElemCount)) {
+            LocalTypeHandler = *TypeHandler;
+            LocalTypeHandler.ContextID  = Icc ->ContextID;
+            LocalTypeHandler.ICCVersion = Icc ->Version;
+            if (!LocalTypeHandler.WritePtr(&LocalTypeHandler, io, Data, TagDescriptor ->ElemCount)) {
 
                 char String[5];
 
@@ -1311,10 +1313,11 @@ cmsBool  CMSEXPORT cmsCloseProfile(cmsHPROFILE hProfile)
             cmsTagTypeHandler* TypeHandler = Icc ->TagTypeHandlers[i];
 
             if (TypeHandler != NULL) {
+                cmsTagTypeHandler LocalTypeHandler = *TypeHandler;
 
-                TypeHandler ->ContextID = Icc ->ContextID;              // As an additional parameters
-                TypeHandler ->ICCVersion = Icc ->Version;
-                TypeHandler ->FreePtr(TypeHandler, Icc -> TagPtrs[i]);
+                LocalTypeHandler.ContextID = Icc ->ContextID;              // As an additional parameters
+                LocalTypeHandler.ICCVersion = Icc ->Version;
+                LocalTypeHandler.FreePtr(&LocalTypeHandler, Icc -> TagPtrs[i]);
             }
             else
                 _cmsFree(Icc ->ContextID, Icc ->TagPtrs[i]);
@@ -1358,6 +1361,7 @@ void* CMSEXPORT cmsReadTag(cmsHPROFILE hProfile, cmsTagSignature sig)
     _cmsICCPROFILE* Icc = (_cmsICCPROFILE*) hProfile;
     cmsIOHANDLER* io = Icc ->IOhandler;
     cmsTagTypeHandler* TypeHandler;
+    cmsTagTypeHandler LocalTypeHandler;
     cmsTagDescriptor*  TagDescriptor;
     cmsTagTypeSignature BaseType;
     cmsUInt32Number Offset, TagSize;
@@ -1398,14 +1402,15 @@ void* CMSEXPORT cmsReadTag(cmsHPROFILE hProfile, cmsTagSignature sig)
     // Get type handler
     TypeHandler = _cmsGetTagTypeHandler(BaseType);
     if (TypeHandler == NULL) return NULL;
+    LocalTypeHandler = *TypeHandler;
 
 
     // Read the tag
     Icc -> TagTypeHandlers[n] = TypeHandler;
 
-    TypeHandler ->ContextID = Icc ->ContextID;
-    TypeHandler ->ICCVersion = Icc ->Version;
-    Icc -> TagPtrs[n] = TypeHandler ->ReadPtr(TypeHandler, io, &ElemCount, TagSize);
+    LocalTypeHandler.ContextID = Icc ->ContextID;
+    LocalTypeHandler.ICCVersion = Icc ->Version;
+    Icc -> TagPtrs[n] = LocalTypeHandler.ReadPtr(&LocalTypeHandler, io, &ElemCount, TagSize);
 
     // The tag type is supported, but something wrong happend and we cannot read the tag.
     // let know the user about this (although it is just a warning)
@@ -1458,6 +1463,7 @@ cmsBool CMSEXPORT cmsWriteTag(cmsHPROFILE hProfile, cmsTagSignature sig, const v
 {
     _cmsICCPROFILE* Icc = (_cmsICCPROFILE*) hProfile;
     cmsTagTypeHandler* TypeHandler = NULL;
+    cmsTagTypeHandler LocalTypeHandler;
     cmsTagDescriptor* TagDescriptor = NULL;
     cmsTagTypeSignature Type;
     int i;
@@ -1488,9 +1494,10 @@ cmsBool CMSEXPORT cmsWriteTag(cmsHPROFILE hProfile, cmsTagSignature sig, const v
 
                 if (TypeHandler != NULL) {
 
-                    TypeHandler ->ContextID = Icc ->ContextID;              // As an additional parameter
-                    TypeHandler ->ICCVersion = Icc ->Version;
-                    TypeHandler->FreePtr(TypeHandler, Icc -> TagPtrs[i]);
+                    LocalTypeHandler = *TypeHandler;
+                    LocalTypeHandler.ContextID = Icc ->ContextID;              // As an additional parameter
+                    LocalTypeHandler.ICCVersion = Icc ->Version;
+                    LocalTypeHandler.FreePtr(&LocalTypeHandler, Icc -> TagPtrs[i]);
                 }
             }
         }
@@ -1567,9 +1574,10 @@ cmsBool CMSEXPORT cmsWriteTag(cmsHPROFILE hProfile, cmsTagSignature sig, const v
     Icc ->TagSizes[i]         = 0;
     Icc ->TagOffsets[i]       = 0;
 
-    TypeHandler ->ContextID  = Icc ->ContextID;
-    TypeHandler ->ICCVersion = Icc ->Version;
-    Icc ->TagPtrs[i]         = TypeHandler ->DupPtr(TypeHandler, data, TagDescriptor ->ElemCount);
+    LocalTypeHandler = *TypeHandler;
+    LocalTypeHandler.ContextID  = Icc ->ContextID;
+    LocalTypeHandler.ICCVersion = Icc ->Version;
+    Icc ->TagPtrs[i]         = LocalTypeHandler.DupPtr(&LocalTypeHandler, data, TagDescriptor ->ElemCount);
 
     if (Icc ->TagPtrs[i] == NULL)  {
 
@@ -1596,6 +1604,7 @@ cmsInt32Number CMSEXPORT cmsReadRawTag(cmsHPROFILE hProfile, cmsTagSignature sig
     int i;
     cmsIOHANDLER* MemIO;
     cmsTagTypeHandler* TypeHandler = NULL;
+    cmsTagTypeHandler LocalTypeHandler;
     cmsTagDescriptor* TagDescriptor = NULL;
     cmsUInt32Number rc;
     cmsUInt32Number Offset, TagSize;
@@ -1663,16 +1672,18 @@ cmsInt32Number CMSEXPORT cmsReadRawTag(cmsHPROFILE hProfile, cmsTagSignature sig
          return 0;
     }
 
+    // FIXME: No handling for TypeHandler == NULL here?
     // Serialize
-    TypeHandler ->ContextID  = Icc ->ContextID;
-    TypeHandler ->ICCVersion = Icc ->Version;
+    LocalTypeHandler = *TypeHandler;
+    LocalTypeHandler.ContextID  = Icc ->ContextID;
+    LocalTypeHandler.ICCVersion = Icc ->Version;
 
     if (!_cmsWriteTypeBase(MemIO, TypeHandler ->Signature)) {
         cmsCloseIOhandler(MemIO);
         return 0;
     }
 
-    if (!TypeHandler ->WritePtr(TypeHandler, MemIO, Object, TagDescriptor ->ElemCount)) {
+    if (!LocalTypeHandler.WritePtr(&LocalTypeHandler, MemIO, Object, TagDescriptor ->ElemCount)) {
         cmsCloseIOhandler(MemIO);
         return 0;
     }
