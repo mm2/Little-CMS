@@ -40,13 +40,13 @@
 static
 cmsHTRANSFORM CreateRoundtripXForm(cmsHPROFILE hProfile, cmsUInt32Number nIntent)
 {
-    cmsHPROFILE hLab = cmsCreateLab4Profile(NULL);
+    cmsContext ContextID = cmsGetProfileContextID(hProfile);
+    cmsHPROFILE hLab = cmsCreateLab4ProfileTHR(ContextID, NULL);
     cmsHTRANSFORM xform;
     cmsBool BPC[4] = { FALSE, FALSE, FALSE, FALSE };
     cmsFloat64Number States[4] = { 1.0, 1.0, 1.0, 1.0 };
     cmsHPROFILE hProfiles[4];
     cmsUInt32Number Intents[4];
-    cmsContext ContextID = cmsGetProfileContextID(hProfile);
 
     hProfiles[0] = hLab; hProfiles[1] = hProfile; hProfiles[2] = hProfile; hProfiles[3] = hLab;
     Intents[0]   = INTENT_RELATIVE_COLORIMETRIC; Intents[1] = nIntent; Intents[2] = INTENT_RELATIVE_COLORIMETRIC; Intents[3] = INTENT_RELATIVE_COLORIMETRIC;
