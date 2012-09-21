@@ -167,7 +167,7 @@ cmsINLINE cmsUInt16Number _cmsQuickSaturateWord(cmsFloat64Number d)
 // Plug-In registering ---------------------------------------------------------------
 
 // Specialized function for plug-in memory management. No pairing free() since whole pool is freed at once.
-void* _cmsPluginMalloc(cmsUInt32Number size);
+void* _cmsPluginMalloc(cmsContext ContextID, cmsUInt32Number size);
 
 // Memory management
 cmsBool   _cmsRegisterMemHandlerPlugin(cmsPluginBase* Plugin);
@@ -176,28 +176,28 @@ cmsBool   _cmsRegisterMemHandlerPlugin(cmsPluginBase* Plugin);
 cmsBool  _cmsRegisterInterpPlugin(cmsPluginBase* Plugin);
 
 // Parametric curves
-cmsBool  _cmsRegisterParametricCurvesPlugin(cmsPluginBase* Plugin);
+cmsBool  _cmsRegisterParametricCurvesPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
 
 // Formatters management
-cmsBool  _cmsRegisterFormattersPlugin(cmsPluginBase* Plugin);
+cmsBool  _cmsRegisterFormattersPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
 
 // Tag type management
-cmsBool  _cmsRegisterTagTypePlugin(cmsPluginBase* Plugin);
+cmsBool  _cmsRegisterTagTypePlugin(cmsContext ContextID, cmsPluginBase* Plugin);
 
 // Tag management
-cmsBool  _cmsRegisterTagPlugin(cmsPluginBase* Plugin);
+cmsBool  _cmsRegisterTagPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
 
 // Intent management
-cmsBool  _cmsRegisterRenderingIntentPlugin(cmsPluginBase* Plugin);
+cmsBool  _cmsRegisterRenderingIntentPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
 
 // Multi Process elements
-cmsBool  _cmsRegisterMultiProcessElementPlugin(cmsPluginBase* Plugin);
+cmsBool  _cmsRegisterMultiProcessElementPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
 
 // Optimization
-cmsBool  _cmsRegisterOptimizationPlugin(cmsPluginBase* Plugin);
+cmsBool  _cmsRegisterOptimizationPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
 
 // Transform
-cmsBool  _cmsRegisterTransformPlugin(cmsPluginBase* Plugin);
+cmsBool  _cmsRegisterTransformPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
 
 // ---------------------------------------------------------------------------------------------------------
 
