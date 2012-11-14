@@ -607,7 +607,6 @@ cmsStage* CMSEXPORT cmsStageAllocCLut16bit(cmsContext ContextID,
     for (i=0; i < MAX_INPUT_DIMENSIONS; i++)
         Dimensions[i] = nGridPoints;
 
-
     return cmsStageAllocCLut16bitGranular(ContextID, Dimensions, inputChan, outputChan, Table);
 }
 
@@ -677,14 +676,11 @@ cmsStage* CMSEXPORT cmsStageAllocCLutFloatGranular(cmsContext ContextID, const c
         }
     }
 
-
     NewElem ->Params = _cmsComputeInterpParamsEx(ContextID, clutPoints,  inputChan, outputChan, NewElem ->Tab.TFloat, CMS_LERP_FLAGS_FLOAT);
     if (NewElem ->Params == NULL) {
         cmsStageFree(NewMPE);
         return NULL;
     }
-
-
 
     return NewMPE;
 }
@@ -994,6 +990,7 @@ cmsStage* _cmsStageAllocLabV2ToV4curves(cmsContext ContextID)
     mpe = cmsStageAllocToneCurves(ContextID, 3, LabTable);
     cmsFreeToneCurveTriple(LabTable);
 
+    if (mpe == NULL) return NULL;
     mpe ->Implements = cmsSigLabV2toV4;
     return mpe;
 }
