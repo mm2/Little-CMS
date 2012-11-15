@@ -739,7 +739,7 @@ cmsBool CMSEXPORT cmsStageSampleCLut16bit(cmsStage* mpe, cmsSAMPLER16 Sampler, v
     int i, t, nTotalPoints, index, rest;
     int nInputs, nOutputs;
     cmsUInt32Number* nSamples;
-    cmsUInt16Number In[cmsMAXCHANNELS], Out[MAX_STAGE_CHANNELS];
+    cmsUInt16Number In[MAX_INPUT_DIMENSIONS+1], Out[MAX_STAGE_CHANNELS];
     _cmsStageCLutData* clut;
 
     if (mpe == NULL) return FALSE;
@@ -754,7 +754,7 @@ cmsBool CMSEXPORT cmsStageSampleCLut16bit(cmsStage* mpe, cmsSAMPLER16 Sampler, v
 
     if (nInputs <= 0) return FALSE;
     if (nOutputs <= 0) return FALSE;
-    if (nInputs >= cmsMAXCHANNELS) return FALSE;
+    if (nInputs > MAX_INPUT_DIMENSIONS) return FALSE;
     if (nOutputs >= MAX_STAGE_CHANNELS) return FALSE;
 
     nTotalPoints = CubeSize(nSamples, nInputs);
@@ -801,14 +801,16 @@ cmsBool CMSEXPORT cmsStageSampleCLutFloat(cmsStage* mpe, cmsSAMPLERFLOAT Sampler
     int i, t, nTotalPoints, index, rest;
     int nInputs, nOutputs;
     cmsUInt32Number* nSamples;
-    cmsFloat32Number In[cmsMAXCHANNELS], Out[MAX_STAGE_CHANNELS];
+    cmsFloat32Number In[MAX_INPUT_DIMENSIONS+1], Out[MAX_STAGE_CHANNELS];
     _cmsStageCLutData* clut = (_cmsStageCLutData*) mpe->Data;
 
     nSamples = clut->Params ->nSamples;
     nInputs  = clut->Params ->nInputs;
     nOutputs = clut->Params ->nOutputs;
 
-    if (nInputs >= cmsMAXCHANNELS) return FALSE;
+    if (nInputs <= 0) return FALSE;
+    if (nOutputs <= 0) return FALSE;
+    if (nInputs  > MAX_INPUT_DIMENSIONS) return FALSE;
     if (nOutputs >= MAX_STAGE_CHANNELS) return FALSE;
 
     nTotalPoints = CubeSize(nSamples, nInputs);
