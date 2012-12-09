@@ -58,7 +58,7 @@ host_triplet = @host@
 subdir = .
 DIST_COMMON = $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in $(srcdir)/lcms2.pc.in \
-	$(top_srcdir)/configure AUTHORS COPYING ChangeLog INSTALL NEWS \
+	$(top_srcdir)/configure AUTHORS COPYING ChangeLog INSTALL \
 	config.guess config.sub depcomp install-sh ltmain.sh missing
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/configure.ac
@@ -300,7 +300,7 @@ AUTOMAKE_OPTIONS = 1.7.2 dist-zip foreign
 SUBDIRS = src include utils/tificc utils/transicc utils/linkicc utils/jpgicc utils/psicc testbed
 
 # Additional files to distribute
-EXTRA_DIST = AUTHORS COPYING ChangeLog doc Projects include bin Lib INSTALL NEWS README.1ST lcms2.pc.in
+EXTRA_DIST = AUTHORS COPYING ChangeLog doc Projects include bin Lib INSTALL README.1ST lcms2.pc.in
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = lcms2.pc
 all: all-recursive

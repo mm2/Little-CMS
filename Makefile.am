@@ -12,7 +12,7 @@ PACKAGE_VERSION = @PACKAGE_VERSION@
 SUBDIRS = src include utils/tificc utils/transicc utils/linkicc utils/jpgicc utils/psicc testbed
 
 # Additional files to distribute
-EXTRA_DIST = AUTHORS COPYING ChangeLog doc Projects include bin Lib INSTALL NEWS README.1ST lcms2.pc.in
+EXTRA_DIST = AUTHORS COPYING ChangeLog doc Projects include bin Lib INSTALL README.1ST lcms2.pc.in
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = lcms2.pc
