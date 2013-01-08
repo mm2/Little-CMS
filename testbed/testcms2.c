@@ -7289,6 +7289,57 @@ cmsInt32Number ChecksRGB2LabFLT(void)
     return 1;
 }
 
+/*
+ * parametric curve for Rec709
+ */
+static
+double Rec709(double L)
+{
+    if (L <0.018) return 4.5*L;
+    else
+    {
+          double a = 1.099* pow(L, 0.45);
+          
+          a = a - 0.099;
+          return a;
+    }
+}
+
+
+static
+cmsInt32Number CheckParametricRec709(void)
+{
+	cmsFloat64Number params[7];
+	cmsToneCurve* t;
+    int i;
+
+    params[0] = 0.45; /* y */
+	params[1] = pow(1.099, 1.0 / 0.45); /* a */
+	params[2] = 0.0; /* b */
+	params[3] = 4.5; /* c */
+	params[4] = 0.018; /* d */
+    params[5] = -0.099; /* e */
+    params[6] = 0.0; /* f */
+		
+	t = cmsBuildParametricToneCurve (NULL, 5, params);
+
+
+    for (i=0; i < 256; i++)
+    {
+        cmsFloat32Number n = (cmsFloat32Number) i / 255.0F;
+        cmsUInt16Number f1 = (cmsUInt16Number) floor(255.0 * cmsEvalToneCurveFloat(t, n) + 0.5);
+        cmsUInt16Number f2 = (cmsUInt16Number) floor(255.0*Rec709((double) i / 255.0) + 0.5);
+
+        if (f1 != f2) 
+        {
+            cmsFreeToneCurve(t);
+            return 0;
+        }
+    }
+
+    cmsFreeToneCurve(t);
+    return 1;
+}
 
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
@@ -8159,6 +8210,8 @@ int main(int argc, char* argv[])
     Check("Linking", CheckLinking);
     Check("floating point tags on XYZ", CheckFloatXYZ);
     Check("RGB->Lab->RGB with alpha on FLT", ChecksRGB2LabFLT);
+    Check("Parametric curve on Rec709", CheckParametricRec709);
+
     }
 
 
