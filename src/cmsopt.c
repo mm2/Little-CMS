@@ -53,10 +53,6 @@ typedef struct {
     int nInputs;
     int nOutputs;
 
-    // Since there is no limitation of the output number of channels, this buffer holding the connexion CLUT-shaper
-    // has to be dynamically allocated. This is not the case of first step shaper-CLUT, which is limited to max inputs
-    cmsUInt16Number* StageDEF;
-
     _cmsInterpFn16 EvalCurveIn16[MAX_INPUT_DIMENSIONS];       // The maximum number of input channels is known in advance
     cmsInterpParams*  ParamsCurveIn16[MAX_INPUT_DIMENSIONS];
 
@@ -225,6 +221,7 @@ void PrelinEval16(register const cmsUInt16Number Input[],
 {
     Prelin16Data* p16 = (Prelin16Data*) D;
     cmsUInt16Number  StageABC[MAX_INPUT_DIMENSIONS];
+    cmsUInt16Number * StageDEF = _cmsCalloc(p16 ->ContextID, p16 ->nOutputs, sizeof(cmsUInt16Number));
     int i;
 
     for (i=0; i < p16 ->nInputs; i++) {
@@ -232,12 +229,13 @@ void PrelinEval16(register const cmsUInt16Number Input[],
         p16 ->EvalCurveIn16[i](&Input[i], &StageABC[i], p16 ->ParamsCurveIn16[i]);
     }
 
-    p16 ->EvalCLUT(StageABC, p16 ->StageDEF, p16 ->CLUTparams);
+    p16 ->EvalCLUT(StageABC, StageDEF, p16 ->CLUTparams);
 
     for (i=0; i < p16 ->nOutputs; i++) {
 
-        p16 ->EvalCurveOut16[i](&p16->StageDEF[i], &Output[i], p16 ->ParamsCurveOut16[i]);
+        p16 ->EvalCurveOut16[i](&StageDEF[i], &Output[i], p16 ->ParamsCurveOut16[i]);
     }
+    _cmsFree(p16 ->ContextID, StageDEF);
 }
 
 
@@ -246,7 +244,6 @@ void PrelinOpt16free(cmsContext ContextID, void* ptr)
 {
     Prelin16Data* p16 = (Prelin16Data*) ptr;
 
-    _cmsFree(ContextID, p16 ->StageDEF);
     _cmsFree(ContextID, p16 ->EvalCurveOut16);
     _cmsFree(ContextID, p16 ->ParamsCurveOut16);
 
@@ -261,7 +258,6 @@ void* Prelin16dup(cmsContext ContextID, const void* ptr)
 
     if (Duped == NULL) return NULL;
 
-    Duped ->StageDEF         = _cmsCalloc(ContextID, p16 ->nOutputs, sizeof(cmsUInt16Number));
     Duped ->EvalCurveOut16   = _cmsDupMem(ContextID, p16 ->EvalCurveOut16, p16 ->nOutputs * sizeof(_cmsInterpFn16));
     Duped ->ParamsCurveOut16 = _cmsDupMem(ContextID, p16 ->ParamsCurveOut16, p16 ->nOutputs * sizeof(cmsInterpParams* ));
 
@@ -300,7 +296,6 @@ Prelin16Data* PrelinOpt16alloc(cmsContext ContextID,
     p16 ->EvalCLUT   = ColorMap ->Interpolation.Lerp16;
 
 
-    p16 -> StageDEF = _cmsCalloc(ContextID, p16 ->nOutputs, sizeof(cmsUInt16Number));
     p16 -> EvalCurveOut16 = (_cmsInterpFn16*) _cmsCalloc(ContextID, nOutputs, sizeof(_cmsInterpFn16));
     p16 -> ParamsCurveOut16 = (cmsInterpParams**) _cmsCalloc(ContextID, nOutputs, sizeof(cmsInterpParams* ));
 
