@@ -1697,7 +1697,7 @@ cmsBool Write8bitTables(cmsContext ContextID, cmsIOHANDLER* io, cmsUInt32Number 
 
 // Check overflow
 static
-size_t uipow(cmsUInt32Number n, cmsUInt32Number a, cmsUInt32Number b)
+cmsUInt32Number uipow(cmsUInt32Number n, cmsUInt32Number a, cmsUInt32Number b)
 {
     cmsUInt32Number rv = 1, rc;
 
@@ -1709,13 +1709,13 @@ size_t uipow(cmsUInt32Number n, cmsUInt32Number a, cmsUInt32Number b)
         rv *= a;
 
         // Check for overflow
-        if (rv > UINT_MAX / a) return (size_t) -1;
+        if (rv > UINT_MAX / a) return (cmsUInt32Number) -1;
 
     }
 
     rc = rv * n;
 
-    if (rv != rc / n) return (size_t) -1;
+    if (rv != rc / n) return (cmsUInt32Number) -1;
     return rc;
 }
 
@@ -1779,7 +1779,7 @@ void *Type_LUT8_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cms
 
     // Get 3D CLUT. Check the overflow....
     nTabSize = uipow(OutputChannels, CLUTpoints, InputChannels);
-    if (nTabSize == (size_t) -1) goto Error;
+    if (nTabSize == (cmsUInt32Number) -1) goto Error;
     if (nTabSize > 0) {
 
         cmsUInt16Number *PtrW, *T;
@@ -1907,7 +1907,7 @@ cmsBool  Type_LUT8_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io,
     if (!Write8bitTables(self ->ContextID, io, NewLUT ->InputChannels, PreMPE)) return FALSE;
 
     nTabSize = uipow(NewLUT->OutputChannels, clutPoints, NewLUT ->InputChannels);
-    if (nTabSize == (size_t) -1) return FALSE;
+    if (nTabSize == (cmsUInt32Number) -1) return FALSE;
     if (nTabSize > 0) {
 
         // The 3D CLUT.
@@ -2081,7 +2081,7 @@ void *Type_LUT16_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cm
 
     // Get 3D CLUT
     nTabSize = uipow(OutputChannels, CLUTpoints, InputChannels);
-    if (nTabSize == (size_t) -1) goto Error;
+    if (nTabSize == (cmsUInt32Number) -1) goto Error;
     if (nTabSize > 0) {
 
         cmsUInt16Number *T;
@@ -2222,7 +2222,7 @@ cmsBool  Type_LUT16_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io
     }
 
     nTabSize = uipow(OutputChannels, clutPoints, InputChannels);
-    if (nTabSize == (size_t) -1) return FALSE;
+    if (nTabSize == (cmsUInt32Number) -1) return FALSE;
     if (nTabSize > 0) {
         // The 3D CLUT.
         if (clut != NULL) {

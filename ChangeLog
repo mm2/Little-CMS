@@ -89,4 +89,5 @@ Added a check for maximum input channels
 
 User defined parametric curves can now be saved in ICC profiles.
 RGB profiles using same tone curves for several channels are storing now only one copy of the curve (saves space)
-
+Fixed a multithead bug on optimization (StageDEF)
+Fixed some 64 bit warnings on size_t to uint32 conversions
