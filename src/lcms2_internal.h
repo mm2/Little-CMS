@@ -234,7 +234,7 @@ typedef struct {
     cmsUInt16Number Country;
 
     cmsUInt32Number StrW;       // Offset to current unicode string
-    cmsUInt32Number Len;        // Lenght in bytes
+    cmsUInt32Number Len;        // Length in bytes
 
 } _cmsMLUentry;
 
