@@ -5058,7 +5058,7 @@ void *Type_Dictionary_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* i
     if (!_cmsReadUInt32Number(io, &Count)) return NULL;
     SizeOfTag -= sizeof(cmsUInt32Number);
 
-    // Get rec lenghth
+    // Get rec length
     if (!_cmsReadUInt32Number(io, &Length)) return NULL;
     SizeOfTag -= sizeof(cmsUInt32Number);
 
