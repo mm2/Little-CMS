@@ -30,8 +30,8 @@
 // IT8.7 / CGATS.17-200x handling -----------------------------------------------------------------------------
 
 
-#define MAXID        128     // Max lenght of identifier
-#define MAXSTR      1024     // Max lenght of string
+#define MAXID        128     // Max length of identifier
+#define MAXSTR      1024     // Max length of string
 #define MAXTABLES    255     // Max Number of tables in a single stream
 #define MAXINCLUDE    20     // Max number of nested includes
 
@@ -1547,7 +1547,7 @@ void WriteStr(SAVESTREAM* f, const char *str)
     if (str == NULL)
         str = " ";
 
-    // Lenghth to write
+    // Length to write
     len = (cmsUInt32Number) strlen(str);
     f ->Used += len;
 
