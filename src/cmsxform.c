@@ -367,7 +367,7 @@ typedef struct _cmsTransformCollection_st {
 static _cmsTransformCollection* TransformCollection = NULL;
 
 // Register new ways to transform
-cmsBool  _cmsRegisterTransformPlugin(cmsPluginBase* Data)
+cmsBool  _cmsRegisterTransformPlugin(cmsContext id, cmsPluginBase* Data)
 {
     cmsPluginTransform* Plugin = (cmsPluginTransform*) Data;
     _cmsTransformCollection* fl;
@@ -383,7 +383,7 @@ cmsBool  _cmsRegisterTransformPlugin(cmsPluginBase* Data)
    if (Plugin ->Factory == NULL) return FALSE;
 
 
-    fl = (_cmsTransformCollection*) _cmsPluginMalloc(sizeof(_cmsTransformCollection));
+    fl = (_cmsTransformCollection*) _cmsPluginMalloc(id, sizeof(_cmsTransformCollection));
     if (fl == NULL) return FALSE;
 
       // Copy the parameters

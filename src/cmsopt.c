@@ -1603,7 +1603,7 @@ static _cmsOptimizationCollection DefaultOptimization[] = {
 static _cmsOptimizationCollection* OptimizationCollection = DefaultOptimization;
 
 // Register new ways to optimize
-cmsBool  _cmsRegisterOptimizationPlugin(cmsPluginBase* Data)
+cmsBool  _cmsRegisterOptimizationPlugin(cmsContext id, cmsPluginBase* Data)
 {
     cmsPluginOptimization* Plugin = (cmsPluginOptimization*) Data;
     _cmsOptimizationCollection* fl;
@@ -1617,7 +1617,7 @@ cmsBool  _cmsRegisterOptimizationPlugin(cmsPluginBase* Data)
     // Optimizer callback is required
     if (Plugin ->OptimizePtr == NULL) return FALSE;
 
-    fl = (_cmsOptimizationCollection*) _cmsPluginMalloc(sizeof(_cmsOptimizationCollection));
+    fl = (_cmsOptimizationCollection*) _cmsPluginMalloc(id, sizeof(_cmsOptimizationCollection));
     if (fl == NULL) return FALSE;
 
     // Copy the parameters

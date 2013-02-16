@@ -62,7 +62,7 @@ typedef struct _cmsTagTypeLinkedList_st {
 
 // Register a new type handler. This routine is shared between normal types and MPE
 static
-cmsBool RegisterTypesPlugin(cmsPluginBase* Data, _cmsTagTypeLinkedList* LinkedList, cmsUInt32Number DefaultListCount)
+cmsBool RegisterTypesPlugin(cmsContext id, cmsPluginBase* Data, _cmsTagTypeLinkedList* LinkedList, cmsUInt32Number DefaultListCount)
 {
     cmsPluginTagType* Plugin = (cmsPluginTagType*) Data;
     _cmsTagTypeLinkedList *pt, *Anterior = NULL;
@@ -89,7 +89,7 @@ cmsBool RegisterTypesPlugin(cmsPluginBase* Data, _cmsTagTypeLinkedList* LinkedLi
     }
 
     // Registering happens in plug-in memory pool
-    pt = (_cmsTagTypeLinkedList*) _cmsPluginMalloc(sizeof(_cmsTagTypeLinkedList));
+    pt = (_cmsTagTypeLinkedList*) _cmsPluginMalloc(id, sizeof(_cmsTagTypeLinkedList));
     if (pt == NULL) return FALSE;
 
     pt ->Handler   = Plugin ->Handler;
@@ -5251,14 +5251,14 @@ static _cmsTagTypeLinkedList SupportedTagTypes[] = {
 #define DEFAULT_TAG_TYPE_COUNT  (sizeof(SupportedTagTypes) / sizeof(_cmsTagTypeLinkedList))
 
 // Both kind of plug-ins share same structure
-cmsBool  _cmsRegisterTagTypePlugin(cmsPluginBase* Data)
+cmsBool  _cmsRegisterTagTypePlugin(cmsContext id, cmsPluginBase* Data)
 {
-    return RegisterTypesPlugin(Data, SupportedTagTypes, DEFAULT_TAG_TYPE_COUNT);
+    return RegisterTypesPlugin(id, Data, SupportedTagTypes, DEFAULT_TAG_TYPE_COUNT);
 }
 
-cmsBool  _cmsRegisterMultiProcessElementPlugin(cmsPluginBase* Data)
+cmsBool  _cmsRegisterMultiProcessElementPlugin(cmsContext id, cmsPluginBase* Data)
 {
-    return RegisterTypesPlugin(Data, SupportedMPEtypes, DEFAULT_MPE_TYPE_COUNT);
+    return RegisterTypesPlugin(id, Data, SupportedMPEtypes, DEFAULT_MPE_TYPE_COUNT);
 }
 
 
@@ -5380,7 +5380,7 @@ static _cmsTagLinkedList SupportedTags[] = {
 
 #define DEFAULT_TAG_COUNT  (sizeof(SupportedTags) / sizeof(_cmsTagLinkedList))
 
-cmsBool  _cmsRegisterTagPlugin(cmsPluginBase* Data)
+cmsBool  _cmsRegisterTagPlugin(cmsContext id, cmsPluginBase* Data)
 {
     cmsPluginTag* Plugin = (cmsPluginTag*) Data;
     _cmsTagLinkedList *pt, *Anterior;
@@ -5404,7 +5404,7 @@ cmsBool  _cmsRegisterTagPlugin(cmsPluginBase* Data)
         pt = pt ->Next;
     }
 
-    pt = (_cmsTagLinkedList*) _cmsPluginMalloc(sizeof(_cmsTagLinkedList));
+    pt = (_cmsTagLinkedList*) _cmsPluginMalloc(id, sizeof(_cmsTagLinkedList));
     if (pt == NULL) return FALSE;
 
     pt ->Signature  = Plugin ->Signature;
