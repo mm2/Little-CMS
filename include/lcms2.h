@@ -985,6 +985,7 @@ CMSAPI long int          CMSEXPORT cmsfilelength(FILE* f);
 // Plug-In registering  ---------------------------------------------------------------------------------------------------
 
 CMSAPI cmsBool           CMSEXPORT cmsPlugin(void* Plugin);
+CMSAPI cmsBool           CMSEXPORT cmsPluginTHR(cmsContext ContextID, void* Plugin);
 CMSAPI void              CMSEXPORT cmsUnregisterPlugins(void);
 
 // Error logging ----------------------------------------------------------------------------------------------------------

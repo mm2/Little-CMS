@@ -70,7 +70,7 @@ static _cmsParametricCurvesCollection DefaultCurves = {
 static _cmsParametricCurvesCollection* ParametricCurves = &DefaultCurves;
 
 // As a way to install new parametric curves
-cmsBool _cmsRegisterParametricCurvesPlugin(cmsPluginBase* Data)
+cmsBool _cmsRegisterParametricCurvesPlugin(cmsContext id, cmsPluginBase* Data)
 {
     cmsPluginParametricCurves* Plugin = (cmsPluginParametricCurves*) Data;
     _cmsParametricCurvesCollection* fl;
@@ -81,7 +81,7 @@ cmsBool _cmsRegisterParametricCurvesPlugin(cmsPluginBase* Data)
           return TRUE;
     }
 
-    fl = (_cmsParametricCurvesCollection*) _cmsPluginMalloc(sizeof(_cmsParametricCurvesCollection));
+    fl = (_cmsParametricCurvesCollection*) _cmsPluginMalloc(id, sizeof(_cmsParametricCurvesCollection));
     if (fl == NULL) return FALSE;
 
     // Copy the parameters

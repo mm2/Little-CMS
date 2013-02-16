@@ -1028,7 +1028,7 @@ cmsUInt32Number CMSEXPORT cmsGetSupportedIntents(cmsUInt32Number nMax, cmsUInt32
 }
 
 // The plug-in registration. User can add new intents or override default routines
-cmsBool  _cmsRegisterRenderingIntentPlugin(cmsPluginBase* Data)
+cmsBool  _cmsRegisterRenderingIntentPlugin(cmsContext id, cmsPluginBase* Data)
 {
     cmsPluginRenderingIntent* Plugin = (cmsPluginRenderingIntent*) Data;
     cmsIntentsList* fl;
@@ -1043,7 +1043,7 @@ cmsBool  _cmsRegisterRenderingIntentPlugin(cmsPluginBase* Data)
     fl = SearchIntent(Plugin ->Intent);
 
     if (fl == NULL) {
-        fl = (cmsIntentsList*) _cmsPluginMalloc(sizeof(cmsIntentsList));
+        fl = (cmsIntentsList*) _cmsPluginMalloc(id, sizeof(cmsIntentsList));
         if (fl == NULL) return FALSE;
     }
 
