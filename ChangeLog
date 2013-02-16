@@ -92,3 +92,4 @@ RGB profiles using same tone curves for several channels are storing now only on
 Fixed a multithead bug on optimization (StageDEF)
 Fixed some 64 bit warnings on size_t to uint32 conversions
 update black point detection algorithm to reflect ICC changes
+Added new cmsPlugInTHR() and fixed some race conditions (thanks to Artifex)
