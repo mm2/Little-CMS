@@ -964,7 +964,7 @@ cmsBool  CMSEXPORT cmsSmoothToneCurve(cmsToneCurve* Tab, cmsFloat64Number lambda
 
     if (Tab == NULL) return FALSE;
 
-    if (cmsIsToneCurveLinear(Tab)) return FALSE; // Nothing to do
+    if (cmsIsToneCurveLinear(Tab)) return TRUE; // Nothing to do
 
     nItems = Tab -> nEntries;
 
@@ -991,11 +991,20 @@ cmsBool  CMSEXPORT cmsSmoothToneCurve(cmsToneCurve* Tab, cmsFloat64Number lambda
 
         if (z[i] == 0.) Zeros++;
         if (z[i] >= 65535.) Poles++;
-        if (z[i] < z[i-1]) return FALSE; // Non-Monotonic
+        if (z[i] < z[i-1]) {
+            cmsSignalError(Tab ->InterpParams->ContextID, cmsERROR_RANGE, "cmsSmoothToneCurve: Non-Monotonic.");
+            return FALSE;
+        }
     }
 
-    if (Zeros > (nItems / 3)) return FALSE;  // Degenerated, mostly zeros
-    if (Poles > (nItems / 3)) return FALSE;  // Degenerated, mostly poles
+    if (Zeros > (nItems / 3)) {
+        cmsSignalError(Tab ->InterpParams->ContextID, cmsERROR_RANGE, "cmsSmoothToneCurve: Degenerated, mostly zeros.");
+        return FALSE;
+    }
+    if (Poles > (nItems / 3)) {
+        cmsSignalError(Tab ->InterpParams->ContextID, cmsERROR_RANGE, "cmsSmoothToneCurve: Degenerated, mostly poles.");
+        return FALSE;
+    }
 
     // Seems ok
     for (i=0; i < nItems; i++) {

@@ -1256,7 +1256,7 @@ cmsInt32Number CMSEXPORT cmsIT8SetTable(cmsHANDLE  IT8, cmsUInt32Number nTable)
 
      it8 ->nTable = nTable;
 
-     return nTable;
+     return (cmsInt32Number) nTable;
 }
 
 
@@ -1432,7 +1432,7 @@ void AllocateDataFormat(cmsIT8* it8)
         t -> nSamples = 10;
         }
 
-    t -> DataFormat = (char**) AllocChunk (it8, (t->nSamples + 1) * sizeof(char *));
+    t -> DataFormat = (char**) AllocChunk (it8, ((cmsUInt32Number) t->nSamples + 1) * sizeof(char *));
     if (t->DataFormat == NULL) {
 
         SynError(it8, "AllocateDataFormat: Unable to allocate dataFormat array");
@@ -1488,7 +1488,7 @@ void AllocateDataSet(cmsIT8* it8)
     t-> nSamples   = atoi(cmsIT8GetProperty(it8, "NUMBER_OF_FIELDS"));
     t-> nPatches   = atoi(cmsIT8GetProperty(it8, "NUMBER_OF_SETS"));
 
-    t-> Data = (char**)AllocChunk (it8, (t->nSamples + 1) * (t->nPatches + 1) *sizeof (char*));
+    t-> Data = (char**)AllocChunk (it8, ((cmsUInt32Number) t->nSamples + 1) * ((cmsUInt32Number) t->nPatches + 1) *sizeof (char*));
     if (t->Data == NULL) {
 
         SynError(it8, "AllocateDataSet: Unable to allocate data array");
@@ -2186,7 +2186,7 @@ void CookPointers(cmsIT8* it8)
                                         char Buffer[256];
 
                                         char *Type  = p ->Value;
-                                        int  nTable = k;
+                                        int  nTable = (int) k;
 
                                         snprintf(Buffer, 255, "%s %d %s", Label, nTable, Type );
 

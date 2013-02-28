@@ -23,7 +23,7 @@
 //
 //---------------------------------------------------------------------------------
 //
-// Version 2.4
+// Version 2.5b
 //
 
 #ifndef _lcms2_H
@@ -72,7 +72,7 @@ extern "C" {
 #endif
 
 // Version/release
-#define LCMS_VERSION        2040
+#define LCMS_VERSION        2050
 
 // I will give the chance of redefining basic types for compilers that are not fully C99 compliant
 #ifndef CMS_BASIC_TYPES_ALREADY_DEFINED
