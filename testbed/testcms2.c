@@ -7341,6 +7341,111 @@ cmsInt32Number CheckParametricRec709(void)
     return 1;
 }
 
+
+#define kNumPoints  10
+
+typedef cmsFloat32Number(*Function)(cmsFloat32Number x);
+
+static cmsFloat32Number StraightLine( cmsFloat32Number x) 
+{
+    return (cmsFloat32Number) (0.1 + 0.9 * x);
+}
+
+static cmsInt32Number TestCurve( const char* label, cmsToneCurve* curve, Function fn) 
+{
+    cmsInt32Number ok = 1;
+    int i;
+    for (i = 0; i < kNumPoints*3; i++) {
+        
+        cmsFloat32Number x = (cmsFloat32Number)i / (kNumPoints*3 - 1);
+        cmsFloat32Number expectedY = fn(x);
+        cmsFloat32Number out = cmsEvalToneCurveFloat( curve, x);
+        
+        if (!IsGoodVal(label, expectedY, out, FLOAT_PRECISSION)) {
+            ok = 0;
+        }
+    }
+    return ok;
+}
+
+static
+cmsInt32Number CheckFloatSamples(void)
+{
+    cmsFloat32Number y[kNumPoints];
+    int i;
+    cmsToneCurve *curve;
+    cmsInt32Number ok;
+
+    for (i = 0; i < kNumPoints; i++) {
+        cmsFloat32Number x = (cmsFloat32Number)i / (kNumPoints-1);
+        
+        y[i] = StraightLine(x);
+    }
+    
+    curve = cmsBuildTabulatedToneCurveFloat(NULL, kNumPoints, y);
+    ok = TestCurve( "Float Samples", curve, StraightLine);
+    cmsFreeToneCurve(curve);
+    
+    return ok;
+}
+
+static
+cmsInt32Number CheckFloatSegments(void)
+{
+    cmsInt32Number ok = 1;
+    int i;
+    cmsToneCurve *curve;
+    
+    cmsFloat32Number y[ kNumPoints];
+    
+    // build a segmented curve with a sampled section...
+    cmsCurveSegment Seg[3];
+    
+    // Initialize segmented curve part up to 0.1
+    Seg[0].x0 = -1e22;      // -infinity
+    Seg[0].x1 = 0.1;
+    Seg[0].Type = 6;            // Y = (a * X + b) ^ Gamma + c
+    Seg[0].Params[0] = 1.0;     // gamma
+    Seg[0].Params[1] = 0.9;     // a
+    Seg[0].Params[2] = 0;       // b
+    Seg[0].Params[3] = 0.1;     // c
+    Seg[0].Params[4] = 0;
+    
+    // From zero to 1
+    Seg[1].x0 = 0.1;
+    Seg[1].x1 = 0.9;
+    Seg[1].Type = 0;
+    
+    Seg[1].nGridPoints = kNumPoints;
+    Seg[1].SampledPoints = y;
+    
+    for (i = 0; i < kNumPoints; i++) {
+        cmsFloat32Number x = (cmsFloat32Number) (0.1 + ((cmsFloat32Number)i / (kNumPoints-1)) * (0.9 - 0.1));
+        y[i] = StraightLine(x);
+    }
+    
+    // from 1 to +infinity
+    Seg[2].x0 = 0.9;
+    Seg[2].x1 = 1e22;   // +infinity
+    Seg[2].Type = 6;
+    
+    Seg[2].Params[0] = 1.0;
+    Seg[2].Params[1] = 0.9;
+    Seg[2].Params[2] = 0;
+    Seg[2].Params[3] = 0.1;
+    Seg[2].Params[4] = 0;
+    
+    curve = cmsBuildSegmentedToneCurve(0, 3, Seg);
+    
+    ok = TestCurve( "Float Segmented Curve", curve, StraightLine);
+
+    cmsFreeToneCurve( curve);
+
+    return ok;
+}
+
+
+
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
 // --------------------------------------------------------------------------------------------------
@@ -8211,7 +8316,8 @@ int main(int argc, char* argv[])
     Check("floating point tags on XYZ", CheckFloatXYZ);
     Check("RGB->Lab->RGB with alpha on FLT", ChecksRGB2LabFLT);
     Check("Parametric curve on Rec709", CheckParametricRec709);
-
+    Check("Floating Point sampled curve with non-zero start", CheckFloatSamples);
+    Check("Floating Point segmented curve with short sampled segement", CheckFloatSegments);
     }
 
 

@@ -94,4 +94,5 @@ Fixed some 64 bit warnings on size_t to uint32 conversions
 update black point detection algorithm to reflect ICC changes
 Added new cmsPlugInTHR() and fixed some race conditions (thanks to Artifex)
 Added error descriptions on cmsSmoothToneCurve 
-
+Fixed a bug on  big endian platforms not supporting uint64 or long long.
+Fixed some bugs on floating point curves.
