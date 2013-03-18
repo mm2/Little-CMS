@@ -354,28 +354,28 @@ static const char* PredefinedSampleID[] = {
 //Forward declaration of some internal functions
 static void* AllocChunk(cmsIT8* it8, cmsUInt32Number size);
 
-// Checks if c is a separator
+// Checks whatever c is a separator
 static
 cmsBool isseparator(int c)
 {
-        return (c == ' ') || (c == '\t') || (c == '\r');
+    return (c == ' ') || (c == '\t') ; 
 }
 
-// Checks whatever if c is a valid identifier char
+// Checks whatever c is a valid identifier char
 static
 cmsBool ismiddle(int c)
 {
    return (!isseparator(c) && (c != '#') && (c !='\"') && (c != '\'') && (c > 32) && (c < 127));
 }
 
-// Checks whatsever if c is a valid identifier middle char.
+// Checks whatsever c is a valid identifier middle char.
 static
 cmsBool isidchar(int c)
 {
    return isalnum(c) || ismiddle(c);
 }
 
-// Checks whatsever if c is a valid identifier first char.
+// Checks whatsever c is a valid identifier first char.
 static
 cmsBool isfirstidchar(int c)
 {
@@ -405,7 +405,6 @@ cmsBool isabsolutepath(const char *path)
 #endif
     return FALSE;
 }
-
 
 
 // Makes a file path based on a given reference path
@@ -684,7 +683,7 @@ void InSymbol(cmsIT8* it8)
     register int k;
     SYMBOL key;
     int sng;
-
+    
     do {
 
         while (isseparator(it8->ch))
@@ -841,6 +840,14 @@ void InSymbol(cmsIT8* it8)
 
 
         // Next line
+        case '\r':
+            NextCh(it8);
+            if (it8 ->ch == '\n') 
+                NextCh(it8);
+            it8->sy = SEOLN;
+            it8->lineno++;
+            break;
+
         case '\n':
             NextCh(it8);
             it8->sy = SEOLN;
@@ -850,7 +857,7 @@ void InSymbol(cmsIT8* it8)
         // Comment
         case '#':
             NextCh(it8);
-            while (it8->ch && it8->ch != '\n')
+            while (it8->ch && it8->ch != '\n' && it8->ch != '\r')
                 NextCh(it8);
 
             it8->sy = SCOMMENT;
@@ -1117,9 +1124,9 @@ cmsBool IsAvailableOnList(KEYVALUE* p, const char* Key, const char* Subkey, KEYV
         if (*Key != '#') { // Comments are ignored
 
             if (cmsstrcasecmp(Key, p->Keyword) == 0)
-                    break;
+                break;
         }
-        }
+    }
 
     if (p == NULL)
         return FALSE;
@@ -1129,11 +1136,13 @@ cmsBool IsAvailableOnList(KEYVALUE* p, const char* Key, const char* Subkey, KEYV
 
     for (; p != NULL; p = p->NextSubkey) {
 
+        if (p ->Subkey == NULL) continue;
+
         if (LastPtr) *LastPtr = p;
 
         if (cmsstrcasecmp(Subkey, p->Subkey) == 0)
-                    return TRUE;
-        }
+            return TRUE;
+    }
 
     return FALSE;
 }
@@ -2071,7 +2080,7 @@ cmsBool ParseIT8(cmsIT8* it8, cmsBool nosheet)
                                          NextCh(it8);
 
                                      // If a newline is found, then this is a type string
-                                    if (it8 ->ch == '\n') {
+                                    if (it8 ->ch == '\n' || it8->ch == '\r') {
 
                                          cmsIT8SetSheetType(it8, it8 ->id);
                                          InSymbol(it8);
