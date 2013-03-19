@@ -777,7 +777,6 @@ int EmitCIEBasedDEF(cmsIOHANDLER* m, cmsPipeline* Pipeline, int Intent, cmsCIEXY
 
     mpe = Pipeline ->Elements;
 
-
     switch (cmsStageInputChannels(mpe)) {
     case 3:
 
@@ -809,8 +808,6 @@ int EmitCIEBasedDEF(cmsIOHANDLER* m, cmsPipeline* Pipeline, int Intent, cmsCIEXY
         mpe = mpe ->Next;
     }
 
-
-
     if (cmsStageType(mpe) == cmsSigCLutElemType) {
 
             _cmsIOPrintf(m, "/Table ");
@@ -824,7 +821,6 @@ int EmitCIEBasedDEF(cmsIOHANDLER* m, cmsPipeline* Pipeline, int Intent, cmsCIEXY
 
     _cmsIOPrintf(m, "   >>\n");
     _cmsIOPrintf(m, "]\n");
-
 
     return 1;
 }
@@ -921,6 +917,7 @@ int WriteInputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, int Intent, cmsUInt32Nu
 
             rc = EmitCIEBasedDEF(m, DeviceLink, Intent, &BlackPointAdaptedToD50);
             cmsPipelineFree(DeviceLink);
+			if (rc == 0) return 0;
             }
             break;
 

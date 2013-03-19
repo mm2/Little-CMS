@@ -427,6 +427,7 @@ static
 void* Type_Chromaticity_Dup(struct _cms_typehandler_struct* self, const void *Ptr, cmsUInt32Number n)
 {
     return _cmsDupMem(self ->ContextID, Ptr, sizeof(cmsCIExyYTRIPLE));
+	
     cmsUNUSED_PARAMETER(n);
 }
 
@@ -1783,10 +1784,7 @@ void *Type_LUT8_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cms
     if (nTabSize > 0) {
 
         cmsUInt16Number *PtrW, *T;
-        cmsUInt32Number Tsize;
-
-        Tsize = (cmsUInt32Number) nTabSize * sizeof(cmsUInt16Number);
-
+       
         PtrW = T  = (cmsUInt16Number*) _cmsCalloc(self ->ContextID, nTabSize, sizeof(cmsUInt16Number));
         if (T  == NULL) goto Error;
 
@@ -2004,7 +2002,7 @@ cmsBool Write16bitTables(cmsContext ContextID, cmsIOHANDLER* io, _cmsStageToneCu
     int j;
     cmsUInt32Number i;
     cmsUInt16Number val;
-    int nEntries = 256;
+    int nEntries;
 
     _cmsAssert(Tables != NULL);
 

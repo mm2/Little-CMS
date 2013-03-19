@@ -634,8 +634,7 @@ cmsHTRANSFORM CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
                                                    cmsUInt32Number OutputFormat,
                                                    cmsUInt32Number dwFlags)
 {
-    _cmsTRANSFORM* xform;
-    cmsBool  FloatTransform;
+    _cmsTRANSFORM* xform;    
     cmsColorSpaceSignature EntryColorSpace;
     cmsColorSpaceSignature ExitColorSpace;
     cmsPipeline* Lut;
@@ -652,9 +651,7 @@ cmsHTRANSFORM CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
         if (hGamutProfile == NULL) dwFlags &= ~cmsFLAGS_GAMUTCHECK;
     }
 
-    // On floating point transforms, inhibit optimizations
-    FloatTransform = (_cmsFormatterIsFloat(InputFormat) && _cmsFormatterIsFloat(OutputFormat));
-
+    // On floating point transforms, inhibit cache
     if (_cmsFormatterIsFloat(InputFormat) || _cmsFormatterIsFloat(OutputFormat))
         dwFlags |= cmsFLAGS_NOCACHE;
 

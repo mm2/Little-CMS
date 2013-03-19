@@ -1684,16 +1684,11 @@ cmsBool CMSEXPORT cmsPipelineEvalReverseFloat(cmsFloat32Number Target[],
     cmsFloat32Number  fx[4], x[4], xd[4], fxd[4];
     cmsVEC3 tmp, tmp2;
     cmsMAT3 Jacobian;
-    cmsFloat64Number LastResult[4];
-
-
+    
     // Only 3->3 and 4->3 are supported
     if (lut ->InputChannels != 3 && lut ->InputChannels != 4) return FALSE;
     if (lut ->OutputChannels != 3) return FALSE;
-
-    // Mark result of -1
-    LastResult[0] = LastResult[1] = LastResult[2] = -1.0f;
-
+   
     // Take the hint as starting point if specified
     if (Hint == NULL) {
 
