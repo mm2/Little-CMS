@@ -329,6 +329,7 @@ cmsFloat64Number RootOfLeastSquaresFitQuadraticCurve(int n, cmsFloat64Number x[]
 
 }
 
+/*
 static
 cmsBool IsMonotonic(int n, const cmsFloat64Number Table[])
 {
@@ -349,7 +350,7 @@ cmsBool IsMonotonic(int n, const cmsFloat64Number Table[])
 
     return TRUE;
 }
-
+*/
 
 // Calculates the black point of a destination profile.
 // This algorithm comes from the Adobe paper disclosing its black point compensation method.

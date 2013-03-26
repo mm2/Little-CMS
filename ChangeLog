@@ -98,3 +98,4 @@ Fixed a bug on  big endian platforms not supporting uint64 or long long.
 Fixed some bugs on floating point curves.
 Several improvements in cgats parser.
 Several minor issues found by cppcheck
+Fixed devicelink generation for 8 bits

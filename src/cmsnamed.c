@@ -330,9 +330,9 @@ const wchar_t* _cmsMLUgetWide(const cmsMLU* mlu,
     if (Best == -1)
         Best = 0;
 
-     v = mlu ->Entries + Best;
+    v = mlu ->Entries + Best;
 
-     if (UsedLanguageCode != NULL) *UsedLanguageCode = v ->Language;
+    if (UsedLanguageCode != NULL) *UsedLanguageCode = v ->Language;
     if (UsedCountryCode  != NULL) *UsedCountryCode = v ->Country;
 
     if (len != NULL) *len   = v ->Len;
