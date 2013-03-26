@@ -301,9 +301,11 @@ typedef struct _cms_iccprofile_struct {
     cmsColorSpaceSignature   ColorSpace;
     cmsColorSpaceSignature   PCS;
     cmsUInt32Number          RenderingIntent;
+
     cmsUInt32Number          flags;
     cmsUInt32Number          manufacturer, model;
     cmsUInt64Number          attributes;
+    cmsUInt32Number          creator;
 
     cmsProfileID             ProfileID;
 

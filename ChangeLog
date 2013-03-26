@@ -99,3 +99,5 @@ Fixed some bugs on floating point curves.
 Several improvements in cgats parser.
 Several minor issues found by cppcheck
 Fixed devicelink generation for 8 bits
+Added a reference for Mac MLU tag
+Added a way to read the profile creator from header
