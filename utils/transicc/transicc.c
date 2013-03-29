@@ -166,7 +166,7 @@ void HandleSwitches(int argc, char *argv[])
         case 'd':
         case 'D': {
             cmsFloat64Number ObserverAdaptationState = atof(xoptarg);
-            if (ObserverAdaptationState < 0 && 
+            if (ObserverAdaptationState < 0 || 
                 ObserverAdaptationState > 1.0)
                 FatalError("Adaptation states should be between 0 and 1");
 
