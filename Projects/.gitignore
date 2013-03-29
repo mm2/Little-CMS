@@ -1,3 +1,6 @@
-**.suo
+**.opensdf
 **.sdf
+**.suo
 **.user
+Debug/
+Release/
