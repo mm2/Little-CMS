@@ -389,9 +389,11 @@ cmsPipeline* _cmsCreateGamutCheckPipeline(cmsContext ContextID,
 		if (Gamut != NULL) {
 
 			CLUT = cmsStageAllocCLut16bit(ContextID, nGridpoints, nChannels, 1, NULL);
-			cmsPipelineInsertStage(Gamut, cmsAT_BEGIN, CLUT);
-
-			cmsStageSampleCLut16bit(CLUT, GamutSampler, (void*) &Chain, 0);
+			if (!cmsPipelineInsertStage(Gamut, cmsAT_BEGIN, CLUT)) {
+				cmsPipelineFree(Gamut);
+				Gamut = NULL;
+			} else
+				cmsStageSampleCLut16bit(CLUT, GamutSampler, (void*) &Chain, 0);
 		}
 	}
 	else
