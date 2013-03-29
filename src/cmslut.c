@@ -235,10 +235,10 @@ Error:
     if (NewElem ->TheCurves != NULL) {
         for (i=0; i < NewElem ->nCurves; i++) {
             if (NewElem ->TheCurves[i])
-                cmsFreeToneCurve(Data ->TheCurves[i]);
+                cmsFreeToneCurve(NewElem ->TheCurves[i]);
         }
     }
-    _cmsFree(mpe ->ContextID, Data ->TheCurves);
+    _cmsFree(mpe ->ContextID, NewElem ->TheCurves);
     _cmsFree(mpe ->ContextID, NewElem);
     return NULL;
 }
@@ -363,6 +363,8 @@ static
 void MatrixElemTypeFree(cmsStage* mpe)
 {
     _cmsStageMatrixData* Data = (_cmsStageMatrixData*) mpe ->Data;
+    if (Data == NULL)
+        return;
     if (Data ->Double)
         _cmsFree(mpe ->ContextID, Data ->Double);
 
@@ -1220,9 +1222,13 @@ cmsStage* CMSEXPORT cmsStageDup(cmsStage* mpe)
 
     NewMPE ->Implements     = mpe ->Implements;
 
-    if (mpe ->DupElemPtr)
+    if (mpe ->DupElemPtr) {
         NewMPE ->Data       = mpe ->DupElemPtr(mpe);
-    else
+	if (NewMPE->Data == NULL) {
+            cmsStageFree(NewMPE);
+            return NULL;
+	}
+    } else
         NewMPE ->Data       = NULL;
 
     return NewMPE;

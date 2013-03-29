@@ -229,7 +229,8 @@ cmsToneCurve* AllocateToneCurveStruct(cmsContext ContextID, cmsInt32Number nEntr
     }
 
     p ->InterpParams = _cmsComputeInterpParams(ContextID, p ->nEntries, 1, 1, p->Table16, CMS_LERP_FLAGS_16BITS);
-    return p;
+    if (p->InterpParams != NULL)
+        return p;
 
 Error:
     if (p -> Segments) _cmsFree(ContextID, p ->Segments);

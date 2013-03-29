@@ -468,7 +468,8 @@ cmsPipeline* DefaultICCintents(cmsContext       ContextID,
                                cmsFloat64Number AdaptationStates[],
                                cmsUInt32Number  dwFlags)
 {
-    cmsPipeline* Lut, *Result;
+    cmsPipeline* Lut = NULL;
+    cmsPipeline* Result;
     cmsHPROFILE hProfile;
     cmsMAT3 m;
     cmsVEC3 off;
@@ -564,7 +565,8 @@ cmsPipeline* DefaultICCintents(cmsContext       ContextID,
         }
 
         // Concatenate to the output LUT
-        cmsPipelineCat(Result, Lut);
+        if (!cmsPipelineCat(Result, Lut))
+            goto Error;
         cmsPipelineFree(Lut);
 
         // Update current space
@@ -575,6 +577,7 @@ cmsPipeline* DefaultICCintents(cmsContext       ContextID,
 
 Error:
 
+    cmsPipelineFree(Lut);
     if (Result != NULL) cmsPipelineFree(Result);
     return NULL;
 
