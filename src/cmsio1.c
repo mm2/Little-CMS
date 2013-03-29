@@ -164,7 +164,8 @@ cmsPipeline* BuildGrayInputMatrixPipeline(cmsHPROFILE hProfile)
     if (GrayTRC == NULL) return NULL;
 
     Lut = cmsPipelineAlloc(ContextID, 1, 3);
-    if (Lut == NULL) return NULL;
+    if (Lut == NULL)
+        goto Error;
 
     if (cmsGetPCS(hProfile) == cmsSigLabData) {
 
@@ -175,19 +176,18 @@ cmsPipeline* BuildGrayInputMatrixPipeline(cmsHPROFILE hProfile)
 
         EmptyTab = cmsBuildTabulatedToneCurve16(ContextID, 2, Zero);
 
-        if (EmptyTab == NULL) {
-
-                 cmsPipelineFree(Lut);
-                 return NULL;
-        }
+        if (EmptyTab == NULL)
+            goto Error;
 
         LabCurves[0] = GrayTRC;
         LabCurves[1] = EmptyTab;
         LabCurves[2] = EmptyTab;
 
 	if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, OneToThreeInputMatrix, NULL)) ||
-	    !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, LabCurves)))
-		goto Error;
+	    !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, LabCurves))) {
+            cmsFreeToneCurve(EmptyTab);
+            goto Error;
+	}
 
         cmsFreeToneCurve(EmptyTab);
 
@@ -200,6 +200,7 @@ cmsPipeline* BuildGrayInputMatrixPipeline(cmsHPROFILE hProfile)
 
     return Lut;
 Error:
+    cmsFreeToneCurve(GrayTRC);
     cmsPipelineFree(Lut);
     return NULL;
 }
