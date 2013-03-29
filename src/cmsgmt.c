@@ -385,17 +385,21 @@ cmsPipeline* _cmsCreateGamutCheckPipeline(cmsContext ContextID,
 		// dE when doing a transform back and forth on the colorimetric intent.
 
 		Gamut = cmsPipelineAlloc(ContextID, 3, 1);
+        if (Gamut != NULL) {
 
-		if (Gamut != NULL) {
+            CLUT = cmsStageAllocCLut16bit(ContextID, nGridpoints, nChannels, 1, NULL);
+            if (CLUT == NULL) {
 
-			CLUT = cmsStageAllocCLut16bit(ContextID, nGridpoints, nChannels, 1, NULL);
-			if (!cmsPipelineInsertStage(Gamut, cmsAT_BEGIN, CLUT)) {
-				cmsPipelineFree(Gamut);
-				Gamut = NULL;
-			} else
-				cmsStageSampleCLut16bit(CLUT, GamutSampler, (void*) &Chain, 0);
-		}
-	}
+                cmsPipelineFree(Gamut);
+                Gamut = NULL;
+            } 
+            else {
+
+                cmsPipelineInsertStage(Gamut, cmsAT_BEGIN, CLUT);
+                cmsStageSampleCLut16bit(CLUT, GamutSampler, (void*) &Chain, 0);
+            }
+        }
+    }
 	else
 		Gamut = NULL;   // Didn't work...
 
