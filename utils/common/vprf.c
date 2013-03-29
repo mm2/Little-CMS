@@ -231,7 +231,7 @@ void PrintRenderingIntents(void)
     n = cmsGetSupportedIntents(200, Codes, Descriptions);
 
     for (i=0; i < n; i++) {
-        fprintf(stderr, "\t%d - %s\n", Codes[i], Descriptions[i]);
+        fprintf(stderr, "\t%u - %s\n", Codes[i], Descriptions[i]);
     }
     fprintf(stderr, "\n");
 }
