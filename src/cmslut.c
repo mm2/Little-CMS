@@ -1220,16 +1220,22 @@ cmsStage* CMSEXPORT cmsStageDup(cmsStage* mpe)
                                      NULL);
     if (NewMPE == NULL) return NULL;
 
-    NewMPE ->Implements     = mpe ->Implements;
+    NewMPE ->Implements = mpe ->Implements;
 
     if (mpe ->DupElemPtr) {
-        NewMPE ->Data       = mpe ->DupElemPtr(mpe);
-	if (NewMPE->Data == NULL) {
+
+        NewMPE ->Data = mpe ->DupElemPtr(mpe);
+
+        if (NewMPE->Data == NULL) {
+
             cmsStageFree(NewMPE);
             return NULL;
-	}
-    } else
+        }
+
+    } else {
+
         NewMPE ->Data       = NULL;
+    }
 
     return NewMPE;
 }
