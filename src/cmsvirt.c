@@ -291,7 +291,6 @@ cmsHPROFILE CMSEXPORT cmsCreateLinearizationDeviceLinkTHR(cmsContext ContextID,
 {
     cmsHPROFILE hICC;
     cmsPipeline* Pipeline;
-    cmsStage* Lin;
     int nChannels;
 
     hICC = cmsCreateProfilePlaceholder(ContextID);
@@ -315,10 +314,8 @@ cmsHPROFILE CMSEXPORT cmsCreateLinearizationDeviceLinkTHR(cmsContext ContextID,
 
 
     // Copy tables to Pipeline
-    Lin = cmsStageAllocToneCurves(ContextID, nChannels, TransferFunctions);
-    if (Lin == NULL) goto Error;
-
-    cmsPipelineInsertStage(Pipeline, cmsAT_BEGIN, Lin);
+    if (!cmsPipelineInsertStage(Pipeline, cmsAT_BEGIN, cmsStageAllocToneCurves(ContextID, nChannels, TransferFunctions)))
+        goto Error;
 
     // Create tags
     if (!SetTextTags(hICC, L"Linearization built-in")) goto Error;
@@ -332,6 +329,7 @@ cmsHPROFILE CMSEXPORT cmsCreateLinearizationDeviceLinkTHR(cmsContext ContextID,
     return hICC;
 
 Error:
+    cmsPipelineFree(Pipeline);
     if (hICC)
         cmsCloseProfile(hICC);
 
@@ -439,9 +437,10 @@ cmsHPROFILE CMSEXPORT cmsCreateInkLimitingDeviceLinkTHR(cmsContext ContextID,
 
     if (!cmsStageSampleCLut16bit(CLUT, InkLimitingSampler, (void*) &Limit, 0)) goto Error;
 
-    cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, nChannels));
-    cmsPipelineInsertStage(LUT, cmsAT_END, CLUT);
-    cmsPipelineInsertStage(LUT, cmsAT_END, _cmsStageAllocIdentityCurves(ContextID, nChannels));
+    if (!cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, nChannels)) ||
+        !cmsPipelineInsertStage(LUT, cmsAT_END, CLUT) ||
+        !cmsPipelineInsertStage(LUT, cmsAT_END, _cmsStageAllocIdentityCurves(ContextID, nChannels)))
+        goto Error;
 
     // Create tags
     if (!SetTextTags(hICC, L"ink-limiting built-in")) goto Error;
@@ -492,7 +491,8 @@ cmsHPROFILE CMSEXPORT cmsCreateLab2ProfileTHR(cmsContext ContextID, const cmsCIE
     LUT = cmsPipelineAlloc(ContextID, 3, 3);
     if (LUT == NULL) goto Error;
 
-    cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCLut(ContextID, 3));
+    if (!cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCLut(ContextID, 3)))
+        goto Error;
 
     if (!cmsWriteTag(hProfile, cmsSigAToB0Tag, LUT)) goto Error;
     cmsPipelineFree(LUT);
@@ -538,7 +538,8 @@ cmsHPROFILE CMSEXPORT cmsCreateLab4ProfileTHR(cmsContext ContextID, const cmsCIE
     LUT = cmsPipelineAlloc(ContextID, 3, 3);
     if (LUT == NULL) goto Error;
 
-    cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, 3));
+    if (!cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, 3)))
+        goto Error;
 
     if (!cmsWriteTag(hProfile, cmsSigAToB0Tag, LUT)) goto Error;
     cmsPipelineFree(LUT);
@@ -583,7 +584,8 @@ cmsHPROFILE CMSEXPORT cmsCreateXYZProfileTHR(cmsContext ContextID)
     LUT = cmsPipelineAlloc(ContextID, 3, 3);
     if (LUT == NULL) goto Error;
 
-    cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, 3));
+    if (!cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, 3)))
+        goto Error;
 
     if (!cmsWriteTag(hProfile, cmsSigAToB0Tag, LUT)) goto Error;
     cmsPipelineFree(LUT);
@@ -777,12 +779,12 @@ cmsHPROFILE CMSEXPORT cmsCreateBCHSWabstractProfileTHR(cmsContext ContextID,
        if (!cmsStageSampleCLut16bit(CLUT, bchswSampler, (void*) &bchsw, 0)) {
 
                 // Shouldn't reach here
-                cmsPipelineFree(Pipeline);
-                cmsCloseProfile(hICC);
-                return NULL;
+	       goto Error;
        }
 
-       cmsPipelineInsertStage(Pipeline, cmsAT_END, CLUT);
+       if (!cmsPipelineInsertStage(Pipeline, cmsAT_END, CLUT)) {
+	   goto Error;
+       }
 
        // Create tags
 
@@ -797,6 +799,10 @@ cmsHPROFILE CMSEXPORT cmsCreateBCHSWabstractProfileTHR(cmsContext ContextID,
 
        // Ok, done
        return hICC;
+Error:
+        cmsPipelineFree(Pipeline);
+        cmsCloseProfile(hICC);
+        return NULL;
 }
 
 
@@ -844,7 +850,8 @@ cmsHPROFILE CMSEXPORT cmsCreateNULLProfileTHR(cmsContext ContextID)
     PostLin = cmsStageAllocToneCurves(ContextID, 1, &EmptyTab);
     cmsFreeToneCurve(EmptyTab);
 
-    cmsPipelineInsertStage(LUT, cmsAT_END, PostLin);
+    if (!cmsPipelineInsertStage(LUT, cmsAT_END, PostLin))
+        goto Error;
 
     if (!cmsWriteTag(hProfile, cmsSigBToA0Tag, (void*) LUT)) goto Error;
     if (!cmsWriteTag(hProfile, cmsSigMediaWhitePointTag, cmsD50_XYZ())) goto Error;
@@ -1068,13 +1075,15 @@ cmsHPROFILE CMSEXPORT cmsTransform2DeviceLink(cmsHTRANSFORM hTransform, cmsFloat
     // Time to fix the Lab2/Lab4 issue.
     if ((xform ->EntryColorSpace == cmsSigLabData) && (Version < 4.0)) {
 
-        cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocLabV2ToV4curves(ContextID));
+        if (!cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocLabV2ToV4curves(ContextID)))
+            goto Error;
     }
 
     // On the output side too
     if ((xform ->ExitColorSpace) == cmsSigLabData && (Version < 4.0)) {
 
-        cmsPipelineInsertStage(LUT, cmsAT_END, _cmsStageAllocLabV4ToV2(ContextID));
+        if (!cmsPipelineInsertStage(LUT, cmsAT_END, _cmsStageAllocLabV4ToV2(ContextID)))
+            goto Error;
     }
 
 
@@ -1124,10 +1133,12 @@ cmsHPROFILE CMSEXPORT cmsTransform2DeviceLink(cmsHTRANSFORM hTransform, cmsFloat
 
         // Put identity curves if needed
         if (cmsPipelineGetPtrToFirstStage(LUT) ->Type != cmsSigCurveSetElemType)
-             cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, ChansIn));
+             if (!cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, ChansIn)))
+                 goto Error;
 
         if (cmsPipelineGetPtrToLastStage(LUT) ->Type != cmsSigCurveSetElemType)
-             cmsPipelineInsertStage(LUT, cmsAT_END,   _cmsStageAllocIdentityCurves(ContextID, ChansOut));
+             if (!cmsPipelineInsertStage(LUT, cmsAT_END,   _cmsStageAllocIdentityCurves(ContextID, ChansOut)))
+                 goto Error;
 
         AllowedLUT = FindCombination(LUT, Version >= 4.0, DestinationTag);
     }

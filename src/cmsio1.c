@@ -185,18 +185,23 @@ cmsPipeline* BuildGrayInputMatrixPipeline(cmsHPROFILE hProfile)
         LabCurves[1] = EmptyTab;
         LabCurves[2] = EmptyTab;
 
-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, OneToThreeInputMatrix, NULL));
-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, LabCurves));
+	if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, OneToThreeInputMatrix, NULL)) ||
+	    !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, LabCurves)))
+		goto Error;
 
         cmsFreeToneCurve(EmptyTab);
 
     }
     else  {
-       cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &GrayTRC));
-       cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, GrayInputMatrix, NULL));
+	if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &GrayTRC)) ||
+	    !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, GrayInputMatrix, NULL)))
+		goto Error;
     }
 
     return Lut;
+Error:
+    cmsPipelineFree(Lut);
+    return NULL;
 }
 
 // RGB Matrix shaper
@@ -230,20 +235,25 @@ cmsPipeline* BuildRGBInputMatrixShaper(cmsHPROFILE hProfile)
     Lut = cmsPipelineAlloc(ContextID, 3, 3);
     if (Lut != NULL) {
      
-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, Shapes));
-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3, 3, (cmsFloat64Number*) &Mat, NULL));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, Shapes)) ||
+            !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3, 3, (cmsFloat64Number*) &Mat, NULL)))
+	    goto Error;
         
         // Note that it is certainly possible a single profile would have a LUT based
         // tag for output working in lab and a matrix-shaper for the fallback cases. 
         // This is not allowed by the spec, but this code is tolerant to those cases    
         if (cmsGetPCS(hProfile) == cmsSigLabData) {
 
-             cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocXYZ2Lab(ContextID));
+	    if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocXYZ2Lab(ContextID)))
+		goto Error;
         }
 
     }
 
     return Lut;
+Error:
+    cmsPipelineFree(Lut);
+    return NULL;
 }
 
 
@@ -262,15 +272,20 @@ cmsPipeline* _cmsReadFloatInputTag(cmsHPROFILE hProfile, cmsTagSignature tagFloa
     // and since the formatter has already accomodated to 0..1.0, we should undo this change
     if ( spc == cmsSigLabData)
     {
-        cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID)))
+	    goto Error;
     }
     else
         if (spc == cmsSigXYZData)
         {
-            cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID));
+            if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID)))
+                goto Error;
         }
 
     return Lut;
+Error:
+    cmsPipelineFree(Lut);
+    return NULL;
 }
 */
 static
@@ -287,23 +302,30 @@ cmsPipeline* _cmsReadFloatInputTag(cmsHPROFILE hProfile, cmsTagSignature tagFloa
     //  these need to be normalized into the appropriate ranges (Lab = 100,0,0, XYZ=1.0,1.0,1.0)
     if ( spc == cmsSigLabData)
     {
-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID)))
+            goto Error;
     }
     else if (spc == cmsSigXYZData)
     {
-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID)))
+            goto Error;
     }
     
     if ( PCS == cmsSigLabData)
     {
-        cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID)))
+            goto Error;
     }
     else if( PCS == cmsSigXYZData)
     {
-        cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID)))
+            goto Error;
     }
     
     return Lut;
+Error:
+    cmsPipelineFree(Lut);
+    return NULL;
 }
 
 
@@ -330,8 +352,11 @@ cmsPipeline* _cmsReadInputLUT(cmsHPROFILE hProfile, int Intent)
             return NULL;
         }
 
-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocNamedColor(nc, TRUE));
-        cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocNamedColor(nc, TRUE)) ||
+            !cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID))) {
+            cmsPipelineFree(Lut);
+            return NULL;
+        }
         return Lut;
     }
 
@@ -366,12 +391,18 @@ cmsPipeline* _cmsReadInputLUT(cmsHPROFILE hProfile, int Intent)
             return Lut;
 
         // If the input is Lab, add also a conversion at the begin
-        if (cmsGetColorSpace(hProfile) == cmsSigLabData)
-            cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocLabV4ToV2(ContextID));
+        if (cmsGetColorSpace(hProfile) == cmsSigLabData &&
+            !cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocLabV4ToV2(ContextID)))
+            goto Error;
 
         // Add a matrix for conversion V2 to V4 Lab PCS
-        cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID)))
+            goto Error;
+
         return Lut;
+Error:
+        cmsPipelineFree(Lut);
+        return NULL;
     }
 
     // Lut was not found, try to create a matrix-shaper
@@ -416,16 +447,23 @@ cmsPipeline* BuildGrayOutputPipeline(cmsHPROFILE hProfile)
 
     if (cmsGetPCS(hProfile) == cmsSigLabData) {
 
-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 1,  3, PickLstarMatrix, NULL));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 1,  3, PickLstarMatrix, NULL)))
+            goto Error;
     }
     else  {
-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 1,  3, PickYMatrix, NULL));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 1,  3, PickYMatrix, NULL)))
+            goto Error;
     }
 
-    cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &RevGrayTRC));
+    if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &RevGrayTRC)))
+        goto Error;
     cmsFreeToneCurve(RevGrayTRC);
 
     return Lut;
+Error:
+    cmsFreeToneCurve(RevGrayTRC);
+    cmsPipelineFree(Lut);
+    return NULL;
 }
 
 
@@ -477,15 +515,21 @@ cmsPipeline* BuildRGBOutputMatrixShaper(cmsHPROFILE hProfile)
         // This is not allowed by the spec, but this code is tolerant to those cases    
         if (cmsGetPCS(hProfile) == cmsSigLabData) {
 
-             cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLab2XYZ(ContextID));
+             if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLab2XYZ(ContextID)))
+                 goto Error;
         }
 
-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3, 3, (cmsFloat64Number*) &Inv, NULL));
-        cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, InvShapes));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3, 3, (cmsFloat64Number*) &Inv, NULL)) ||
+            !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, InvShapes)))
+	    goto Error;
     }
 
     cmsFreeToneCurveTriple(InvShapes);
     return Lut;
+Error:
+    cmsFreeToneCurveTriple(InvShapes);
+    cmsPipelineFree(Lut);
+    return NULL;
 }
 
 
@@ -524,15 +568,20 @@ cmsPipeline* _cmsReadFloatOutputTag(cmsHPROFILE hProfile, cmsTagSignature tagFlo
     // and since the formatter has already accomodated to 0..1.0, we should undo this change
     if ( PCS == cmsSigLabData)
     {
-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID)))
+            goto Error;
     }
     else
         if (PCS == cmsSigXYZData)
         {
-            cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID));
+            if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID)))
+                goto Error;
         }
 
     return Lut;
+Error:
+    cmsPipelineFree(Lut);
+    return NULL;
 }*/
 
 static
@@ -549,25 +598,32 @@ cmsPipeline* _cmsReadFloatOutputTag(cmsHPROFILE hProfile, cmsTagSignature tagFlo
     // and since the formatter has already accomodated to 0..1.0, we should undo this change
     if ( PCS == cmsSigLabData)
     {
-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID)))
+            goto Error;
     }
     else
         if (PCS == cmsSigXYZData)
         {
-            cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID));
+            if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID)))
+                goto Error;
         }
     
     // the output can be Lab or XYZ, in which case normalisation is needed on the end of the pipeline
     if ( dataSpace == cmsSigLabData)
     {
-        cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID)))
+            goto Error;
     }
     else if ( dataSpace == cmsSigXYZData)
     {
-        cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID)))
+            goto Error;
     }
     
     return Lut;
+Error:
+    cmsPipelineFree(Lut);
+    return NULL;
 }
 
 // Create an output MPE LUT from agiven profile. Version mismatches are handled here
@@ -614,13 +670,18 @@ cmsPipeline* _cmsReadOutputLUT(cmsHPROFILE hProfile, int Intent)
             return Lut;
 
         // Add a matrix for conversion V4 to V2 Lab PCS
-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocLabV4ToV2(ContextID));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocLabV4ToV2(ContextID)))
+            goto Error;
 
         // If the output is Lab, add also a conversion at the end
         if (cmsGetColorSpace(hProfile) == cmsSigLabData)
-            cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID));
+            if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID)))
+                goto Error;
 
         return Lut;
+Error:
+	cmsPipelineFree(Lut);
+	return NULL;
     }
 
     // Lut not found, try to create a matrix-shaper
@@ -652,25 +713,32 @@ cmsPipeline* _cmsReadFloatDevicelinkTag(cmsHPROFILE hProfile, cmsTagSignature ta
 
     if (spc == cmsSigLabData)
     {
-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID));
+        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID)))
+            goto Error;
     }
     else
         if (spc == cmsSigXYZData)
         {
-            cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID));
+            if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID)))
+                goto Error;
         }
 
         if (PCS == cmsSigLabData)
         {
-            cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID));
+            if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID)))
+                goto Error;
         }
         else
             if (PCS == cmsSigXYZData)
             {
-                cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID));
+                if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID)))
+                    goto Error;
             }
 
-            return Lut;
+    return Lut;
+Error:
+    cmsPipelineFree(Lut);
+    return NULL;
 }
 
 // This one includes abstract profiles as well. Matrix-shaper cannot be obtained on that device class. The
@@ -692,15 +760,19 @@ cmsPipeline* _cmsReadDevicelinkLUT(cmsHPROFILE hProfile, int Intent)
         if (nc == NULL) return NULL;
 
         Lut = cmsPipelineAlloc(ContextID, 0, 0);
-        if (Lut == NULL) {
-            cmsFreeNamedColorList(nc);
-            return NULL;
-        }
+        if (Lut == NULL)
+            goto Error;
 
-        cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocNamedColor(nc, FALSE));
+	if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocNamedColor(nc, FALSE)))
+            goto Error;
         if (cmsGetColorSpace(hProfile) == cmsSigLabData)
-              cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID));
+            if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID)))
+                goto Error;
         return Lut;
+Error:
+        cmsPipelineFree(Lut);
+        cmsFreeNamedColorList(nc);
+        return NULL;
     }
 
     if (cmsIsTag(hProfile, tagFloat)) {  // Float tag takes precedence
@@ -745,16 +817,19 @@ cmsPipeline* _cmsReadDevicelinkLUT(cmsHPROFILE hProfile, int Intent)
     // Here it is possible to get Lab on both sides
 
     if (cmsGetPCS(hProfile) == cmsSigLabData) {
-            cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocLabV4ToV2(ContextID));
+        if(!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocLabV4ToV2(ContextID)))
+            goto Error2;
     }
 
     if (cmsGetColorSpace(hProfile) == cmsSigLabData) {
-            cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID));
+        if(!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID)))
+            goto Error2;
     }
 
     return Lut;
-
-
+Error2:
+    cmsPipelineFree(Lut);
+    return NULL;
 }
 
 // ---------------------------------------------------------------------------------------------------------------

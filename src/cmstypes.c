@@ -1614,7 +1614,6 @@ Byte Position   Field Length (bytes)  Content Encoded as...
 static
 cmsBool  Read8bitTables(cmsContext ContextID, cmsIOHANDLER* io, cmsPipeline* lut, int nChannels)
 {
-    cmsStage* mpe;
     cmsUInt8Number* Temp = NULL;
     int i, j;
     cmsToneCurve* Tables[cmsMAXCHANNELS];
@@ -1643,11 +1642,8 @@ cmsBool  Read8bitTables(cmsContext ContextID, cmsIOHANDLER* io, cmsPipeline* lut
     _cmsFree(ContextID, Temp);
     Temp = NULL;
 
-
-    mpe = cmsStageAllocToneCurves(ContextID, nChannels, Tables);
-    if (mpe == NULL) goto Error;
-
-    cmsPipelineInsertStage(lut, cmsAT_END, mpe);
+    if (!cmsPipelineInsertStage(lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, nChannels, Tables)))
+        goto Error;
 
     for (i=0; i < nChannels; i++)
         cmsFreeToneCurve(Tables[i]);
@@ -1740,7 +1736,6 @@ void *Type_LUT8_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cms
     cmsUInt8Number InputChannels, OutputChannels, CLUTpoints;
     cmsUInt8Number* Temp = NULL;
     cmsPipeline* NewLUT = NULL;
-    cmsStage *mpemat, *mpeclut;
     cmsUInt32Number nTabSize, i;
     cmsFloat64Number Matrix[3*3];
 
@@ -1779,9 +1774,8 @@ void *Type_LUT8_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cms
     // Only operates if not identity...
     if ((InputChannels == 3) && !_cmsMAT3isIdentity((cmsMAT3*) Matrix)) {
 
-        mpemat = cmsStageAllocMatrix(self ->ContextID, 3, 3, Matrix, NULL);
-        if (mpemat == NULL) goto Error;
-        cmsPipelineInsertStage(NewLUT, cmsAT_BEGIN, mpemat);
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_BEGIN, cmsStageAllocMatrix(self ->ContextID, 3, 3, Matrix, NULL)))
+            goto Error;
     }
 
     // Get input tables
@@ -1809,10 +1803,8 @@ void *Type_LUT8_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cms
         _cmsFree(self ->ContextID, Temp);
         Temp = NULL;
 
-
-        mpeclut = cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, InputChannels, OutputChannels, T);
-        if (mpeclut == NULL) goto Error;
-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpeclut);
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, InputChannels, OutputChannels, T)))
+            goto Error;
         _cmsFree(self ->ContextID, T);
     }
 
@@ -1963,7 +1955,6 @@ void Type_LUT8_Free(struct _cms_typehandler_struct* self, void* Ptr)
 static
 cmsBool  Read16bitTables(cmsContext ContextID, cmsIOHANDLER* io, cmsPipeline* lut, int nChannels, int nEntries)
 {
-    cmsStage* mpe;
     int i;
     cmsToneCurve* Tables[cmsMAXCHANNELS];
 
@@ -1987,10 +1978,8 @@ cmsBool  Read16bitTables(cmsContext ContextID, cmsIOHANDLER* io, cmsPipeline* lu
 
 
     // Add the table (which may certainly be an identity, but this is up to the optimizer, not the reading code)
-    mpe = cmsStageAllocToneCurves(ContextID, nChannels, Tables);
-    if (mpe == NULL) goto Error;
-
-    cmsPipelineInsertStage(lut, cmsAT_END, mpe);
+    if (!cmsPipelineInsertStage(lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, nChannels, Tables)))
+        goto Error;
 
     for (i=0; i < nChannels; i++)
         cmsFreeToneCurve(Tables[i]);
@@ -2035,7 +2024,6 @@ void *Type_LUT16_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cm
 {
     cmsUInt8Number InputChannels, OutputChannels, CLUTpoints;
     cmsPipeline* NewLUT = NULL;
-    cmsStage *mpemat,  *mpeclut;
     cmsUInt32Number nTabSize;
     cmsFloat64Number Matrix[3*3];
     cmsUInt16Number InputEntries, OutputEntries;
@@ -2072,9 +2060,8 @@ void *Type_LUT16_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cm
     // Only operates on 3 channels
     if ((InputChannels == 3) && !_cmsMAT3isIdentity((cmsMAT3*) Matrix)) {
 
-        mpemat = cmsStageAllocMatrix(self ->ContextID, 3, 3, Matrix, NULL);
-        if (mpemat == NULL) goto Error;
-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpemat);
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, cmsStageAllocMatrix(self ->ContextID, 3, 3, Matrix, NULL)))
+            goto Error;
     }
 
     if (!_cmsReadUInt16Number(io, &InputEntries)) goto Error;
@@ -2101,13 +2088,10 @@ void *Type_LUT16_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cm
             goto Error;
         }
 
-        mpeclut = cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, InputChannels, OutputChannels, T);
-        if (mpeclut == NULL) {
+	if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, InputChannels, OutputChannels, T))) {
              _cmsFree(self ->ContextID, T);
             goto Error;
-        }
-
-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpeclut);
+	}
         _cmsFree(self ->ContextID, T);
     }
 
@@ -2457,7 +2441,6 @@ void* Type_LUTA2B_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, c
     cmsUInt32Number      offsetM;        // Offset to first "M" curve
     cmsUInt32Number      offsetC;        // Offset to CLUT
     cmsUInt32Number      offsetA;        // Offset to first "A" curve
-    cmsStage* mpe;
     cmsPipeline* NewLUT = NULL;
 
 
@@ -2479,37 +2462,35 @@ void* Type_LUTA2B_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, c
     if (NewLUT == NULL) return NULL;
 
     if (offsetA!= 0) {
-        mpe = ReadSetOfCurves(self, io, BaseOffset + offsetA, inputChan);
-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadSetOfCurves(self, io, BaseOffset + offsetA, inputChan)))
+            goto Error;
     }
 
     if (offsetC != 0) {
-        mpe = ReadCLUT(self, io, BaseOffset + offsetC, inputChan, outputChan);
-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadCLUT(self, io, BaseOffset + offsetC, inputChan, outputChan)))
+            goto Error;
     }
 
     if (offsetM != 0) {
-        mpe = ReadSetOfCurves(self, io, BaseOffset + offsetM, outputChan);
-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadSetOfCurves(self, io, BaseOffset + offsetM, outputChan)))
+            goto Error;
     }
 
     if (offsetMat != 0) {
-        mpe = ReadMatrix(self, io, BaseOffset + offsetMat);
-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadMatrix(self, io, BaseOffset + offsetMat)))
+            goto Error;
     }
 
     if (offsetB != 0) {
-        mpe = ReadSetOfCurves(self, io, BaseOffset + offsetB, outputChan);
-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadSetOfCurves(self, io, BaseOffset + offsetB, outputChan)))
+            goto Error;
     }
 
     *nItems = 1;
     return NewLUT;
+Error:
+    cmsPipelineFree(NewLUT);
+    return NULL;
 
     cmsUNUSED_PARAMETER(SizeOfTag);
 }
@@ -2776,7 +2757,6 @@ void* Type_LUTB2A_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, c
     cmsUInt32Number      offsetM;        // Offset to first "M" curve
     cmsUInt32Number      offsetC;        // Offset to CLUT
     cmsUInt32Number      offsetA;        // Offset to first "A" curve
-    cmsStage* mpe;
     cmsPipeline* NewLUT = NULL;
 
 
@@ -2799,37 +2779,35 @@ void* Type_LUTB2A_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, c
     if (NewLUT == NULL) return NULL;
 
     if (offsetB != 0) {
-        mpe = ReadSetOfCurves(self, io, BaseOffset + offsetB, inputChan);
-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadSetOfCurves(self, io, BaseOffset + offsetB, inputChan)))
+            goto Error;
     }
 
     if (offsetMat != 0) {
-        mpe = ReadMatrix(self, io, BaseOffset + offsetMat);
-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadMatrix(self, io, BaseOffset + offsetMat)))
+            goto Error;
     }
 
     if (offsetM != 0) {
-        mpe = ReadSetOfCurves(self, io, BaseOffset + offsetM, inputChan);
-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadSetOfCurves(self, io, BaseOffset + offsetM, inputChan)))
+            goto Error;
     }
 
     if (offsetC != 0) {
-        mpe = ReadCLUT(self, io, BaseOffset + offsetC, inputChan, outputChan);
-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadCLUT(self, io, BaseOffset + offsetC, inputChan, outputChan)))
+            goto Error;
     }
 
     if (offsetA!= 0) {
-        mpe = ReadSetOfCurves(self, io, BaseOffset + offsetA, outputChan);
-        if (mpe == NULL) { cmsPipelineFree(NewLUT); return NULL; }
-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, ReadSetOfCurves(self, io, BaseOffset + offsetA, outputChan)))
+            goto Error;
     }
 
     *nItems = 1;
     return NewLUT;
+Error:
+    cmsPipelineFree(NewLUT);
+    return NULL;
 
     cmsUNUSED_PARAMETER(SizeOfTag);
 }
@@ -4362,7 +4340,6 @@ cmsBool ReadMPEElem(struct _cms_typehandler_struct* self,
 {
     cmsStageSignature ElementSig;
     cmsTagTypeHandler* TypeHandler;
-    cmsStage *mpe = NULL;
     cmsUInt32Number nItems;
     cmsPipeline *NewLUT = (cmsPipeline *) Cargo;
 
@@ -4390,11 +4367,8 @@ cmsBool ReadMPEElem(struct _cms_typehandler_struct* self,
     if (TypeHandler ->ReadPtr != NULL) {
 
         // This is a real element which should be read and processed
-        mpe = (cmsStage*) TypeHandler ->ReadPtr(self, io, &nItems, SizeOfTag);
-        if (mpe == NULL) return FALSE;
-
-        // All seems ok, insert element
-        cmsPipelineInsertStage(NewLUT, cmsAT_END, mpe);
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, (cmsStage*) TypeHandler ->ReadPtr(self, io, &nItems, SizeOfTag)))
+            return FALSE;
     }
 
     return TRUE;
