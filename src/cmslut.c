@@ -499,10 +499,15 @@ void* CLUTElemDup(cmsStage* mpe)
 
     if (Data ->Tab.T) {
 
-        if (Data ->HasFloatValues)
+        if (Data ->HasFloatValues) {
             NewElem ->Tab.TFloat = (cmsFloat32Number*) _cmsDupMem(mpe ->ContextID, Data ->Tab.TFloat, Data ->nEntries * sizeof (cmsFloat32Number));
-        else
+            if (NewElem ->Tab.TFloat == NULL)
+                goto Error;
+        } else {
             NewElem ->Tab.T = (cmsUInt16Number*) _cmsDupMem(mpe ->ContextID, Data ->Tab.T, Data ->nEntries * sizeof (cmsUInt16Number));
+            if (NewElem ->Tab.TFloat == NULL)
+                goto Error;
+        }
     }
 
     NewElem ->Params   = _cmsComputeInterpParamsEx(mpe ->ContextID,
@@ -511,8 +516,14 @@ void* CLUTElemDup(cmsStage* mpe)
                                                    Data ->Params ->nOutputs,
                                                    NewElem ->Tab.T,
                                                    Data ->Params ->dwFlags);
-
-    return (void*) NewElem;
+    if (NewElem->Params != NULL)
+        return (void*) NewElem;
+ Error:
+    if (NewElem->Tab.T)
+        // This works for both types
+        _cmsFree(mpe ->ContextID, NewElem -> Tab.T);
+    _cmsFree(mpe ->ContextID, NewElem);
+    return NULL;
 }
 
 
