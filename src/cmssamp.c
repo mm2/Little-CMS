@@ -456,7 +456,6 @@ cmsBool CMSEXPORT cmsDetectDestinationBlackPoint(cmsCIEXYZ* BlackPoint, cmsHPROF
         outRamp[l] = cmsmin(outRamp[l], outRamp[l+1]);
     }
 
-
     // Check
     if (! (outRamp[0] < outRamp[255])) {
 
@@ -471,9 +470,7 @@ cmsBool CMSEXPORT cmsDetectDestinationBlackPoint(cmsCIEXYZ* BlackPoint, cmsHPROF
     NearlyStraightMidrange = TRUE;
     MinL = outRamp[0]; MaxL = outRamp[255];
     if (Intent == INTENT_RELATIVE_COLORIMETRIC) {
-
-       
-
+      
         for (l=0; l < 256; l++) {
 
             if (! ((inRamp[l] <= MinL + 0.2 * (MaxL - MinL) ) ||   

@@ -124,8 +124,7 @@ cmsIOHANDLER*  CMSEXPORT cmsOpenIOhandlerFromNULL(cmsContext ContextID)
 
     return iohandler;
 
-Error:
-    if (fm) _cmsFree(ContextID, fm);
+Error:    
     if (iohandler) _cmsFree(ContextID, iohandler);
     return NULL;
 
