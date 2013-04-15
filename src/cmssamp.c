@@ -190,13 +190,24 @@ cmsBool BlackPointUsingPerceptualBlack(cmsCIEXYZ* BlackPoint, cmsHPROFILE hProfi
 // involves to turn BP to neutral and to use only L component.
 cmsBool CMSEXPORT cmsDetectBlackPoint(cmsCIEXYZ* BlackPoint, cmsHPROFILE hProfile, cmsUInt32Number Intent, cmsUInt32Number dwFlags)
 {
+    cmsProfileClassSignature devClass;
 
-    // Zero for black point
-    if (cmsGetDeviceClass(hProfile) == cmsSigLinkClass) {
-
-        BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
-        return FALSE;
+    // Make sure the device class is adequate
+    devClass = cmsGetDeviceClass(hProfile);
+    if (devClass == cmsSigLinkClass ||
+        devClass == cmsSigAbstractClass ||
+        devClass == cmsSigNamedColorClass) {
+    		BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
+			return FALSE;	
     }
+
+    // Make sure intent is adequate
+    if (Intent != INTENT_PERCEPTUAL &&
+        Intent != INTENT_RELATIVE_COLORIMETRIC &&
+		Intent != INTENT_SATURATION) {
+			BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
+			return FALSE;
+	}
 
     // v4 + perceptual & saturation intents does have its own black point, and it is
     // well specified enough to use it. Black point tag is deprecated in V4.
@@ -366,7 +377,16 @@ cmsBool CMSEXPORT cmsDetectDestinationBlackPoint(cmsCIEXYZ* BlackPoint, cmsHPROF
     cmsFloat64Number x[256], y[256];
     cmsFloat64Number lo, hi;
     int n, l;
+    cmsProfileClassSignature devClass;
 
+    // Make sure the device class is adequate
+    devClass = cmsGetDeviceClass(hProfile);
+    if (devClass == cmsSigLinkClass ||
+        devClass == cmsSigAbstractClass ||
+        devClass == cmsSigNamedColorClass) {
+    		BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
+			return FALSE;	
+    }
 
     // Make sure intent is adequate
     if (Intent != INTENT_PERCEPTUAL &&
