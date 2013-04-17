@@ -1091,7 +1091,7 @@ void Help(int level)
                      "\tjpgicc %ciprinter.icm incmyk.jpg outrgb.jpg\n"
                      "To convert from CIELab ITU/Fax JPEG to sRGB\n"
                      "\tjpgicc in.jpg out.jpg\n\n",
-                     SW, SW, SW, SW, SW, SW);
+                     SW, SW, SW, SW, SW);
      break;
 
      case 2:
