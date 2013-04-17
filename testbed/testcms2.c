@@ -7534,7 +7534,7 @@ void SpeedTest16bitsCMYK(const char * Title, cmsHPROFILE hlcmsProfileIn, cmsHPRO
     Scanline_rgb2 *In;
     cmsUInt32Number Mb;
 
-    if (hlcmsProfileOut == NULL || hlcmsProfileOut == NULL)
+    if (hlcmsProfileOut == NULL)
         Die("Unable to open profiles");
 
     hlcmsxform  = cmsCreateTransformTHR(DbgThread(), hlcmsProfileIn, TYPE_CMYK_16,
