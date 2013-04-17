@@ -319,3 +319,7 @@ _cmsSetTransformUserData                 =   _cmsSetTransformUserData
 _cmsGetTransformFormatters16             =   _cmsGetTransformFormatters16
 _cmsGetTransformFormattersFloat          =   _cmsGetTransformFormattersFloat
 cmsGetHeaderCreator                      =   cmsGetHeaderCreator
+cmsPluginTHR                             =   cmsPluginTHR
+cmsGetPipelineContextID                  =   cmsGetPipelineContextID
+cmsGetTransformInputFormat               =   cmsGetTransformInputFormat
+cmsGetTransformOutputFormat              =   cmsGetTransformOutputFormat

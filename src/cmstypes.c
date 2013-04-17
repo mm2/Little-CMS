@@ -2137,7 +2137,7 @@ cmsBool  Type_LUT16_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io
     _cmsStageToneCurvesData* PreMPE = NULL, *PostMPE = NULL;
     _cmsStageMatrixData* MatMPE = NULL;
     _cmsStageCLutData* clut = NULL;
-    int InputChannels, OutputChannels, clutPoints;
+    int i, InputChannels, OutputChannels, clutPoints;
 
     // Disassemble the LUT into components.
     mpe = NewLUT -> Elements;
@@ -2212,13 +2212,13 @@ cmsBool  Type_LUT16_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io
     if (PreMPE != NULL) {
         if (!_cmsWriteUInt16Number(io, (cmsUInt16Number) PreMPE ->TheCurves[0]->nEntries)) return FALSE;
     } else {
-            if (!_cmsWriteUInt16Number(io, 0)) return FALSE;
+            if (!_cmsWriteUInt16Number(io, 2)) return FALSE;
     }
 
     if (PostMPE != NULL) {
         if (!_cmsWriteUInt16Number(io, (cmsUInt16Number) PostMPE ->TheCurves[0]->nEntries)) return FALSE;
     } else {
-        if (!_cmsWriteUInt16Number(io, 0)) return FALSE;
+        if (!_cmsWriteUInt16Number(io, 2)) return FALSE;
 
     }
 
@@ -2226,6 +2226,13 @@ cmsBool  Type_LUT16_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io
 
     if (PreMPE != NULL) {
         if (!Write16bitTables(self ->ContextID, io, PreMPE)) return FALSE;
+    }
+    else {
+        for (i=0; i < InputChannels; i++) {
+
+            if (!_cmsWriteUInt16Number(io, 0)) return FALSE;
+            if (!_cmsWriteUInt16Number(io, 0xffff)) return FALSE;
+        }
     }
 
     nTabSize = uipow(OutputChannels, clutPoints, InputChannels);
@@ -2241,7 +2248,13 @@ cmsBool  Type_LUT16_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io
     if (PostMPE != NULL) {
         if (!Write16bitTables(self ->ContextID, io, PostMPE)) return FALSE;
     }
+    else {
+        for (i=0; i < OutputChannels; i++) {
 
+            if (!_cmsWriteUInt16Number(io, 0)) return FALSE;
+            if (!_cmsWriteUInt16Number(io, 0xffff)) return FALSE;
+        }
+    }
 
     return TRUE;
 
