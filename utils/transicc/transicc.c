@@ -166,7 +166,7 @@ void HandleSwitches(int argc, char *argv[])
         case 'd':
         case 'D': {
             cmsFloat64Number ObserverAdaptationState = atof(xoptarg);
-            if (ObserverAdaptationState < 0 && 
+            if (ObserverAdaptationState < 0 || 
                 ObserverAdaptationState > 1.0)
                 FatalError("Adaptation states should be between 0 and 1");
 
@@ -653,7 +653,7 @@ void PrintFloatResults(cmsFloat64Number Value[])
         }
         else {
             OutputRange = 1;
-            sprintf(ChannelName, "Channel #%d", i + 1);
+            sprintf(ChannelName, "Channel #%u", i + 1);
         }
 
         v = (cmsFloat64Number) Value[i]* OutputRange;
@@ -724,7 +724,7 @@ void TakeFloatValues(cmsFloat64Number Float[])
         }
         else {
             InputRange = 1;
-            sprintf(ChannelName, "Channel #%d", i+1);
+            sprintf(ChannelName, "Channel #%u", i+1);
         }
 
         GetLine(Buffer, "%s? ", ChannelName);
@@ -773,7 +773,7 @@ void PrintEncodedResults(cmsUInt16Number Encoded[])
             cmsNamedColorInfo(OutputColorant, i, ChannelName, NULL, NULL, NULL, NULL);          
         }
         else {          
-            sprintf(ChannelName, "Channel #%d", i + 1);
+            sprintf(ChannelName, "Channel #%u", i + 1);
         }
 
         if (Verbose > 0)
@@ -936,7 +936,7 @@ void TakeCGATSValues(int nPatch, cmsFloat64Number Float[])
 
                 char Buffer[255];
 
-                sprintf(Buffer, "%dCLR_%d", n, i+1);
+                sprintf(Buffer, "%uCLR_%u", n, i+1);
                 Float[i] = GetIT8Val(Buffer, 100.0);
             }
 
@@ -952,7 +952,7 @@ void TakeCGATSValues(int nPatch, cmsFloat64Number Float[])
 
                 char Buffer[255];
 
-                sprintf(Buffer, "CHAN_%d", i+1);
+                sprintf(Buffer, "CHAN_%u", i+1);
                 Float[i] = GetIT8Val(Buffer, 1.0);
             }
 
@@ -1045,7 +1045,7 @@ void PutCGATSValues(cmsFloat64Number Float[])
 
                 char Buffer[255];
 
-                sprintf(Buffer, "%dCLR_%d", n, i+1);
+                sprintf(Buffer, "%uCLR_%u", n, i+1);
 
                 SetCGATSfld(Buffer, Float[i] * 100.0);
             }
@@ -1062,7 +1062,7 @@ void PutCGATSValues(cmsFloat64Number Float[])
 
                 char Buffer[255];
 
-                sprintf(Buffer, "CHAN_%d", i+1);
+                sprintf(Buffer, "CHAN_%u", i+1);
 
                 SetCGATSfld(Buffer, Float[i]);
             }
