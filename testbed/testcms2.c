@@ -174,7 +174,7 @@ static
 void DebugMemPrintTotals(void)
 {
     printf("[Memory statistics]\n");
-    printf("Allocated = %d MaxAlloc = %d Single block hit = %d\n", TotalMemory, MaxAllocated, SingleHit);
+    printf("Allocated = %u MaxAlloc = %u Single block hit = %u\n", TotalMemory, MaxAllocated, SingleHit);
 }
 
 // Here we go with the plug-in declaration
@@ -297,7 +297,7 @@ void DumpToneCurve(cmsToneCurve* gamma, const char* FileName)
     for (i=0; i < gamma ->nEntries; i++) {
         char Val[30];
 
-        sprintf(Val, "%d", i);
+        sprintf(Val, "%u", i);
         cmsIT8SetDataRowCol(hIT8, i, 0, Val);
         sprintf(Val, "0x%x", gamma ->Table16[i]);
         cmsIT8SetDataRowCol(hIT8, i, 1, Val);
@@ -1023,7 +1023,7 @@ cmsInt32Number ExhaustiveCheck1DLERP(void)
     printf("\n");
     for (j=10; j <= 4096; j++) {
 
-        if ((j % 10) == 0) printf("%d    \r", j);
+        if ((j % 10) == 0) printf("%u    \r", j);
 
         if (!Check1D(j, FALSE, 1)) return 0;
     }
@@ -1040,7 +1040,7 @@ cmsInt32Number ExhaustiveCheck1DLERPDown(void)
     printf("\n");
     for (j=10; j <= 4096; j++) {
 
-        if ((j % 10) == 0) printf("%d    \r", j);
+        if ((j % 10) == 0) printf("%u    \r", j);
 
         if (!Check1D(j, TRUE, 1)) return 0;
     }
@@ -5389,12 +5389,12 @@ cmsInt32Number CheckBadTransforms(void)
 
     {
 
-    cmsHPROFILE h1 = cmsOpenProfileFromFile("test1.icc", "r");
-    cmsHPROFILE h2 = cmsCreate_sRGBProfile();
+    cmsHPROFILE hp1 = cmsOpenProfileFromFile("test1.icc", "r");
+    cmsHPROFILE hp2 = cmsCreate_sRGBProfile();
 
-    x1 = cmsCreateTransform(h1, TYPE_BGR_8, h2, TYPE_BGR_8, INTENT_PERCEPTUAL, 0);
+    x1 = cmsCreateTransform(hp1, TYPE_BGR_8, hp2, TYPE_BGR_8, INTENT_PERCEPTUAL, 0);
 
-    cmsCloseProfile(h1); cmsCloseProfile(h2);
+    cmsCloseProfile(hp1); cmsCloseProfile(hp2);
     if (x1 != NULL) {
         cmsDeleteTransform(x1);
         return 0;
@@ -7834,7 +7834,7 @@ void PrintSupportedIntents(void)
 
     printf("Supported intents:\n");
     for (i=0; i < n; i++) {
-        printf("\t%d - %s\n", Codes[i], Descriptions[i]);
+        printf("\t%u - %s\n", Codes[i], Descriptions[i]);
     }
     printf("\n");
 }
