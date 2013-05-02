@@ -5562,10 +5562,8 @@ cmsInt32Number Compare16bitXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, cms
 static
 cmsInt32Number CheckFloatlinearXFORM(cmsHTRANSFORM xform, cmsInt32Number nChan)
 {
-    cmsInt32Number n2, i, j;
+    cmsInt32Number i, j;
     cmsFloat32Number In[cmsMAXCHANNELS], Out[cmsMAXCHANNELS];
-
-    n2=0;
 
     for (j=0; j < 0xFFFF; j++) {
 
@@ -5589,10 +5587,8 @@ cmsInt32Number CheckFloatlinearXFORM(cmsHTRANSFORM xform, cmsInt32Number nChan)
 static
 cmsInt32Number CompareFloatXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, cmsInt32Number nChan)
 {
-    cmsInt32Number n2, i, j;
+    cmsInt32Number i, j;
     cmsFloat32Number In[cmsMAXCHANNELS], Out1[cmsMAXCHANNELS], Out2[cmsMAXCHANNELS];
-
-    n2=0;
 
     for (j=0; j < 0xFFFF; j++) {
 
@@ -7045,9 +7041,9 @@ int CheckMD5(void)
     cmsCloseProfile(pProfile);
 
 
-     pProfile = cmsOpenProfileFromFile("sRGBlcms2.icc", "r");
+    pProfile = cmsOpenProfileFromFile("sRGBlcms2.icc", "r");
 
-      h =(_cmsICCPROFILE*) pProfile;
+    h =(_cmsICCPROFILE*) pProfile;
     if (cmsMD5computeID(pProfile)) cmsGetHeaderProfileID(pProfile, ProfileID3.ID8);
     if (cmsMD5computeID(pProfile)) cmsGetHeaderProfileID(pProfile,ProfileID4.ID8);
 
