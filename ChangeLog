@@ -103,4 +103,5 @@ Added a reference for Mac MLU tag
 Added a way to read the profile creator from header
 Added identity curves support for write V2 LUT 
 More changes from Artifex
+Added TIFF Lab16 handling on tifficc
 Added some fixes from XhmikosR
