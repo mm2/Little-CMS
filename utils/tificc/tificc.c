@@ -39,7 +39,6 @@ static int     Width                  = 8;
 static cmsBool GamutCheck             = FALSE;
 static cmsBool lIsDeviceLink          = FALSE;
 static cmsBool StoreAsAlpha           = FALSE;
-static cmsBool InputLabUsingICC       = FALSE;
 
 static int Intent                  = INTENT_PERCEPTUAL;
 static int ProofingIntent          = INTENT_PERCEPTUAL;
@@ -150,6 +149,23 @@ unsigned char* UnrollTIFFLab8(struct _cmstransform_struct* CMMcargo,
     UTILS_UNUSED_PARAMETER(CMMcargo);
 }
 
+// Formatter for 16bit Lab TIFF (photometric 8)
+static
+unsigned char* UnrollTIFFLab16(struct _cmstransform_struct* CMMcargo,
+                              register cmsUInt16Number wIn[],
+                              register cmsUInt8Number* accum,
+                              register cmsUInt32Number Stride )
+{
+    cmsUInt16Number* accum16 = (cmsUInt16Number*) accum;
+
+    wIn[0] = (cmsUInt16Number) FromLabV2ToLabV4(accum16[0]);
+    wIn[1] = (cmsUInt16Number) FromLabV2ToLabV4(((accum16[1] > 0x7f00) ? (accum16[1] - 0x8000) : (accum16[1] + 0x8000)) );
+    wIn[2] = (cmsUInt16Number) FromLabV2ToLabV4(((accum16[2] > 0x7f00) ? (accum16[2] - 0x8000) : (accum16[2] + 0x8000)) );
+
+    return accum + 3 * sizeof(cmsUInt16Number);
+}
+
+
 static
 unsigned char* PackTIFFLab8(struct _cmstransform_struct* CMMcargo, 
                             register cmsUInt16Number wOut[], 
@@ -172,26 +188,54 @@ unsigned char* PackTIFFLab8(struct _cmstransform_struct* CMMcargo,
     UTILS_UNUSED_PARAMETER(CMMcargo);
 }
 
+static
+unsigned char* PackTIFFLab16(struct _cmstransform_struct* CMMcargo, 
+                            register cmsUInt16Number wOut[], 
+                            register cmsUInt8Number* output, 
+                            register cmsUInt32Number Stride)
+{
+    int a, b;
+    cmsUInt16Number* output16 = (cmsUInt16Number*) output;
+
+    *output16++ = (cmsUInt16Number) FromLabV4ToLabV2(wOut[0]);
+
+    a = FromLabV4ToLabV2(wOut[1]);
+    b = FromLabV4ToLabV2(wOut[2]);
+
+    *output16++ = (cmsUInt16Number) ((a < 0x7f00) ? (a + 0x8000) : (a - 0x8000));
+    *output16++ = (cmsUInt16Number) ((b < 0x7f00) ? (b + 0x8000) : (b - 0x8000));
+
+    return (cmsUInt8Number*) output16;
+
+    UTILS_UNUSED_PARAMETER(Stride);
+    UTILS_UNUSED_PARAMETER(CMMcargo);
+}
+
 
 static
-cmsFormatter TiffFormatterFactory(cmsUInt32Number Type, 
-                                  cmsFormatterDirection Dir, 
+cmsFormatter TiffFormatterFactory(cmsUInt32Number Type,
+                                  cmsFormatterDirection Dir,
                                   cmsUInt32Number dwFlags)
 {
     cmsFormatter Result = { NULL };
+    int bps           = T_BYTES(Type);
+    int IsTiffSpecial = (Type >> 23) & 1;
 
-    if (Type == TYPE_Lab_8 && !(dwFlags & CMS_PACK_FLAGS_FLOAT)) {
-
+    if (IsTiffSpecial && !(dwFlags & CMS_PACK_FLAGS_FLOAT))
+    {
         if (Dir == cmsFormatterInput)
-            Result.Fmt16 = UnrollTIFFLab8;
+        {
+            Result.Fmt16 = (bps == 1) ? UnrollTIFFLab8 : UnrollTIFFLab16;
+        }
         else
-            Result.Fmt16 = PackTIFFLab8;
+            Result.Fmt16 = (bps == 1) ? PackTIFFLab8 : PackTIFFLab16;
     }
 
     return Result;
 }
 
 static cmsPluginFormatters TiffLabPlugin = { {cmsPluginMagicNumber, 2000, cmsPluginFormattersSig, NULL}, TiffFormatterFactory };
+
 
 
 // Build up the pixeltype descriptor
@@ -201,6 +245,7 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
     uint16 Photometric, bps, spp, extra, PlanarConfig, *info;
     uint16 Compression, reverse = 0;
     int ColorChannels, IsPlanar = 0, pt = 0, IsFlt;
+    int labTiffSpecial = FALSE;
 
     TIFFGetField(Bank,           TIFFTAG_PHOTOMETRIC,   &Photometric);
     TIFFGetFieldDefaulted(Bank,  TIFFTAG_BITSPERSAMPLE, &bps);
@@ -244,19 +289,19 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
 
     switch (Photometric) {
 
-     case PHOTOMETRIC_MINISWHITE:
+    case PHOTOMETRIC_MINISWHITE:
 
-         reverse = 1;
+        reverse = 1;
 
-         // ... fall through ...
+        // ... fall through ...
 
-     case PHOTOMETRIC_MINISBLACK:                                   
-         pt = PT_GRAY;                                
-         break;
+    case PHOTOMETRIC_MINISBLACK:                                   
+        pt = PT_GRAY;                                
+        break;
 
-     case PHOTOMETRIC_RGB:                                   
-         pt = PT_RGB;
-         break;
+    case PHOTOMETRIC_RGB:                                   
+        pt = PT_RGB;
+        break;
 
 
      case PHOTOMETRIC_PALETTE:                                             
@@ -282,13 +327,12 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
          break;
 
      case PHOTOMETRIC_ICCLAB:
-         pt = PT_Lab;
-         InputLabUsingICC = TRUE;
+         pt = PT_LabV2;         
          break;
 
      case PHOTOMETRIC_CIELAB:
          pt = PT_Lab;
-         InputLabUsingICC = FALSE;
+         labTiffSpecial = TRUE;
          break;
 
 
@@ -308,7 +352,7 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
     bps >>= 3; 
     IsFlt = (bps == 0) || (bps == 4);
 
-    return (FLOAT_SH(IsFlt)|COLORSPACE_SH(pt)|PLANAR_SH(IsPlanar)|EXTRA_SH(extra)|CHANNELS_SH(ColorChannels)|BYTES_SH(bps)|FLAVOR_SH(reverse));
+    return (FLOAT_SH(IsFlt)|COLORSPACE_SH(pt)|PLANAR_SH(IsPlanar)|EXTRA_SH(extra)|CHANNELS_SH(ColorChannels)|BYTES_SH(bps)|FLAVOR_SH(reverse) | (labTiffSpecial << 23) );
 }
 
 
