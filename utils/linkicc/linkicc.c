@@ -346,7 +346,7 @@ int main(int argc, char *argv[])
      
     // Create the color transform. Specify 0 for the format is safe as the transform 
     // is intended to be used only for the devicelink.
-    hTransform = cmsCreateMultiprofileTransform(Profiles, nargs, 0, 0, Intent, dwFlags);
+    hTransform = cmsCreateMultiprofileTransform(Profiles, nargs, 0, 0, Intent, dwFlags|cmsFLAGS_NOOPTIMIZE);
     if (hTransform == NULL) {
         FatalError("Transform creation failed");
         goto Cleanup;

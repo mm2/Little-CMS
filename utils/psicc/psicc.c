@@ -140,13 +140,17 @@ void GenerateCSA(void)
 	n = cmsGetPostScriptCSA(0, hProfile, Intent, 0, NULL, 0);
 	if (n == 0) return;
 
-	Buffer = (char*) malloc(n + 1);
-	cmsGetPostScriptCSA(0, hProfile, Intent, 0, Buffer, n);
-	Buffer[n] = 0;
+    Buffer = (char*) malloc(n + 1);
+    if (Buffer != NULL) {
 
-	fprintf(OutFile, "%s", Buffer);	
-	
-	free(Buffer);
+        cmsGetPostScriptCSA(0, hProfile, Intent, 0, Buffer, n);
+        Buffer[n] = 0;
+
+        fprintf(OutFile, "%s", Buffer);	
+
+        free(Buffer);
+    }
+
 	cmsCloseProfile(hProfile);
 }
 

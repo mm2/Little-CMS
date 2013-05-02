@@ -7402,14 +7402,14 @@ cmsInt32Number CheckFloatSegments(void)
     cmsCurveSegment Seg[3];
     
     // Initialize segmented curve part up to 0.1
-    Seg[0].x0 = (float)-1e22;   // -infinity
+    Seg[0].x0 = -1e22f;      // -infinity
     Seg[0].x1 = 0.1f;
-    Seg[0].Type = 6;            // Y = (a * X + b) ^ Gamma + c
-    Seg[0].Params[0] = 1.0;     // gamma
-    Seg[0].Params[1] = 0.9;     // a
-    Seg[0].Params[2] = 0;       // b
-    Seg[0].Params[3] = 0.1;     // c
-    Seg[0].Params[4] = 0;
+    Seg[0].Type = 6;             // Y = (a * X + b) ^ Gamma + c
+    Seg[0].Params[0] = 1.0f;     // gamma
+    Seg[0].Params[1] = 0.9f;     // a
+    Seg[0].Params[2] = 0.0f;        // b
+    Seg[0].Params[3] = 0.1f;     // c
+    Seg[0].Params[4] = 0.0f;
     
     // From zero to 1
     Seg[1].x0 = 0.1f;
@@ -7426,14 +7426,14 @@ cmsInt32Number CheckFloatSegments(void)
     
     // from 1 to +infinity
     Seg[2].x0 = 0.9f;
-    Seg[2].x1 = (float)1e22;   // +infinity
+    Seg[2].x1 = 1e22f;   // +infinity
     Seg[2].Type = 6;
     
-    Seg[2].Params[0] = 1.0;
-    Seg[2].Params[1] = 0.9;
-    Seg[2].Params[2] = 0;
-    Seg[2].Params[3] = 0.1;
-    Seg[2].Params[4] = 0;
+    Seg[2].Params[0] = 1.0f;
+    Seg[2].Params[1] = 0.9f;
+    Seg[2].Params[2] = 0.0f;
+    Seg[2].Params[3] = 0.1f;
+    Seg[2].Params[4] = 0.0f;
     
     curve = cmsBuildSegmentedToneCurve(0, 3, Seg);
     
@@ -7534,7 +7534,7 @@ void SpeedTest16bitsCMYK(const char * Title, cmsHPROFILE hlcmsProfileIn, cmsHPRO
     Scanline_rgb2 *In;
     cmsUInt32Number Mb;
 
-    if (hlcmsProfileOut == NULL)
+    if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
         Die("Unable to open profiles");
 
     hlcmsxform  = cmsCreateTransformTHR(DbgThread(), hlcmsProfileIn, TYPE_CMYK_16,
