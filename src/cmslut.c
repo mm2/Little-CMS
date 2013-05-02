@@ -499,10 +499,15 @@ void* CLUTElemDup(cmsStage* mpe)
 
     if (Data ->Tab.T) {
 
-        if (Data ->HasFloatValues)
+        if (Data ->HasFloatValues) {
             NewElem ->Tab.TFloat = (cmsFloat32Number*) _cmsDupMem(mpe ->ContextID, Data ->Tab.TFloat, Data ->nEntries * sizeof (cmsFloat32Number));
-        else
+            if (NewElem ->Tab.TFloat == NULL)
+                goto Error;
+        } else {
             NewElem ->Tab.T = (cmsUInt16Number*) _cmsDupMem(mpe ->ContextID, Data ->Tab.T, Data ->nEntries * sizeof (cmsUInt16Number));
+            if (NewElem ->Tab.TFloat == NULL)
+                goto Error;
+        }
     }
 
     NewElem ->Params   = _cmsComputeInterpParamsEx(mpe ->ContextID,
@@ -511,8 +516,14 @@ void* CLUTElemDup(cmsStage* mpe)
                                                    Data ->Params ->nOutputs,
                                                    NewElem ->Tab.T,
                                                    Data ->Params ->dwFlags);
-
-    return (void*) NewElem;
+    if (NewElem->Params != NULL)
+        return (void*) NewElem;
+ Error:
+    if (NewElem->Tab.T)
+        // This works for both types
+        _cmsFree(mpe ->ContextID, NewElem -> Tab.T);
+    _cmsFree(mpe ->ContextID, NewElem);
+    return NULL;
 }
 
 
@@ -1448,12 +1459,12 @@ cmsPipeline* CMSEXPORT cmsPipelineDup(const cmsPipeline* lut)
 }
 
 
-void CMSEXPORT cmsPipelineInsertStage(cmsPipeline* lut, cmsStageLoc loc, cmsStage* mpe)
+int CMSEXPORT cmsPipelineInsertStage(cmsPipeline* lut, cmsStageLoc loc, cmsStage* mpe)
 {
     cmsStage* Anterior = NULL, *pt;
 
-    _cmsAssert(lut != NULL);
-    _cmsAssert(mpe != NULL);
+    if (lut == NULL || mpe == NULL)
+        return FALSE;
 
     switch (loc) {
 
@@ -1477,9 +1488,11 @@ void CMSEXPORT cmsPipelineInsertStage(cmsPipeline* lut, cmsStageLoc loc, cmsStag
             }
             break;
         default:;
+            return FALSE;
     }
 
     BlessLUT(lut);
+    return TRUE;
 }
 
 // Unlink an element and return the pointer to it
@@ -1541,7 +1554,7 @@ void CMSEXPORT cmsPipelineUnlinkStage(cmsPipeline* lut, cmsStageLoc loc, cmsStag
 // Concatenate two LUT into a new single one
 cmsBool  CMSEXPORT cmsPipelineCat(cmsPipeline* l1, const cmsPipeline* l2)
 {
-    cmsStage* mpe, *NewMPE;
+    cmsStage* mpe;
 
     // If both LUTS does not have elements, we need to inherit
     // the number of channels
@@ -1556,17 +1569,12 @@ cmsBool  CMSEXPORT cmsPipelineCat(cmsPipeline* l1, const cmsPipeline* l2)
          mpe = mpe ->Next) {
 
             // We have to dup each element
-             NewMPE = cmsStageDup(mpe);
-
-             if (NewMPE == NULL) {
-                 return FALSE;
-             }
-
-             cmsPipelineInsertStage(l1, cmsAT_END, NewMPE);
+            if (!cmsPipelineInsertStage(l1, cmsAT_END, cmsStageDup(mpe)))
+                return FALSE;
     }
 
-  BlessLUT(l1);
-  return TRUE;
+    BlessLUT(l1);
+    return TRUE;
 }
 
 

@@ -387,14 +387,17 @@ cmsBool AddConversion(cmsPipeline* Result, cmsColorSpaceSignature InPCS, cmsColo
             switch (OutPCS) {
 
             case cmsSigXYZData:  // XYZ -> XYZ
-                if (!IsEmptyLayer(m, off))
-                    cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl));
+                if (!IsEmptyLayer(m, off) &&
+                    !cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl)))
+                    return FALSE;
                 break;
 
             case cmsSigLabData:  // XYZ -> Lab
-                if (!IsEmptyLayer(m, off))
-                    cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl));
-                cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocXYZ2Lab(Result ->ContextID));
+                if (!IsEmptyLayer(m, off) &&
+                    !cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl)))
+                    return FALSE;
+                if (!cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocXYZ2Lab(Result ->ContextID)))
+                    return FALSE;
                 break;
 
             default:
@@ -409,17 +412,20 @@ cmsBool AddConversion(cmsPipeline* Result, cmsColorSpaceSignature InPCS, cmsColo
 
             case cmsSigXYZData:  // Lab -> XYZ
 
-                cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocLab2XYZ(Result ->ContextID));
-                if (!IsEmptyLayer(m, off))
-                    cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl));
+                if (!cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocLab2XYZ(Result ->ContextID)))
+                    return FALSE;
+                if (!IsEmptyLayer(m, off) &&
+                    !cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl)))
+                    return FALSE;
                 break;
 
             case cmsSigLabData:  // Lab -> Lab
 
                 if (!IsEmptyLayer(m, off)) {
-                    cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocLab2XYZ(Result ->ContextID));
-                    cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl));
-                    cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocXYZ2Lab(Result ->ContextID));
+                    if (!cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocLab2XYZ(Result ->ContextID)) ||
+                        !cmsPipelineInsertStage(Result, cmsAT_END, cmsStageAllocMatrix(Result ->ContextID, 3, 3, m_as_dbl, off_as_dbl)) ||
+                        !cmsPipelineInsertStage(Result, cmsAT_END, _cmsStageAllocXYZ2Lab(Result ->ContextID)))
+			return FALSE;
                 }
                 break;
 
@@ -716,7 +722,8 @@ cmsPipeline*  BlackPreservingKOnlyIntents(cmsContext     ContextID,
     if (CLUT == NULL) goto Error;
 
     // This is the one and only MPE in this LUT
-    cmsPipelineInsertStage(Result, cmsAT_BEGIN, CLUT);
+    if (!cmsPipelineInsertStage(Result, cmsAT_BEGIN, CLUT))
+        goto Error;
 
     // Sample it. We cannot afford pre/post linearization this time.
     if (!cmsStageSampleCLut16bit(CLUT, BlackPreservingGrayOnlySampler, (void*) &bp, 0))
@@ -933,7 +940,8 @@ cmsPipeline* BlackPreservingKPlaneIntents(cmsContext     ContextID,
     CLUT = cmsStageAllocCLut16bit(ContextID, nGridPoints, 4, 4, NULL);
     if (CLUT == NULL) goto Cleanup;
 
-    cmsPipelineInsertStage(Result, cmsAT_BEGIN, CLUT);
+    if (!cmsPipelineInsertStage(Result, cmsAT_BEGIN, CLUT))
+        goto Cleanup;
 
     cmsStageSampleCLut16bit(CLUT, BlackPreservingSampler, (void*) &bp, 0);
 
