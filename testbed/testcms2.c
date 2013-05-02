@@ -6683,7 +6683,8 @@ void GenerateCSA(const char* cInProf, const char* FileName)
 
     _cmsFree(BuffThread, Buffer);
     cmsCloseProfile(hProfile);
-    remove(FileName);
+    if (FileName != NULL)
+        remove(FileName);
 }
 
 
@@ -6717,7 +6718,8 @@ void GenerateCRD(const char* cOutProf, const char* FileName)
 
     _cmsFree(BuffThread, Buffer);
     cmsCloseProfile(hProfile);
-    remove(FileName);
+    if (FileName != NULL)
+        remove(FileName);
 }
 
 static
