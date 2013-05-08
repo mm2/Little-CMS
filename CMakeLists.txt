@@ -100,11 +100,19 @@ ENDIF()
 ##################################################################################
 # includes
 
-INCLUDE_DIRECTORIES( ${JPEG_INCLUDE_DIR}
-                     ${TIFF_INCLUDE_DIR}
-                     ${ZLIB_INCLUDE_DIRS}
-                     include
-                     )
+INCLUDE_DIRECTORIES( include)
+
+IF( JPEG_FOUND)
+  INCLUDE_DIRECTORIES( ${JPEG_INCLUDE_DIR})
+ENDIF()
+
+IF( TIFF_FOUND)
+  INCLUDE_DIRECTORIES( ${TIFF_INCLUDE_DIR})
+ENDIF()
+
+IF( ZLIB_FOUND)
+  INCLUDE_DIRECTORIES( ${ZLIB_INCLUDE_DIRS})
+ENDIF()
 
 ##################################################################################
 # lcms lib

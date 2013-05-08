@@ -32,10 +32,11 @@ FILE(GLOB_RECURSE LCMS2_INTERNAL_HEADERS ./*.h)
 FILE( GLOB LCMS2_SOURCES ./*.c)
 
 IF( BUILD_SHARED)
-  ADD_LIBRARY( lcms2 SHARED ${LCMS2_INCLUDE_HEADERS}
-                            ${LCMS2_INTERNAL_HEADERS}
-                            ${LCMS2_SOURCES}
-                            )
+	ADD_DEFINITIONS( -DCMS_DLL_BUILD)
+	ADD_LIBRARY( lcms2 SHARED   ${LCMS2_INCLUDE_HEADERS}
+    	                        ${LCMS2_INTERNAL_HEADERS}
+        	                    ${LCMS2_SOURCES}
+            	                )
 ELSE()
   ADD_LIBRARY( lcms2 ${LCMS2_INCLUDE_HEADERS}
                      ${LCMS2_INTERNAL_HEADERS}
