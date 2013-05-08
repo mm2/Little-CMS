@@ -1,7 +1,0 @@
-/Users/est/Devel/est/Little-CMS/build/llvm-gcc/debug/utils/jpgicc/CMakeFiles/jpgicc.dir
-/Users/est/Devel/est/Little-CMS/build/llvm-gcc/debug/src/CMakeFiles/lcms2.dir
-/Users/est/Devel/est/Little-CMS/build/llvm-gcc/debug/utils/linkicc/CMakeFiles/linkicc.dir
-/Users/est/Devel/est/Little-CMS/build/llvm-gcc/debug/utils/psicc/CMakeFiles/psicc.dir
-/Users/est/Devel/est/Little-CMS/build/llvm-gcc/debug/utils/tificc/CMakeFiles/tifdiff.dir
-/Users/est/Devel/est/Little-CMS/build/llvm-gcc/debug/utils/tificc/CMakeFiles/tificc.dir
-/Users/est/Devel/est/Little-CMS/build/llvm-gcc/debug/utils/transicc/CMakeFiles/transicc.dir

@@ -1,1 +1,0 @@
-/usr/llvm-gcc-4.2/bin/llvm-gcc-4.2  -g -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/tificc.dir/tificc.c.o CMakeFiles/tificc.dir/__/common/vprf.c.o CMakeFiles/tificc.dir/__/common/xgetopt.c.o  -o tificc  ../../src/liblcms2.dylib /usr/local/lib/libtiff.dylib 
