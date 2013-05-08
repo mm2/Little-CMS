@@ -1,0 +1,1 @@
+/usr/llvm-gcc-4.2/bin/llvm-gcc-4.2  -g -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/jpgicc.dir/jpgicc.c.o CMakeFiles/jpgicc.dir/iccjpeg.c.o CMakeFiles/jpgicc.dir/__/common/vprf.c.o CMakeFiles/jpgicc.dir/__/common/xgetopt.c.o  -o jpgicc  ../../src/liblcms2.dylib /usr/local/lib/libjpeg.dylib 

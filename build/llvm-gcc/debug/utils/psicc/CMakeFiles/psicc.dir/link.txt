@@ -1,0 +1,1 @@
+/usr/llvm-gcc-4.2/bin/llvm-gcc-4.2  -g -Wl,-search_paths_first -Wl,-headerpad_max_install_names   CMakeFiles/psicc.dir/psicc.c.o CMakeFiles/psicc.dir/__/common/vprf.c.o CMakeFiles/psicc.dir/__/common/xgetopt.c.o  -o psicc  ../../src/liblcms2.dylib 

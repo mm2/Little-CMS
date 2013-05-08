@@ -24,16 +24,5 @@
 ##################################################################################
 #
 
-INCLUDE_DIRECTORIES( common)
-
-ADD_SUBDIRECTORY( transicc)
-ADD_SUBDIRECTORY( linkicc)
-ADD_SUBDIRECTORY( psicc)
-
-IF( TIFF_FOUND)
-    ADD_SUBDIRECTORY( tificc)
-ENDIF()
-
-IF( JPEG_FOUND)
-    ADD_SUBDIRECTORY( jpgicc)
-ENDIF()
+ADD_EXECUTABLE( psicc psicc.c ../common/vprf.c ../common/xgetopt.c)
+TARGET_LINK_LIBRARIES( psicc lcms2)

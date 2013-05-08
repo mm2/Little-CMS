@@ -24,16 +24,8 @@
 ##################################################################################
 #
 
-INCLUDE_DIRECTORIES( common)
+ADD_EXECUTABLE( tifdiff tifdiff.c ../common/vprf.c ../common/xgetopt.c)
+TARGET_LINK_LIBRARIES( tifdiff lcms2 ${TIFF_LIBRARIES})
 
-ADD_SUBDIRECTORY( transicc)
-ADD_SUBDIRECTORY( linkicc)
-ADD_SUBDIRECTORY( psicc)
-
-IF( TIFF_FOUND)
-    ADD_SUBDIRECTORY( tificc)
-ENDIF()
-
-IF( JPEG_FOUND)
-    ADD_SUBDIRECTORY( jpgicc)
-ENDIF()
+ADD_EXECUTABLE( tificc tificc.c ../common/vprf.c ../common/xgetopt.c)
+TARGET_LINK_LIBRARIES( tificc lcms2 ${TIFF_LIBRARIES})
