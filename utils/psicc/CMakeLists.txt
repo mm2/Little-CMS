@@ -26,3 +26,4 @@
 
 ADD_EXECUTABLE( psicc psicc.c ../common/vprf.c ../common/xgetopt.c)
 TARGET_LINK_LIBRARIES( psicc lcms2)
+INSTALL( TARGETS psicc DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

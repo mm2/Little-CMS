@@ -43,3 +43,6 @@ ELSE()
                      ${LCMS2_SOURCES}
                      )
 ENDIF()
+
+INSTALL( DIRECTORY ../include DESTINATION ${CMAKE_INSTALL_PREFIX}/include)
+INSTALL( TARGETS lcms2 DESTINATION ${CMAKE_INSTALL_PREFIX}/lib)

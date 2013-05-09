@@ -26,3 +26,4 @@
 
 ADD_EXECUTABLE( jpgicc jpgicc.c iccjpeg.c ../common/vprf.c ../common/xgetopt.c)
 TARGET_LINK_LIBRARIES( jpgicc lcms2 ${JPEG_LIBRARIES})
+INSTALL( TARGETS jpgicc DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

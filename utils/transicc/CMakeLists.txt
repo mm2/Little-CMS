@@ -26,3 +26,4 @@
 
 ADD_EXECUTABLE( transicc transicc.c ../common/vprf.c ../common/xgetopt.c)
 TARGET_LINK_LIBRARIES( transicc lcms2)
+INSTALL( TARGETS transicc DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

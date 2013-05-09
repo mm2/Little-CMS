@@ -26,6 +26,8 @@
 
 ADD_EXECUTABLE( tifdiff tifdiff.c ../common/vprf.c ../common/xgetopt.c)
 TARGET_LINK_LIBRARIES( tifdiff lcms2 ${TIFF_LIBRARIES})
+INSTALL( TARGETS tifdiff DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 ADD_EXECUTABLE( tificc tificc.c ../common/vprf.c ../common/xgetopt.c)
 TARGET_LINK_LIBRARIES( tificc lcms2 ${TIFF_LIBRARIES})
+INSTALL( TARGETS tificc DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)

@@ -26,3 +26,4 @@
 
 ADD_EXECUTABLE( linkicc linkicc.c ../common/vprf.c ../common/xgetopt.c)
 TARGET_LINK_LIBRARIES( linkicc lcms2)
+INSTALL( TARGETS linkicc DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
