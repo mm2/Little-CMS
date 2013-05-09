@@ -170,8 +170,6 @@ cmsBool PreOptimize(cmsPipeline* Lut)
 {
     cmsBool AnyOpt = FALSE, Opt;
 
-    AnyOpt = FALSE;
-
     do {
 
         Opt = FALSE;
