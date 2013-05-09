@@ -163,6 +163,9 @@ unsigned char* UnrollTIFFLab16(struct _cmstransform_struct* CMMcargo,
     wIn[2] = (cmsUInt16Number) FromLabV2ToLabV4(((accum16[2] > 0x7f00) ? (accum16[2] - 0x8000) : (accum16[2] + 0x8000)) );
 
     return accum + 3 * sizeof(cmsUInt16Number);
+
+    UTILS_UNUSED_PARAMETER(Stride);
+    UTILS_UNUSED_PARAMETER(CMMcargo);
 }
 
 

@@ -170,8 +170,6 @@ cmsBool PreOptimize(cmsPipeline* Lut)
 {
     cmsBool AnyOpt = FALSE, Opt;
 
-    AnyOpt = FALSE;
-
     do {
 
         Opt = FALSE;
@@ -643,12 +641,12 @@ Error:
         // Ops, something went wrong, Restore stages
         if (KeepPreLin != NULL) {
             if (!cmsPipelineInsertStage(Src, cmsAT_BEGIN, KeepPreLin)) {
-                assert("This never happens" == NULL);
+                _cmsAssert(0) // This never happens
             }
 	}
         if (KeepPostLin != NULL) {
             if (!cmsPipelineInsertStage(Src, cmsAT_END,   KeepPostLin)) {
-                assert("This never happens" == NULL);
+                 _cmsAssert(0) // This never happens
             }
 	}
         cmsPipelineFree(Dest);
