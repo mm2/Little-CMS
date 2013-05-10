@@ -641,12 +641,12 @@ Error:
         // Ops, something went wrong, Restore stages
         if (KeepPreLin != NULL) {
             if (!cmsPipelineInsertStage(Src, cmsAT_BEGIN, KeepPreLin)) {
-                _cmsAssert(0) // This never happens
+                _cmsAssert(0); // This never happens
             }
 	}
         if (KeepPostLin != NULL) {
             if (!cmsPipelineInsertStage(Src, cmsAT_END,   KeepPostLin)) {
-                 _cmsAssert(0) // This never happens
+                 _cmsAssert(0); // This never happens
             }
 	}
         cmsPipelineFree(Dest);
