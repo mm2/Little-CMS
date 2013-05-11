@@ -395,7 +395,7 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
             if (e > 0)
                 Val = pow(e, Params[0]) + Params[5];
             else
-                Val = 0;
+                Val = Params[5];
         }
         else
             Val = R*Params[3] + Params[6];
