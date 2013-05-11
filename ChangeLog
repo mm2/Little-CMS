@@ -105,3 +105,4 @@ Added identity curves support for write V2 LUT
 More changes from Artifex
 Added TIFF Lab16 handling on tifficc
 Added some fixes from XhmikosR
+Fixed a bug in parametric curves
