@@ -170,10 +170,10 @@ void QuantizeToSector(const cmsSpherical* sp, int* alpha, int* theta)
     *alpha = (int) floor(((sp->alpha * (SECTORS)) / 360.0) );
     *theta = (int) floor(((sp->theta * (SECTORS)) / 180.0) );
 
-	if (*alpha >= SECTORS)
-		*alpha = SECTORS-1;
-	if (*theta >= SECTORS)
-		*theta = SECTORS-1;
+    if (*alpha >= SECTORS)
+        *alpha = SECTORS-1;
+    if (*theta >= SECTORS)
+        *theta = SECTORS-1;
 }
 
 
@@ -326,8 +326,8 @@ cmsGDBPoint* GetPoint(cmsGDB* gbd, const cmsCIELab* Lab, cmsSpherical* sp)
 
     // Housekeeping
     _cmsAssert(gbd != NULL);
-	_cmsAssert(Lab != NULL);
-	_cmsAssert(sp != NULL);
+    _cmsAssert(Lab != NULL);
+    _cmsAssert(sp != NULL);
 
     // Center L* by substracting half of its domain, that's 50
     _cmsVEC3init(&v, Lab ->L - 50.0, Lab ->a, Lab ->b);
@@ -709,10 +709,10 @@ cmsBool cmsGBDdumpVRML(cmsHANDLE hGBD, const char* fname)
         else
             if (pt ->Type == GP_MODELED)
                 fprintf (fp, "\t\t\t\t\t%g %g %g", 1.0, .5, .5);
-			else {
+            else {
                 fprintf (fp, "\t\t\t\t\t%g %g %g", 1.0, 1.0, 1.0);
 
-			}
+            }
 
         if ((j == SECTORS - 1) && (i == SECTORS - 1))
                 fprintf (fp, "]\n");

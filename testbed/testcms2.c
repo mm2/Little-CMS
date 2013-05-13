@@ -7095,7 +7095,7 @@ int CheckLinking(void)
     cmsWriteTag(h, cmsSigAToB0Tag, pipeline);
     cmsPipelineFree(pipeline);
 
-	if (!cmsSaveProfileToFile(h, "lcms2link2.icc")) return 0;
+    if (!cmsSaveProfileToFile(h, "lcms2link2.icc")) return 0;
     cmsCloseProfile(h);
 
 
@@ -7307,19 +7307,19 @@ double Rec709(double L)
 static
 cmsInt32Number CheckParametricRec709(void)
 {
-	cmsFloat64Number params[7];
-	cmsToneCurve* t;
+    cmsFloat64Number params[7];
+    cmsToneCurve* t;
     int i;
 
     params[0] = 0.45; /* y */
-	params[1] = pow(1.099, 1.0 / 0.45); /* a */
-	params[2] = 0.0; /* b */
-	params[3] = 4.5; /* c */
-	params[4] = 0.018; /* d */
+    params[1] = pow(1.099, 1.0 / 0.45); /* a */
+    params[2] = 0.0; /* b */
+    params[3] = 4.5; /* c */
+    params[4] = 0.018; /* d */
     params[5] = -0.099; /* e */
     params[6] = 0.0; /* f */
-		
-	t = cmsBuildParametricToneCurve (NULL, 5, params);
+        
+    t = cmsBuildParametricToneCurve (NULL, 5, params);
 
 
     for (i=0; i < 256; i++)
@@ -7440,6 +7440,47 @@ cmsInt32Number CheckFloatSegments(void)
     cmsFreeToneCurve( curve);
 
     return ok;
+}
+
+
+static
+cmsInt32Number CheckReadRAW(void)
+{
+    cmsInt32Number tag_size, tag_size1;
+    char buffer[4];
+    cmsHPROFILE hProfile;
+    
+
+    SubTest("RAW read on on-disk");
+    hProfile = cmsOpenProfileFromFile("test1.icc", "r");
+
+    if (hProfile == NULL) 
+        return 0;
+    
+    tag_size = cmsReadRawTag(hProfile, cmsSigGamutTag, buffer, 4);
+    tag_size1 = cmsReadRawTag(hProfile, cmsSigGamutTag, NULL, 0);
+
+    cmsCloseProfile(hProfile);
+
+    if (tag_size != 4)
+        return 0;
+
+    if (tag_size1 != 37009)
+        return 0;
+
+    SubTest("RAW read on in-memory created profiles");
+    hProfile = cmsCreate_sRGBProfile();
+    tag_size = cmsReadRawTag(hProfile, cmsSigGreenColorantTag, buffer, 4);
+    tag_size1 = cmsReadRawTag(hProfile, cmsSigGreenColorantTag, NULL, 0);
+
+    cmsCloseProfile(hProfile);
+
+    if (tag_size != 4)
+        return 0;
+    if (tag_size1 != 20)
+        return 0;
+
+    return 1;
 }
 
 
@@ -8316,6 +8357,7 @@ int main(int argc, char* argv[])
     Check("Parametric curve on Rec709", CheckParametricRec709);
     Check("Floating Point sampled curve with non-zero start", CheckFloatSamples);
     Check("Floating Point segmented curve with short sampled segement", CheckFloatSegments);
+    Check("Read RAW portions", CheckReadRAW);
     }
 
 

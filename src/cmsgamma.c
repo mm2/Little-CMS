@@ -430,7 +430,7 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
         e = Params[1]*R + Params[2];
 
         if (e < 0)
-            Val = 0;
+            Val = Params[3];
         else
             Val = pow(e, Params[0]) + Params[3];
         break;
@@ -450,7 +450,7 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
 
        e = Params[2] * pow(R, Params[0]) + Params[3];
        if (e <= 0)
-           Val = 0;
+           Val = Params[4];
        else
            Val = Params[1]*log10(e) + Params[4];
        break;
@@ -623,17 +623,17 @@ cmsToneCurve* CMSEXPORT cmsBuildTabulatedToneCurveFloat(cmsContext ContextID, cm
     Seg[1].nGridPoints = nEntries;
     Seg[1].SampledPoints = (cmsFloat32Number*) values;
 
-	// Final segment is constant = lastsample
-	Seg[2].x0 = 1.0;
-	Seg[2].x1 = PLUS_INF;
-	Seg[2].Type = 6;
-	
+    // Final segment is constant = lastsample
+    Seg[2].x0 = 1.0;
+    Seg[2].x1 = PLUS_INF;
+    Seg[2].Type = 6;
+    
     Seg[2].Params[0] = 1;
     Seg[2].Params[1] = 0;
     Seg[2].Params[2] = 0;
     Seg[2].Params[3] = values[nEntries-1];
     Seg[2].Params[4] = 0;
-	
+    
 
     return cmsBuildSegmentedToneCurve(ContextID, 3, Seg);
 }

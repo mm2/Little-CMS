@@ -917,7 +917,7 @@ int WriteInputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, int Intent, cmsUInt32Nu
 
             rc = EmitCIEBasedDEF(m, DeviceLink, Intent, &BlackPointAdaptedToD50);
             cmsPipelineFree(DeviceLink);
-			if (rc == 0) return 0;
+            if (rc == 0) return 0;
             }
             break;
 

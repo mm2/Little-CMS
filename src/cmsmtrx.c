@@ -97,16 +97,16 @@ cmsBool CloseEnough(cmsFloat64Number a, cmsFloat64Number b)
 
 cmsBool CMSEXPORT _cmsMAT3isIdentity(const cmsMAT3* a)
 {
-	cmsMAT3 Identity;
-	int i, j;
+    cmsMAT3 Identity;
+    int i, j;
 
-	_cmsMAT3identity(&Identity);
+    _cmsMAT3identity(&Identity);
 
-	for (i=0; i < 3; i++)
-		for (j=0; j < 3; j++)
-			if (!CloseEnough(a ->v[i].n[j], Identity.v[i].n[j])) return FALSE;
+    for (i=0; i < 3; i++)
+        for (j=0; j < 3; j++)
+            if (!CloseEnough(a ->v[i].n[j], Identity.v[i].n[j])) return FALSE;
 
-	return TRUE;
+    return TRUE;
 }
 
 

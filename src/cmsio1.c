@@ -100,7 +100,6 @@ cmsBool  _cmsReadCHAD(cmsMAT3* Dest, cmsHPROFILE hProfile)
     Tag = (cmsMAT3*) cmsReadTag(hProfile, cmsSigChromaticAdaptationTag);
 
     if (Tag != NULL) {
-
         *Dest = *Tag;
         return TRUE;
     }
@@ -183,22 +182,24 @@ cmsPipeline* BuildGrayInputMatrixPipeline(cmsHPROFILE hProfile)
         LabCurves[1] = EmptyTab;
         LabCurves[2] = EmptyTab;
 
-	if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, OneToThreeInputMatrix, NULL)) ||
-	    !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, LabCurves))) {
-            cmsFreeToneCurve(EmptyTab);
-            goto Error;
-	}
+        if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, OneToThreeInputMatrix, NULL)) ||
+            !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, LabCurves))) {
+                cmsFreeToneCurve(EmptyTab);
+                goto Error;
+        }
 
         cmsFreeToneCurve(EmptyTab);
 
     }
     else  {
-	if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &GrayTRC)) ||
-	    !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, GrayInputMatrix, NULL)))
-		goto Error;
+
+        if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &GrayTRC)) ||
+            !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, GrayInputMatrix, NULL)))
+            goto Error;
     }
 
     return Lut;
+
 Error:
     cmsFreeToneCurve(GrayTRC);
     cmsPipelineFree(Lut);
@@ -235,23 +236,24 @@ cmsPipeline* BuildRGBInputMatrixShaper(cmsHPROFILE hProfile)
 
     Lut = cmsPipelineAlloc(ContextID, 3, 3);
     if (Lut != NULL) {
-     
+
         if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, Shapes)) ||
             !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3, 3, (cmsFloat64Number*) &Mat, NULL)))
-	    goto Error;
-        
+            goto Error;
+
         // Note that it is certainly possible a single profile would have a LUT based
         // tag for output working in lab and a matrix-shaper for the fallback cases. 
         // This is not allowed by the spec, but this code is tolerant to those cases    
         if (cmsGetPCS(hProfile) == cmsSigLabData) {
 
-	    if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocXYZ2Lab(ContextID)))
-		goto Error;
+            if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocXYZ2Lab(ContextID)))
+                goto Error;
         }
 
     }
 
     return Lut;
+
 Error:
     cmsPipelineFree(Lut);
     return NULL;
@@ -260,35 +262,6 @@ Error:
 
 
 // Read the DToAX tag, adjusting the encoding of Lab or XYZ if neded
-/*static
-cmsPipeline* _cmsReadFloatInputTag(cmsHPROFILE hProfile, cmsTagSignature tagFloat)
-{
-    cmsContext ContextID       = cmsGetProfileContextID(hProfile);
-    cmsPipeline* Lut           = cmsPipelineDup((cmsPipeline*) cmsReadTag(hProfile, tagFloat));
-    cmsColorSpaceSignature spc = cmsGetColorSpace(hProfile);
-
-    if (Lut == NULL) return NULL;
-
-    // If PCS is Lab or XYZ, the floating point tag is accepting data in the space encoding,
-    // and since the formatter has already accomodated to 0..1.0, we should undo this change
-    if ( spc == cmsSigLabData)
-    {
-        if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID)))
-	    goto Error;
-    }
-    else
-        if (spc == cmsSigXYZData)
-        {
-            if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID)))
-                goto Error;
-        }
-
-    return Lut;
-Error:
-    cmsPipelineFree(Lut);
-    return NULL;
-}
-*/
 static
 cmsPipeline* _cmsReadFloatInputTag(cmsHPROFILE hProfile, cmsTagSignature tagFloat)
 {
@@ -324,6 +297,7 @@ cmsPipeline* _cmsReadFloatInputTag(cmsHPROFILE hProfile, cmsTagSignature tagFloa
     }
     
     return Lut;
+
 Error:
     cmsPipelineFree(Lut);
     return NULL;
@@ -458,16 +432,15 @@ cmsPipeline* BuildGrayOutputPipeline(cmsHPROFILE hProfile)
 
     if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &RevGrayTRC)))
         goto Error;
-    cmsFreeToneCurve(RevGrayTRC);
 
+    cmsFreeToneCurve(RevGrayTRC);
     return Lut;
+
 Error:
     cmsFreeToneCurve(RevGrayTRC);
     cmsPipelineFree(Lut);
     return NULL;
 }
-
-
 
 
 static
@@ -516,13 +489,13 @@ cmsPipeline* BuildRGBOutputMatrixShaper(cmsHPROFILE hProfile)
         // This is not allowed by the spec, but this code is tolerant to those cases    
         if (cmsGetPCS(hProfile) == cmsSigLabData) {
 
-             if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLab2XYZ(ContextID)))
-                 goto Error;
+            if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLab2XYZ(ContextID)))
+                goto Error;
         }
 
         if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3, 3, (cmsFloat64Number*) &Inv, NULL)) ||
             !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, InvShapes)))
-	    goto Error;
+            goto Error;
     }
 
     cmsFreeToneCurveTriple(InvShapes);
@@ -556,35 +529,6 @@ void ChangeInterpolationToTrilinear(cmsPipeline* Lut)
 
 
 // Read the DToAX tag, adjusting the encoding of Lab or XYZ if neded
-/*static
-cmsPipeline* _cmsReadFloatOutputTag(cmsHPROFILE hProfile, cmsTagSignature tagFloat)
-{
-    cmsContext ContextID       = cmsGetProfileContextID(hProfile);
-    cmsPipeline* Lut           = cmsPipelineDup((cmsPipeline*) cmsReadTag(hProfile, tagFloat));
-    cmsColorSpaceSignature PCS = cmsGetPCS(hProfile);
-
-    if (Lut == NULL) return NULL;
-
-    // If PCS is Lab or XYZ, the floating point tag is accepting data in the space encoding,
-    // and since the formatter has already accomodated to 0..1.0, we should undo this change
-    if ( PCS == cmsSigLabData)
-    {
-        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToLabFloat(ContextID)))
-            goto Error;
-    }
-    else
-        if (PCS == cmsSigXYZData)
-        {
-            if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageNormalizeToXyzFloat(ContextID)))
-                goto Error;
-        }
-
-    return Lut;
-Error:
-    cmsPipelineFree(Lut);
-    return NULL;
-}*/
-
 static
 cmsPipeline* _cmsReadFloatOutputTag(cmsHPROFILE hProfile, cmsTagSignature tagFloat)
 {
@@ -615,13 +559,14 @@ cmsPipeline* _cmsReadFloatOutputTag(cmsHPROFILE hProfile, cmsTagSignature tagFlo
         if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID)))
             goto Error;
     }
-    else if ( dataSpace == cmsSigXYZData)
+    else if (dataSpace == cmsSigXYZData)
     {
         if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID)))
             goto Error;
     }
     
     return Lut;
+
 Error:
     cmsPipelineFree(Lut);
     return NULL;
@@ -664,7 +609,7 @@ cmsPipeline* _cmsReadOutputLUT(cmsHPROFILE hProfile, int Intent)
         // Now it is time for a controversial stuff. I found that for 3D LUTS using
         // Lab used as indexer space,  trilinear interpolation should be used
         if (cmsGetPCS(hProfile) == cmsSigLabData)
-                             ChangeInterpolationToTrilinear(Lut);
+            ChangeInterpolationToTrilinear(Lut);
 
         // We need to adjust data only for Lab and Lut16 type
         if (OriginalType != cmsSigLut16Type || cmsGetPCS(hProfile) != cmsSigLabData)
@@ -681,18 +626,18 @@ cmsPipeline* _cmsReadOutputLUT(cmsHPROFILE hProfile, int Intent)
 
         return Lut;
 Error:
-	cmsPipelineFree(Lut);
-	return NULL;
+        cmsPipelineFree(Lut);
+        return NULL;
     }
 
     // Lut not found, try to create a matrix-shaper
 
     // Check if this is a grayscale profile.
-     if (cmsGetColorSpace(hProfile) == cmsSigGrayData) {
+    if (cmsGetColorSpace(hProfile) == cmsSigGrayData) {
 
-              // if so, build appropiate conversion tables.
-              // The tables are the PCS iluminant, scaled across GrayTRC
-              return BuildGrayOutputPipeline(hProfile);
+        // if so, build appropiate conversion tables.
+        // The tables are the PCS iluminant, scaled across GrayTRC
+        return BuildGrayOutputPipeline(hProfile);
     }
 
     // Not gray, create a normal matrix-shaper, which only operates in XYZ space  
@@ -764,11 +709,13 @@ cmsPipeline* _cmsReadDevicelinkLUT(cmsHPROFILE hProfile, int Intent)
         if (Lut == NULL)
             goto Error;
 
-	if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocNamedColor(nc, FALSE)))
+        if (!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocNamedColor(nc, FALSE)))
             goto Error;
+
         if (cmsGetColorSpace(hProfile) == cmsSigLabData)
             if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID)))
                 goto Error;
+
         return Lut;
 Error:
         cmsPipelineFree(Lut);
@@ -804,10 +751,10 @@ Error:
     Lut = cmsPipelineDup(Lut);
     if (Lut == NULL) return NULL;
 
-     // Now it is time for a controversial stuff. I found that for 3D LUTS using
-     // Lab used as indexer space,  trilinear interpolation should be used
+    // Now it is time for a controversial stuff. I found that for 3D LUTS using
+    // Lab used as indexer space,  trilinear interpolation should be used
     if (cmsGetColorSpace(hProfile) == cmsSigLabData)
-                        ChangeInterpolationToTrilinear(Lut);
+        ChangeInterpolationToTrilinear(Lut);
 
     // After reading it, we have info about the original type
     OriginalType =  _cmsGetTagTrueType(hProfile, tag16);
@@ -828,6 +775,7 @@ Error:
     }
 
     return Lut;
+
 Error2:
     cmsPipelineFree(Lut);
     return NULL;

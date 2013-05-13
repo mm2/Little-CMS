@@ -267,7 +267,7 @@ cmsBool CMSEXPORT cmsMD5computeID(cmsHPROFILE hProfile)
     _cmsICCPROFILE* Icc = (_cmsICCPROFILE*) hProfile;
     _cmsICCPROFILE Keep;
 
-	_cmsAssert(hProfile != NULL);
+    _cmsAssert(hProfile != NULL);
 
     ContextID = cmsGetProfileContextID(hProfile);
 
