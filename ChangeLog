@@ -108,3 +108,4 @@ Added some fixes from XhmikosR
 Fixed a bug in parametric curves
 Remove spurious tabs added by git merge of pull request
 Added support for VS2012
+Added a simple project for cppcheck
