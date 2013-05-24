@@ -1170,6 +1170,9 @@ cmsHPROFILE CMSEXPORT cmsTransform2DeviceLink(cmsHTRANSFORM hTransform, cmsFloat
         if (!_cmsWriteProfileSequence(hProfile, xform ->Sequence)) goto Error;
     }
 
+    // Per 7.2.15 in spec 4.3
+    cmsSetHeaderRenderingIntent(hProfile, xform ->RenderingIntent);
+
     cmsPipelineFree(LUT);
     return hProfile;
 

@@ -1360,6 +1360,9 @@ void *Type_Measurement_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* 
 {
     cmsICCMeasurementConditions mc;
 
+	
+    memset(&mc, 0, sizeof(mc));
+	
     if (!_cmsReadUInt32Number(io, &mc.Observer)) return NULL;
     if (!_cmsReadXYZNumber(io,    &mc.Backing)) return NULL;
     if (!_cmsReadUInt32Number(io, &mc.Geometry)) return NULL;
