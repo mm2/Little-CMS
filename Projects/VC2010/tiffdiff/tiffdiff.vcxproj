@@ -84,19 +84,22 @@
     <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IncludePath);;C:\tiff-3.9.4\libtiff</IncludePath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(LibraryPath);;C:\tiff-3.9.4\libtiff</LibraryPath>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IncludePath);;C:\tiff-3.9.4\libtiff</IncludePath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(LibraryPath);;C:\tiff-3.9.4\libtiff</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\jpeg-8d;c:\tiff-4.0.2\libtiff;$(IncludePath)</IncludePath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\jpeg-8d;c:\tiff-4.0.2\libtiff;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\jpeg-8d;C:\tiff-4.0.2\libtiff;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\jpeg-8d;C:\tiff-4.0.2\libtiff;$(LibraryPath)</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\jpeg-8d;c:\tiff-4.0.2\libtiff;$(IncludePath)</IncludePath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\jpeg-8d;c:\tiff-4.0.2\libtiff;$(IncludePath)</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\jpeg-8d;C:\tiff-4.0.2\libtiff;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\jpeg-8d;C:\tiff-4.0.2\libtiff;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
       <AdditionalIncludeDirectories>../../../include;../../../utils/common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <PrecompiledHeader>
       </PrecompiledHeader>
       <WarningLevel>Level4</WarningLevel>
@@ -135,7 +138,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <AdditionalIncludeDirectories>../../../include;../../../utils/common;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
-      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <PrecompiledHeader>
       </PrecompiledHeader>

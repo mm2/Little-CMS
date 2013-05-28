@@ -118,28 +118,28 @@ NOTE – The functional equivalence of inch-based and mm-based resolutions is main
 static
 cmsBool IsITUFax(jpeg_saved_marker_ptr ptr)
 {
-	while (ptr)
-	{
+    while (ptr)
+    {
         if (ptr -> marker == (JPEG_APP0 + 1) && ptr -> data_length > 5) {
 
-			const char* data = (const char*) ptr -> data;
+            const char* data = (const char*) ptr -> data;
 
-			if (strcmp(data, "G3FAX") == 0) return TRUE;
-		}
+            if (strcmp(data, "G3FAX") == 0) return TRUE;
+        }
 
-		ptr = ptr -> next;
-	}
+        ptr = ptr -> next;
+    }
 
-	return FALSE;
+    return FALSE;
 }
 
 // Save a ITU T.42/Fax marker with defaults on boundaries. This is the only mode we support right now.
 static
 void SetITUFax(j_compress_ptr cinfo)
 {
-	unsigned char Marker[] = "G3FAX\x00\0x07\xCA\x00\xC8";
+    unsigned char Marker[] = "G3FAX\x00\0x07\xCA\x00\xC8";
 
-	jpeg_write_marker(cinfo, (JPEG_APP0 + 1), Marker, 10);
+    jpeg_write_marker(cinfo, (JPEG_APP0 + 1), Marker, 10);
 }
 
 
@@ -159,17 +159,17 @@ void SetITUFax(j_compress_ptr cinfo)
 static
 void ITU2Lab(const cmsUInt16Number In[3], cmsCIELab* Lab)
 {
-	Lab -> L = (double) In[0] / 655.35;
-	Lab -> a = (double) 170.* (In[1] - 32768.) / 65535.;
-	Lab -> b = (double) 200.* (In[2] - 24576.) / 65535.;
+    Lab -> L = (double) In[0] / 655.35;
+    Lab -> a = (double) 170.* (In[1] - 32768.) / 65535.;
+    Lab -> b = (double) 200.* (In[2] - 24576.) / 65535.;
 }
 
 static
 void Lab2ITU(const cmsCIELab* Lab, cmsUInt16Number Out[3])
 {
-	Out[0] = (cmsUInt16Number) floor((double) (Lab -> L / 100.)* 65535. );
-	Out[1] = (cmsUInt16Number) floor((double) (Lab -> a / 170.)* 65535. + 32768. );
-	Out[2] = (cmsUInt16Number) floor((double) (Lab -> b / 200.)* 65535. + 24576. );
+    Out[0] = (cmsUInt16Number) floor((double) (Lab -> L / 100.)* 65535. );
+    Out[1] = (cmsUInt16Number) floor((double) (Lab -> a / 170.)* 65535. + 32768. );
+    Out[2] = (cmsUInt16Number) floor((double) (Lab -> b / 200.)* 65535. + 24576. );
 }
 
 // These are the samplers-- They are passed as callbacks to cmsStageSampleCLut16bit()
@@ -185,12 +185,12 @@ void Lab2ITU(const cmsCIELab* Lab, cmsUInt16Number Out[3])
 static
 int PCS2ITU(register const cmsUInt16Number In[], register cmsUInt16Number Out[], register void*  Cargo)
 {
-	cmsCIELab Lab;
+    cmsCIELab Lab;
 
-	cmsLabEncoded2Float(&Lab, In);
-	cmsDesaturateLab(&Lab, 85, -85, 125, -75);    // This function does the necessary gamut remapping
-	Lab2ITU(&Lab, Out);
-	return TRUE;
+    cmsLabEncoded2Float(&Lab, In);
+    cmsDesaturateLab(&Lab, 85, -85, 125, -75);    // This function does the necessary gamut remapping
+    Lab2ITU(&Lab, Out);
+    return TRUE;
 
     UTILS_UNUSED_PARAMETER(Cargo);
 }
@@ -199,11 +199,11 @@ int PCS2ITU(register const cmsUInt16Number In[], register cmsUInt16Number Out[],
 static
 int ITU2PCS( register const cmsUInt16Number In[], register cmsUInt16Number Out[], register void*  Cargo)
 {
-	cmsCIELab Lab;
+    cmsCIELab Lab;
 
-	ITU2Lab(In, &Lab);
-	cmsFloat2LabEncoded(Out, &Lab);
-	return TRUE;
+    ITU2Lab(In, &Lab);
+    cmsFloat2LabEncoded(Out, &Lab);
+    return TRUE;
 
     UTILS_UNUSED_PARAMETER(Cargo);
 }
@@ -212,32 +212,32 @@ int ITU2PCS( register const cmsUInt16Number In[], register cmsUInt16Number Out[]
 static
 cmsHPROFILE CreateITU2PCS_ICC(void)
 {
-	cmsHPROFILE hProfile;
-	cmsPipeline* AToB0;
-	cmsStage* ColorMap;
+    cmsHPROFILE hProfile;
+    cmsPipeline* AToB0;
+    cmsStage* ColorMap;
 
-	AToB0 = cmsPipelineAlloc(0, 3, 3);
-	if (AToB0 == NULL) return NULL;
+    AToB0 = cmsPipelineAlloc(0, 3, 3);
+    if (AToB0 == NULL) return NULL;
 
-	ColorMap = cmsStageAllocCLut16bit(0, GRID_POINTS, 3, 3, NULL);
-	if (ColorMap == NULL) return NULL;
+    ColorMap = cmsStageAllocCLut16bit(0, GRID_POINTS, 3, 3, NULL);
+    if (ColorMap == NULL) return NULL;
 
     cmsPipelineInsertStage(AToB0, cmsAT_BEGIN, ColorMap);
-	cmsStageSampleCLut16bit(ColorMap, ITU2PCS, NULL, 0);
+    cmsStageSampleCLut16bit(ColorMap, ITU2PCS, NULL, 0);
 
-	hProfile = cmsCreateProfilePlaceholder(0);
-	if (hProfile == NULL) {
-		cmsPipelineFree(AToB0);
-		return NULL;
-	}
+    hProfile = cmsCreateProfilePlaceholder(0);
+    if (hProfile == NULL) {
+        cmsPipelineFree(AToB0);
+        return NULL;
+    }
 
-	cmsWriteTag(hProfile, cmsSigAToB0Tag, AToB0);
-	cmsSetColorSpace(hProfile, cmsSigLabData);
-	cmsSetPCS(hProfile, cmsSigLabData);
-	cmsSetDeviceClass(hProfile, cmsSigColorSpaceClass);
-	cmsPipelineFree(AToB0);
+    cmsWriteTag(hProfile, cmsSigAToB0Tag, AToB0);
+    cmsSetColorSpace(hProfile, cmsSigLabData);
+    cmsSetPCS(hProfile, cmsSigLabData);
+    cmsSetDeviceClass(hProfile, cmsSigColorSpaceClass);
+    cmsPipelineFree(AToB0);
 
-	return hProfile;
+    return hProfile;
 }
 
 
@@ -544,31 +544,31 @@ static
 static
 cmsBool OpenInput(const char* FileName)
 {
-	int m;
+    int m;
 
-	lIsITUFax = FALSE;
-	InFile  = fopen(FileName, "rb");
-	if (InFile == NULL) {
-		FatalError("Cannot open '%s'", FileName);
-	}
+    lIsITUFax = FALSE;
+    InFile  = fopen(FileName, "rb");
+    if (InFile == NULL) {
+        FatalError("Cannot open '%s'", FileName);
+    }
 
-	// Now we can initialize the JPEG decompression object.
-	Decompressor.err                 = jpeg_std_error(&ErrorHandler.pub);
-	ErrorHandler.pub.error_exit      = my_error_exit;
-	ErrorHandler.pub.output_message  = my_error_exit;
+    // Now we can initialize the JPEG decompression object.
+    Decompressor.err                 = jpeg_std_error(&ErrorHandler.pub);
+    ErrorHandler.pub.error_exit      = my_error_exit;
+    ErrorHandler.pub.output_message  = my_error_exit;
 
-	jpeg_create_decompress(&Decompressor);
-	jpeg_stdio_src(&Decompressor, InFile);
+    jpeg_create_decompress(&Decompressor);
+    jpeg_stdio_src(&Decompressor, InFile);
 
-	for (m = 0; m < 16; m++)
-		jpeg_save_markers(&Decompressor, JPEG_APP0 + m, 0xFFFF);
+    for (m = 0; m < 16; m++)
+        jpeg_save_markers(&Decompressor, JPEG_APP0 + m, 0xFFFF);
 
-	// setup_read_icc_profile(&Decompressor);
+    // setup_read_icc_profile(&Decompressor);
 
-	fseek(InFile, 0, SEEK_SET);
-	jpeg_read_header(&Decompressor, TRUE);
+    fseek(InFile, 0, SEEK_SET);
+    jpeg_read_header(&Decompressor, TRUE);
 
-	return TRUE;
+    return TRUE;
 }
 
 
@@ -576,29 +576,29 @@ static
 cmsBool OpenOutput(const char* FileName)
 {
 
-	OutFile = fopen(FileName, "wb");
-	if (OutFile == NULL) {
-		FatalError("Cannot create '%s'", FileName);
+    OutFile = fopen(FileName, "wb");
+    if (OutFile == NULL) {
+        FatalError("Cannot create '%s'", FileName);
 
-	}
+    }
 
-	Compressor.err                   = jpeg_std_error(&ErrorHandler.pub);
-	ErrorHandler.pub.error_exit      = my_error_exit;
-	ErrorHandler.pub.output_message  = my_error_exit;
+    Compressor.err                   = jpeg_std_error(&ErrorHandler.pub);
+    ErrorHandler.pub.error_exit      = my_error_exit;
+    ErrorHandler.pub.output_message  = my_error_exit;
 
-	Compressor.input_components = Compressor.num_components = 4;
+    Compressor.input_components = Compressor.num_components = 4;
 
-	jpeg_create_compress(&Compressor);
-	jpeg_stdio_dest(&Compressor, OutFile);
-	return TRUE;
+    jpeg_create_compress(&Compressor);
+    jpeg_stdio_dest(&Compressor, OutFile);
+    return TRUE;
 }
 
 static
 cmsBool Done(void)
 {
-	jpeg_destroy_decompress(&Decompressor);
-	jpeg_destroy_compress(&Compressor);
-	return fclose(InFile) + fclose(OutFile);
+    jpeg_destroy_decompress(&Decompressor);
+    jpeg_destroy_compress(&Compressor);
+    return fclose(InFile) + fclose(OutFile);
 
 }
 
@@ -669,33 +669,33 @@ cmsUInt32Number GetInputPixelType(void)
 static
 cmsUInt32Number ComputeOutputFormatDescriptor(cmsUInt32Number dwInput, int OutColorSpace)
 {
-	int IsPlanar  = T_PLANAR(dwInput);
-	int Channels  = 0;
-	int Flavor    = 0;
+    int IsPlanar  = T_PLANAR(dwInput);
+    int Channels  = 0;
+    int Flavor    = 0;
 
-	switch (OutColorSpace) {
+    switch (OutColorSpace) {
 
    case PT_GRAY:
-	   Channels = 1;
-	   break;
+       Channels = 1;
+       break;
    case PT_RGB:
    case PT_CMY:
    case PT_Lab:
    case PT_YUV:
    case PT_YCbCr:
-	   Channels = 3;
-	   break;
+       Channels = 3;
+       break;
 
    case PT_CMYK:
-	   if (Compressor.write_Adobe_marker)   // Adobe keeps CMYK inverted, so change flavor to chocolate
-		   Flavor = 1;
-	   Channels = 4;
-	   break;
+       if (Compressor.write_Adobe_marker)   // Adobe keeps CMYK inverted, so change flavor to chocolate
+           Flavor = 1;
+       Channels = 4;
+       break;
    default:
-	   FatalError("Unsupported output color space");
-	}
+       FatalError("Unsupported output color space");
+    }
 
-	return (COLORSPACE_SH(OutColorSpace)|PLANAR_SH(IsPlanar)|CHANNELS_SH(Channels)|BYTES_SH(1)|FLAVOR_SH(Flavor));
+    return (COLORSPACE_SH(OutColorSpace)|PLANAR_SH(IsPlanar)|CHANNELS_SH(Channels)|BYTES_SH(1)|FLAVOR_SH(Flavor));
 }
 
 
@@ -705,7 +705,7 @@ int GetProfileColorSpace(cmsHPROFILE hProfile)
 {
     cmsColorSpaceSignature ProfileSpace = cmsGetColorSpace(hProfile);
 
-	return _cmsLCMScolorSpace(ProfileSpace);
+    return _cmsLCMScolorSpace(ProfileSpace);
 }
 
 static
@@ -713,7 +713,7 @@ int GetDevicelinkColorSpace(cmsHPROFILE hProfile)
 {
     cmsColorSpaceSignature ProfileSpace = cmsGetPCS(hProfile);
 
-	return _cmsLCMScolorSpace(ProfileSpace);
+    return _cmsLCMScolorSpace(ProfileSpace);
 }
 
 
@@ -815,7 +815,7 @@ void WriteOutputFields(int OutputColorSpace)
       int i;
       for(i=0; i < Compressor.num_components; i++) {
 
-	        Compressor.comp_info[i].h_samp_factor = 1;
+            Compressor.comp_info[i].h_samp_factor = 1;
             Compressor.comp_info[i].v_samp_factor = 1;
       }
 
@@ -949,7 +949,7 @@ int TransformImage(char *cDefInpProf, char *cOutProf)
                if (Verbose) {
 
                   fprintf(stdout, " (Embedded profile found)\n");
-				  PrintProfileInformation(hIn);
+                  PrintProfileInformation(hIn);
                   fflush(stdout);
               }
 
@@ -1016,7 +1016,7 @@ int TransformImage(char *cDefInpProf, char *cOutProf)
                                           hOut, wOutput,
                                           hProof, Intent,
                                           ProofingIntent, dwFlags);
-	   if (xform == NULL)
+       if (xform == NULL)
                  FatalError("Cannot transform by using the profiles");
 
        DoTransform(xform, OutputColorSpace);
@@ -1052,7 +1052,7 @@ void Help(int level)
      fprintf(stderr, "%ci<profile> - Input profile (defaults to sRGB)\n", SW);
      fprintf(stderr, "%co<profile> - Output profile (defaults to sRGB)\n", SW);
 
-	 PrintRenderingIntents();
+     PrintRenderingIntents();
 
 
      fprintf(stderr, "%cb - Black point compensation\n", SW);
@@ -1095,8 +1095,8 @@ void Help(int level)
      break;
 
      case 2:
-		 PrintBuiltins();
-		 break;
+         PrintBuiltins();
+         break;
 
      case 3:
 
@@ -1159,8 +1159,8 @@ void HandleSwitches(int argc, char *argv[])
 
         case 'l':
         case 'L':
-			if (cInpProf != NULL || cOutProf != NULL)
-				FatalError("input/output profiles already specified");
+            if (cInpProf != NULL || cOutProf != NULL)
+                FatalError("input/output profiles already specified");
 
             cInpProf = xoptarg;
             lIsDeviceLink = TRUE;
@@ -1243,25 +1243,25 @@ void HandleSwitches(int argc, char *argv[])
 
 int main(int argc, char* argv[])
 {
-	InitUtils("jpgicc");
+    InitUtils("jpgicc");
 
-	HandleSwitches(argc, argv);
+    HandleSwitches(argc, argv);
 
-	if ((argc - xoptind) != 2) {
-		Help(0);
-	}
+    if ((argc - xoptind) != 2) {
+        Help(0);
+    }
 
-	OpenInput(argv[xoptind]);
-	OpenOutput(argv[xoptind+1]);
+    OpenInput(argv[xoptind]);
+    OpenOutput(argv[xoptind+1]);
 
-	TransformImage(cInpProf, cOutProf);
+    TransformImage(cInpProf, cOutProf);
 
 
-	if (Verbose) { fprintf(stdout, "\n"); fflush(stdout); }
+    if (Verbose) { fprintf(stdout, "\n"); fflush(stdout); }
 
-	Done();
+    Done();
 
-	return 0;
+    return 0;
 }
 
 

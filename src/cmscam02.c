@@ -52,7 +52,7 @@ typedef struct  {
     cmsUInt32Number surround;
     cmsFloat64Number n, Nbb, Ncb, z, FL, D;
 
-	cmsContext ContextID;
+    cmsContext ContextID;
 
 } cmsCIECAM02;
 
@@ -358,70 +358,70 @@ CAM02COLOR CAT02toXYZ(CAM02COLOR clr)
 
 cmsHANDLE  CMSEXPORT cmsCIECAM02Init(cmsContext ContextID, const cmsViewingConditions* pVC)
 {
-	cmsCIECAM02* lpMod;
+    cmsCIECAM02* lpMod;
 
-	_cmsAssert(pVC != NULL);
+    _cmsAssert(pVC != NULL);
 
-	if((lpMod = (cmsCIECAM02*) _cmsMallocZero(ContextID, sizeof(cmsCIECAM02))) == NULL) {
-		return NULL;
-	}
+    if((lpMod = (cmsCIECAM02*) _cmsMallocZero(ContextID, sizeof(cmsCIECAM02))) == NULL) {
+        return NULL;
+    }
 
-	lpMod ->ContextID = ContextID;
+    lpMod ->ContextID = ContextID;
 
-	lpMod ->adoptedWhite.XYZ[0] = pVC ->whitePoint.X;
-	lpMod ->adoptedWhite.XYZ[1] = pVC ->whitePoint.Y;
-	lpMod ->adoptedWhite.XYZ[2] = pVC ->whitePoint.Z;
+    lpMod ->adoptedWhite.XYZ[0] = pVC ->whitePoint.X;
+    lpMod ->adoptedWhite.XYZ[1] = pVC ->whitePoint.Y;
+    lpMod ->adoptedWhite.XYZ[2] = pVC ->whitePoint.Z;
 
-	lpMod -> LA       = pVC ->La;
-	lpMod -> Yb       = pVC ->Yb;
-	lpMod -> D        = pVC ->D_value;
-	lpMod -> surround = pVC ->surround;
+    lpMod -> LA       = pVC ->La;
+    lpMod -> Yb       = pVC ->Yb;
+    lpMod -> D        = pVC ->D_value;
+    lpMod -> surround = pVC ->surround;
 
-	switch (lpMod -> surround) {
+    switch (lpMod -> surround) {
 
 
-	case CUTSHEET_SURROUND:
-		lpMod->F = 0.8;
-		lpMod->c = 0.41;
-		lpMod->Nc = 0.8;
-		break;
+    case CUTSHEET_SURROUND:
+        lpMod->F = 0.8;
+        lpMod->c = 0.41;
+        lpMod->Nc = 0.8;
+        break;
 
-	case DARK_SURROUND:
-		lpMod -> F  = 0.8;
-		lpMod -> c  = 0.525;
-		lpMod -> Nc = 0.8;
-		break;
+    case DARK_SURROUND:
+        lpMod -> F  = 0.8;
+        lpMod -> c  = 0.525;
+        lpMod -> Nc = 0.8;
+        break;
 
-	case DIM_SURROUND:
-		lpMod -> F  = 0.9;
-		lpMod -> c  = 0.59;
-		lpMod -> Nc = 0.95;
-		break;
+    case DIM_SURROUND:
+        lpMod -> F  = 0.9;
+        lpMod -> c  = 0.59;
+        lpMod -> Nc = 0.95;
+        break;
 
-	default:
-		// Average surround
-		lpMod -> F  = 1.0;
-		lpMod -> c  = 0.69;
-		lpMod -> Nc = 1.0;
-	}
+    default:
+        // Average surround
+        lpMod -> F  = 1.0;
+        lpMod -> c  = 0.69;
+        lpMod -> Nc = 1.0;
+    }
 
-	lpMod -> n   = compute_n(lpMod);
-	lpMod -> z   = compute_z(lpMod);
-	lpMod -> Nbb = computeNbb(lpMod);
-	lpMod -> FL  = computeFL(lpMod);
+    lpMod -> n   = compute_n(lpMod);
+    lpMod -> z   = compute_z(lpMod);
+    lpMod -> Nbb = computeNbb(lpMod);
+    lpMod -> FL  = computeFL(lpMod);
 
-	if (lpMod -> D == D_CALCULATE) {
-		lpMod -> D   = computeD(lpMod);
-	}
+    if (lpMod -> D == D_CALCULATE) {
+        lpMod -> D   = computeD(lpMod);
+    }
 
-	lpMod -> Ncb = lpMod -> Nbb;
+    lpMod -> Ncb = lpMod -> Nbb;
 
-	lpMod -> adoptedWhite = XYZtoCAT02(lpMod -> adoptedWhite);
-	lpMod -> adoptedWhite = ChromaticAdaptation(lpMod -> adoptedWhite, lpMod);
-	lpMod -> adoptedWhite = CAT02toHPE(lpMod -> adoptedWhite);
-	lpMod -> adoptedWhite = NonlinearCompression(lpMod -> adoptedWhite, lpMod);
+    lpMod -> adoptedWhite = XYZtoCAT02(lpMod -> adoptedWhite);
+    lpMod -> adoptedWhite = ChromaticAdaptation(lpMod -> adoptedWhite, lpMod);
+    lpMod -> adoptedWhite = CAT02toHPE(lpMod -> adoptedWhite);
+    lpMod -> adoptedWhite = NonlinearCompression(lpMod -> adoptedWhite, lpMod);
 
-	return (cmsHANDLE) lpMod;
+    return (cmsHANDLE) lpMod;
 
 }
 
@@ -429,7 +429,7 @@ void CMSEXPORT cmsCIECAM02Done(cmsHANDLE hModel)
 {
     cmsCIECAM02* lpMod = (cmsCIECAM02*) hModel;
 
-	if (lpMod) _cmsFree(lpMod ->ContextID, lpMod);
+    if (lpMod) _cmsFree(lpMod ->ContextID, lpMod);
 }
 
 
@@ -438,9 +438,9 @@ void CMSEXPORT cmsCIECAM02Forward(cmsHANDLE hModel, const cmsCIEXYZ* pIn, cmsJCh
     CAM02COLOR clr;
     cmsCIECAM02* lpMod = (cmsCIECAM02*) hModel;
 
-	_cmsAssert(lpMod != NULL);
-	_cmsAssert(pIn != NULL);
-	_cmsAssert(pOut != NULL);
+    _cmsAssert(lpMod != NULL);
+    _cmsAssert(pIn != NULL);
+    _cmsAssert(pOut != NULL);
 
     clr.XYZ[0] = pIn ->X;
     clr.XYZ[1] = pIn ->Y;
@@ -462,9 +462,9 @@ void CMSEXPORT cmsCIECAM02Reverse(cmsHANDLE hModel, const cmsJCh* pIn, cmsCIEXYZ
     CAM02COLOR clr;
     cmsCIECAM02* lpMod = (cmsCIECAM02*) hModel;
 
-	_cmsAssert(lpMod != NULL);
-	_cmsAssert(pIn != NULL);
-	_cmsAssert(pOut != NULL);
+    _cmsAssert(lpMod != NULL);
+    _cmsAssert(pIn != NULL);
+    _cmsAssert(pOut != NULL);
 
     clr.J = pIn -> J;
     clr.C = pIn -> C;

@@ -446,6 +446,35 @@ CMSAPI cmsBool CMSEXPORT cmsMLUgetTranslation(const cmsMLU* mlu,
 }
 
 
+
+// Get the number of translations in the MLU object
+cmsUInt32Number CMSEXPORT cmsMLUtranslationsCount(const cmsMLU* mlu)
+{
+    if (mlu == NULL) return 0;
+    return mlu->UsedEntries;
+}
+
+// Get the language and country codes for a specific MLU index
+cmsBool CMSEXPORT cmsMLUtranslationsCodes(const cmsMLU* mlu,
+                                          cmsUInt32Number idx,
+                                          char LanguageCode[3],
+                                          char CountryCode[3])
+{
+    _cmsMLUentry *entry;
+
+    if (mlu == NULL) return FALSE;
+
+    if (idx >= (cmsUInt32Number) mlu->UsedEntries) return FALSE;
+
+    entry = &mlu->Entries[idx];
+    
+    *(cmsUInt16Number *)LanguageCode = _cmsAdjustEndianess16(entry->Language);
+    *(cmsUInt16Number *)CountryCode  = _cmsAdjustEndianess16(entry->Country);
+
+    return TRUE;
+}
+
+
 // Named color lists --------------------------------------------------------------------------------------------
 
 // Grow the list to keep at least NumElements

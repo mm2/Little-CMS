@@ -197,17 +197,17 @@ cmsBool CMSEXPORT cmsDetectBlackPoint(cmsCIEXYZ* BlackPoint, cmsHPROFILE hProfil
     if (devClass == cmsSigLinkClass ||
         devClass == cmsSigAbstractClass ||
         devClass == cmsSigNamedColorClass) {
-    		BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
-			return FALSE;	
+            BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
+            return FALSE;
     }
 
     // Make sure intent is adequate
     if (Intent != INTENT_PERCEPTUAL &&
         Intent != INTENT_RELATIVE_COLORIMETRIC &&
-		Intent != INTENT_SATURATION) {
-			BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
-			return FALSE;
-	}
+        Intent != INTENT_SATURATION) {
+            BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
+            return FALSE;
+    }
 
     // v4 + perceptual & saturation intents does have its own black point, and it is
     // well specified enough to use it. Black point tag is deprecated in V4.
@@ -344,8 +344,8 @@ cmsFloat64Number RootOfLeastSquaresFitQuadraticCurve(int n, cmsFloat64Number x[]
 static
 cmsBool IsMonotonic(int n, const cmsFloat64Number Table[])
 {
-	int i;
-	cmsFloat64Number last;
+    int i;
+    cmsFloat64Number last;
 
     last = Table[n-1];
 
@@ -384,17 +384,17 @@ cmsBool CMSEXPORT cmsDetectDestinationBlackPoint(cmsCIEXYZ* BlackPoint, cmsHPROF
     if (devClass == cmsSigLinkClass ||
         devClass == cmsSigAbstractClass ||
         devClass == cmsSigNamedColorClass) {
-    		BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
-			return FALSE;	
+            BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
+            return FALSE;
     }
 
     // Make sure intent is adequate
     if (Intent != INTENT_PERCEPTUAL &&
         Intent != INTENT_RELATIVE_COLORIMETRIC &&
-		Intent != INTENT_SATURATION) {
-			BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
-			return FALSE;
-	}
+        Intent != INTENT_SATURATION) {
+            BlackPoint -> X = BlackPoint ->Y = BlackPoint -> Z = 0.0;
+            return FALSE;
+    }
 
 
     // v4 + perceptual & saturation intents does have its own black point, and it is
@@ -546,7 +546,7 @@ cmsBool CMSEXPORT cmsDetectDestinationBlackPoint(cmsCIEXYZ* BlackPoint, cmsHPROF
         }    
     }
 
- 	
+    
     // No suitable points
     if (n < 3 ) {
         cmsDeleteTransform(hRoundTrip);

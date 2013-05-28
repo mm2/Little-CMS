@@ -105,3 +105,8 @@ Added identity curves support for write V2 LUT
 More changes from Artifex
 Added TIFF Lab16 handling on tifficc
 Added some fixes from XhmikosR
+Fixed a bug in parametric curves
+Remove spurious tabs added by git merge of pull request
+Added support for VS2012
+Added a simple project for cppcheck
+Rendering intent used when creating the transform is now propagated to profile header in cmsTransform2Devicelink. This is because 7.2.15 in spec 4.3

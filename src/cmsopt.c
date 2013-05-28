@@ -553,7 +553,6 @@ cmsBool OptimizeByResampling(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
     cmsToneCurve** DataSetOut;
     Prelin16Data* p16;
 
-
     // This is a loosy optimization! does not apply in floating-point cases
     if (_cmsFormatterIsFloat(*InputFormat) || _cmsFormatterIsFloat(*OutputFormat)) return FALSE;
 
@@ -567,10 +566,10 @@ cmsBool OptimizeByResampling(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
 
     Src = *Lut;
 
-   // Named color pipelines cannot be optimized either
-   for (mpe = cmsPipelineGetPtrToFirstStage(Src);
-         mpe != NULL;
-         mpe = cmsStageNext(mpe)) {
+    // Named color pipelines cannot be optimized either
+    for (mpe = cmsPipelineGetPtrToFirstStage(Src);
+        mpe != NULL;
+        mpe = cmsStageNext(mpe)) {
             if (cmsStageType(mpe) == cmsSigNamedColorElemType) return FALSE;
     }
 
@@ -641,14 +640,14 @@ Error:
         // Ops, something went wrong, Restore stages
         if (KeepPreLin != NULL) {
             if (!cmsPipelineInsertStage(Src, cmsAT_BEGIN, KeepPreLin)) {
-                _cmsAssert(0) // This never happens
+                _cmsAssert(0); // This never happens
             }
-	}
+        }
         if (KeepPostLin != NULL) {
             if (!cmsPipelineInsertStage(Src, cmsAT_END,   KeepPostLin)) {
-                 _cmsAssert(0) // This never happens
+                _cmsAssert(0); // This never happens
             }
-	}
+        }
         cmsPipelineFree(Dest);
         return FALSE;
     }
@@ -675,12 +674,11 @@ Error:
     else {
 
         p16 = PrelinOpt16alloc(Dest ->ContextID,
-                               DataCLUT ->Params,
-                               Dest ->InputChannels,
-                               DataSetIn,
-                               Dest ->OutputChannels,
-                               DataSetOut);
-
+            DataCLUT ->Params,
+            Dest ->InputChannels,
+            DataSetIn,
+            Dest ->OutputChannels,
+            DataSetOut);
 
         _cmsPipelineSetOptimizationParameters(Dest, PrelinEval16, (void*) p16, PrelinOpt16free, Prelin16dup);
     }

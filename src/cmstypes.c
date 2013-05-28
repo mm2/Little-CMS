@@ -427,7 +427,7 @@ static
 void* Type_Chromaticity_Dup(struct _cms_typehandler_struct* self, const void *Ptr, cmsUInt32Number n)
 {
     return _cmsDupMem(self ->ContextID, Ptr, sizeof(cmsCIExyYTRIPLE));
-	
+
     cmsUNUSED_PARAMETER(n);
 }
 
@@ -1360,6 +1360,9 @@ void *Type_Measurement_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* 
 {
     cmsICCMeasurementConditions mc;
 
+	
+    memset(&mc, 0, sizeof(mc));
+	
     if (!_cmsReadUInt32Number(io, &mc.Observer)) return NULL;
     if (!_cmsReadXYZNumber(io,    &mc.Backing)) return NULL;
     if (!_cmsReadUInt32Number(io, &mc.Geometry)) return NULL;
@@ -2088,10 +2091,10 @@ void *Type_LUT16_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cm
             goto Error;
         }
 
-	if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, InputChannels, OutputChannels, T))) {
-             _cmsFree(self ->ContextID, T);
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, InputChannels, OutputChannels, T))) {
+            _cmsFree(self ->ContextID, T);
             goto Error;
-	}
+        }
         _cmsFree(self ->ContextID, T);
     }
 

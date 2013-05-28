@@ -1247,6 +1247,13 @@ CMSAPI cmsBool           CMSEXPORT cmsMLUgetTranslation(const cmsMLU* mlu,
                                                          const char LanguageCode[3], const char CountryCode[3],
                                                          char ObtainedLanguage[3], char ObtainedCountry[3]);
 
+CMSAPI cmsUInt32Number   CMSEXPORT cmsMLUtranslationsCount(const cmsMLU* mlu);
+
+CMSAPI cmsBool           CMSEXPORT cmsMLUtranslationsCodes(const cmsMLU* mlu,
+                                                             cmsUInt32Number idx,
+                                                             char LanguageCode[3],
+                                                             char CountryCode[3]);
+ 
 // Undercolorremoval & black generation -------------------------------------------------------------------------------------
 
 typedef struct {

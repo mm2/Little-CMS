@@ -842,7 +842,7 @@ cmsFloat64Number GetIT8Val(const char* Name, cmsFloat64Number Max)
 // Read input values from CGATS file.
 
 static
-void TakeCGATSValues(int nPatch, cmsFloat64Number Float[])
+    void TakeCGATSValues(int nPatch, cmsFloat64Number Float[])
 {
 
     // At first take the name if SAMPLE_ID is present
@@ -856,15 +856,15 @@ void TakeCGATSValues(int nPatch, cmsFloat64Number Float[])
 
     if (InputNamedColor) {
 
-      const cmsNAMEDCOLORLIST* NamedColorList;
-      int index;
+        const cmsNAMEDCOLORLIST* NamedColorList;
+        int index;
 
-      NamedColorList = cmsGetNamedColorList(hTrans);
-      if (NamedColorList == NULL) 
-          FatalError("Malformed named color profile");
-      
-      index = cmsNamedColorIndex(NamedColorList, CGATSPatch);
-      if (index < 0) 
+        NamedColorList = cmsGetNamedColorList(hTrans);
+        if (NamedColorList == NULL) 
+            FatalError("Malformed named color profile");
+
+        index = cmsNamedColorIndex(NamedColorList, CGATSPatch);
+        if (index < 0) 
             FatalError("Named color '%s' not found in the profile", CGATSPatch); 
 
         Float[0] = index;
@@ -941,7 +941,7 @@ void TakeCGATSValues(int nPatch, cmsFloat64Number Float[])
             }
 
         }
-	break;
+        break;
 
     default: 
         {
@@ -1050,7 +1050,7 @@ void PutCGATSValues(cmsFloat64Number Float[])
                 SetCGATSfld(Buffer, Float[i] * 100.0);
             }
         }
-	break;
+        break;
 
     default: 
         {
@@ -1154,20 +1154,20 @@ void SetOutputDataFormat(void)
     case cmsSig13colorData:
     case cmsSig14colorData:
     case cmsSig15colorData:
-	{
-	    int i, n;
-	    char Buffer[255];
+        {
+            int i, n;
+            char Buffer[255];
 
-	    n = cmsChannelsOf(OutputColorSpace);
-	    cmsIT8SetPropertyDbl(hIT8out, "NUMBER_OF_FIELDS", n+1);
-	    cmsIT8SetDataFormat(hIT8out, 0, "SAMPLE_ID");
+            n = cmsChannelsOf(OutputColorSpace);
+            cmsIT8SetPropertyDbl(hIT8out, "NUMBER_OF_FIELDS", n+1);
+            cmsIT8SetDataFormat(hIT8out, 0, "SAMPLE_ID");
 
-	    for (i=1; i <= n; i++) {
-		sprintf(Buffer, "%dCLR_%d", n, i);
-		cmsIT8SetDataFormat(hIT8out, i, Buffer);
-	    }
-	}
-	break;
+            for (i=1; i <= n; i++) {
+                sprintf(Buffer, "%dCLR_%d", n, i);
+                cmsIT8SetDataFormat(hIT8out, i, Buffer);
+            }
+        }
+        break;
 
     default: {
 
