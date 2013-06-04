@@ -7,7 +7,7 @@ AC_PREREQ(2.60)
 #
 # Set the package name and version
 #
-AC_INIT(lcms2,2.4)
+AC_INIT(lcms2,2.5)
 
 #
 # Libtool library revision control info
@@ -31,7 +31,7 @@ AC_INIT(lcms2,2.4)
 #     then set age to 0.
 #
 LIBRARY_CURRENT=2
-LIBRARY_REVISION=4
+LIBRARY_REVISION=5
 LIBRARY_AGE=0
 
 AC_SUBST(LIBRARY_CURRENT)dnl
