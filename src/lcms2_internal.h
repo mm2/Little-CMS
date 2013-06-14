@@ -558,6 +558,10 @@ typedef struct _cmstransform_struct {
     cmsColorSpaceSignature EntryColorSpace;
     cmsColorSpaceSignature ExitColorSpace;
 
+    // White points (informative only)
+    cmsCIEXYZ EntryWhitePoint;
+    cmsCIEXYZ ExitWhitePoint;
+
     // Profiles used to create the transform
     cmsSEQ* Sequence;
 

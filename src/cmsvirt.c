@@ -1053,6 +1053,7 @@ cmsHPROFILE CMSEXPORT cmsTransform2DeviceLink(cmsHTRANSFORM hTransform, cmsFloat
     cmsContext ContextID = cmsGetTransformContextID(hTransform);
     const cmsAllowedLUT* AllowedLUT;
     cmsTagSignature DestinationTag;
+    cmsProfileClassSignature deviceClass; 
 
     _cmsAssert(hTransform != NULL);
 
@@ -1104,8 +1105,9 @@ cmsHPROFILE CMSEXPORT cmsTransform2DeviceLink(cmsHTRANSFORM hTransform, cmsFloat
     FrmIn  = COLORSPACE_SH(ColorSpaceBitsIn) | CHANNELS_SH(ChansIn)|BYTES_SH(2);
     FrmOut = COLORSPACE_SH(ColorSpaceBitsOut) | CHANNELS_SH(ChansOut)|BYTES_SH(2);
 
+    deviceClass = cmsGetDeviceClass(hProfile);
 
-     if (cmsGetDeviceClass(hProfile) == cmsSigOutputClass)
+     if (deviceClass == cmsSigOutputClass)
          DestinationTag = cmsSigBToA0Tag;
      else
          DestinationTag = cmsSigAToB0Tag;
@@ -1166,10 +1168,19 @@ cmsHPROFILE CMSEXPORT cmsTransform2DeviceLink(cmsHTRANSFORM hTransform, cmsFloat
            if (!cmsWriteTag(hProfile, cmsSigColorantTableOutTag, xform->OutputColorant)) goto Error;
     }
 
-    if (xform ->Sequence != NULL) {
+    if ((deviceClass == cmsSigLinkClass) && (xform ->Sequence != NULL)) {
         if (!_cmsWriteProfileSequence(hProfile, xform ->Sequence)) goto Error;
     }
 
+    // Set the white point
+    if (deviceClass == cmsSigInputClass) {
+        if (!cmsWriteTag(hProfile, cmsSigMediaWhitePointTag, &xform ->EntryWhitePoint)) goto Error;
+    }
+    else {
+         if (!cmsWriteTag(hProfile, cmsSigMediaWhitePointTag, &xform ->ExitWhitePoint)) goto Error;
+    }
+
+  
     // Per 7.2.15 in spec 4.3
     cmsSetHeaderRenderingIntent(hProfile, xform ->RenderingIntent);
 

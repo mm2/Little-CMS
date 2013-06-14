@@ -110,3 +110,5 @@ Remove spurious tabs added by git merge of pull request
 Added support for VS2012
 Added a simple project for cppcheck
 Rendering intent used when creating the transform is now propagated to profile header in cmsTransform2Devicelink. This is because 7.2.15 in spec 4.3
+Transform2Devicelink now keeps white point is gurssing deviceclass is enabled
+
