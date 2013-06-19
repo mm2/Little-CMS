@@ -887,15 +887,12 @@ cmsHANDLE CMSEXPORT cmsDictDup(cmsHANDLE hDict)
 {
     _cmsDICT* old_dict = (_cmsDICT*) hDict;
     cmsHANDLE hNew;
-    _cmsDICT* new_dict;
     cmsDICTentry *entry;
 
     _cmsAssert(old_dict != NULL);
 
     hNew  = cmsDictAlloc(old_dict ->ContextID);
     if (hNew == NULL) return NULL;
-
-    new_dict = (_cmsDICT*) hNew;
 
     // Walk the list freeing all nodes
     entry = old_dict ->head;
