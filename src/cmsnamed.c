@@ -517,8 +517,8 @@ cmsNAMEDCOLORLIST* CMSEXPORT cmsAllocNamedColorList(cmsContext ContextID, cmsUIn
     while (v -> Allocated < n)
         GrowNamedColorList(v);
 
-    strncpy(v ->Prefix, Prefix, sizeof(v ->Prefix));
-    strncpy(v ->Suffix, Suffix, sizeof(v ->Suffix));
+    strncpy(v ->Prefix, Prefix, sizeof(v ->Prefix)-1);
+    strncpy(v ->Suffix, Suffix, sizeof(v ->Suffix)-1);
     v->Prefix[32] = v->Suffix[32] = 0;
 
     v -> ColorantCount = ColorantCount;
@@ -577,9 +577,7 @@ cmsBool  CMSEXPORT cmsAppendNamedColor(cmsNAMEDCOLORLIST* NamedColorList,
 
     if (Name != NULL) {
 
-        strncpy(NamedColorList ->List[NamedColorList ->nColors].Name, Name,
-                    sizeof(NamedColorList ->List[NamedColorList ->nColors].Name));
-
+        strncpy(NamedColorList ->List[NamedColorList ->nColors].Name, Name, cmsMAX_PATH-1);
         NamedColorList ->List[NamedColorList ->nColors].Name[cmsMAX_PATH-1] = 0;
 
     }
@@ -735,6 +733,10 @@ cmsSEQ* CMSEXPORT cmsAllocProfileSequenceDescription(cmsContext ContextID, cmsUI
     Seq -> seq      = (cmsPSEQDESC*) _cmsCalloc(ContextID, n, sizeof(cmsPSEQDESC));
     Seq -> n        = n;
 
+    if (Seq -> seq == NULL) {
+        _cmsFree(ContextID, Seq);
+        return NULL;
+    }
 
     for (i=0; i < n; i++) {
         Seq -> seq[i].Manufacturer = NULL;

@@ -120,6 +120,7 @@ Added support for VS2012
 Added a simple project for cppcheck
 Rendering intent used when creating the transform is now propagated to profile header in cmsTransform2Devicelink. This is because 7.2.15 in spec 4.3
 Transform2Devicelink now keeps white point when guessing deviceclass is enabled
+Added some checks for non-happy path, mostly failing mallocs
 
 -----------------------
 2.5 Maintenance release
