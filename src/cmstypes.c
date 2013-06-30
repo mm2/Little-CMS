@@ -5089,14 +5089,22 @@ void *Type_Dictionary_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* i
             if (!ReadOneMLUC(self, io, &a.DisplayValue, i, &DisplayValueMLU)) goto Error;
         }
 
+        if (NameWCS == NULL || ValueWCS == NULL) {
+        
+            cmsSignalError(self->ContextID, cmsERROR_CORRUPTION_DETECTED, "Bad dictionary Name/Value");        
+            rc = FALSE;
+        }
+        else {
+
         rc = cmsDictAddEntry(hDict, NameWCS, ValueWCS, DisplayNameMLU, DisplayValueMLU);
+        }
 
         if (NameWCS != NULL) _cmsFree(self ->ContextID, NameWCS);
         if (ValueWCS != NULL) _cmsFree(self ->ContextID, ValueWCS);
         if (DisplayNameMLU != NULL) cmsMLUfree(DisplayNameMLU);
         if (DisplayValueMLU != NULL) cmsMLUfree(DisplayValueMLU);
 
-        if (!rc) return FALSE;
+        if (!rc) goto Error;
     }
 
    FreeArray(&a);
