@@ -125,3 +125,6 @@ Added some checks for non-happy path, mostly failing mallocs
 -----------------------
 2.5 Maintenance release
 -----------------------
+
+Fixed a double free in recovering from a previous error in default intent handler.
+
