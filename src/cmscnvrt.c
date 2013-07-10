@@ -571,7 +571,9 @@ cmsPipeline* DefaultICCintents(cmsContext       ContextID,
         // Concatenate to the output LUT
         if (!cmsPipelineCat(Result, Lut))
             goto Error;
+
         cmsPipelineFree(Lut);
+        Lut = NULL;
 
         // Update current space
         CurrentColorSpace = ColorSpaceOut;
@@ -581,7 +583,7 @@ cmsPipeline* DefaultICCintents(cmsContext       ContextID,
 
 Error:
 
-    cmsPipelineFree(Lut);
+    if (Lut != NULL) cmsPipelineFree(Lut);
     if (Result != NULL) cmsPipelineFree(Result);
     return NULL;
 
