@@ -342,7 +342,7 @@ cmsBool  FileSeek(cmsIOHANDLER* iohandler, cmsUInt32Number offset)
 static
 cmsUInt32Number FileTell(cmsIOHANDLER* iohandler)
 {
-    return ftell((FILE*)iohandler ->stream);
+    return (cmsUInt32Number) ftell((FILE*)iohandler ->stream);
 }
 
 // Writes data to stream, also keeps used space for further reference. Returns TRUE on success, FALSE on error
@@ -385,7 +385,7 @@ cmsIOHANDLER* CMSEXPORT cmsOpenIOhandlerFromFile(cmsContext ContextID, const cha
              cmsSignalError(ContextID, cmsERROR_FILE, "File '%s' not found", FileName);
             return NULL;
         }
-        iohandler -> ReportedSize = cmsfilelength(fm);
+        iohandler -> ReportedSize = (cmsUInt32Number) cmsfilelength(fm);
         break;
 
     case 'w':
@@ -432,7 +432,7 @@ cmsIOHANDLER* CMSEXPORT cmsOpenIOhandlerFromStream(cmsContext ContextID, FILE* S
     iohandler -> ContextID = ContextID;
     iohandler -> stream = (void*) Stream;
     iohandler -> UsedSpace = 0;
-    iohandler -> ReportedSize = cmsfilelength(Stream);
+    iohandler -> ReportedSize = (cmsUInt32Number) cmsfilelength(Stream);
     iohandler -> PhysicalFile[0] = 0;
 
     iohandler ->Read    = FileRead;
@@ -957,6 +957,32 @@ Error:
     return NULL;
 }
 
+// Create profile from IOhandler
+cmsHPROFILE CMSEXPORT cmsOpenProfileFromIOhandler2THR(cmsContext ContextID, cmsIOHANDLER* io, cmsBool write)
+{
+    _cmsICCPROFILE* NewIcc;
+    cmsHPROFILE hEmpty = cmsCreateProfilePlaceholder(ContextID);
+
+    if (hEmpty == NULL) return NULL;
+
+    NewIcc = (_cmsICCPROFILE*) hEmpty;
+
+    NewIcc ->IOhandler = io;
+    if (write) {
+
+        NewIcc -> IsWrite = TRUE;
+        return hEmpty;
+    }
+
+    if (!_cmsReadHeader(NewIcc)) goto Error;
+    return hEmpty;
+
+Error:
+    cmsCloseProfile(hEmpty);
+    return NULL;
+}
+
+
 // Create profile from disk file
 cmsHPROFILE CMSEXPORT cmsOpenProfileFromFileTHR(cmsContext ContextID, const char *lpFileName, const char *sAccess)
 {
@@ -1205,6 +1231,9 @@ cmsUInt32Number CMSEXPORT cmsSaveProfileToIOhandler(cmsHPROFILE hProfile, cmsIOH
     cmsIOHANDLER* PrevIO;
     cmsUInt32Number UsedSpace;
     cmsContext ContextID;
+
+    _cmsAssert(hProfile != NULL);
+    _cmsAssert(io != NULL);
 
     memmove(&Keep, Icc, sizeof(_cmsICCPROFILE));
 
