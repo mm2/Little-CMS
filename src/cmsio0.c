@@ -1233,7 +1233,6 @@ cmsUInt32Number CMSEXPORT cmsSaveProfileToIOhandler(cmsHPROFILE hProfile, cmsIOH
     cmsContext ContextID;
 
     _cmsAssert(hProfile != NULL);
-    _cmsAssert(io != NULL);
 
     memmove(&Keep, Icc, sizeof(_cmsICCPROFILE));
 
@@ -1251,6 +1250,7 @@ cmsUInt32Number CMSEXPORT cmsSaveProfileToIOhandler(cmsHPROFILE hProfile, cmsIOH
     // Pass #2 does save to iohandler
 
     if (io != NULL) {
+
         Icc ->IOhandler = io;
         if (!SetLinks(Icc)) goto CleanUp;
         if (!_cmsWriteHeader(Icc, UsedSpace)) goto CleanUp;
