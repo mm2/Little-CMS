@@ -200,15 +200,14 @@ cmsBool MemoryWrite(struct _cms_io_handler* iohandler, cmsUInt32Number size, con
     if (ResData == NULL) return FALSE; // Housekeeping
 
     // Check for available space. Clip.
-    if (iohandler ->UsedSpace + size > ResData->Size) {
-        size = ResData ->Size - iohandler ->UsedSpace;
+    if (ResData->Pointer + size > ResData->Size) {
+        size = ResData ->Size - ResData->Pointer;
     }
       
     if (size == 0) return TRUE;     // Write zero bytes is ok, but does nothing
 
     memmove(ResData ->Block + ResData ->Pointer, Ptr, size);
     ResData ->Pointer += size;
-    iohandler->UsedSpace += size;
 
     if (ResData ->Pointer > iohandler->UsedSpace)
         iohandler->UsedSpace = ResData ->Pointer;
