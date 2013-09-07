@@ -687,8 +687,8 @@ Error:
     return NULL;
 }
 
-// This one includes abstract profiles as well. Matrix-shaper cannot be obtained on that device class. The
-// tag name here may default to AToB0
+// This one includes abstract profiles as well. Matrix-shaper cannot be used on that device class. 
+// The tag name here may default to AToB0
 cmsPipeline* _cmsReadDevicelinkLUT(cmsHPROFILE hProfile, int Intent)
 {
     cmsPipeline* Lut;
@@ -696,7 +696,6 @@ cmsPipeline* _cmsReadDevicelinkLUT(cmsHPROFILE hProfile, int Intent)
     cmsTagSignature tag16    = Device2PCS16[Intent];
     cmsTagSignature tagFloat = Device2PCSFloat[Intent];
     cmsContext ContextID = cmsGetProfileContextID(hProfile);
-
 
     // On named color, take the appropiate tag
     if (cmsGetDeviceClass(hProfile) == cmsSigNamedColorClass) {
@@ -753,7 +752,7 @@ Error:
 
     // Now it is time for a controversial stuff. I found that for 3D LUTS using
     // Lab used as indexer space,  trilinear interpolation should be used
-    if (cmsGetColorSpace(hProfile) == cmsSigLabData)
+    if (cmsGetPCS(hProfile) == cmsSigLabData)
         ChangeInterpolationToTrilinear(Lut);
 
     // After reading it, we have info about the original type
@@ -764,12 +763,12 @@ Error:
 
     // Here it is possible to get Lab on both sides
 
-    if (cmsGetPCS(hProfile) == cmsSigLabData) {
+    if (cmsGetColorSpace(hProfile) == cmsSigLabData) {
         if(!cmsPipelineInsertStage(Lut, cmsAT_BEGIN, _cmsStageAllocLabV4ToV2(ContextID)))
             goto Error2;
     }
 
-    if (cmsGetColorSpace(hProfile) == cmsSigLabData) {
+    if (cmsGetPCS(hProfile) == cmsSigLabData) {
         if(!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocLabV2ToV4(ContextID)))
             goto Error2;
     }
