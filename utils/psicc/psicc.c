@@ -102,9 +102,9 @@ void HandleSwitches(int argc, char *argv[])
 static
 void Help(void)
 {
-	 fprintf(stderr, "little cms ICC PostScript generator - v2.0 [LittleCMS %2.2f]\n", LCMS_VERSION / 1000.0);
+	 fprintf(stderr, "little CMS ICC PostScript generator - v2.1 [LittleCMS %2.2f]\n", LCMS_VERSION / 1000.0);
    
-     fprintf(stderr, "usage: psicc [flags]\n\n");
+     fprintf(stderr, "usage: psicc [flags] [<Output file>]\n\n");
 
      fprintf(stderr, "flags:\n\n");
      
@@ -119,6 +119,7 @@ void Help(void)
      fprintf(stderr, "%cn<gridpoints> - Alternate way to set precission, number of CLUT points (CRD only)\n", SW);     
      
 	 fprintf(stderr, "\n");
+	 fprintf(stderr, "If no output file is specified, output goes to stdout.\n\n");
      fprintf(stderr, "This program is intended to be a demo of the little cms\n"
                      "engine. Both lcms and this program are freeware. You can\n"
                      "obtain both in source code at http://www.littlecms.com\n"
@@ -206,16 +207,14 @@ int main(int argc, char *argv[])
 	 if (nargs != 0 && nargs != 1)
 				Help();            
 	
+    if (cInProf == NULL && cOutProf == NULL)
+        Help();
+
 	 if (nargs == 0) 
 			OutFile = stdout;
 	 else
 			OutFile = fopen(argv[xoptind], "wt");
 	   		
-
-	 if (cInProf == NULL && cOutProf == NULL)
-				Help();
-
-    
 	  if (cInProf != NULL)
 			GenerateCSA();
 		  
