@@ -229,6 +229,10 @@ typedef int                  cmsBool;
 #ifndef TRUE
 #       define TRUE  1
 #endif
+#ifndef HAVE_BOOLEAN
+#       define boolean int
+#       define HAVE_BOOLEAN
+#endif
 
 // D50 XYZ normalized to Y=1.0
 #define cmsD50X             0.9642
