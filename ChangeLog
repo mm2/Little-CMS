@@ -129,3 +129,4 @@ Added some checks for non-happy path, mostly failing mallocs
 Fixed a double free in recovering from a previous error in default intent handler.
 Fixed some indexing out of bounds in floating point interpolation
 Fixed a bug in PCS/Colorspace order when reading V2 Lab devicelinks
+Added a way to retrieve matrix shaper always, no matter LUT is present

@@ -2150,9 +2150,9 @@ void CookPointers(cmsIT8* it8)
 
         if (cmsstrcasecmp(Fld, "SAMPLE_ID") == 0) {
 
-                    t -> SampleID = idField;
+            t -> SampleID = idField;
 
-        for (i=0; i < t -> nPatches; i++) {
+            for (i=0; i < t -> nPatches; i++) {
 
                 char *Data = GetData(it8, i, idField);
                 if (Data) {
@@ -2167,7 +2167,7 @@ void CookPointers(cmsIT8* it8)
                         SetData(it8, i, idField, Buffer);
 
                 }
-                }
+            }
 
         }
 

@@ -5096,7 +5096,7 @@ void *Type_Dictionary_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* i
         }
         else {
 
-        rc = cmsDictAddEntry(hDict, NameWCS, ValueWCS, DisplayNameMLU, DisplayValueMLU);
+            rc = cmsDictAddEntry(hDict, NameWCS, ValueWCS, DisplayNameMLU, DisplayValueMLU);
         }
 
         if (NameWCS != NULL) _cmsFree(self ->ContextID, NameWCS);
