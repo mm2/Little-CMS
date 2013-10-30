@@ -23,7 +23,7 @@
 //
 //---------------------------------------------------------------------------------
 //
-// Version 2.5
+// Version 2.6b
 //
 
 #ifndef _lcms2_H
@@ -72,7 +72,7 @@ extern "C" {
 #endif
 
 // Version/release
-#define LCMS_VERSION        2050
+#define LCMS_VERSION        2060
 
 // I will give the chance of redefining basic types for compilers that are not fully C99 compliant
 #ifndef CMS_BASIC_TYPES_ALREADY_DEFINED
@@ -177,19 +177,30 @@ typedef int                  cmsBool;
 #   define CMS_USE_BIG_ENDIAN      1
 #endif
 
-#if defined(__sgi__) || defined(__sgi) || defined(__powerpc__) || defined(sparc)
+#if defined(__sgi__) || defined(__sgi) || defined(sparc)
 #   define CMS_USE_BIG_ENDIAN      1
 #endif
 
-#if defined(__ppc__) || defined(__s390__) || defined(__s390x__)
+#if defined(__s390__) || defined(__s390x__)
 #   define CMS_USE_BIG_ENDIAN   1
 #endif
 
-#ifdef TARGET_CPU_PPC
-# if TARGET_CPU_PPC
+#  ifdef TARGET_CPU_PPC
+#    if TARGET_CPU_PPC
+#      define CMS_USE_BIG_ENDIAN   1
+#    endif
+#  endif
+
+#if defined(__powerpc__) || defined(__ppc__) || defined(TARGET_CPU_PPC)
 #   define CMS_USE_BIG_ENDIAN   1
-# endif
+#   if defined (__GNUC__) 
+#           if ( __BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+#                // Don't use big endian for PowerPC little endian mode
+#                undef CMS_USE_BIG_ENDIAN
+#           endif
+#   endif
 #endif
+
 
 #ifdef macintosh
 # ifdef __BIG_ENDIAN__

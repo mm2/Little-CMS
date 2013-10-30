@@ -1795,9 +1795,16 @@ void *Type_LUT8_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cms
         if (T  == NULL) goto Error;
 
         Temp = (cmsUInt8Number*) _cmsMalloc(self ->ContextID, nTabSize);
-        if (Temp == NULL) goto Error;
+        if (Temp == NULL) {
+            _cmsFree(self ->ContextID, T);
+            goto Error;
+        }
 
-        if (io ->Read(io, Temp, nTabSize, 1) != 1) goto Error;
+        if (io ->Read(io, Temp, nTabSize, 1) != 1) {
+            _cmsFree(self ->ContextID, T);
+            _cmsFree(self ->ContextID, Temp);
+            goto Error;
+        }
 
         for (i = 0; i < nTabSize; i++) {
 
@@ -2342,27 +2349,30 @@ cmsStage* ReadCLUT(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUI
     // Precision can be 1 or 2 bytes
     if (Precision == 1) {
 
-       cmsUInt8Number  v;
+        cmsUInt8Number  v;
 
         for (i=0; i < Data ->nEntries; i++) {
 
-                if (io ->Read(io, &v, sizeof(cmsUInt8Number), 1) != 1) return NULL;
-                Data ->Tab.T[i] = FROM_8_TO_16(v);
+            if (io ->Read(io, &v, sizeof(cmsUInt8Number), 1) != 1) return NULL;
+            Data ->Tab.T[i] = FROM_8_TO_16(v);
         }
 
     }
     else
         if (Precision == 2) {
 
-            if (!_cmsReadUInt16Array(io, Data->nEntries, Data ->Tab.T)) return NULL;
-    }
-    else {
-        cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unknown precision of '%d'", Precision);
-        return NULL;
-    }
+            if (!_cmsReadUInt16Array(io, Data->nEntries, Data ->Tab.T)) {
+                cmsStageFree(CLUT);
+                return NULL;
+            }
+        }
+        else {
+            cmsStageFree(CLUT);
+            cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unknown precision of '%d'", Precision);
+            return NULL;
+        }
 
-
-    return CLUT;
+        return CLUT;
 }
 
 static
