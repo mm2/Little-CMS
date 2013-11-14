@@ -854,6 +854,42 @@ cmsUInt8Number* UnrollXYZDoubleTo16(register _cmsTRANSFORM* info,
     }
 }
 
+// This is a conversion of XYZ float to 16 bits
+static
+cmsUInt8Number* UnrollXYZFloatTo16(register _cmsTRANSFORM* info,
+                                   register cmsUInt16Number wIn[],
+                                   register cmsUInt8Number* accum,
+                                   register cmsUInt32Number Stride)
+{
+    if (T_PLANAR(info -> InputFormat)) {
+
+        cmsFloat32Number* Pt = (cmsFloat32Number*) accum;
+        cmsCIEXYZ XYZ;
+
+        XYZ.X = Pt[0];
+        XYZ.Y = Pt[Stride];
+        XYZ.Z = Pt[Stride*2];
+        cmsFloat2XYZEncoded(wIn, &XYZ);
+
+        return accum + sizeof(cmsFloat32Number);
+
+    }
+
+    else {
+        cmsFloat32Number* Pt = (cmsFloat32Number*) accum;
+        cmsCIEXYZ XYZ;
+
+        XYZ.X = Pt[0];
+        XYZ.Y = Pt[1];
+        XYZ.Z = Pt[2];
+        cmsFloat2XYZEncoded(wIn, &XYZ);
+
+        accum += 3 * sizeof(cmsFloat32Number) + T_EXTRA(info ->InputFormat) * sizeof(cmsFloat32Number);
+
+        return accum;
+    }
+}
+
 // Check if space is marked as ink
 cmsINLINE cmsBool IsInkSpace(cmsUInt32Number Type)
 {
@@ -2897,6 +2933,7 @@ static cmsFormatters16 InputFormatters16[] = {
     { TYPE_Lab_DBL,                                 ANYPLANAR|ANYEXTRA,   UnrollLabDoubleTo16},
     { TYPE_XYZ_DBL,                                 ANYPLANAR|ANYEXTRA,   UnrollXYZDoubleTo16},
     { TYPE_Lab_FLT,                                 ANYPLANAR|ANYEXTRA,   UnrollLabFloatTo16},
+    { TYPE_XYZ_FLT,                                 ANYPLANAR|ANYEXTRA,   UnrollXYZFloatTo16},
     { TYPE_GRAY_DBL,                                                 0,   UnrollDouble1Chan},
     { FLOAT_SH(1)|BYTES_SH(0), ANYCHANNELS|ANYPLANAR|ANYSWAPFIRST|ANYFLAVOR|
                                              ANYSWAP|ANYEXTRA|ANYSPACE,   UnrollDoubleTo16},
