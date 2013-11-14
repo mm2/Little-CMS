@@ -2305,6 +2305,39 @@ cmsUInt8Number* PackXYZDoubleFrom16(register _cmsTRANSFORM* Info,
 }
 
 static
+cmsUInt8Number* PackXYZFloatFrom16(register _cmsTRANSFORM* Info,
+                                   register cmsUInt16Number wOut[],
+                                   register cmsUInt8Number* output,
+                                   register cmsUInt32Number Stride)
+{
+    if (T_PLANAR(Info -> OutputFormat)) {
+
+        cmsCIEXYZ XYZ;
+        cmsFloat32Number* Out = (cmsFloat32Number*) output;
+        cmsXYZEncoded2Float(&XYZ, wOut);
+
+        Out[0]        = XYZ.X;
+        Out[Stride]   = XYZ.Y;
+        Out[Stride*2] = XYZ.Z;
+
+        return output + sizeof(cmsFloat32Number);
+
+    }
+    else {
+
+        cmsCIEXYZ XYZ;
+        cmsFloat32Number* Out = (cmsFloat32Number*) output;
+        cmsXYZEncoded2Float(&XYZ, wOut);
+
+        Out[0] = XYZ.X;
+        Out[1] = XYZ.Y;
+        Out[2] = XYZ.Z;
+
+        return output + (3 * sizeof(cmsFloat32Number) + T_EXTRA(Info ->OutputFormat) * sizeof(cmsFloat32Number));
+    }
+}
+
+static
 cmsUInt8Number* PackDoubleFrom16(register _cmsTRANSFORM* info,
                                 register cmsUInt16Number wOut[],
                                 register cmsUInt8Number* output,
@@ -2998,6 +3031,7 @@ static cmsFormatters16 OutputFormatters16[] = {
     { TYPE_XYZ_DBL,                                      ANYPLANAR|ANYEXTRA,  PackXYZDoubleFrom16},
 
     { TYPE_Lab_FLT,                                      ANYPLANAR|ANYEXTRA,  PackLabFloatFrom16},
+    { TYPE_XYZ_FLT,                                      ANYPLANAR|ANYEXTRA,  PackXYZFloatFrom16},
     
     { FLOAT_SH(1)|BYTES_SH(0),      ANYFLAVOR|ANYSWAPFIRST|ANYSWAP|
                                     ANYCHANNELS|ANYPLANAR|ANYEXTRA|ANYSPACE,  PackDoubleFrom16},
