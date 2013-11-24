@@ -854,6 +854,42 @@ cmsUInt8Number* UnrollXYZDoubleTo16(register _cmsTRANSFORM* info,
     }
 }
 
+// This is a conversion of XYZ float to 16 bits
+static
+cmsUInt8Number* UnrollXYZFloatTo16(register _cmsTRANSFORM* info,
+                                   register cmsUInt16Number wIn[],
+                                   register cmsUInt8Number* accum,
+                                   register cmsUInt32Number Stride)
+{
+    if (T_PLANAR(info -> InputFormat)) {
+
+        cmsFloat32Number* Pt = (cmsFloat32Number*) accum;
+        cmsCIEXYZ XYZ;
+
+        XYZ.X = Pt[0];
+        XYZ.Y = Pt[Stride];
+        XYZ.Z = Pt[Stride*2];
+        cmsFloat2XYZEncoded(wIn, &XYZ);
+
+        return accum + sizeof(cmsFloat32Number);
+
+    }
+
+    else {
+        cmsFloat32Number* Pt = (cmsFloat32Number*) accum;
+        cmsCIEXYZ XYZ;
+
+        XYZ.X = Pt[0];
+        XYZ.Y = Pt[1];
+        XYZ.Z = Pt[2];
+        cmsFloat2XYZEncoded(wIn, &XYZ);
+
+        accum += 3 * sizeof(cmsFloat32Number) + T_EXTRA(info ->InputFormat) * sizeof(cmsFloat32Number);
+
+        return accum;
+    }
+}
+
 // Check if space is marked as ink
 cmsINLINE cmsBool IsInkSpace(cmsUInt32Number Type)
 {
@@ -2305,6 +2341,39 @@ cmsUInt8Number* PackXYZDoubleFrom16(register _cmsTRANSFORM* Info,
 }
 
 static
+cmsUInt8Number* PackXYZFloatFrom16(register _cmsTRANSFORM* Info,
+                                   register cmsUInt16Number wOut[],
+                                   register cmsUInt8Number* output,
+                                   register cmsUInt32Number Stride)
+{
+    if (T_PLANAR(Info -> OutputFormat)) {
+
+        cmsCIEXYZ XYZ;
+        cmsFloat32Number* Out = (cmsFloat32Number*) output;
+        cmsXYZEncoded2Float(&XYZ, wOut);
+
+        Out[0]        = XYZ.X;
+        Out[Stride]   = XYZ.Y;
+        Out[Stride*2] = XYZ.Z;
+
+        return output + sizeof(cmsFloat32Number);
+
+    }
+    else {
+
+        cmsCIEXYZ XYZ;
+        cmsFloat32Number* Out = (cmsFloat32Number*) output;
+        cmsXYZEncoded2Float(&XYZ, wOut);
+
+        Out[0] = XYZ.X;
+        Out[1] = XYZ.Y;
+        Out[2] = XYZ.Z;
+
+        return output + (3 * sizeof(cmsFloat32Number) + T_EXTRA(Info ->OutputFormat) * sizeof(cmsFloat32Number));
+    }
+}
+
+static
 cmsUInt8Number* PackDoubleFrom16(register _cmsTRANSFORM* info,
                                 register cmsUInt16Number wOut[],
                                 register cmsUInt8Number* output,
@@ -2864,6 +2933,7 @@ static cmsFormatters16 InputFormatters16[] = {
     { TYPE_Lab_DBL,                                 ANYPLANAR|ANYEXTRA,   UnrollLabDoubleTo16},
     { TYPE_XYZ_DBL,                                 ANYPLANAR|ANYEXTRA,   UnrollXYZDoubleTo16},
     { TYPE_Lab_FLT,                                 ANYPLANAR|ANYEXTRA,   UnrollLabFloatTo16},
+    { TYPE_XYZ_FLT,                                 ANYPLANAR|ANYEXTRA,   UnrollXYZFloatTo16},
     { TYPE_GRAY_DBL,                                                 0,   UnrollDouble1Chan},
     { FLOAT_SH(1)|BYTES_SH(0), ANYCHANNELS|ANYPLANAR|ANYSWAPFIRST|ANYFLAVOR|
                                              ANYSWAP|ANYEXTRA|ANYSPACE,   UnrollDoubleTo16},
@@ -2998,6 +3068,7 @@ static cmsFormatters16 OutputFormatters16[] = {
     { TYPE_XYZ_DBL,                                      ANYPLANAR|ANYEXTRA,  PackXYZDoubleFrom16},
 
     { TYPE_Lab_FLT,                                      ANYPLANAR|ANYEXTRA,  PackLabFloatFrom16},
+    { TYPE_XYZ_FLT,                                      ANYPLANAR|ANYEXTRA,  PackXYZFloatFrom16},
     
     { FLOAT_SH(1)|BYTES_SH(0),      ANYFLAVOR|ANYSWAPFIRST|ANYSWAP|
                                     ANYCHANNELS|ANYPLANAR|ANYEXTRA|ANYSPACE,  PackDoubleFrom16},
