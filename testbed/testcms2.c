@@ -5083,6 +5083,41 @@ cmsInt32Number CheckRAWtags(cmsInt32Number Pass,  cmsHPROFILE hProfile)
 }
 
 
+static
+cmsInt32Number CheckVersionHeaderWriting(void)
+{
+    cmsHPROFILE h;
+    int index;
+    float test_versions[] = {
+      2.3,
+      4.08,
+      4.09,
+      4.3
+    };
+
+    for (index = 0; index < sizeof(test_versions)/sizeof(test_versions[0]); index++) {
+      h = cmsCreateProfilePlaceholder(DbgThread());
+      if (h == NULL) return 0;
+
+      cmsSetProfileVersion(h, test_versions[index]);
+
+      cmsSaveProfileToFile(h, "alltags.icc");
+      cmsCloseProfile(h);
+
+      h = cmsOpenProfileFromFileTHR(DbgThread(), "alltags.icc", "r");
+
+      // Only the first 3 digits are significant
+      if (fabs(cmsGetProfileVersion(h) - test_versions[index]) > 0.005) {
+        Fail("Version failed to round-trip: wrote %.2f, read %.2f",
+             test_versions[index], cmsGetProfileVersion(h));
+        return 0;
+      }
+      cmsCloseProfile(h);
+      remove("alltags.icc");
+    }
+    return 1;
+}
+
 // This is a very big test that checks every single tag
 static
 cmsInt32Number CheckProfileCreation(void)
@@ -8303,7 +8338,7 @@ int main(int argc, char* argv[])
 
     // Profile I/O (this one is huge!)
     Check("Profile creation", CheckProfileCreation);
-
+    Check("Header version", CheckVersionHeaderWriting);
 
     // Error reporting
     Check("Error reporting on bad profiles", CheckErrReportingOnBadProfiles);

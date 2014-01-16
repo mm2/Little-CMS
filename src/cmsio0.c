@@ -924,7 +924,7 @@ void  CMSEXPORT cmsSetProfileVersion(cmsHPROFILE hProfile, cmsFloat64Number Vers
 
     // 4.2 -> 0x4200000
 
-    Icc -> Version = BaseToBase((cmsUInt32Number) floor(Version * 100.0), 10, 16) << 16;
+    Icc -> Version = BaseToBase((cmsUInt32Number) round(Version * 100.0), 10, 16) << 16;
 }
 
 cmsFloat64Number CMSEXPORT cmsGetProfileVersion(cmsHPROFILE hProfile)
