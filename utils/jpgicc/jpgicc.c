@@ -72,13 +72,6 @@ static struct my_error_mgr {
 
 cmsUInt16Number Alarm[4] = {128,128,128,0};
 
-// Out of mem
-static
-void OutOfMem(size_t size)
-{
-    FatalError("Out of memory on allocating %d bytes.", size);
-}
-
 
 static
 void my_error_exit (j_common_ptr cinfo)
@@ -840,7 +833,7 @@ void DoEmbedProfile(const char* ProfileFile)
         fclose(f);
         EmbedBuffer[EmbedLen] = 0;
 
-        write_icc_profile (&Compressor, EmbedBuffer, EmbedLen);
+        write_icc_profile (&Compressor, EmbedBuffer, (unsigned int) EmbedLen);
         free(EmbedBuffer);
 }
 

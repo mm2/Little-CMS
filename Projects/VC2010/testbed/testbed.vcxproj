@@ -189,6 +189,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\..\..\testbed\testcms2.c" />
+    <ClCompile Include="..\..\..\testbed\testplugin.c" />
+    <ClCompile Include="..\..\..\testbed\zoo_icc.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\testbed\testcms2.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

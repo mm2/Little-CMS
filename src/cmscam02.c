@@ -437,11 +437,12 @@ void CMSEXPORT cmsCIECAM02Forward(cmsHANDLE hModel, const cmsCIEXYZ* pIn, cmsJCh
 {
     CAM02COLOR clr;
     cmsCIECAM02* lpMod = (cmsCIECAM02*) hModel;
-
-    memset(&clr, 0, sizeof(clr));
+  
     _cmsAssert(lpMod != NULL);
     _cmsAssert(pIn != NULL);
     _cmsAssert(pOut != NULL);
+
+    memset(&clr, 0, sizeof(clr));
 
     clr.XYZ[0] = pIn ->X;
     clr.XYZ[1] = pIn ->Y;
@@ -462,11 +463,12 @@ void CMSEXPORT cmsCIECAM02Reverse(cmsHANDLE hModel, const cmsJCh* pIn, cmsCIEXYZ
 {
     CAM02COLOR clr;
     cmsCIECAM02* lpMod = (cmsCIECAM02*) hModel;
-
-    memset(&clr, 0, sizeof(clr));
+    
     _cmsAssert(lpMod != NULL);
     _cmsAssert(pIn != NULL);
     _cmsAssert(pOut != NULL);
+
+    memset(&clr, 0, sizeof(clr));
 
     clr.J = pIn -> J;
     clr.C = pIn -> C;

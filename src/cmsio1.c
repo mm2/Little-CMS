@@ -528,7 +528,7 @@ void ChangeInterpolationToTrilinear(cmsPipeline* Lut)
                 _cmsStageCLutData* CLUT = (_cmsStageCLutData*) Stage ->Data;
 
                 CLUT ->Params->dwFlags |= CMS_LERP_FLAGS_TRILINEAR;
-                _cmsSetInterpolationRoutine(CLUT ->Params);
+                _cmsSetInterpolationRoutine(Lut->ContextID, CLUT ->Params);
             }
     }
 }

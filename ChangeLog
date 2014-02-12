@@ -132,3 +132,10 @@ Fixed a bug in PCS/Colorspace order when reading V2 Lab devicelinks
 Added a way to retrieve matrix shaper always, no matter LUT is present
 Changed endianess detection for PowerPC
 Fixed memory leaks on error handling
+Big revamp on Contexts, from Artifex
+New locking plug-in, from Artifex
+Added directories for tiff, jpeg in configure script
+
+-----------------------
+2.6 Featured release
+-----------------------

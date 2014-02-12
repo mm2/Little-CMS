@@ -3,7 +3,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2010 Marti Maria Saguer
+//  Copyright (c) 1998-2014 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -25,16 +25,29 @@
 //
 //---------------------------------------------------------------------------------
 //
-// Version 2.1
+// Version 2.6
 //
 
 UNIT lcms2dll;
 
+{$IFDEF FPC}
+  {$MODE Delphi}
+{$ENDIF}
+
 INTERFACE
 
-USES Windows;
+{$IFNDEF MSWINDOWS}
+   USES LCLType, types;
+   Type PWChar = PWideChar;
+{$ELSE}
+   USES Windows;
+{$ENDIF}
 
- TYPE 
+ CONST
+
+  LCMS2_SO = {$IFDEF DARWIN} 'liblcms2.2.dylib'; {$ELSE} 'lcms2.dll'; {$ENDIF}
+
+ TYPE
 
   Uint8   = Byte;
   Int8    = Shortint;
@@ -43,7 +56,7 @@ USES Windows;
   UInt32  = LongWord;
   Int32   = Longint;
 
- TYPE 
+ TYPE
      cmsUInt8Number   = Uint8;
      cmsInt8Number    = Int8;
      cmsUInt16Number  = UInt16;
@@ -58,17 +71,17 @@ USES Windows;
      cmsFloat64Number = Double;
 
      LPcmsUInt8Number    = ^cmsUInt8Number;
-     LPcmsInt8Number     = ^cmsInt8Number;  
-     LPcmsUInt16Number   = ^cmsUInt16Number;  
-     LPcmsInt16Number    = ^cmsInt16Number;  
-     
-     LPcmsUInt32Number   = ^cmsUInt32Number;  
-     LPcmsInt32Number    = ^cmsInt32Number;  
-     LPcmsInt64Number    = ^cmsInt64Number;  
-     LPcmsUInt64Number   = ^cmsUInt64Number;  
-     
-     LPcmsFloat32Number  = ^cmsFloat32Number; 
-     LPcmsFloat64Number  = ^cmsFloat64Number; 
+     LPcmsInt8Number     = ^cmsInt8Number;
+     LPcmsUInt16Number   = ^cmsUInt16Number;
+     LPcmsInt16Number    = ^cmsInt16Number;
+
+     LPcmsUInt32Number   = ^cmsUInt32Number;
+     LPcmsInt32Number    = ^cmsInt32Number;
+     LPcmsInt64Number    = ^cmsInt64Number;
+     LPcmsUInt64Number   = ^cmsUInt64Number;
+
+     LPcmsFloat32Number  = ^cmsFloat32Number;
+     LPcmsFloat64Number  = ^cmsFloat64Number;
 
 
      // Derivative types
@@ -315,7 +328,7 @@ cmsPlatformSignature = (
     cmsSigUnices                            = $2A6E6978   // '*nix'   // From argyll -- Not official
 );
 
-CONST 
+CONST
 
     // Reference gamut
     cmsSigPerceptualReferenceMediumGamut         = $70726d67;  //'prmg'
@@ -357,7 +370,7 @@ cmsCurveSegSignature = (
     cmsSigSegmentedCurve                = $63757266  // 'curf'
 );
 
-CONST 
+CONST
 
     // Used in ResponseCurveType
     cmsSigStatusA                    = $53746141; //'StaA'
@@ -388,12 +401,12 @@ cmsICCData = PACKED RECORD
 
 // ICC date time
 cmsDateTimeNumber = PACKED RECORD
-    year:     cmsUInt16Number;     
-    month:    cmsUInt16Number;     
-    day:      cmsUInt16Number;     
-    hours:    cmsUInt16Number;     
-    minutes:  cmsUInt16Number;     
-    seconds:  cmsUInt16Number;                 
+    year:     cmsUInt16Number;
+    month:    cmsUInt16Number;
+    day:      cmsUInt16Number;
+    hours:    cmsUInt16Number;
+    minutes:  cmsUInt16Number;
+    seconds:  cmsUInt16Number;
 END;
 
 // ICC XYZ
@@ -443,8 +456,8 @@ END;
 
 // ICC base tag
 cmsTagBase = PACKED RECORD
-     sig:         cmsTagTypeSignature; 
-     reserved:    array[0..3] of cmsInt8Number;       
+     sig:         cmsTagTypeSignature;
+     reserved:    array[0..3] of cmsInt8Number;
 END;
 
 // A tag entry in directory
@@ -457,7 +470,7 @@ END;
 
 cmsContext    = Pointer;              // Context identifier for multithreaded environments
 cmsHANDLE     = Pointer;              // Generic handle
-cmsHPROFILE   = Pointer;             // Opaque typedefs to hide internals
+cmsHPROFILE   = Pointer;              // Opaque typedefs to hide internals
 cmsHTRANSFORM = Pointer;
 
 
@@ -494,17 +507,17 @@ CONST
     FUNCTION BYTES_SH(b: cmsUInt32Number):cmsUInt32Number;
 
 
-    FUNCTION T_FLOAT(a: cmsUInt32Number): cmsUInt32Number;          
-    FUNCTION T_OPTIMIZED(o: cmsUInt32Number): cmsUInt32Number;      
-    FUNCTION T_COLORSPACE(s: cmsUInt32Number): cmsUInt32Number;     
-    FUNCTION T_SWAPFIRST(s: cmsUInt32Number): cmsUInt32Number;      
-    FUNCTION T_FLAVOR(s: cmsUInt32Number): cmsUInt32Number;         
-    FUNCTION T_PLANAR(p: cmsUInt32Number): cmsUInt32Number;         
-    FUNCTION T_ENDIAN16(e: cmsUInt32Number): cmsUInt32Number;       
-    FUNCTION T_DOSWAP(e: cmsUInt32Number): cmsUInt32Number;         
-    FUNCTION T_EXTRA(e: cmsUInt32Number): cmsUInt32Number;          
-    FUNCTION T_CHANNELS(c: cmsUInt32Number): cmsUInt32Number;       
-    FUNCTION T_BYTES(b: cmsUInt32Number): cmsUInt32Number;          
+    FUNCTION T_FLOAT(a: cmsUInt32Number): cmsUInt32Number;
+    FUNCTION T_OPTIMIZED(o: cmsUInt32Number): cmsUInt32Number;
+    FUNCTION T_COLORSPACE(s: cmsUInt32Number): cmsUInt32Number;
+    FUNCTION T_SWAPFIRST(s: cmsUInt32Number): cmsUInt32Number;
+    FUNCTION T_FLAVOR(s: cmsUInt32Number): cmsUInt32Number;
+    FUNCTION T_PLANAR(p: cmsUInt32Number): cmsUInt32Number;
+    FUNCTION T_ENDIAN16(e: cmsUInt32Number): cmsUInt32Number;
+    FUNCTION T_DOSWAP(e: cmsUInt32Number): cmsUInt32Number;
+    FUNCTION T_EXTRA(e: cmsUInt32Number): cmsUInt32Number;
+    FUNCTION T_CHANNELS(c: cmsUInt32Number): cmsUInt32Number;
+    FUNCTION T_BYTES(b: cmsUInt32Number): cmsUInt32Number;
 
 CONST
 
@@ -525,7 +538,7 @@ CONST
     PT_HSV     =  12;
     PT_HLS     =  13;
     PT_Yxy     =  14;
-                
+
     PT_MCH1    =  15;
     PT_MCH2    =  16;
     PT_MCH3    =  17;
@@ -544,7 +557,7 @@ CONST
 
     PT_LabV2   =  30;     // Identical to PT_Lab, but using the V2 old encoding
 
-    
+
     // Format descriptors
     TYPE_GRAY_8          = $030009;
     TYPE_GRAY_8_REV      = $032009;
@@ -568,6 +581,9 @@ CONST
     TYPE_BGR_16_SE       = $040c1a;
     TYPE_RGBA_8          = $040099;
     TYPE_RGBA_8_PLANAR   = $041099;
+    TYPE_ARGB_8_PLANAR   = $045099;
+    TYPE_ABGR_8_PLANAR   = $041499;
+    TYPE_BGRA_8_PLANAR   = $045499;
     TYPE_RGBA_16         = $04009a;
     TYPE_RGBA_16_PLANAR  = $04109a;
     TYPE_RGBA_16_SE      = $04089a;
@@ -686,6 +702,7 @@ CONST
     TYPE_XYZA_FLT        = $49009c;
     TYPE_LabA_FLT        = $4a009c;
     TYPE_RGBA_FLT        = $44009c;
+
     TYPE_XYZ_DBL         = $490018;
     TYPE_Lab_DBL         = $4a0018;
     TYPE_GRAY_DBL        = $430008;
@@ -695,7 +712,16 @@ CONST
     TYPE_ALabV2_8        = $1e0499;
     TYPE_LabV2_16        = $1e001a;
 
-    
+    TYPE_GRAY_HALF_FLT   = $43000a;
+    TYPE_RGB_HALF_FLT    = $44001a;
+    TYPE_RGBA_HALF_FLT   = $44009a;
+    TYPE_CMYK_HALF_FLT   = $460022;
+
+    TYPE_ARGB_HALF_FLT   = $44409a;
+    TYPE_BGR_HALF_FLT    = $44041a;
+    TYPE_BGRA_HALF_FLT   = $44449a;
+    TYPE_ABGR_HALF_FLT   = $44041a;
+
 TYPE
 
 
@@ -751,7 +777,7 @@ CONST
     cmsILLUMINANT_TYPE_A       = $0000006;
     cmsILLUMINANT_TYPE_E       = $0000007;
     cmsILLUMINANT_TYPE_F8      = $0000008;
-    
+
 TYPE
 
     cmsICCMeasurementConditions = PACKED RECORD
@@ -770,6 +796,13 @@ TYPE
         IlluminantType: cmsUInt32Number;  // viewing condition
     END;
 
+
+// Context   --------------------------------------------------------------------------------------------------------------
+
+FUNCTION  cmsCreateContext(Plugin : Pointer; UserData : Pointer) : cmsContext; StdCall;
+PROCEDURE cmsDeleteContext(ContextID: cmsContext); StdCall;
+FUNCTION  cmsDupContext(ContextID: cmsContext; NewUserData: Pointer): cmsContext; StdCall;
+FUNCTION  cmsGetContextUserData(ContextID: cmsContext): Pointer;  StdCall;
 
 // Plug-In registering  ---------------------------------------------------------------------------------------------------
 
@@ -888,7 +921,7 @@ FUNCTION cmsAdaptToIlluminant(Result: LPcmsCIEXYZ; SourceWhitePt: LPcmsCIEXYZ;
 
 
     LPcmsViewingConditions = ^cmsViewingConditions;
-        
+
 FUNCTION    cmsCIECAM02Init(pVC : LPcmsViewingConditions ) : Pointer; StdCall;
 PROCEDURE   cmsCIECAM02Done(hModel : Pointer); StdCall;
 PROCEDURE   cmsCIECAM02Forward(hModel: Pointer; pIn: LPcmsCIEXYZ; pOut: LPcmsJCh ); StdCall;
@@ -899,7 +932,7 @@ PROCEDURE   cmsCIECAM02Reverse(hModel: Pointer; pIn: LPcmsJCh;   pOut: LPcmsCIEX
 // This describes a curve segment. For a table of supported types, see the manual. User can increase the number of
 // available types by using a proper plug-in. Parametric segments allow 10 parameters at most
 
-TYPE 
+TYPE
 cmsCurveSegment = PACKED RECORD
        x0, x1: cmsFloat32Number;                       // Domain; for x0 < x <= x1
          PType: cmsInt32Number;                        // Parametric type, Type == 0 means sampled segment. Negative values are reserved
@@ -947,6 +980,8 @@ FUNCTION  cmsIsToneCurveMonotonic(t: LPcmsToneCurve):cmsBool; StdCall;
 FUNCTION  cmsIsToneCurveDescending(t: LPcmsToneCurve):cmsBool; StdCall;
 FUNCTION  cmsGetToneCurveParametricType(t: LPcmsToneCurve):cmsInt32Number; StdCall;
 FUNCTION  cmsEstimateGamma(t: LPcmsToneCurve; Precision:cmsFloat64Number):cmsFloat64Number; StdCall;
+FUNCTION  cmsGetToneCurveEstimatedTableEntries(t: LPcmsToneCurve): cmsUInt32Number; StdCall;
+FUNCTION  cmsGetToneCurveEstimatedTable(t: LPcmsToneCurve): LPcmsUInt16Number; StdCall;
 
 
 // Implements pipelines of multi-processing elements -------------------------------------------------------------
@@ -955,11 +990,12 @@ TYPE
     LPcmsPipeline = Pointer;
     LPcmsStage    = Pointer;
     LPLPcmsStage   = ^LPcmsStage;
- 
+
 // Those are hi-level pipelines
 FUNCTION  cmsPipelineAlloc(ContextID: cmsContext; InputChannels, OutputChannels: cmsUInt32Number): LPcmsPipeline; StdCall;
 PROCEDURE cmsPipelineFree(lut: LPcmsPipeline); StdCall;
-FUNCTION  cmsPipelineDup(Orig: LPcmsPipeline): LPcmsPipeline; StdCall; 
+FUNCTION  cmsPipelineDup(Orig: LPcmsPipeline): LPcmsPipeline; StdCall;
+FUNCTION  cmsGetPipelineContextID(lut: LPcmsPipeline) : cmsContext; StdCall;
 FUNCTION  cmsPipelineInputChannels(lut: LPcmsPipeline): cmsUInt32Number; StdCall;
 FUNCTION  cmsPipelineOutputChannels(lut: LPcmsPipeline): cmsUInt32Number; StdCall;
 
@@ -1011,7 +1047,7 @@ FUNCTION cmsStageType(mpe: LPcmsStage): cmsStageSignature; StdCall;
 FUNCTION cmsStageData(mpe: LPcmsStage): Pointer; StdCall;
 
 // Sampling
- 
+
 Type
     cmsSAMPLER16    = FUNCTION (Inp, Outp: LPcmsUInt16NumberArray; Cargo: Pointer): cmsInt32Number; CDecl;
     cmsSAMPLERFLOAT = FUNCTION (Inp, Outp: LPcmsFloat32NumberArray; Cargo: Pointer): cmsInt32Number; CDecl;
@@ -1046,9 +1082,9 @@ cmsNoLanguage = #0#0#0;
 cmsNoCountry  = #0#0#0;
 
 
-FUNCTION  cmsMLUalloc(ContextID: cmsContext; nItems: cmsUInt32Number): LPcmsMLU; StdCall; 
+FUNCTION  cmsMLUalloc(ContextID: cmsContext; nItems: cmsUInt32Number): LPcmsMLU; StdCall;
 PROCEDURE cmsMLUfree(mlu: LPcmsMLU); StdCall;
-FUNCTION  cmsMLUdup(mlu: LPcmsMLU): LPcmsMLU; StdCall; 
+FUNCTION  cmsMLUdup(mlu: LPcmsMLU): LPcmsMLU; StdCall;
 
 FUNCTION  cmsMLUsetASCII(mlu: LPcmsMLU; LanguageCode, CountryCode, ASCIIString: PAnsiChar): cmsBool; StdCall;
 FUNCTION  cmsMLUsetWide(mlu: LPcmsMLU; LanguageCode, CountryCode: PAnsiChar; WideString: PWChar): cmsBool; StdCall;
@@ -1056,7 +1092,7 @@ FUNCTION  cmsMLUsetWide(mlu: LPcmsMLU; LanguageCode, CountryCode: PAnsiChar; Wid
 FUNCTION cmsMLUgetASCII(mlu: LPcmsMLU; LanguageCode, CountryCode: PAnsiChar; Buffer: PAnsiChar; BufferSize: cmsUInt32Number): cmsUInt32Number; StdCall;
 
 FUNCTION cmsMLUgetWide(mlu: LPcmsMLU; LanguageCode, CountryCode: PAnsiChar; Buffer: PWChar; BufferSize: cmsUInt32Number): cmsUInt32Number; StdCall;
-                                                 
+
 FUNCTION cmsMLUgetTranslation(mlu: LPcmsMLU; LanguageCode, CountryCode, ObtainedLanguage, ObtainedCountry: PAnsiChar): cmsBool; StdCall;
 
 // Undercolorremoval & black generation -------------------------------------------------------------------------------------
@@ -1085,13 +1121,13 @@ Const
  cmsSPOT_LINE            = 5;
  cmsSPOT_SQUARE          = 6;
  cmsSPOT_CROSS           = 7;
-                            
+
 
 Type
 
 cmsScreeningChannel = PACKED RECORD
 
-      Frequency, 
+      Frequency,
       ScreenAngle: cmsFloat64Number;
       SpotShape: cmsUInt32Number;
 
@@ -1137,12 +1173,12 @@ Type
 
 cmsPSEQDESC = PACKED RECORD
    deviceMfg, deviceModel: cmsSignature;
-    
+
    attributes: cmsUInt64Number;
    technology: cmsTechnologySignature;
    ProfileID: cmsProfileID;
-   Manufacturer, 
-   Model, 
+   Manufacturer,
+   Model,
    Description : LPcmsMLU;
  END;
 
@@ -1167,11 +1203,11 @@ TYPE
 
  LPcmsDICTentry = ^cmsDICTentry;
 
-cmsDICTentry = PACKED RECORD 
+cmsDICTentry = PACKED RECORD
 
     Next: LPcmsDICTentry;
 
-    DisplayName, DisplayValue: LPcmsMLU;    
+    DisplayName, DisplayValue: LPcmsMLU;
     Name, Value : PWChar;
 END;
 
@@ -1390,7 +1426,7 @@ INTENT_PRESERVE_K_ONLY_SATURATION             = 12;
 INTENT_PRESERVE_K_PLANE_PERCEPTUAL            = 13;
 INTENT_PRESERVE_K_PLANE_RELATIVE_COLORIMETRIC = 14;
 INTENT_PRESERVE_K_PLANE_SATURATION            = 15;
-                                                  
+
 Type
 LPPAnsiChar = ^PAnsiChar;
 
@@ -1507,6 +1543,8 @@ FUNCTION   cmsCreateExtendedTransform(ContextID: cmsContext;
 PROCEDURE  cmsDeleteTransform(hTransform: cmsHTRANSFORM); StdCall;
 
 PROCEDURE  cmsDoTransform(Transform: cmsHTRANSFORM; InputBuffer, OutputBuffer: Pointer; size: cmsUInt32Number);  StdCall;
+PROCEDURE  cmsDoTransformStride(Transform: cmsHTRANSFORM; InputBuffer, OutputBuffer: Pointer; size: cmsUInt32Number; stride: cmsUInt32Number);  StdCall;
+
 
 PROCEDURE  cmsSetAlarmCodes( NewAlarm: LPcmsUInt16NumberArray);  StdCall;
 PROCEDURE  cmsGetAlarmCodes(NewAlarm: LPcmsUInt16NumberArray); StdCall;
@@ -1624,7 +1662,7 @@ FUNCTION cmsDetectTAC(hProfile: cmsHPROFILE): cmsFloat64Number; StdCall;
 
 // Poor man's gamut mapping
 FUNCTION  cmsDesaturateLab(Lab: LPcmsCIELab; amax, amin, bmax, bmin: cmsFloat64Number): cmsBool; StdCall;
-                                                   
+
 
 IMPLEMENTATION
 
@@ -1643,275 +1681,282 @@ IMPLEMENTATION
     FUNCTION BYTES_SH(b: cmsUInt32Number):cmsUInt32Number;         begin  BYTES_SH :=       (b) end;
 
 
-    FUNCTION T_FLOAT(a: cmsUInt32Number): cmsUInt32Number;          begin  T_FLOAT :=        (((a) shr 22) and 1) end;  
-    FUNCTION T_OPTIMIZED(o: cmsUInt32Number): cmsUInt32Number;      begin  T_OPTIMIZED :=    (((o) shr 21) and 1) end;    
-    FUNCTION T_COLORSPACE(s: cmsUInt32Number): cmsUInt32Number;     begin  T_COLORSPACE :=   (((s) shr 16) and 31) end;   
-    FUNCTION T_SWAPFIRST(s: cmsUInt32Number): cmsUInt32Number;      begin  T_SWAPFIRST :=    (((s) shr 14) and 1) end;    
+    FUNCTION T_FLOAT(a: cmsUInt32Number): cmsUInt32Number;          begin  T_FLOAT :=        (((a) shr 22) and 1) end;
+    FUNCTION T_OPTIMIZED(o: cmsUInt32Number): cmsUInt32Number;      begin  T_OPTIMIZED :=    (((o) shr 21) and 1) end;
+    FUNCTION T_COLORSPACE(s: cmsUInt32Number): cmsUInt32Number;     begin  T_COLORSPACE :=   (((s) shr 16) and 31) end;
+    FUNCTION T_SWAPFIRST(s: cmsUInt32Number): cmsUInt32Number;      begin  T_SWAPFIRST :=    (((s) shr 14) and 1) end;
     FUNCTION T_FLAVOR(s: cmsUInt32Number): cmsUInt32Number;         begin  T_FLAVOR :=       (((s) shr 13) and 1) end;
-    FUNCTION T_PLANAR(p: cmsUInt32Number): cmsUInt32Number;         begin  T_PLANAR :=       (((p) shr 12) and 1) end;  
-    FUNCTION T_ENDIAN16(e: cmsUInt32Number): cmsUInt32Number;       begin  T_ENDIAN16 :=     (((e) shr 11) and 1) end;  
-    FUNCTION T_DOSWAP(e: cmsUInt32Number): cmsUInt32Number;         begin  T_DOSWAP :=       (((e) shr 10) and 1) end; 
-    FUNCTION T_EXTRA(e: cmsUInt32Number): cmsUInt32Number;          begin  T_EXTRA :=        (((e) shr 7) and 7) end;   
-    FUNCTION T_CHANNELS(c: cmsUInt32Number): cmsUInt32Number;       begin  T_CHANNELS :=     (((c) shr 3) and 15) end; 
+    FUNCTION T_PLANAR(p: cmsUInt32Number): cmsUInt32Number;         begin  T_PLANAR :=       (((p) shr 12) and 1) end;
+    FUNCTION T_ENDIAN16(e: cmsUInt32Number): cmsUInt32Number;       begin  T_ENDIAN16 :=     (((e) shr 11) and 1) end;
+    FUNCTION T_DOSWAP(e: cmsUInt32Number): cmsUInt32Number;         begin  T_DOSWAP :=       (((e) shr 10) and 1) end;
+    FUNCTION T_EXTRA(e: cmsUInt32Number): cmsUInt32Number;          begin  T_EXTRA :=        (((e) shr 7) and 7) end;
+    FUNCTION T_CHANNELS(c: cmsUInt32Number): cmsUInt32Number;       begin  T_CHANNELS :=     (((c) shr 3) and 15) end;
     FUNCTION T_BYTES(b: cmsUInt32Number): cmsUInt32Number;          begin  T_BYTES :=        ((b) and 7) end;
 
 
 
-// 
+//
 
+FUNCTION  cmsCreateContext(Plugin : Pointer; UserData : Pointer) : cmsContext; StdCall; external LCMS2_SO;
+PROCEDURE cmsDeleteContext(ContextID: cmsContext); StdCall; external LCMS2_SO;
+FUNCTION  cmsDupContext(ContextID: cmsContext; NewUserData: Pointer): cmsContext; StdCall; external LCMS2_SO;
+FUNCTION  cmsGetContextUserData(ContextID: cmsContext): Pointer;  StdCall; external LCMS2_SO;
 
-FUNCTION  cmsPlugin(Plugin: Pointer): cmsBool; StdCall; external 'lcms2.dll';
-PROCEDURE cmsUnregisterPlugins; StdCall; external 'lcms2.dll';
-PROCEDURE cmsSetLogErrorHandler(Fn: cmsLogErrorHandlerFunction); StdCall; external 'lcms2.dll';
-FUNCTION cmsD50_XYZ: LPcmsCIEXYZ; StdCall; external 'lcms2.dll';
-FUNCTION cmsD50_xyY: LPcmsCIExyY; StdCall; external 'lcms2.dll';
-PROCEDURE cmsXYZ2xyY(Dest: LPcmsCIExyY; Source: LPcmsCIEXYZ); StdCall; external 'lcms2.dll';
-PROCEDURE cmsxyY2XYZ(Dest: LPcmsCIEXYZ; Source: LPcmsCIExyY); StdCall; external 'lcms2.dll';
-PROCEDURE cmsLab2XYZ(WhitePoint: LPcmsCIEXYZ; xyz: LPcmsCIEXYZ; Lab: LPcmsCIELab); StdCall; external 'lcms2.dll';
-PROCEDURE cmsXYZ2Lab(WhitePoint: LPcmsCIEXYZ; Lab: LPcmsCIELab; xyz: LPcmsCIEXYZ); StdCall; external 'lcms2.dll';
-PROCEDURE cmsLab2LCh(LCh: LPcmsCIELCh; Lab: LPcmsCIELab); StdCall; external 'lcms2.dll';
-PROCEDURE cmsLCh2Lab(Lab: LPcmsCIELab; LCh: LPcmsCIELCh); StdCall; external 'lcms2.dll';
-PROCEDURE cmsLabEncoded2Float(Lab: LPcmsCIELab; wLab: Pointer); StdCall; external 'lcms2.dll';
-PROCEDURE cmsLabEncoded2FloatV2(Lab: LPcmsCIELab; wLab: Pointer); StdCall; external 'lcms2.dll';
-PROCEDURE cmsFloat2LabEncoded(wLab: Pointer; Lab: LPcmsCIELab); StdCall; external 'lcms2.dll';
-PROCEDURE cmsFloat2LabEncodedV2(wLab: Pointer; Lab: LPcmsCIELab); StdCall; external 'lcms2.dll';
-PROCEDURE cmsXYZEncoded2Float(fxyz : LPcmsCIEXYZ; XYZ: Pointer); StdCall; external 'lcms2.dll';
-PROCEDURE cmsFloat2XYZEncoded(XYZ: Pointer; fXYZ: LPcmsCIEXYZ); StdCall; external 'lcms2.dll';
-FUNCTION cmsDeltaE(Lab1, Lab2: LPcmsCIELab): Double; StdCall; external 'lcms2.dll';
-FUNCTION cmsCIE94DeltaE(Lab1, Lab2: LPcmsCIELab): Double; StdCall; external 'lcms2.dll';
-FUNCTION cmsBFDdeltaE(Lab1, Lab2: LPcmsCIELab): Double; StdCall; external 'lcms2.dll';
-FUNCTION cmsCMCdeltaE(Lab1, Lab2: LPcmsCIELab): Double; StdCall; external 'lcms2.dll';
-FUNCTION cmsCIE2000DeltaE(Lab1, Lab2: LPcmsCIELab; Kl, Kc, Kh: Double): Double; StdCall; external 'lcms2.dll';
-FUNCTION  cmsWhitePointFromTemp(var WhitePoint: cmsCIExyY; TempK: cmsFloat64Number) : cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION  cmsTempFromWhitePoint(var TeampK: cmsFloat64Number; var WhitePoint: cmsCIExyY) : cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION  cmsPlugin(Plugin: Pointer): cmsBool; StdCall; external LCMS2_SO;
+PROCEDURE cmsUnregisterPlugins; StdCall; external LCMS2_SO;
+PROCEDURE cmsSetLogErrorHandler(Fn: cmsLogErrorHandlerFunction); StdCall; external LCMS2_SO;
+FUNCTION cmsD50_XYZ: LPcmsCIEXYZ; StdCall; external LCMS2_SO;
+FUNCTION cmsD50_xyY: LPcmsCIExyY; StdCall; external LCMS2_SO;
+PROCEDURE cmsXYZ2xyY(Dest: LPcmsCIExyY; Source: LPcmsCIEXYZ); StdCall; external LCMS2_SO;
+PROCEDURE cmsxyY2XYZ(Dest: LPcmsCIEXYZ; Source: LPcmsCIExyY); StdCall; external LCMS2_SO;
+PROCEDURE cmsLab2XYZ(WhitePoint: LPcmsCIEXYZ; xyz: LPcmsCIEXYZ; Lab: LPcmsCIELab); StdCall; external LCMS2_SO;
+PROCEDURE cmsXYZ2Lab(WhitePoint: LPcmsCIEXYZ; Lab: LPcmsCIELab; xyz: LPcmsCIEXYZ); StdCall; external LCMS2_SO;
+PROCEDURE cmsLab2LCh(LCh: LPcmsCIELCh; Lab: LPcmsCIELab); StdCall; external LCMS2_SO;
+PROCEDURE cmsLCh2Lab(Lab: LPcmsCIELab; LCh: LPcmsCIELCh); StdCall; external LCMS2_SO;
+PROCEDURE cmsLabEncoded2Float(Lab: LPcmsCIELab; wLab: Pointer); StdCall; external LCMS2_SO;
+PROCEDURE cmsLabEncoded2FloatV2(Lab: LPcmsCIELab; wLab: Pointer); StdCall; external LCMS2_SO;
+PROCEDURE cmsFloat2LabEncoded(wLab: Pointer; Lab: LPcmsCIELab); StdCall; external LCMS2_SO;
+PROCEDURE cmsFloat2LabEncodedV2(wLab: Pointer; Lab: LPcmsCIELab); StdCall; external LCMS2_SO;
+PROCEDURE cmsXYZEncoded2Float(fxyz : LPcmsCIEXYZ; XYZ: Pointer); StdCall; external LCMS2_SO;
+PROCEDURE cmsFloat2XYZEncoded(XYZ: Pointer; fXYZ: LPcmsCIEXYZ); StdCall; external LCMS2_SO;
+FUNCTION cmsDeltaE(Lab1, Lab2: LPcmsCIELab): Double; StdCall; external LCMS2_SO;
+FUNCTION cmsCIE94DeltaE(Lab1, Lab2: LPcmsCIELab): Double; StdCall; external LCMS2_SO;
+FUNCTION cmsBFDdeltaE(Lab1, Lab2: LPcmsCIELab): Double; StdCall; external LCMS2_SO;
+FUNCTION cmsCMCdeltaE(Lab1, Lab2: LPcmsCIELab): Double; StdCall; external LCMS2_SO;
+FUNCTION cmsCIE2000DeltaE(Lab1, Lab2: LPcmsCIELab; Kl, Kc, Kh: Double): Double; StdCall; external LCMS2_SO;
+FUNCTION cmsWhitePointFromTemp(var WhitePoint: cmsCIExyY; TempK: cmsFloat64Number) : cmsBool; StdCall; external LCMS2_SO;
+FUNCTION cmsTempFromWhitePoint(var TeampK: cmsFloat64Number; var WhitePoint: cmsCIExyY) : cmsBool; StdCall; external LCMS2_SO;
 FUNCTION cmsAdaptToIlluminant(Result: LPcmsCIEXYZ; SourceWhitePt: LPcmsCIEXYZ;
-                              Illuminant: LPcmsCIEXYZ; Value: LPcmsCIEXYZ): cmsBool; StdCall; external 'lcms2.dll';        
-FUNCTION    cmsCIECAM02Init(pVC : LPcmsViewingConditions ) : Pointer; StdCall; external 'lcms2.dll';
-PROCEDURE   cmsCIECAM02Done(hModel : Pointer); StdCall; external 'lcms2.dll';
-PROCEDURE   cmsCIECAM02Forward(hModel: Pointer; pIn: LPcmsCIEXYZ; pOut: LPcmsJCh ); StdCall; external 'lcms2.dll';
-PROCEDURE   cmsCIECAM02Reverse(hModel: Pointer; pIn: LPcmsJCh;   pOut: LPcmsCIEXYZ ); StdCall; external 'lcms2.dll';
-FUNCTION  cmsBuildSegmentedToneCurve(ContextID: cmsContext; nSegments: cmsInt32Number; Segments: LPcmsCurveSegmentArray): LPcmsToneCurve; StdCall; external 'lcms2.dll';
-FUNCTION  cmsBuildParametricToneCurve(ContextID: cmsContext;  CType: cmsInt32Number; Params: LPcmsFloat64NumberArray): LPcmsToneCurve; StdCall; external 'lcms2.dll';
-FUNCTION  cmsBuildGamma(ContextID: cmsContext; Gamma: cmsFloat64Number): LPcmsToneCurve; StdCall; external 'lcms2.dll';
-FUNCTION  cmsBuildTabulatedToneCurve16(ContextID: cmsContext; nEntries: cmsInt32Number; values: LPcmsUInt16NumberArray): LPcmsToneCurve; StdCall; external 'lcms2.dll';
-FUNCTION  cmsBuildTabulatedToneCurveFloat(ContextID: cmsContext; nEntries: cmsUInt32Number; values: LPcmsFloat32NumberArray): LPcmsToneCurve; StdCall; external 'lcms2.dll';
-PROCEDURE cmsFreeToneCurve(Curve: LPcmsToneCurve); StdCall; external 'lcms2.dll';
-PROCEDURE cmsFreeToneCurveTriple(Curve: LPLPcmsToneCurveArray); StdCall; external 'lcms2.dll';
-FUNCTION  cmsDupToneCurve(Src: LPcmsToneCurve): LPcmsToneCurve; StdCall; external 'lcms2.dll';
-FUNCTION  cmsReverseToneCurve(InGamma: LPcmsToneCurve): LPcmsToneCurve; StdCall; external 'lcms2.dll';
-FUNCTION  cmsReverseToneCurveEx(nResultSamples: cmsInt32Number; InGamma: LPcmsToneCurve): LPcmsToneCurve; StdCall; external 'lcms2.dll';
-FUNCTION  cmsJoinToneCurve(ContextID: cmsContext; X, Y: LPcmsToneCurve; nPoints: cmsUInt32Number ): LPcmsToneCurve; StdCall; external 'lcms2.dll';
-FUNCTION  cmsSmoothToneCurve(Tab: LPcmsToneCurve; lambda: cmsFloat64Number): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION  cmsEvalToneCurveFloat(Curve: LPcmsToneCurve; v: cmsFloat32Number):cmsFloat32Number; StdCall; external 'lcms2.dll';
-FUNCTION  cmsEvalToneCurve16(Curve: LPcmsToneCurve; v:cmsUInt16Number):cmsUInt16Number; StdCall; external 'lcms2.dll';
-FUNCTION  cmsIsToneCurveMultisegment(InGamma: LPcmsToneCurve):cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION  cmsIsToneCurveLinear(Curve: LPcmsToneCurve):cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION  cmsIsToneCurveMonotonic(t: LPcmsToneCurve):cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION  cmsIsToneCurveDescending(t: LPcmsToneCurve):cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION  cmsGetToneCurveParametricType(t: LPcmsToneCurve):cmsInt32Number; StdCall; external 'lcms2.dll';
-FUNCTION  cmsEstimateGamma(t: LPcmsToneCurve; Precision:cmsFloat64Number):cmsFloat64Number; StdCall; external 'lcms2.dll';
-FUNCTION  cmsPipelineAlloc(ContextID: cmsContext; InputChannels, OutputChannels: cmsUInt32Number): LPcmsPipeline; StdCall; external 'lcms2.dll';
-PROCEDURE cmsPipelineFree(lut: LPcmsPipeline); StdCall; external 'lcms2.dll';
-FUNCTION  cmsPipelineDup(Orig: LPcmsPipeline): LPcmsPipeline; StdCall; external 'lcms2.dll'; 
-FUNCTION  cmsPipelineInputChannels(lut: LPcmsPipeline): cmsUInt32Number; StdCall; external 'lcms2.dll';
-FUNCTION  cmsPipelineOutputChannels(lut: LPcmsPipeline): cmsUInt32Number; StdCall; external 'lcms2.dll';
-FUNCTION cmsPipelineStageCount(lut: LPcmsPipeline): cmsUInt32Number; StdCall; external 'lcms2.dll';
-FUNCTION cmsPipelineGetPtrToFirstStage(lut: LPcmsPipeline): LPcmsStage; StdCall; external 'lcms2.dll';
-FUNCTION cmsPipelineGetPtrToLastStage(lut: LPcmsPipeline): LPcmsStage; StdCall; external 'lcms2.dll';
+                              Illuminant: LPcmsCIEXYZ; Value: LPcmsCIEXYZ): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION  cmsCIECAM02Init(pVC : LPcmsViewingConditions ) : Pointer; StdCall; external LCMS2_SO;
+PROCEDURE cmsCIECAM02Done(hModel : Pointer); StdCall; external LCMS2_SO;
+PROCEDURE cmsCIECAM02Forward(hModel: Pointer; pIn: LPcmsCIEXYZ; pOut: LPcmsJCh ); StdCall; external LCMS2_SO;
+PROCEDURE cmsCIECAM02Reverse(hModel: Pointer; pIn: LPcmsJCh;   pOut: LPcmsCIEXYZ ); StdCall; external LCMS2_SO;
+FUNCTION  cmsBuildSegmentedToneCurve(ContextID: cmsContext; nSegments: cmsInt32Number; Segments: LPcmsCurveSegmentArray): LPcmsToneCurve; StdCall; external LCMS2_SO;
+FUNCTION  cmsBuildParametricToneCurve(ContextID: cmsContext;  CType: cmsInt32Number; Params: LPcmsFloat64NumberArray): LPcmsToneCurve; StdCall; external LCMS2_SO;
+FUNCTION  cmsBuildGamma(ContextID: cmsContext; Gamma: cmsFloat64Number): LPcmsToneCurve; StdCall; external LCMS2_SO;
+FUNCTION  cmsBuildTabulatedToneCurve16(ContextID: cmsContext; nEntries: cmsInt32Number; values: LPcmsUInt16NumberArray): LPcmsToneCurve; StdCall; external LCMS2_SO;
+FUNCTION  cmsBuildTabulatedToneCurveFloat(ContextID: cmsContext; nEntries: cmsUInt32Number; values: LPcmsFloat32NumberArray): LPcmsToneCurve; StdCall; external LCMS2_SO;
+PROCEDURE cmsFreeToneCurve(Curve: LPcmsToneCurve); StdCall; external LCMS2_SO;
+PROCEDURE cmsFreeToneCurveTriple(Curve: LPLPcmsToneCurveArray); StdCall; external LCMS2_SO;
+FUNCTION  cmsDupToneCurve(Src: LPcmsToneCurve): LPcmsToneCurve; StdCall; external LCMS2_SO;
+FUNCTION  cmsReverseToneCurve(InGamma: LPcmsToneCurve): LPcmsToneCurve; StdCall; external LCMS2_SO;
+FUNCTION  cmsReverseToneCurveEx(nResultSamples: cmsInt32Number; InGamma: LPcmsToneCurve): LPcmsToneCurve; StdCall; external LCMS2_SO;
+FUNCTION  cmsJoinToneCurve(ContextID: cmsContext; X, Y: LPcmsToneCurve; nPoints: cmsUInt32Number ): LPcmsToneCurve; StdCall; external LCMS2_SO;
+FUNCTION  cmsSmoothToneCurve(Tab: LPcmsToneCurve; lambda: cmsFloat64Number): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION  cmsEvalToneCurveFloat(Curve: LPcmsToneCurve; v: cmsFloat32Number):cmsFloat32Number; StdCall; external LCMS2_SO;
+FUNCTION  cmsEvalToneCurve16(Curve: LPcmsToneCurve; v:cmsUInt16Number):cmsUInt16Number; StdCall; external LCMS2_SO;
+FUNCTION  cmsIsToneCurveMultisegment(InGamma: LPcmsToneCurve):cmsBool; StdCall; external LCMS2_SO;
+FUNCTION  cmsIsToneCurveLinear(Curve: LPcmsToneCurve):cmsBool; StdCall; external LCMS2_SO;
+FUNCTION  cmsIsToneCurveMonotonic(t: LPcmsToneCurve):cmsBool; StdCall; external LCMS2_SO;
+FUNCTION  cmsIsToneCurveDescending(t: LPcmsToneCurve):cmsBool; StdCall; external LCMS2_SO;
+FUNCTION  cmsGetToneCurveParametricType(t: LPcmsToneCurve):cmsInt32Number; StdCall; external LCMS2_SO;
+FUNCTION  cmsEstimateGamma(t: LPcmsToneCurve; Precision:cmsFloat64Number):cmsFloat64Number; StdCall; external LCMS2_SO;
+FUNCTION  cmsGetToneCurveEstimatedTableEntries(t: LPcmsToneCurve): cmsUInt32Number; StdCall; external LCMS2_SO;
+FUNCTION  cmsGetToneCurveEstimatedTable(t: LPcmsToneCurve): LPcmsUInt16Number; StdCall; external LCMS2_SO;
+FUNCTION  cmsPipelineAlloc(ContextID: cmsContext; InputChannels, OutputChannels: cmsUInt32Number): LPcmsPipeline; StdCall; external LCMS2_SO;
+PROCEDURE cmsPipelineFree(lut: LPcmsPipeline); StdCall; external LCMS2_SO;
+FUNCTION  cmsPipelineDup(Orig: LPcmsPipeline): LPcmsPipeline; StdCall; external LCMS2_SO;
+FUNCTION  cmsGetPipelineContextID(lut: LPcmsPipeline) : cmsContext; StdCall; external LCMS2_SO;
+FUNCTION  cmsPipelineInputChannels(lut: LPcmsPipeline): cmsUInt32Number; StdCall; external LCMS2_SO;
+FUNCTION  cmsPipelineOutputChannels(lut: LPcmsPipeline): cmsUInt32Number; StdCall; external LCMS2_SO;
+FUNCTION cmsPipelineStageCount(lut: LPcmsPipeline): cmsUInt32Number; StdCall; external LCMS2_SO;
+FUNCTION cmsPipelineGetPtrToFirstStage(lut: LPcmsPipeline): LPcmsStage; StdCall; external LCMS2_SO;
+FUNCTION cmsPipelineGetPtrToLastStage(lut: LPcmsPipeline): LPcmsStage; StdCall; external LCMS2_SO;
 
-PROCEDURE cmsPipelineEval16(Inv, Outv: LPcmsUInt16NumberArray; lut: LPcmsPipeline); StdCall; external 'lcms2.dll';
-PROCEDURE cmsPipelineEvalFloat(Inv, Outv: LPcmsFloat32NumberArray; lut: LPcmsPipeline); StdCall; external 'lcms2.dll';
+PROCEDURE cmsPipelineEval16(Inv, Outv: LPcmsUInt16NumberArray; lut: LPcmsPipeline); StdCall; external LCMS2_SO;
+PROCEDURE cmsPipelineEvalFloat(Inv, Outv: LPcmsFloat32NumberArray; lut: LPcmsPipeline); StdCall; external LCMS2_SO;
 
-FUNCTION cmsPipelineEvalReverseFloat(Target, Result, Hint: LPcmsFloat32NumberArray; lut: LPcmsPipeline): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION cmsPipelineCat(l1, l2: LPcmsPipeline): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION cmsPipelineSetSaveAs8bitsFlag(lut: LPcmsPipeline; On: cmsBool): cmsBool; StdCall; external 'lcms2.dll';
-PROCEDURE cmsPipelineInsertStage(lut: LPcmsPipeline; loc: cmsStageLoc; mpe: LPcmsStage); StdCall; external 'lcms2.dll';
-PROCEDURE cmsPipelineUnlinkStage(lut: LPcmsPipeline; loc: cmsStageLoc; mpe: LPLPcmsStage); StdCall; external 'lcms2.dll';
-FUNCTION  cmsStageAllocIdentity(ContextID: cmsContext; nChannels: cmsUInt32Number): LPcmsStage; StdCall; external 'lcms2.dll';
-FUNCTION  cmsStageAllocToneCurves(ContextID: cmsContext; nChannels: cmsUInt32Number; Curves: LPLPcmsToneCurveArray): LPcmsStage; StdCall; external 'lcms2.dll';
-FUNCTION  cmsStageAllocMatrix(ContextID: cmsContext; Rows, Cols: cmsUInt32Number; Matrix, Offset: LPcmsFloat64NumberArray): LPcmsStage; StdCall; external 'lcms2.dll';
-FUNCTION  cmsStageAllocCLut16bit(ContextID: cmsContext; nGridPoints: cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: LPcmsUInt16NumberArray): LPcmsStage; StdCall; external 'lcms2.dll';
-FUNCTION  cmsStageAllocCLutFloat(ContextID: cmsContext; nGridPoints: cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: LPcmsFloat32NumberArray): LPcmsStage; StdCall; external 'lcms2.dll';
-FUNCTION  cmsStageAllocCLut16bitGranular(ContextID: cmsContext; nGridPoints: LPcmsUInt32NumberArray; inputChan, outputChan: cmsUInt32Number; Table: LPcmsUInt16NumberArray): LPcmsStage; StdCall; external 'lcms2.dll';
-FUNCTION  cmsStageAllocCLutFloatGranular(ContextID: cmsContext; nGridPoints: LPcmsUInt32NumberArray; inputChan, outputChan: cmsUInt32Number; Table: LPcmsFloat32NumberArray): LPcmsStage; StdCall; external 'lcms2.dll';
-FUNCTION  cmsStageDup(mpe: LPcmsStage): LPcmsStage; StdCall; external 'lcms2.dll';
-PROCEDURE cmsStageFree(mpe: LPcmsStage); StdCall; external 'lcms2.dll';
-FUNCTION  cmsStageNext(mpe: LPcmsStage): LPcmsStage; StdCall; external 'lcms2.dll';
-FUNCTION cmsStageInputChannels(mpe: LPcmsStage): cmsUInt32Number; StdCall; external 'lcms2.dll';
-FUNCTION cmsStageOutputChannels(mpe: LPcmsStage): cmsUInt32Number; StdCall; external 'lcms2.dll';
-FUNCTION cmsStageType(mpe: LPcmsStage): cmsStageSignature; StdCall; external 'lcms2.dll';
-FUNCTION cmsStageData(mpe: LPcmsStage): Pointer; StdCall; external 'lcms2.dll';
-FUNCTION cmsStageSampleCLut16bit(mpe: LPcmsStage;  Sampler: cmsSAMPLER16;    Cargo: Pointer; dwFlags: cmsUInt32Number): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION cmsStageSampleCLutFloat(mpe: LPcmsStage;  Sampler: cmsSAMPLERFLOAT; Cargo: Pointer; dwFlags: cmsUInt32Number): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION cmsPipelineEvalReverseFloat(Target, Result, Hint: LPcmsFloat32NumberArray; lut: LPcmsPipeline): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION cmsPipelineCat(l1, l2: LPcmsPipeline): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION cmsPipelineSetSaveAs8bitsFlag(lut: LPcmsPipeline; On: cmsBool): cmsBool; StdCall; external LCMS2_SO;
+PROCEDURE cmsPipelineInsertStage(lut: LPcmsPipeline; loc: cmsStageLoc; mpe: LPcmsStage); StdCall; external LCMS2_SO;
+PROCEDURE cmsPipelineUnlinkStage(lut: LPcmsPipeline; loc: cmsStageLoc; mpe: LPLPcmsStage); StdCall; external LCMS2_SO;
+FUNCTION  cmsStageAllocIdentity(ContextID: cmsContext; nChannels: cmsUInt32Number): LPcmsStage; StdCall; external LCMS2_SO;
+FUNCTION  cmsStageAllocToneCurves(ContextID: cmsContext; nChannels: cmsUInt32Number; Curves: LPLPcmsToneCurveArray): LPcmsStage; StdCall; external LCMS2_SO;
+FUNCTION  cmsStageAllocMatrix(ContextID: cmsContext; Rows, Cols: cmsUInt32Number; Matrix, Offset: LPcmsFloat64NumberArray): LPcmsStage; StdCall; external LCMS2_SO;
+FUNCTION  cmsStageAllocCLut16bit(ContextID: cmsContext; nGridPoints: cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: LPcmsUInt16NumberArray): LPcmsStage; StdCall; external LCMS2_SO;
+FUNCTION  cmsStageAllocCLutFloat(ContextID: cmsContext; nGridPoints: cmsUInt32Number; inputChan, outputChan: cmsUInt32Number; Table: LPcmsFloat32NumberArray): LPcmsStage; StdCall; external LCMS2_SO;
+FUNCTION  cmsStageAllocCLut16bitGranular(ContextID: cmsContext; nGridPoints: LPcmsUInt32NumberArray; inputChan, outputChan: cmsUInt32Number; Table: LPcmsUInt16NumberArray): LPcmsStage; StdCall; external LCMS2_SO;
+FUNCTION  cmsStageAllocCLutFloatGranular(ContextID: cmsContext; nGridPoints: LPcmsUInt32NumberArray; inputChan, outputChan: cmsUInt32Number; Table: LPcmsFloat32NumberArray): LPcmsStage; StdCall; external LCMS2_SO;
+FUNCTION  cmsStageDup(mpe: LPcmsStage): LPcmsStage; StdCall; external LCMS2_SO;
+PROCEDURE cmsStageFree(mpe: LPcmsStage); StdCall; external LCMS2_SO;
+FUNCTION  cmsStageNext(mpe: LPcmsStage): LPcmsStage; StdCall; external LCMS2_SO;
+FUNCTION cmsStageInputChannels(mpe: LPcmsStage): cmsUInt32Number; StdCall; external LCMS2_SO;
+FUNCTION cmsStageOutputChannels(mpe: LPcmsStage): cmsUInt32Number; StdCall; external LCMS2_SO;
+FUNCTION cmsStageType(mpe: LPcmsStage): cmsStageSignature; StdCall; external LCMS2_SO;
+FUNCTION cmsStageData(mpe: LPcmsStage): Pointer; StdCall; external LCMS2_SO;
+FUNCTION cmsStageSampleCLut16bit(mpe: LPcmsStage;  Sampler: cmsSAMPLER16;    Cargo: Pointer; dwFlags: cmsUInt32Number): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION cmsStageSampleCLutFloat(mpe: LPcmsStage;  Sampler: cmsSAMPLERFLOAT; Cargo: Pointer; dwFlags: cmsUInt32Number): cmsBool; StdCall; external LCMS2_SO;
 FUNCTION  cmsSliceSpace16(nInputs: cmsUInt32Number; clutPoints: LPcmsUInt32NumberArray;
-                                                   Sampler: cmsSAMPLER16; Cargo: Pointer): cmsBool; StdCall; external 'lcms2.dll';
+                                                   Sampler: cmsSAMPLER16; Cargo: Pointer): cmsBool; StdCall; external LCMS2_SO;
 
 FUNCTION cmsSliceSpaceFloat(nInputs: cmsUInt32Number; clutPoints: LPcmsUInt32NumberArray;
-                                                   Sampler: cmsSAMPLERFLOAT; Cargo: Pointer): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION  cmsMLUalloc(ContextID: cmsContext; nItems: cmsUInt32Number): LPcmsMLU; StdCall; external 'lcms2.dll'; 
-PROCEDURE cmsMLUfree(mlu: LPcmsMLU); StdCall; external 'lcms2.dll';
-FUNCTION  cmsMLUdup(mlu: LPcmsMLU): LPcmsMLU; StdCall; external 'lcms2.dll'; 
+                                                   Sampler: cmsSAMPLERFLOAT; Cargo: Pointer): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION  cmsMLUalloc(ContextID: cmsContext; nItems: cmsUInt32Number): LPcmsMLU; StdCall; external LCMS2_SO;
+PROCEDURE cmsMLUfree(mlu: LPcmsMLU); StdCall; external LCMS2_SO;
+FUNCTION  cmsMLUdup(mlu: LPcmsMLU): LPcmsMLU; StdCall; external LCMS2_SO;
 
-FUNCTION  cmsMLUsetASCII(mlu: LPcmsMLU; LanguageCode, CountryCode, ASCIIString: PAnsiChar): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION  cmsMLUsetWide(mlu: LPcmsMLU; LanguageCode, CountryCode: PAnsiChar; WideString: PWChar): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION  cmsMLUsetASCII(mlu: LPcmsMLU; LanguageCode, CountryCode, ASCIIString: PAnsiChar): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION  cmsMLUsetWide(mlu: LPcmsMLU; LanguageCode, CountryCode: PAnsiChar; WideString: PWChar): cmsBool; StdCall; external LCMS2_SO;
 
-FUNCTION cmsMLUgetASCII(mlu: LPcmsMLU; LanguageCode, CountryCode: PAnsiChar; Buffer: PAnsiChar; BufferSize: cmsUInt32Number): cmsUInt32Number; StdCall; external 'lcms2.dll';
+FUNCTION cmsMLUgetASCII(mlu: LPcmsMLU; LanguageCode, CountryCode: PAnsiChar; Buffer: PAnsiChar; BufferSize: cmsUInt32Number): cmsUInt32Number; StdCall; external LCMS2_SO;
 
-FUNCTION cmsMLUgetWide(mlu: LPcmsMLU; LanguageCode, CountryCode: PAnsiChar; Buffer: PWChar; BufferSize: cmsUInt32Number): cmsUInt32Number; StdCall; external 'lcms2.dll';
-                                                 
-FUNCTION cmsMLUgetTranslation(mlu: LPcmsMLU; LanguageCode, CountryCode, ObtainedLanguage, ObtainedCountry: PAnsiChar): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION cmsMLUgetWide(mlu: LPcmsMLU; LanguageCode, CountryCode: PAnsiChar; Buffer: PWChar; BufferSize: cmsUInt32Number): cmsUInt32Number; StdCall; external LCMS2_SO;
+
+FUNCTION cmsMLUgetTranslation(mlu: LPcmsMLU; LanguageCode, CountryCode, ObtainedLanguage, ObtainedCountry: PAnsiChar): cmsBool; StdCall; external LCMS2_SO;
 
 FUNCTION cmsAllocNamedColorList(ContextID: cmsContext; n, ColorantCount :cmsUInt32Number;
-                                                           Prefix, Suffix: PAnsiChar): LPcmsNAMEDCOLORLIST; StdCall; external 'lcms2.dll';
+                                                           Prefix, Suffix: PAnsiChar): LPcmsNAMEDCOLORLIST; StdCall; external LCMS2_SO;
 
-PROCEDURE cmsFreeNamedColorList(v: LPcmsNAMEDCOLORLIST); StdCall; external 'lcms2.dll';
-FUNCTION  cmsDupNamedColorList(v: LPcmsNAMEDCOLORLIST): LPcmsNAMEDCOLORLIST; StdCall; external 'lcms2.dll';
+PROCEDURE cmsFreeNamedColorList(v: LPcmsNAMEDCOLORLIST); StdCall; external LCMS2_SO;
+FUNCTION  cmsDupNamedColorList(v: LPcmsNAMEDCOLORLIST): LPcmsNAMEDCOLORLIST; StdCall; external LCMS2_SO;
 FUNCTION  cmsAppendNamedColor(v: LPcmsNAMEDCOLORLIST; Name: PAnsiChar;
-                                                             PCS, Colorant : LPcmsUInt16NumberArray): cmsBool; StdCall; external 'lcms2.dll';
+                                                             PCS, Colorant : LPcmsUInt16NumberArray): cmsBool; StdCall; external LCMS2_SO;
 
-FUNCTION cmsNamedColorCount(v: LPcmsNAMEDCOLORLIST): cmsUInt32Number; StdCall; external 'lcms2.dll';
-FUNCTION cmsNamedColorIndex(v: LPcmsNAMEDCOLORLIST; Name: PAnsiChar): cmsInt32Number; StdCall; external 'lcms2.dll';
+FUNCTION cmsNamedColorCount(v: LPcmsNAMEDCOLORLIST): cmsUInt32Number; StdCall; external LCMS2_SO;
+FUNCTION cmsNamedColorIndex(v: LPcmsNAMEDCOLORLIST; Name: PAnsiChar): cmsInt32Number; StdCall; external LCMS2_SO;
 
 FUNCTION cmsNamedColorInfo(v: LPcmsNAMEDCOLORLIST; nColor : cmsUInt32Number;
                                                       Name,Prefix, Suffix : PAnsiChar;
-                                                       PCS, Colorant : LPcmsUInt16NumberArray): cmsBool; StdCall; external 'lcms2.dll';
+                                                       PCS, Colorant : LPcmsUInt16NumberArray): cmsBool; StdCall; external LCMS2_SO;
 
-FUNCTION cmsGetNamedColorList(xform: cmsHTRANSFORM ): LPcmsNAMEDCOLORLIST; StdCall; external 'lcms2.dll';
+FUNCTION cmsGetNamedColorList(xform: cmsHTRANSFORM ): LPcmsNAMEDCOLORLIST; StdCall; external LCMS2_SO;
 
-FUNCTION   cmsAllocProfileSequenceDescription(ContextID: cmsContext; n: cmsUInt32Number):LPcmsSEQ; StdCall; external 'lcms2.dll';
-FUNCTION   cmsDupProfileSequenceDescription(pseq: LPcmsSEQ):LPcmsSEQ; StdCall; external 'lcms2.dll';
-PROCEDURE  cmsFreeProfileSequenceDescription(pseq: LPcmsSEQ); StdCall; external 'lcms2.dll';
+FUNCTION   cmsAllocProfileSequenceDescription(ContextID: cmsContext; n: cmsUInt32Number):LPcmsSEQ; StdCall; external LCMS2_SO;
+FUNCTION   cmsDupProfileSequenceDescription(pseq: LPcmsSEQ):LPcmsSEQ; StdCall; external LCMS2_SO;
+PROCEDURE  cmsFreeProfileSequenceDescription(pseq: LPcmsSEQ); StdCall; external LCMS2_SO;
 
-FUNCTION  cmsDictAlloc(ContextID: cmsContext): cmsHANDLE; StdCall; external 'lcms2.dll';
-PROCEDURE cmsDictFree(hDict: cmsHANDLE);  StdCall; external 'lcms2.dll';
-FUNCTION  cmsDictDup(hDict: cmsHANDLE): cmsHANDLE;  StdCall; external 'lcms2.dll';
+FUNCTION  cmsDictAlloc(ContextID: cmsContext): cmsHANDLE; StdCall; external LCMS2_SO;
+PROCEDURE cmsDictFree(hDict: cmsHANDLE);  StdCall; external LCMS2_SO;
+FUNCTION  cmsDictDup(hDict: cmsHANDLE): cmsHANDLE;  StdCall; external LCMS2_SO;
 
-FUNCTION cmsDictAddEntry(hDict: cmsHANDLE; Name, Value: PWChar; DisplayName, DisplayValue : LPcmsMLU): cmsBool;  StdCall; external 'lcms2.dll';
-FUNCTION cmsDictGetEntryList(hDict: cmsHANDLE): LPcmsDICTentry; StdCall; external 'lcms2.dll';
-FUNCTION cmsDictNextEntry(e : LPcmsDICTentry): LPcmsDICTentry;  StdCall; external 'lcms2.dll';
+FUNCTION cmsDictAddEntry(hDict: cmsHANDLE; Name, Value: PWChar; DisplayName, DisplayValue : LPcmsMLU): cmsBool;  StdCall; external LCMS2_SO;
+FUNCTION cmsDictGetEntryList(hDict: cmsHANDLE): LPcmsDICTentry; StdCall; external LCMS2_SO;
+FUNCTION cmsDictNextEntry(e : LPcmsDICTentry): LPcmsDICTentry;  StdCall; external LCMS2_SO;
 
-FUNCTION cmsCreateProfilePlaceholder(ContextID: cmsContext): cmsHPROFILE; StdCall; external 'lcms2.dll';
+FUNCTION cmsCreateProfilePlaceholder(ContextID: cmsContext): cmsHPROFILE; StdCall; external LCMS2_SO;
 
-FUNCTION cmsGetProfileContextID(hProfile: cmsHPROFILE):cmsContext; StdCall; external 'lcms2.dll';
-FUNCTION cmsGetTagCount(hProfile: cmsHPROFILE): cmsInt32Number; StdCall; external 'lcms2.dll';
-FUNCTION cmsGetTagSignature(hProfile: cmsHPROFILE; n: cmsUInt32Number): cmsTagSignature; StdCall; external 'lcms2.dll';
-FUNCTION cmsIsTag(hProfile: cmsHPROFILE; sig: cmsTagSignature ): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION cmsGetProfileContextID(hProfile: cmsHPROFILE):cmsContext; StdCall; external LCMS2_SO;
+FUNCTION cmsGetTagCount(hProfile: cmsHPROFILE): cmsInt32Number; StdCall; external LCMS2_SO;
+FUNCTION cmsGetTagSignature(hProfile: cmsHPROFILE; n: cmsUInt32Number): cmsTagSignature; StdCall; external LCMS2_SO;
+FUNCTION cmsIsTag(hProfile: cmsHPROFILE; sig: cmsTagSignature ): cmsBool; StdCall; external LCMS2_SO;
 
-FUNCTION cmsReadTag(hProfile: cmsHPROFILE; sig: cmsTagSignature ): Pointer; StdCall; external 'lcms2.dll';
-FUNCTION cmsWriteTag(hProfile: cmsHPROFILE; sig: cmsTagSignature; data: Pointer): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION cmsLinkTag(hProfile: cmsHPROFILE; sig: cmsTagSignature; dest: cmsTagSignature): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION cmsTagLinkedTo(hProfile: cmsHPROFILE; sig: cmsTagSignature):cmsTagSignature; StdCall; external 'lcms2.dll';
+FUNCTION cmsReadTag(hProfile: cmsHPROFILE; sig: cmsTagSignature ): Pointer; StdCall; external LCMS2_SO;
+FUNCTION cmsWriteTag(hProfile: cmsHPROFILE; sig: cmsTagSignature; data: Pointer): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION cmsLinkTag(hProfile: cmsHPROFILE; sig: cmsTagSignature; dest: cmsTagSignature): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION cmsTagLinkedTo(hProfile: cmsHPROFILE; sig: cmsTagSignature):cmsTagSignature; StdCall; external LCMS2_SO;
 
-FUNCTION cmsReadRawTag(hProfile: cmsHPROFILE; sig: cmsTagSignature; Buffer: Pointer; BufferSize: cmsUInt32Number): cmsInt32Number; StdCall; external 'lcms2.dll';
-FUNCTION cmsWriteRawTag(hProfile: cmsHPROFILE; sig: cmsTagSignature; data: Pointer; Size: cmsUInt32Number): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION cmsReadRawTag(hProfile: cmsHPROFILE; sig: cmsTagSignature; Buffer: Pointer; BufferSize: cmsUInt32Number): cmsInt32Number; StdCall; external LCMS2_SO;
+FUNCTION cmsWriteRawTag(hProfile: cmsHPROFILE; sig: cmsTagSignature; data: Pointer; Size: cmsUInt32Number): cmsBool; StdCall; external LCMS2_SO;
 
-FUNCTION  cmsGetHeaderFlags(hProfile: cmsHPROFILE): cmsUInt32Number; StdCall; external 'lcms2.dll';
-PROCEDURE cmsGetHeaderAttributes(hProfile: cmsHPROFILE; Flags: LPcmsUInt64Number); StdCall; external 'lcms2.dll';
-PROCEDURE cmsGetHeaderProfileID(hProfile: cmsHPROFILE; ProfileID: LPcmsUInt8Number); StdCall; external 'lcms2.dll';
+FUNCTION  cmsGetHeaderFlags(hProfile: cmsHPROFILE): cmsUInt32Number; StdCall; external LCMS2_SO;
+PROCEDURE cmsGetHeaderAttributes(hProfile: cmsHPROFILE; Flags: LPcmsUInt64Number); StdCall; external LCMS2_SO;
+PROCEDURE cmsGetHeaderProfileID(hProfile: cmsHPROFILE; ProfileID: LPcmsUInt8Number); StdCall; external LCMS2_SO;
 
-FUNCTION  cmsGetHeaderRenderingIntent(hProfile: cmsHPROFILE): cmsUInt32Number; StdCall; external 'lcms2.dll';
-PROCEDURE cmsSetHeaderFlags(hProfile: cmsHPROFILE; Flags: cmsUInt32Number); StdCall; external 'lcms2.dll';
-FUNCTION  cmsGetHeaderManufacturer(hProfile: cmsHPROFILE): cmsUInt32Number; StdCall; external 'lcms2.dll';
-PROCEDURE cmsSetHeaderManufacturer(hProfile: cmsHPROFILE; manufacturer: cmsUInt32Number ); StdCall; external 'lcms2.dll';
-FUNCTION  cmsGetHeaderModel(hProfile: cmsHPROFILE): cmsUInt32Number; StdCall; external 'lcms2.dll';
-PROCEDURE cmsSetHeaderModel(hProfile: cmsHPROFILE; model: cmsUInt32Number ); StdCall; external 'lcms2.dll';
-PROCEDURE cmsSetHeaderAttributes(hProfile: cmsHPROFILE; Flags: cmsUInt64Number); StdCall; external 'lcms2.dll';
-PROCEDURE cmsSetHeaderProfileID(hProfile: cmsHPROFILE; ProfileID: LPcmsUInt8Number); StdCall; external 'lcms2.dll';
-PROCEDURE cmsSetHeaderRenderingIntent(hProfile: cmsHPROFILE; RenderingIntent: cmsUInt32Number ); StdCall; external 'lcms2.dll';
+FUNCTION  cmsGetHeaderRenderingIntent(hProfile: cmsHPROFILE): cmsUInt32Number; StdCall; external LCMS2_SO;
+PROCEDURE cmsSetHeaderFlags(hProfile: cmsHPROFILE; Flags: cmsUInt32Number); StdCall; external LCMS2_SO;
+FUNCTION  cmsGetHeaderManufacturer(hProfile: cmsHPROFILE): cmsUInt32Number; StdCall; external LCMS2_SO;
+PROCEDURE cmsSetHeaderManufacturer(hProfile: cmsHPROFILE; manufacturer: cmsUInt32Number ); StdCall; external LCMS2_SO;
+FUNCTION  cmsGetHeaderModel(hProfile: cmsHPROFILE): cmsUInt32Number; StdCall; external LCMS2_SO;
+PROCEDURE cmsSetHeaderModel(hProfile: cmsHPROFILE; model: cmsUInt32Number ); StdCall; external LCMS2_SO;
+PROCEDURE cmsSetHeaderAttributes(hProfile: cmsHPROFILE; Flags: cmsUInt64Number); StdCall; external LCMS2_SO;
+PROCEDURE cmsSetHeaderProfileID(hProfile: cmsHPROFILE; ProfileID: LPcmsUInt8Number); StdCall; external LCMS2_SO;
+PROCEDURE cmsSetHeaderRenderingIntent(hProfile: cmsHPROFILE; RenderingIntent: cmsUInt32Number ); StdCall; external LCMS2_SO;
 
-FUNCTION  cmsGetPCS(hProfile: cmsHPROFILE):cmsColorSpaceSignature; StdCall; external 'lcms2.dll';
-PROCEDURE cmsSetPCS(hProfile: cmsHPROFILE; pcs: cmsColorSpaceSignature); StdCall; external 'lcms2.dll';
-FUNCTION  cmsGetColorSpace(hProfile: cmsHPROFILE): cmsColorSpaceSignature; StdCall; external 'lcms2.dll';
-PROCEDURE cmsSetColorSpace(hProfile: cmsHPROFILE; sig: cmsColorSpaceSignature); StdCall; external 'lcms2.dll';
-FUNCTION  cmsGetDeviceClass(hProfile: cmsHPROFILE): cmsProfileClassSignature; StdCall; external 'lcms2.dll';
-PROCEDURE cmsSetDeviceClass(hProfile: cmsHPROFILE; sig: cmsProfileClassSignature); StdCall; external 'lcms2.dll';
-PROCEDURE cmsSetProfileVersion(hProfile: cmsHPROFILE; Version: cmsFloat64Number); StdCall; external 'lcms2.dll';
-FUNCTION  cmsGetProfileVersion(hProfile: cmsHPROFILE): cmsFloat64Number; StdCall; external 'lcms2.dll';
+FUNCTION  cmsGetPCS(hProfile: cmsHPROFILE):cmsColorSpaceSignature; StdCall; external LCMS2_SO;
+PROCEDURE cmsSetPCS(hProfile: cmsHPROFILE; pcs: cmsColorSpaceSignature); StdCall; external LCMS2_SO;
+FUNCTION  cmsGetColorSpace(hProfile: cmsHPROFILE): cmsColorSpaceSignature; StdCall; external LCMS2_SO;
+PROCEDURE cmsSetColorSpace(hProfile: cmsHPROFILE; sig: cmsColorSpaceSignature); StdCall; external LCMS2_SO;
+FUNCTION  cmsGetDeviceClass(hProfile: cmsHPROFILE): cmsProfileClassSignature; StdCall; external LCMS2_SO;
+PROCEDURE cmsSetDeviceClass(hProfile: cmsHPROFILE; sig: cmsProfileClassSignature); StdCall; external LCMS2_SO;
+PROCEDURE cmsSetProfileVersion(hProfile: cmsHPROFILE; Version: cmsFloat64Number); StdCall; external LCMS2_SO;
+FUNCTION  cmsGetProfileVersion(hProfile: cmsHPROFILE): cmsFloat64Number; StdCall; external LCMS2_SO;
 
-FUNCTION  cmsGetEncodedICCversion(hProfile: cmsHPROFILE): cmsUInt32Number; StdCall; external 'lcms2.dll';
-PROCEDURE cmsSetEncodedICCversion(hProfile: cmsHPROFILE; Version: cmsUInt32Number); StdCall; external 'lcms2.dll';
+FUNCTION  cmsGetEncodedICCversion(hProfile: cmsHPROFILE): cmsUInt32Number; StdCall; external LCMS2_SO;
+PROCEDURE cmsSetEncodedICCversion(hProfile: cmsHPROFILE; Version: cmsUInt32Number); StdCall; external LCMS2_SO;
 
 
-FUNCTION   cmsIsIntentSupported(hProfile: cmsHPROFILE; Intent: cmsUInt32Number; UsedDirection: cmsUInt32Number): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION   cmsIsMatrixShaper(hProfile: cmsHPROFILE): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION   cmsIsCLUT(hProfile: cmsHPROFILE; Intent: cmsUInt32Number; UsedDirection: cmsUInt32Number): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION _cmsICCcolorSpace(OurNotation: Integer): cmsColorSpaceSignature; StdCall; external 'lcms2.dll';
-FUNCTION _cmsLCMScolorSpace(ProfileSpace: cmsColorSpaceSignature): Integer; StdCall; external 'lcms2.dll';
+FUNCTION   cmsIsIntentSupported(hProfile: cmsHPROFILE; Intent: cmsUInt32Number; UsedDirection: cmsUInt32Number): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION   cmsIsMatrixShaper(hProfile: cmsHPROFILE): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION   cmsIsCLUT(hProfile: cmsHPROFILE; Intent: cmsUInt32Number; UsedDirection: cmsUInt32Number): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION _cmsICCcolorSpace(OurNotation: Integer): cmsColorSpaceSignature; StdCall; external LCMS2_SO;
+FUNCTION _cmsLCMScolorSpace(ProfileSpace: cmsColorSpaceSignature): Integer; StdCall; external LCMS2_SO;
 
-FUNCTION cmsChannelsOf( ColorSpace: cmsColorSpaceSignature): cmsUInt32Number; StdCall; external 'lcms2.dll';
+FUNCTION cmsChannelsOf( ColorSpace: cmsColorSpaceSignature): cmsUInt32Number; StdCall; external LCMS2_SO;
 
-FUNCTION cmsFormatterForColorspaceOfProfile(hProfile: cmsHPROFILE; nBytes: cmsUInt32Number; lIsFloat: cmsBool): cmsUInt32Number; StdCall; external 'lcms2.dll';
-FUNCTION cmsFormatterForPCSOfProfile(hProfile: cmsHPROFILE; nBytes: cmsUInt32Number; lIsFloat: cmsBool): cmsUInt32Number; StdCall; external 'lcms2.dll';
+FUNCTION cmsFormatterForColorspaceOfProfile(hProfile: cmsHPROFILE; nBytes: cmsUInt32Number; lIsFloat: cmsBool): cmsUInt32Number; StdCall; external LCMS2_SO;
+FUNCTION cmsFormatterForPCSOfProfile(hProfile: cmsHPROFILE; nBytes: cmsUInt32Number; lIsFloat: cmsBool): cmsUInt32Number; StdCall; external LCMS2_SO;
 
 
 FUNCTION cmsGetProfileInfo(hProfile: cmsHPROFILE; Info: cmsInfoType; LanguageCode, CountryCode: PAnsiChar;
-                                                            Buffer: PWChar; BufferSize: cmsUInt32Number): cmsUInt32Number; StdCall; external 'lcms2.dll';
+                                                            Buffer: PWChar; BufferSize: cmsUInt32Number): cmsUInt32Number; StdCall; external LCMS2_SO;
 
 FUNCTION cmsGetProfileInfoASCII(hProfile: cmsHPROFILE; Info: cmsInfoType; LanguageCode, CountryCode: PAnsiChar;
-                                                            Buffer: PAnsiChar; BufferSize: cmsUInt32Number): cmsUInt32Number; StdCall; external 'lcms2.dll';
+                                                            Buffer: PAnsiChar; BufferSize: cmsUInt32Number): cmsUInt32Number; StdCall; external LCMS2_SO;
 
 
-FUNCTION cmsOpenIOhandlerFromFile(ContextID: cmsContext; FileName, AccessMode: PAnsiChar): LPcmsIOHANDLER; StdCall; external 'lcms2.dll';
-// FUNCTION cmsOpenIOhandlerFromStream(ContextID: cmsContext; FILE* Stream): LPcmsIOHANDLER; StdCall; external 'lcms2.dll';
-FUNCTION cmsOpenIOhandlerFromMem(ContextID: cmsContext; Buffer: Pointer; size: cmsUInt32Number; AccessMode: PAnsiChar): LPcmsIOHANDLER; StdCall; external 'lcms2.dll';
-FUNCTION cmsOpenIOhandlerFromNULL(ContextID: cmsContext): LPcmsIOHANDLER; StdCall; external 'lcms2.dll';
-FUNCTION cmsCloseIOhandler(io: LPcmsIOHANDLER): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION cmsOpenIOhandlerFromFile(ContextID: cmsContext; FileName, AccessMode: PAnsiChar): LPcmsIOHANDLER; StdCall; external LCMS2_SO;
+// FUNCTION cmsOpenIOhandlerFromStream(ContextID: cmsContext; FILE* Stream): LPcmsIOHANDLER; StdCall; external LCMS2_SO;
+FUNCTION cmsOpenIOhandlerFromMem(ContextID: cmsContext; Buffer: Pointer; size: cmsUInt32Number; AccessMode: PAnsiChar): LPcmsIOHANDLER; StdCall; external LCMS2_SO;
+FUNCTION cmsOpenIOhandlerFromNULL(ContextID: cmsContext): LPcmsIOHANDLER; StdCall; external LCMS2_SO;
+FUNCTION cmsCloseIOhandler(io: LPcmsIOHANDLER): cmsBool; StdCall; external LCMS2_SO;
 
-FUNCTION cmsMD5computeID(hProfile: cmsHPROFILE): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION cmsMD5computeID(hProfile: cmsHPROFILE): cmsBool; StdCall; external LCMS2_SO;
 
-FUNCTION   cmsOpenProfileFromFile(ICCProfile : PAnsiChar; sAccess: PAnsiChar): cmsHPROFILE; StdCall; external 'lcms2.dll';
-FUNCTION   cmsOpenProfileFromFileTHR(ContextID: cmsContext; ICCProfile, sAccess: PAnsiChar): cmsHPROFILE; StdCall; external 'lcms2.dll';
-// FUNCTION      CMSEXPORT cmsOpenProfileFromStream(FILE* ICCProfile, const char* sAccess): cmsHPROFILE; StdCall; external 'lcms2.dll';
-// FUNCTION      CMSEXPORT cmsOpenProfileFromStreamTHR(ContextID: cmsContext; FILE* ICCProfile, const char* sAccess): cmsHPROFILE; StdCall; external 'lcms2.dll';
-FUNCTION   cmsOpenProfileFromMem(MemPtr: Pointer; dwSize: cmsUInt32Number): cmsHPROFILE; StdCall; external 'lcms2.dll';
-FUNCTION   cmsOpenProfileFromMemTHR(ContextID: cmsContext; MemPtr: Pointer; dwSize: cmsUInt32Number): cmsHPROFILE; StdCall; external 'lcms2.dll';
-FUNCTION   cmsOpenProfileFromIOhandlerTHR(ContextID: cmsContext; io: LPcmsIOHANDLER): cmsHPROFILE; StdCall; external 'lcms2.dll';
-FUNCTION   cmsCloseProfile(hProfile: cmsHPROFILE): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION   cmsOpenProfileFromFile(ICCProfile : PAnsiChar; sAccess: PAnsiChar): cmsHPROFILE; StdCall; external LCMS2_SO;
+FUNCTION   cmsOpenProfileFromFileTHR(ContextID: cmsContext; ICCProfile, sAccess: PAnsiChar): cmsHPROFILE; StdCall; external LCMS2_SO;
+// FUNCTION      CMSEXPORT cmsOpenProfileFromStream(FILE* ICCProfile, const char* sAccess): cmsHPROFILE; StdCall; external LCMS2_SO;
+// FUNCTION      CMSEXPORT cmsOpenProfileFromStreamTHR(ContextID: cmsContext; FILE* ICCProfile, const char* sAccess): cmsHPROFILE; StdCall; external LCMS2_SO;
+FUNCTION   cmsOpenProfileFromMem(MemPtr: Pointer; dwSize: cmsUInt32Number): cmsHPROFILE; StdCall; external LCMS2_SO;
+FUNCTION   cmsOpenProfileFromMemTHR(ContextID: cmsContext; MemPtr: Pointer; dwSize: cmsUInt32Number): cmsHPROFILE; StdCall; external LCMS2_SO;
+FUNCTION   cmsOpenProfileFromIOhandlerTHR(ContextID: cmsContext; io: LPcmsIOHANDLER): cmsHPROFILE; StdCall; external LCMS2_SO;
+FUNCTION   cmsCloseProfile(hProfile: cmsHPROFILE): cmsBool; StdCall; external LCMS2_SO;
 
-FUNCTION   cmsSaveProfileToFile(hProfile: cmsHPROFILE; FileName: PAnsiChar): cmsBool; StdCall; external 'lcms2.dll';
-// FUNCTION         CMSEXPORT cmsSaveProfileToStream(hProfile: cmsHPROFILE, FILE* Stream): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION   cmsSaveProfileToMem(hProfile: cmsHPROFILE; MemPtr: Pointer; BytesNeeded: LPcmsUInt32Number): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION   cmsSaveProfileToIOhandler(hProfile: cmsHPROFILE; io: LPcmsIOHANDLER):cmsUInt32Number; StdCall; external 'lcms2.dll';
+FUNCTION   cmsSaveProfileToFile(hProfile: cmsHPROFILE; FileName: PAnsiChar): cmsBool; StdCall; external LCMS2_SO;
+// FUNCTION         CMSEXPORT cmsSaveProfileToStream(hProfile: cmsHPROFILE, FILE* Stream): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION   cmsSaveProfileToMem(hProfile: cmsHPROFILE; MemPtr: Pointer; BytesNeeded: LPcmsUInt32Number): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION   cmsSaveProfileToIOhandler(hProfile: cmsHPROFILE; io: LPcmsIOHANDLER):cmsUInt32Number; StdCall; external LCMS2_SO;
 
 FUNCTION  cmsCreateRGBProfileTHR(ContextID: cmsContext;
                                                    WhitePoint: LPcmsCIExyY;
                                                    Primaries: LPcmsCIExyYTRIPLE;
-                                                   TransferFunction: LPLPcmsToneCurveArray): cmsHPROFILE; StdCall; external 'lcms2.dll';
+                                                   TransferFunction: LPLPcmsToneCurveArray): cmsHPROFILE; StdCall; external LCMS2_SO;
 
 FUNCTION  cmsCreateRGBProfile(WhitePoint: LPcmsCIExyY;
                                                    Primaries: LPcmsCIExyYTRIPLE;
-                                                   TransferFunction: LPLPcmsToneCurveArray): cmsHPROFILE; StdCall; external 'lcms2.dll';
+                                                   TransferFunction: LPLPcmsToneCurveArray): cmsHPROFILE; StdCall; external LCMS2_SO;
 
 FUNCTION cmsCreateGrayProfileTHR(ContextID: cmsContext;
                                                     WhitePoint: LPcmsCIExyY;
-                                                    TransferFunction: LPcmsToneCurve): cmsHPROFILE; StdCall; external 'lcms2.dll';
+                                                    TransferFunction: LPcmsToneCurve): cmsHPROFILE; StdCall; external LCMS2_SO;
 
 FUNCTION cmsCreateGrayProfile(WhitePoint: LPcmsCIExyY;
-                                                     TransferFunction: LPcmsToneCurve): cmsHPROFILE; StdCall; external 'lcms2.dll';
+                                                     TransferFunction: LPcmsToneCurve): cmsHPROFILE; StdCall; external LCMS2_SO;
 
 FUNCTION cmsCreateLinearizationDeviceLinkTHR(ContextID: cmsContext;
                                                                  ColorSpace: cmsColorSpaceSignature;
-                                                                 TransferFunctions: LPLPcmsToneCurveArray): cmsHPROFILE; StdCall; external 'lcms2.dll';
+                                                                 TransferFunctions: LPLPcmsToneCurveArray): cmsHPROFILE; StdCall; external LCMS2_SO;
 
 FUNCTION cmsCreateLinearizationDeviceLink(ColorSpace: cmsColorSpaceSignature;
-                                                                 TransferFunctions: LPLPcmsToneCurveArray): cmsHPROFILE; StdCall; external 'lcms2.dll';
+                                                                 TransferFunctions: LPLPcmsToneCurveArray): cmsHPROFILE; StdCall; external LCMS2_SO;
 
 FUNCTION cmsCreateInkLimitingDeviceLinkTHR(ContextID: cmsContext;
-                                                              ColorSpace: cmsColorSpaceSignature; Limit: cmsFloat64Number): cmsHPROFILE; StdCall; external 'lcms2.dll';
+                                                              ColorSpace: cmsColorSpaceSignature; Limit: cmsFloat64Number): cmsHPROFILE; StdCall; external LCMS2_SO;
 
-FUNCTION cmsCreateInkLimitingDeviceLink(ColorSpace: cmsColorSpaceSignature; Limit: cmsFloat64Number): cmsHPROFILE; StdCall; external 'lcms2.dll';
+FUNCTION cmsCreateInkLimitingDeviceLink(ColorSpace: cmsColorSpaceSignature; Limit: cmsFloat64Number): cmsHPROFILE; StdCall; external LCMS2_SO;
 
 
-FUNCTION cmsCreateLab2ProfileTHR(ContextID: cmsContext; WhitePoint: LPcmsCIExyY): cmsHPROFILE; StdCall; external 'lcms2.dll';
-FUNCTION cmsCreateLab2Profile(WhitePoint: LPcmsCIExyY): cmsHPROFILE; StdCall; external 'lcms2.dll';
-FUNCTION cmsCreateLab4ProfileTHR(ContextID: cmsContext; WhitePoint: LPcmsCIExyY): cmsHPROFILE; StdCall; external 'lcms2.dll';
-FUNCTION cmsCreateLab4Profile(WhitePoint: LPcmsCIExyY): cmsHPROFILE; StdCall; external 'lcms2.dll';
+FUNCTION cmsCreateLab2ProfileTHR(ContextID: cmsContext; WhitePoint: LPcmsCIExyY): cmsHPROFILE; StdCall; external LCMS2_SO;
+FUNCTION cmsCreateLab2Profile(WhitePoint: LPcmsCIExyY): cmsHPROFILE; StdCall; external LCMS2_SO;
+FUNCTION cmsCreateLab4ProfileTHR(ContextID: cmsContext; WhitePoint: LPcmsCIExyY): cmsHPROFILE; StdCall; external LCMS2_SO;
+FUNCTION cmsCreateLab4Profile(WhitePoint: LPcmsCIExyY): cmsHPROFILE; StdCall; external LCMS2_SO;
 
-FUNCTION cmsCreateXYZProfileTHR(ContextID: cmsContext): cmsHPROFILE; StdCall; external 'lcms2.dll';
-FUNCTION cmsCreateXYZProfile: cmsHPROFILE; StdCall; external 'lcms2.dll';
+FUNCTION cmsCreateXYZProfileTHR(ContextID: cmsContext): cmsHPROFILE; StdCall; external LCMS2_SO;
+FUNCTION cmsCreateXYZProfile: cmsHPROFILE; StdCall; external LCMS2_SO;
 
-FUNCTION cmsCreate_sRGBProfileTHR(ContextID: cmsContext): cmsHPROFILE; StdCall; external 'lcms2.dll';
-FUNCTION cmsCreate_sRGBProfile: cmsHPROFILE; StdCall; external 'lcms2.dll';
+FUNCTION cmsCreate_sRGBProfileTHR(ContextID: cmsContext): cmsHPROFILE; StdCall; external LCMS2_SO;
+FUNCTION cmsCreate_sRGBProfile: cmsHPROFILE; StdCall; external LCMS2_SO;
 
 FUNCTION cmsCreateBCHSWabstractProfileTHR(ContextID: cmsContext;
                                                              nLUTPoints: Integer;
@@ -1920,7 +1965,7 @@ FUNCTION cmsCreateBCHSWabstractProfileTHR(ContextID: cmsContext;
                                                              Hue,
                                                              Saturation: cmsFloat64Number;
                                                              TempSrc,
-                                                             TempDest: Integer): cmsHPROFILE; StdCall; external 'lcms2.dll';
+                                                             TempDest: Integer): cmsHPROFILE; StdCall; external LCMS2_SO;
 
 FUNCTION cmsCreateBCHSWabstractProfile(   nLUTPoints: Integer;
                                                              Bright,
@@ -1928,16 +1973,16 @@ FUNCTION cmsCreateBCHSWabstractProfile(   nLUTPoints: Integer;
                                                              Hue,
                                                              Saturation: cmsFloat64Number;
                                                              TempSrc,
-                                                             TempDest: Integer): cmsHPROFILE; StdCall; external 'lcms2.dll';
+                                                             TempDest: Integer): cmsHPROFILE; StdCall; external LCMS2_SO;
 
-FUNCTION  cmsCreateNULLProfileTHR(ContextID: cmsContext): cmsHPROFILE; StdCall; external 'lcms2.dll';
-FUNCTION  cmsCreateNULLProfile: cmsHPROFILE; StdCall; external 'lcms2.dll';
+FUNCTION  cmsCreateNULLProfileTHR(ContextID: cmsContext): cmsHPROFILE; StdCall; external LCMS2_SO;
+FUNCTION  cmsCreateNULLProfile: cmsHPROFILE; StdCall; external LCMS2_SO;
 
 // Converts a transform to a devicelink profile
-FUNCTION  cmsTransform2DeviceLink(hTransform: cmsHTRANSFORM; Version: cmsFloat64Number; dwFlags: cmsUInt32Number): cmsHPROFILE; StdCall; external 'lcms2.dll';
+FUNCTION  cmsTransform2DeviceLink(hTransform: cmsHTRANSFORM; Version: cmsFloat64Number; dwFlags: cmsUInt32Number): cmsHPROFILE; StdCall; external LCMS2_SO;
 
 // Call with NULL as parameters to get the intent count
-FUNCTION cmsGetSupportedIntents(nMax: cmsUInt32Number; Codes: LPcmsUInt32Number; Descriptions: LPPAnsiChar): cmsUInt32Number; StdCall; external 'lcms2.dll';
+FUNCTION cmsGetSupportedIntents(nMax: cmsUInt32Number; Codes: LPcmsUInt32Number; Descriptions: LPPAnsiChar): cmsUInt32Number; StdCall; external LCMS2_SO;
 
 FUNCTION cmsFLAGS_GRIDPOINTS(n: Integer): Integer; begin cmsFLAGS_GRIDPOINTS :=  (((n) and $FF) shl 16) end;
 
@@ -1948,14 +1993,14 @@ FUNCTION   cmsCreateTransformTHR(ContextID: cmsContext;
                                                   Output: cmsHPROFILE;
                                                   OutputFormat: cmsUInt32Number;
                                                   Intent: cmsUInt32Number;
-                                                  dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall; external 'lcms2.dll';
+                                                  dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall; external LCMS2_SO;
 
 FUNCTION   cmsCreateTransform(Input: cmsHPROFILE;
                                                   InputFormat: cmsUInt32Number;
                                                   Output: cmsHPROFILE;
                                                   OutputFormat: cmsUInt32Number;
                                                   Intent: cmsUInt32Number;
-                                                  dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall; external 'lcms2.dll';
+                                                  dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall; external LCMS2_SO;
 
 FUNCTION   cmsCreateProofingTransformTHR(ContextID: cmsContext;
                                                   Input: cmsHPROFILE;
@@ -1965,7 +2010,7 @@ FUNCTION   cmsCreateProofingTransformTHR(ContextID: cmsContext;
                                                   Proofing: cmsHPROFILE;
                                                   Intent: cmsUInt32Number;
                                                   ProofingIntent: cmsUInt32Number;
-                                                  dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall; external 'lcms2.dll';
+                                                  dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall; external LCMS2_SO;
 
 FUNCTION   cmsCreateProofingTransform(Input: cmsHPROFILE;
                                                   InputFormat: cmsUInt32Number;
@@ -1974,7 +2019,7 @@ FUNCTION   cmsCreateProofingTransform(Input: cmsHPROFILE;
                                                   Proofing: cmsHPROFILE;
                                                   Intent: cmsUInt32Number;
                                                   ProofingIntent: cmsUInt32Number;
-                                                  dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall; external 'lcms2.dll';
+                                                  dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall; external LCMS2_SO;
 
 FUNCTION   cmsCreateMultiprofileTransformTHR(ContextID: cmsContext;
                                                   hProfiles: LPcmsHPROFILEArray;
@@ -1982,7 +2027,7 @@ FUNCTION   cmsCreateMultiprofileTransformTHR(ContextID: cmsContext;
                                                   InputFormat: cmsUInt32Number;
                                                   OutputFormat: cmsUInt32Number;
                                                   Intent: cmsUInt32Number;
-                                                  dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall; external 'lcms2.dll';
+                                                  dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall; external LCMS2_SO;
 
 
 FUNCTION   cmsCreateMultiprofileTransform( hProfiles: LPcmsHPROFILEArray;
@@ -1990,7 +2035,7 @@ FUNCTION   cmsCreateMultiprofileTransform( hProfiles: LPcmsHPROFILEArray;
                                                   InputFormat: cmsUInt32Number;
                                                   OutputFormat: cmsUInt32Number;
                                                   Intent: cmsUInt32Number;
-                                                  dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall; external 'lcms2.dll';
+                                                  dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall; external LCMS2_SO;
 
 
 FUNCTION   cmsCreateExtendedTransform(ContextID: cmsContext;
@@ -2003,23 +2048,23 @@ FUNCTION   cmsCreateExtendedTransform(ContextID: cmsContext;
                                                    nGamutPCSposition: cmsUInt32Number;
                                                    InputFormat,
                                                    OutputFormat: cmsUInt32Number;
-                                                   dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall; external 'lcms2.dll';
+                                                   dwFlags: cmsUInt32Number): cmsHTRANSFORM; StdCall; external LCMS2_SO;
 
-PROCEDURE  cmsDeleteTransform(hTransform: cmsHTRANSFORM); StdCall; external 'lcms2.dll';
+PROCEDURE  cmsDeleteTransform(hTransform: cmsHTRANSFORM); StdCall; external LCMS2_SO;
 
-PROCEDURE  cmsDoTransform(Transform: cmsHTRANSFORM; InputBuffer, OutputBuffer: Pointer; size: cmsUInt32Number);  StdCall; external 'lcms2.dll';
-
-PROCEDURE  cmsSetAlarmCodes( NewAlarm: LPcmsUInt16NumberArray);  StdCall; external 'lcms2.dll';
-PROCEDURE  cmsGetAlarmCodes(NewAlarm: LPcmsUInt16NumberArray); StdCall; external 'lcms2.dll';
+PROCEDURE  cmsDoTransform(Transform: cmsHTRANSFORM; InputBuffer, OutputBuffer: Pointer; size: cmsUInt32Number);  StdCall; external LCMS2_SO;
+PROCEDURE  cmsDoTransformStride(Transform: cmsHTRANSFORM; InputBuffer, OutputBuffer: Pointer; size: cmsUInt32Number; stride: cmsUInt32Number);  StdCall; external LCMS2_SO;
+PROCEDURE  cmsSetAlarmCodes( NewAlarm: LPcmsUInt16NumberArray);  StdCall; external LCMS2_SO;
+PROCEDURE  cmsGetAlarmCodes(NewAlarm: LPcmsUInt16NumberArray); StdCall; external LCMS2_SO;
 
 // Adaptation state for absolute colorimetric intent
-FUNCTION  cmsSetAdaptationState(d: cmsFloat64Number):cmsFloat64Number; StdCall; external 'lcms2.dll';
+FUNCTION  cmsSetAdaptationState(d: cmsFloat64Number):cmsFloat64Number; StdCall; external LCMS2_SO;
 
 // Grab the ContextID from an open transform. Returns NULL if a NULL transform is passed
-FUNCTION  cmsGetTransformContextID(hTransform: cmsHTRANSFORM):cmsContext; StdCall; external 'lcms2.dll';
+FUNCTION  cmsGetTransformContextID(hTransform: cmsHTRANSFORM):cmsContext; StdCall; external LCMS2_SO;
 
 // For backwards compatibility
-FUNCTION  cmsChangeBuffersFormat(hTransform: cmsHTRANSFORM; InputFormat, OutputFormat: cmsUInt32Number): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION  cmsChangeBuffersFormat(hTransform: cmsHTRANSFORM; InputFormat, OutputFormat: cmsUInt32Number): cmsBool; StdCall; external LCMS2_SO;
 
 
 // lcms2 unified method to access postscript color resources
@@ -2027,85 +2072,85 @@ FUNCTION cmsGetPostScriptColorResource(ContextID: cmsContext;   RType: cmsPSReso
                                                                 hProfile: cmsHPROFILE;
                                                                 Intent: cmsUInt32Number;
                                                                 dwFlags: cmsUInt32Number;
-                                                                io: LPcmsIOHANDLER): cmsUInt32Number; StdCall; external 'lcms2.dll';
+                                                                io: LPcmsIOHANDLER): cmsUInt32Number; StdCall; external LCMS2_SO;
 
-FUNCTION cmsGetPostScriptCSA(ContextID: cmsContext; hProfile: cmsHPROFILE; Intent: cmsUInt32Number; dwFlags: cmsUInt32Number; Buffer: Pointer; dwBufferLen: cmsUInt32Number ): cmsUInt32Number; StdCall; external 'lcms2.dll';
-FUNCTION cmsGetPostScriptCRD(ContextID: cmsContext; hProfile: cmsHPROFILE; Intent: cmsUInt32Number; dwFlags: cmsUInt32Number; Buffer: Pointer; dwBufferLen: cmsUInt32Number): cmsUInt32Number; StdCall; external 'lcms2.dll';
+FUNCTION cmsGetPostScriptCSA(ContextID: cmsContext; hProfile: cmsHPROFILE; Intent: cmsUInt32Number; dwFlags: cmsUInt32Number; Buffer: Pointer; dwBufferLen: cmsUInt32Number ): cmsUInt32Number; StdCall; external LCMS2_SO;
+FUNCTION cmsGetPostScriptCRD(ContextID: cmsContext; hProfile: cmsHPROFILE; Intent: cmsUInt32Number; dwFlags: cmsUInt32Number; Buffer: Pointer; dwBufferLen: cmsUInt32Number): cmsUInt32Number; StdCall; external LCMS2_SO;
 
 
 // CGATS.13 parser
 
-FUNCTION  cmsIT8Alloc: cmsHANDLE; StdCall; external 'lcms2.dll';
-PROCEDURE cmsIT8Free(hIT8: cmsHANDLE); StdCall; external 'lcms2.dll';
+FUNCTION  cmsIT8Alloc: cmsHANDLE; StdCall; external LCMS2_SO;
+PROCEDURE cmsIT8Free(hIT8: cmsHANDLE); StdCall; external LCMS2_SO;
 
 // Tables
 
-FUNCTION  cmsIT8TableCount(hIT8: cmsHANDLE): Integer; StdCall; external 'lcms2.dll';
-FUNCTION  cmsIT8SetTable(hIT8: cmsHANDLE; nTable: Integer): Integer; StdCall; external 'lcms2.dll';
+FUNCTION  cmsIT8TableCount(hIT8: cmsHANDLE): Integer; StdCall; external LCMS2_SO;
+FUNCTION  cmsIT8SetTable(hIT8: cmsHANDLE; nTable: Integer): Integer; StdCall; external LCMS2_SO;
 
 // Persistence
-FUNCTION  cmsIT8LoadFromFile(cFileName: PAnsiChar): cmsHANDLE; StdCall; external 'lcms2.dll';
-FUNCTION  cmsIT8LoadFromMem(Ptr: Pointer; size :DWord): cmsHANDLE; StdCall; external 'lcms2.dll';
+FUNCTION  cmsIT8LoadFromFile(cFileName: PAnsiChar): cmsHANDLE; StdCall; external LCMS2_SO;
+FUNCTION  cmsIT8LoadFromMem(Ptr: Pointer; size :DWord): cmsHANDLE; StdCall; external LCMS2_SO;
 
-FUNCTION cmsIT8SaveToFile(hIT8: cmsHANDLE; cFileName: PAnsiChar): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION cmsIT8SaveToMem(hIT8: cmsHANDLE; MemPtr: Pointer; BytesNeeded: LPcmsUInt32Number): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION cmsIT8SaveToFile(hIT8: cmsHANDLE; cFileName: PAnsiChar): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION cmsIT8SaveToMem(hIT8: cmsHANDLE; MemPtr: Pointer; BytesNeeded: LPcmsUInt32Number): cmsBool; StdCall; external LCMS2_SO;
 // Properties
 
-FUNCTION cmsIT8GetSheetType(hIT8: cmsHANDLE): PAnsiChar; StdCall; external 'lcms2.dll';
-FUNCTION cmsIT8SetSheetType(hIT8: cmsHANDLE; TheType: PAnsiChar): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION cmsIT8GetSheetType(hIT8: cmsHANDLE): PAnsiChar; StdCall; external LCMS2_SO;
+FUNCTION cmsIT8SetSheetType(hIT8: cmsHANDLE; TheType: PAnsiChar): cmsBool; StdCall; external LCMS2_SO;
 
-FUNCTION cmsIT8SetComment(hIT8: cmsHANDLE; cComment: PAnsiChar): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION cmsIT8SetComment(hIT8: cmsHANDLE; cComment: PAnsiChar): cmsBool; StdCall; external LCMS2_SO;
 
-FUNCTION cmsIT8SetPropertyStr(hIT8: cmsHANDLE; cProp, Str: PAnsiChar): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION cmsIT8SetPropertyDbl(hIT8: cmsHANDLE; cProp: PAnsiChar; Val: Double): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION cmsIT8SetPropertyHex(hIT8: cmsHANDLE; cProp: PAnsiChar; Val: Integer): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION cmsIT8SetPropertyUncooked(hIT8: cmsHANDLE; Key, Buffer: PAnsiChar): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION cmsIT8SetPropertyStr(hIT8: cmsHANDLE; cProp, Str: PAnsiChar): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION cmsIT8SetPropertyDbl(hIT8: cmsHANDLE; cProp: PAnsiChar; Val: Double): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION cmsIT8SetPropertyHex(hIT8: cmsHANDLE; cProp: PAnsiChar; Val: Integer): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION cmsIT8SetPropertyUncooked(hIT8: cmsHANDLE; Key, Buffer: PAnsiChar): cmsBool; StdCall; external LCMS2_SO;
 
 
-FUNCTION cmsIT8GetProperty(hIT8: cmsHANDLE; cProp: PAnsiChar): PAnsiChar; StdCall; external 'lcms2.dll';
-FUNCTION cmsIT8GetPropertyDbl(hIT8: cmsHANDLE; cProp: PAnsiChar): Double; StdCall; external 'lcms2.dll';
-FUNCTION cmsIT8EnumProperties(hIT8: cmsHANDLE; var PropertyNames: LPPAnsiChar): Integer; StdCall; external 'lcms2.dll';
+FUNCTION cmsIT8GetProperty(hIT8: cmsHANDLE; cProp: PAnsiChar): PAnsiChar; StdCall; external LCMS2_SO;
+FUNCTION cmsIT8GetPropertyDbl(hIT8: cmsHANDLE; cProp: PAnsiChar): Double; StdCall; external LCMS2_SO;
+FUNCTION cmsIT8EnumProperties(hIT8: cmsHANDLE; var PropertyNames: LPPAnsiChar): Integer; StdCall; external LCMS2_SO;
 
 // Datasets
 
-FUNCTION cmsIT8GetDataRowCol(hIT8: cmsHANDLE; row, col: Integer): PAnsiChar; StdCall; external 'lcms2.dll';
-FUNCTION cmsIT8GetDataRowColDbl(hIT8: cmsHANDLE; row, col: Integer): Double; StdCall; external 'lcms2.dll';
+FUNCTION cmsIT8GetDataRowCol(hIT8: cmsHANDLE; row, col: Integer): PAnsiChar; StdCall; external LCMS2_SO;
+FUNCTION cmsIT8GetDataRowColDbl(hIT8: cmsHANDLE; row, col: Integer): Double; StdCall; external LCMS2_SO;
 
-FUNCTION cmsIT8SetDataRowCol(hIT8: cmsHANDLE; row, col: Integer; Val: PAnsiChar): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION cmsIT8SetDataRowColDbl(hIT8: cmsHANDLE; row, col: Integer; Val: Double): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION cmsIT8SetDataRowCol(hIT8: cmsHANDLE; row, col: Integer; Val: PAnsiChar): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION cmsIT8SetDataRowColDbl(hIT8: cmsHANDLE; row, col: Integer; Val: Double): cmsBool; StdCall; external LCMS2_SO;
 
-FUNCTION cmsIT8GetData(hIT8: cmsHANDLE; cPatch, cSample: PAnsiChar): PAnsiChar; StdCall; external 'lcms2.dll';
+FUNCTION cmsIT8GetData(hIT8: cmsHANDLE; cPatch, cSample: PAnsiChar): PAnsiChar; StdCall; external LCMS2_SO;
 
-FUNCTION cmsIT8GetDataDbl(hIT8: cmsHANDLE;cPatch, cSample: PAnsiChar): Double; StdCall; external 'lcms2.dll';
+FUNCTION cmsIT8GetDataDbl(hIT8: cmsHANDLE;cPatch, cSample: PAnsiChar): Double; StdCall; external LCMS2_SO;
 
-FUNCTION cmsIT8SetData(hIT8: cmsHANDLE; cPatch, cSample, Val: PAnsiChar): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION cmsIT8SetData(hIT8: cmsHANDLE; cPatch, cSample, Val: PAnsiChar): cmsBool; StdCall; external LCMS2_SO;
 
-FUNCTION cmsIT8SetDataDbl(hIT8: cmsHANDLE; cPatch, cSample: PAnsiChar; Val: Double): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION cmsIT8SetDataDbl(hIT8: cmsHANDLE; cPatch, cSample: PAnsiChar; Val: Double): cmsBool; StdCall; external LCMS2_SO;
 
-FUNCTION cmsIT8SetDataFormat(hIT8: cmsHANDLE; n: Integer; Sample: PAnsiChar): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION cmsIT8EnumDataFormat(hIT8: cmsHANDLE; var SampleNames: LPPAnsiChar): Integer; StdCall; external 'lcms2.dll';
-FUNCTION cmsIT8GetPatchName(hIT8: cmsHANDLE; nPatch: Integer; Buffer: PAnsiChar): PAnsiChar; StdCall; external 'lcms2.dll';
+FUNCTION cmsIT8SetDataFormat(hIT8: cmsHANDLE; n: Integer; Sample: PAnsiChar): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION cmsIT8EnumDataFormat(hIT8: cmsHANDLE; var SampleNames: LPPAnsiChar): Integer; StdCall; external LCMS2_SO;
+FUNCTION cmsIT8GetPatchName(hIT8: cmsHANDLE; nPatch: Integer; Buffer: PAnsiChar): PAnsiChar; StdCall; external LCMS2_SO;
 
 // The LABEL extension
 
-FUNCTION cmsIT8SetTableByLabel(hIT8: cmsHANDLE; cSet, cField, ExpectedType: PAnsiChar): Integer; StdCall; external 'lcms2.dll';
+FUNCTION cmsIT8SetTableByLabel(hIT8: cmsHANDLE; cSet, cField, ExpectedType: PAnsiChar): Integer; StdCall; external LCMS2_SO;
 
-FUNCTION cmsIT8FindDataFormat(hIT8: cmsHANDLE; cSample: PAnsiChar): Integer; StdCall; external 'lcms2.dll';
+FUNCTION cmsIT8FindDataFormat(hIT8: cmsHANDLE; cSample: PAnsiChar): Integer; StdCall; external LCMS2_SO;
 
 // Formatter for double
-PROCEDURE  cmsIT8DefineDblFormat(hIT8: cmsHANDLE; Formatter: PAnsiChar);  StdCall; external 'lcms2.dll';
+PROCEDURE  cmsIT8DefineDblFormat(hIT8: cmsHANDLE; Formatter: PAnsiChar);  StdCall; external LCMS2_SO;
 
-FUNCTION  cmsGBDAlloc(ContextID: cmsContext):cmsHANDLE; StdCall; external 'lcms2.dll';
-PROCEDURE cmsGBDFree(hGBD: cmsHANDLE); StdCall; external 'lcms2.dll';
-FUNCTION  cmsGDBAddPoint(hGBD: cmsHANDLE; Lab: LPcmsCIELab): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION  cmsGDBCompute(hGDB: cmsHANDLE; dwFlags: cmsUInt32Number): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION  cmsGDBCheckPoint(hGBD: cmsHANDLE; Lab: LPcmsCIELab): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION  cmsGBDAlloc(ContextID: cmsContext):cmsHANDLE; StdCall; external LCMS2_SO;
+PROCEDURE cmsGBDFree(hGBD: cmsHANDLE); StdCall; external LCMS2_SO;
+FUNCTION  cmsGDBAddPoint(hGBD: cmsHANDLE; Lab: LPcmsCIELab): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION  cmsGDBCompute(hGDB: cmsHANDLE; dwFlags: cmsUInt32Number): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION  cmsGDBCheckPoint(hGBD: cmsHANDLE; Lab: LPcmsCIELab): cmsBool; StdCall; external LCMS2_SO;
 
-FUNCTION cmsDetectBlackPoint( BlackPoint: LPcmsCIEXYZ; hProfile: cmsHPROFILE; Intent: cmsUInt32Number; dwFlags: cmsUInt32Number): cmsBool; StdCall; external 'lcms2.dll';
-FUNCTION cmsDetectDestinationBlackPoint( BlackPoint: LPcmsCIEXYZ; hProfile: cmsHPROFILE; Intent: cmsUInt32Number; dwFlags: cmsUInt32Number): cmsBool; StdCall; external 'lcms2.dll';
+FUNCTION cmsDetectBlackPoint( BlackPoint: LPcmsCIEXYZ; hProfile: cmsHPROFILE; Intent: cmsUInt32Number; dwFlags: cmsUInt32Number): cmsBool; StdCall; external LCMS2_SO;
+FUNCTION cmsDetectDestinationBlackPoint( BlackPoint: LPcmsCIEXYZ; hProfile: cmsHPROFILE; Intent: cmsUInt32Number; dwFlags: cmsUInt32Number): cmsBool; StdCall; external LCMS2_SO;
 
-FUNCTION cmsDetectTAC(hProfile: cmsHPROFILE): cmsFloat64Number; StdCall; external 'lcms2.dll';
+FUNCTION cmsDetectTAC(hProfile: cmsHPROFILE): cmsFloat64Number; StdCall; external LCMS2_SO;
 
-FUNCTION  cmsDesaturateLab(Lab: LPcmsCIELab; amax, amin, bmax, bmin: cmsFloat64Number): cmsBool; StdCall; external 'lcms2.dll';
-                                                   
+FUNCTION  cmsDesaturateLab(Lab: LPcmsCIELab; amax, amin, bmax, bmin: cmsFloat64Number): cmsBool; StdCall; external LCMS2_SO;
+
 END.

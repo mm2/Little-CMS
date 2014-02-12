@@ -670,7 +670,7 @@ void DoEmbedProfile(TIFF* Out, const char* ProfileFile)
         return;
     }
 
-    EmbedLen = fread(EmbedBuffer, 1, size, f);
+    EmbedLen = (cmsUInt32Number) fread(EmbedBuffer, 1, (size_t) size, f);
 
     if (EmbedLen != size) 
         FatalError("Cannot read %ld bytes to %s", size, ProfileFile);

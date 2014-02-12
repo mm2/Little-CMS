@@ -64,7 +64,8 @@ am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 mkinstalldirs = $(install_sh) -d
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-am_testcms_OBJECTS = testcms2.$(OBJEXT)
+am_testcms_OBJECTS = testcms2.$(OBJEXT) testplugin.$(OBJEXT) \
+	zoo_icc.$(OBJEXT)
 testcms_OBJECTS = $(am_testcms_OBJECTS)
 testcms_DEPENDENCIES = $(top_builddir)/src/liblcms2.la
 testcms_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
@@ -233,10 +234,10 @@ INCLUDES = -I$(top_builddir)/include -I$(top_srcdir)/include -I$(top_srcdir)/src
 # CFLAGS = --pedantic -Wall -std=c99 -O2
 testcms_LDADD = $(top_builddir)/src/liblcms2.la 
 testcms_LDFLAGS = @LDFLAGS@
-testcms_SOURCES = testcms2.c
+testcms_SOURCES = testcms2.c testplugin.c zoo_icc.c testcms2.h
 EXTRA_DIST = test1.icc bad.icc toosmall.icc test2.icc \
              test3.icc test4.icc \
-             test5.icc  
+             test5.icc ibm-t61.icc new.icc
 
 all: all-am
 
@@ -292,6 +293,8 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testcms2.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testplugin.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zoo_icc.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

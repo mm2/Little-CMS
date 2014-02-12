@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2010 Marti Maria Saguer
+//  Copyright (c) 1998-2014 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -24,11 +24,8 @@
 //---------------------------------------------------------------------------------
 //
 
-#ifdef _MSC_VER
-#    define _CRT_SECURE_NO_WARNINGS 1
-#endif
 
-#include "lcms2_internal.h"
+#include "testcms2.h"
 
 // On Visual Studio, use debug CRT
 #ifdef _MSC_VER
@@ -55,7 +52,6 @@ static cmsInt32Number SimultaneousErrors;
 #define cmsmin(a, b) (((a) < (b)) ? (a) : (b))
 
 // Die, a fatal unexpected error is detected!
-static
 void Die(const char* Reason)
 {
     printf("\n\nArrrgggg!!: %s!\n\n", Reason);
@@ -75,6 +71,7 @@ static cmsUInt32Number SingleHit, MaxAllocated=0, TotalMemory=0;
 typedef struct {
     cmsUInt32Number KeepSize;
     cmsContext      WhoAllocated;
+    cmsUInt32Number DontCheck;
 
     union {
         cmsUInt64Number HiSparc;
@@ -100,7 +97,7 @@ cmsContext DbgThread(void)
 {
     static cmsUInt32Number n = 1;
 
-    return (cmsContext) n++;
+    return (cmsContext) (n++ % 0xff0);
 }
 
 // The allocate routine
@@ -126,9 +123,11 @@ void* DebugMalloc(cmsContext ContextID, cmsUInt32Number size)
 
     blk ->KeepSize = size;
     blk ->WhoAllocated = ContextID;
+    blk ->DontCheck = 0;
 
     return (void*) ((cmsUInt8Number*) blk + SIZE_OF_MEM_HEADER);
 }
+
 
 // The free routine
 static
@@ -143,12 +142,13 @@ void  DebugFree(cmsContext ContextID, void *Ptr)
     blk = (_cmsMemoryBlock*) (((cmsUInt8Number*) Ptr) - SIZE_OF_MEM_HEADER);
     TotalMemory -= blk ->KeepSize;
 
-    if (blk ->WhoAllocated != ContextID) {
+    if (blk ->WhoAllocated != ContextID && !blk->DontCheck) {
         Die("Trying to free memory allocated by a different thread");
     }
 
     free(blk);
 }
+
 
 // Reallocate, just a malloc, a copy and a free in this case.
 static
@@ -177,49 +177,12 @@ void DebugMemPrintTotals(void)
     printf("Allocated = %u MaxAlloc = %u Single block hit = %u\n", TotalMemory, MaxAllocated, SingleHit);
 }
 
-// Here we go with the plug-in declaration
-static cmsPluginMemHandler DebugMemHandler = {{ cmsPluginMagicNumber, 2000, cmsPluginMemHandlerSig, NULL },
-                                               DebugMalloc, DebugFree, DebugRealloc, NULL, NULL, NULL };
 
-// Utils  -------------------------------------------------------------------------------------
-
-static
-void FatalErrorQuit(cmsContext ContextID, cmsUInt32Number ErrorCode, const char *Text)
+void DebugMemDontCheckThis(void *Ptr)
 {
-    Die(Text);
+     _cmsMemoryBlock* blk = (_cmsMemoryBlock*) (((cmsUInt8Number*) Ptr) - SIZE_OF_MEM_HEADER);
 
-    cmsUNUSED_PARAMETER(ContextID);
-    cmsUNUSED_PARAMETER(ErrorCode);
-
-}
-
-// Print a dot for gauging
-static
-void Dot(void)
-{
-    fprintf(stdout, "."); fflush(stdout);
-}
-
-// Keep track of the reason to fail
-static
-void Fail(const char* frm, ...)
-{
-    va_list args;
-    va_start(args, frm);
-    vsprintf(ReasonToFailBuffer, frm, args);
-    va_end(args);
-}
-
-// Keep track of subtest
-static
-void SubTest(const char* frm, ...)
-{
-    va_list args;
-
-    Dot();
-    va_start(args, frm);
-    vsprintf(SubTestBuffer, frm, args);
-    va_end(args);
+     blk ->DontCheck = 1;
 }
 
 
@@ -243,6 +206,90 @@ const char* MemStr(cmsUInt32Number size)
 }
 
 
+void TestMemoryLeaks(cmsBool ok)
+{
+    if (TotalMemory > 0)
+        printf("Ok, but %s are left!\n", MemStr(TotalMemory));
+    else {
+        if (ok) printf("Ok.\n");
+    }
+}
+
+// Here we go with the plug-in declaration
+static cmsPluginMemHandler DebugMemHandler = {{ cmsPluginMagicNumber, 2060, cmsPluginMemHandlerSig, NULL },
+                                               DebugMalloc, DebugFree, DebugRealloc, NULL, NULL, NULL };
+
+// Returnds a pointer to the memhandler plugin
+void* PluginMemHandler(void)
+{
+    return (void*) &DebugMemHandler;
+}
+
+cmsContext WatchDogContext(void* usr)
+{
+    cmsContext ctx;
+
+    ctx = cmsCreateContext(&DebugMemHandler, usr);
+
+    if (ctx == NULL)
+        Die("Unable to create memory managed context");
+
+    DebugMemDontCheckThis(ctx);
+    return ctx;
+}
+
+
+
+static
+void FatalErrorQuit(cmsContext ContextID, cmsUInt32Number ErrorCode, const char *Text)
+{
+    Die(Text);
+
+    cmsUNUSED_PARAMETER(ContextID);
+    cmsUNUSED_PARAMETER(ErrorCode);
+}
+
+
+void ResetFatalError(void)
+{
+    cmsSetLogErrorHandler(FatalErrorQuit);
+}
+
+
+// Print a dot for gauging
+void Dot(void)
+{
+    fprintf(stdout, "."); fflush(stdout);
+}
+
+void Say(const char* str)
+{
+    fprintf(stdout, "%s", str); fflush(stdout);
+}
+
+
+// Keep track of the reason to fail
+
+void Fail(const char* frm, ...)
+{
+    va_list args;
+    va_start(args, frm);
+    vsprintf(ReasonToFailBuffer, frm, args);
+    va_end(args);
+}
+
+// Keep track of subtest
+
+void SubTest(const char* frm, ...)
+{
+    va_list args;
+
+    Dot();
+    va_start(args, frm);
+    vsprintf(SubTestBuffer, frm, args);
+    va_end(args);
+}
+
 // The check framework
 static
 void Check(const char* Title, TestFn Fn)
@@ -259,10 +306,8 @@ void Check(const char* Title, TestFn Fn)
     if (Fn() && !TrappedError) {
 
         // It is a good place to check memory
-        if (TotalMemory > 0)
-            printf("Ok, but %s are left!\n", MemStr(TotalMemory));
-        else
-            printf("Ok.\n");
+        TestMemoryLeaks(TRUE);
+
     }
     else {
         printf("FAIL!\n");
@@ -571,11 +616,8 @@ cmsInt32Number OneVirtual(cmsHPROFILE h, const char* SubTestTxt, const char* Fil
 
     h = cmsOpenProfileFromFile(FileName, "r");
     if (h == NULL) return 0;
-
-    // Do some teste....
-
+    
     cmsCloseProfile(h);
-
     return 1;
 }
 
@@ -744,7 +786,7 @@ cmsInt32Number CheckQuickFloor(void)
         (_cmsQuickFloor(-32767.1) != -32768)) {
 
             Fail("\nOOOPPSS! _cmsQuickFloor() does not work as expected in your machine!\n\n"
-                "Please, edit lcms.h and uncomment the CMS_DONT_USE_FAST_FLOOR toggle.\n");
+                "Please, edit lcms2.h and uncomment the CMS_DONT_USE_FAST_FLOOR toggle.\n");
             return 0;
 
     }
@@ -763,7 +805,7 @@ cmsInt32Number CheckQuickFloorWord(void)
         if (_cmsQuickFloorWord((cmsFloat64Number) i + 0.1234) != i) {
 
             Fail("\nOOOPPSS! _cmsQuickFloorWord() does not work as expected in your machine!\n\n"
-                "Please, edit lcms.h and uncomment the CMS_DONT_USE_FAST_FLOOR toggle.\n");
+                "Please, edit lcms2.h and uncomment the CMS_DONT_USE_FAST_FLOOR toggle.\n");
             return 0;
         }
     }
@@ -787,7 +829,6 @@ cmsInt32Number CheckQuickFloorWord(void)
 static cmsFloat64Number MaxErr;
 static cmsFloat64Number AllowedErr = FIXED_PRECISION_15_16;
 
-static
 cmsBool IsGoodVal(const char *title, cmsFloat64Number in, cmsFloat64Number out, cmsFloat64Number max)
 {
     cmsFloat64Number Err = fabs(in - out);
@@ -803,19 +844,18 @@ cmsBool IsGoodVal(const char *title, cmsFloat64Number in, cmsFloat64Number out, 
        return TRUE;
 }
 
-static
+
 cmsBool  IsGoodFixed15_16(const char *title, cmsFloat64Number in, cmsFloat64Number out)
 {
     return IsGoodVal(title, in, out, FIXED_PRECISION_15_16);
 }
 
-static
+
 cmsBool  IsGoodFixed8_8(const char *title, cmsFloat64Number in, cmsFloat64Number out)
 {
     return IsGoodVal(title, in, out, FIXED_PRECISION_8_8);
 }
 
-static
 cmsBool  IsGoodWord(const char *title, cmsUInt16Number in, cmsUInt16Number out)
 {
     if ((abs(in - out) > 0 )) {
@@ -827,7 +867,6 @@ cmsBool  IsGoodWord(const char *title, cmsUInt16Number in, cmsUInt16Number out)
     return TRUE;
 }
 
-static
 cmsBool  IsGoodWordPrec(const char *title, cmsUInt16Number in, cmsUInt16Number out, cmsUInt16Number maxErr)
 {
     if ((abs(in - out) > maxErr )) {
@@ -887,6 +926,59 @@ cmsInt32Number CheckFixedPoint8_8(void)
     if (!TestSingleFixed8_8(0.99999)) return 0;
     if (!TestSingleFixed8_8(0.1234567890123456789099999)) return 0;
     if (!TestSingleFixed8_8(+255.1234567890123456789099999)) return 0;
+
+    return 1;
+}
+
+// D50 constant --------------------------------------------------------------------------------------------
+
+static
+cmsInt32Number CheckD50Roundtrip(void)
+{
+    cmsFloat64Number cmsD50X_2 =  0.96420288;
+    cmsFloat64Number cmsD50Y_2 =  1.0;
+    cmsFloat64Number cmsD50Z_2 = 0.82490540;
+
+    cmsS15Fixed16Number xe = _cmsDoubleTo15Fixed16(cmsD50X);
+    cmsS15Fixed16Number ye = _cmsDoubleTo15Fixed16(cmsD50Y);
+    cmsS15Fixed16Number ze = _cmsDoubleTo15Fixed16(cmsD50Z);
+
+    cmsFloat64Number x =  _cms15Fixed16toDouble(xe);
+    cmsFloat64Number y =  _cms15Fixed16toDouble(ye);
+    cmsFloat64Number z =  _cms15Fixed16toDouble(ze);
+
+    double dx = fabs(cmsD50X - x);
+    double dy = fabs(cmsD50Y - y);
+    double dz = fabs(cmsD50Z - z);
+
+    double euc = sqrt(dx*dx + dy*dy + dz* dz);
+
+    if (euc > 1E-5) {
+
+        Fail("D50 roundtrip |err| > (%f) ", euc);
+        return 0;
+    }
+
+    xe = _cmsDoubleTo15Fixed16(cmsD50X_2);
+    ye = _cmsDoubleTo15Fixed16(cmsD50Y_2);
+    ze = _cmsDoubleTo15Fixed16(cmsD50Z_2);
+
+    x =  _cms15Fixed16toDouble(xe);
+    y =  _cms15Fixed16toDouble(ye);
+    z =  _cms15Fixed16toDouble(ze);
+
+    dx = fabs(cmsD50X_2 - x);
+    dy = fabs(cmsD50Y_2 - y);
+    dz = fabs(cmsD50Z_2 - z);
+
+    euc = sqrt(dx*dx + dy*dy + dz* dz);
+
+    if (euc > 1E-5) {
+
+        Fail("D50 roundtrip |err| > (%f) ", euc);
+        return 0;
+    }
+
 
     return 1;
 }
@@ -3664,7 +3756,7 @@ Error:
 static cmsBool  FormatterFailed;
 
 static
-void CheckSingleFormatter16(cmsUInt32Number Type, const char* Text)
+void CheckSingleFormatter16(cmsContext id, cmsUInt32Number Type, const char* Text)
 {
     cmsUInt16Number Values[cmsMAXCHANNELS];
     cmsUInt8Number Buffer[1024];
@@ -3679,16 +3771,16 @@ void CheckSingleFormatter16(cmsUInt32Number Type, const char* Text)
     info.OutputFormat = info.InputFormat = Type;
 
     // Go forth and back
-    f = _cmsGetFormatter(Type,  cmsFormatterInput, CMS_PACK_FLAGS_16BITS);
-    b = _cmsGetFormatter(Type,  cmsFormatterOutput, CMS_PACK_FLAGS_16BITS);
+    f = _cmsGetFormatter(id, Type,  cmsFormatterInput, CMS_PACK_FLAGS_16BITS);
+    b = _cmsGetFormatter(id, Type,  cmsFormatterOutput, CMS_PACK_FLAGS_16BITS);
 
     if (f.Fmt16 == NULL || b.Fmt16 == NULL) {
         Fail("no formatter for %s", Text);
         FormatterFailed = TRUE;
 
         // Useful for debug
-        f = _cmsGetFormatter(Type,  cmsFormatterInput, CMS_PACK_FLAGS_16BITS);
-        b = _cmsGetFormatter(Type,  cmsFormatterOutput, CMS_PACK_FLAGS_16BITS);
+        f = _cmsGetFormatter(id, Type,  cmsFormatterInput, CMS_PACK_FLAGS_16BITS);
+        b = _cmsGetFormatter(id, Type,  cmsFormatterOutput, CMS_PACK_FLAGS_16BITS);
         return;
     }
 
@@ -3733,7 +3825,7 @@ void CheckSingleFormatter16(cmsUInt32Number Type, const char* Text)
     }
 }
 
-#define C(a) CheckSingleFormatter16(a, #a)
+#define C(a) CheckSingleFormatter16(0, a, #a)
 
 
 // Check all formatters
@@ -3931,16 +4023,16 @@ void CheckSingleFormatterFloat(cmsUInt32Number Type, const char* Text)
     info.OutputFormat = info.InputFormat = Type;
 
     // Go forth and back
-    f = _cmsGetFormatter(Type,  cmsFormatterInput, CMS_PACK_FLAGS_FLOAT);
-    b = _cmsGetFormatter(Type,  cmsFormatterOutput, CMS_PACK_FLAGS_FLOAT);
+    f = _cmsGetFormatter(0, Type,  cmsFormatterInput, CMS_PACK_FLAGS_FLOAT);
+    b = _cmsGetFormatter(0, Type,  cmsFormatterOutput, CMS_PACK_FLAGS_FLOAT);
 
     if (f.FmtFloat == NULL || b.FmtFloat == NULL) {
         Fail("no formatter for %s", Text);
         FormatterFailed = TRUE;
 
         // Useful for debug
-        f = _cmsGetFormatter(Type,  cmsFormatterInput, CMS_PACK_FLAGS_FLOAT);
-        b = _cmsGetFormatter(Type,  cmsFormatterOutput, CMS_PACK_FLAGS_FLOAT);
+        f = _cmsGetFormatter(0, Type,  cmsFormatterInput, CMS_PACK_FLAGS_FLOAT);
+        b = _cmsGetFormatter(0, Type,  cmsFormatterOutput, CMS_PACK_FLAGS_FLOAT);
         return;
     }
 
@@ -4017,8 +4109,10 @@ cmsInt32Number CheckFormattersFloat(void)
    C( TYPE_BGRA_HALF_FLT );
    C( TYPE_ABGR_HALF_FLT );
 
+   C( TYPE_XYZ_FLT );
 
-    return FormatterFailed == 0 ? 1 : 0;
+
+   return FormatterFailed == 0 ? 1 : 0;
 }
 #undef C
 
@@ -5215,7 +5309,6 @@ cmsInt32Number CheckProfileCreation(void)
         SubTest("Tags holding ICC viewing conditions");
         if (!CheckICCViewingConditions(Pass, h)) return 0;
 
-
         SubTest("VCGT tags");
         if (!CheckVCGT(Pass, h)) return 0;
 
@@ -5248,6 +5341,44 @@ cmsInt32Number CheckProfileCreation(void)
     return 1;
 }
 
+
+// Thanks to Christopher James Halse Rogers for the bugfixing and providing this test 
+static
+cmsInt32Number CheckVersionHeaderWriting(void)
+{
+    cmsHPROFILE h;
+    int index;
+    float test_versions[] = {
+      2.3f,
+      4.08f,
+      4.09f,
+      4.3f
+    };
+
+    for (index = 0; index < sizeof(test_versions)/sizeof(test_versions[0]); index++) {
+
+      h = cmsCreateProfilePlaceholder(DbgThread());
+      if (h == NULL) return 0;
+
+      cmsSetProfileVersion(h, test_versions[index]);
+
+      cmsSaveProfileToFile(h, "versions.icc");
+      cmsCloseProfile(h);
+
+      h = cmsOpenProfileFromFileTHR(DbgThread(), "versions.icc", "r");
+
+      // Only the first 3 digits are significant
+      if (fabs(cmsGetProfileVersion(h) - test_versions[index]) > 0.005) {
+        Fail("Version failed to round-trip: wrote %.2f, read %.2f",
+             test_versions[index], cmsGetProfileVersion(h));
+        return 0;
+      }
+
+      cmsCloseProfile(h);
+      remove("versions.icc");
+    }
+    return 1;
+}
 
 // Error reporting  -------------------------------------------------------------------------------------------------------
 
@@ -6448,7 +6579,7 @@ cmsInt32Number CheckGamutCheck(void)
 
         SubTest("Gamut check on 16 bits");
 
-        xform = cmsCreateProofingTransformTHR(DbgThread(), hAbove, TYPE_RGB_16, hAbove, TYPE_RGB_16, hAbove,
+        xform = cmsCreateProofingTransformTHR(DbgThread(), hAbove, TYPE_RGB_16, hAbove, TYPE_RGB_16, hSRGB,
                                 INTENT_RELATIVE_COLORIMETRIC, INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_GAMUTCHECK);
 
         cmsCloseProfile(hSRGB);
@@ -7484,6 +7615,84 @@ cmsInt32Number CheckReadRAW(void)
 }
 
 
+static
+cmsInt32Number CheckMeta(void)
+{
+	char *data;
+	cmsHANDLE dict;
+	cmsHPROFILE p;
+	cmsUInt32Number clen;
+	FILE *fp;
+	int rc;
+	
+	/* open file */
+	p = cmsOpenProfileFromFile("ibm-t61.icc", "r");
+	if (p == NULL) return 0;
+
+	/* read dictionary, but don't do anything with the value */
+	//COMMENT OUT THE NEXT TWO LINES AND IT WORKS FINE!!!
+	dict = cmsReadTag(p, cmsSigMetaTag);
+	if (dict == NULL) return 0;
+
+	/* serialize profile to memory */
+	rc = cmsSaveProfileToMem(p, NULL, &clen);
+	if (!rc) return 0;
+
+	data = (char*) malloc(clen);
+	rc = cmsSaveProfileToMem(p, data, &clen);
+	if (!rc) return 0;
+
+	/* write the memory blob to a file */
+	//NOTE: The crash does not happen if cmsSaveProfileToFile() is used */
+	fp = fopen("new.icc", "wb");
+	fwrite(data, 1, clen, fp);
+	fclose(fp);
+	free(data);
+
+	cmsCloseProfile(p);
+
+	/* open newly created file and read metadata */
+	p = cmsOpenProfileFromFile("new.icc", "r");
+	//ERROR: Bad dictionary Name/Value
+	//ERROR: Corrupted tag 'meta'
+	//test: test.c:59: main: Assertion `dict' failed.
+	dict = cmsReadTag(p, cmsSigMetaTag);
+   if (dict == NULL) return 0;
+
+   cmsCloseProfile(p);
+	return 1;
+}
+
+
+// Bug on applying null transforms on floating point buffers
+static
+cmsInt32Number CheckFloatNULLxform(void)
+{
+    int i;
+    cmsFloat32Number in[10] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+    cmsFloat32Number out[10];
+
+    cmsHTRANSFORM xform = cmsCreateTransform(NULL, TYPE_GRAY_FLT, NULL, TYPE_GRAY_FLT, INTENT_PERCEPTUAL, cmsFLAGS_NULLTRANSFORM);
+
+    if (xform == NULL) {
+        Fail("Unable to create float null transform");
+        return 0;
+    }
+
+    cmsDoTransform(xform, in, out, 10);
+
+    cmsDeleteTransform(xform);
+    for (i=0; i < 10; i++) {
+    
+        if (!IsGoodVal("float nullxform", in[i], out[i], 0.001)) {
+        
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
 
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
@@ -7511,6 +7720,9 @@ void PrintPerformance(cmsUInt32Number Bytes, cmsUInt32Number SizeOfPixel, cmsFlo
     printf("%g MPixel/sec.\n", mpix_sec);
     fflush(stdout);
 }
+
+
+
 
 
 static
@@ -7880,264 +8092,14 @@ void PrintSupportedIntents(void)
     printf("\n");
 }
 
-// ZOO checks ------------------------------------------------------------------------------------------------------------
-
-
-#ifdef CMS_IS_WINDOWS_
-
-static char ZOOfolder[cmsMAX_PATH] = "c:\\colormaps\\";
-static char ZOOwrite[cmsMAX_PATH]  = "c:\\colormaps\\write\\";
-static char ZOORawWrite[cmsMAX_PATH]  = "c:\\colormaps\\rawwrite\\";
-
-
-// Read all tags on a profile given by its handle
-static
-void ReadAllTags(cmsHPROFILE h)
-{
-    cmsInt32Number i, n;
-    cmsTagSignature sig;
-
-    n = cmsGetTagCount(h);
-    for (i=0; i < n; i++) {
-
-        sig = cmsGetTagSignature(h, i);
-        if (cmsReadTag(h, sig) == NULL) return;
-    }
-}
-
-
-// Read all tags on a profile given by its handle
-static
-void ReadAllRAWTags(cmsHPROFILE h)
-{
-    cmsInt32Number i, n;
-    cmsTagSignature sig;
-    cmsInt32Number len;
-
-    n = cmsGetTagCount(h);
-    for (i=0; i < n; i++) {
-
-        sig = cmsGetTagSignature(h, i);
-        len = cmsReadRawTag(h, sig, NULL, 0);
-    }
-}
-
-
-static
-void PrintInfo(cmsHPROFILE h, cmsInfoType Info)
-{
-    wchar_t* text;
-    cmsInt32Number len;
-    cmsContext id = DbgThread();
-
-    len = cmsGetProfileInfo(h, Info, "en", "US", NULL, 0);
-    if (len == 0) return;
-
-    text = _cmsMalloc(id, len);
-    cmsGetProfileInfo(h, Info, "en", "US", text, len);
-
-    wprintf(L"%s\n", text);
-    _cmsFree(id, text);
-}
-
-
-static
-void PrintAllInfos(cmsHPROFILE h)
-{
-     PrintInfo(h, cmsInfoDescription);
-     PrintInfo(h, cmsInfoManufacturer);
-     PrintInfo(h, cmsInfoModel);
-     PrintInfo(h, cmsInfoCopyright);
-     printf("\n\n");
-}
-
-static
-void ReadAllLUTS(cmsHPROFILE h)
-{
-    cmsPipeline* a;
-    cmsCIEXYZ Black;
-
-    a = _cmsReadInputLUT(h, INTENT_PERCEPTUAL);
-    if (a) cmsPipelineFree(a);
-
-    a = _cmsReadInputLUT(h, INTENT_RELATIVE_COLORIMETRIC);
-    if (a) cmsPipelineFree(a);
-
-    a = _cmsReadInputLUT(h, INTENT_SATURATION);
-    if (a) cmsPipelineFree(a);
-
-    a = _cmsReadInputLUT(h, INTENT_ABSOLUTE_COLORIMETRIC);
-    if (a) cmsPipelineFree(a);
-
-
-    a = _cmsReadOutputLUT(h, INTENT_PERCEPTUAL);
-    if (a) cmsPipelineFree(a);
-
-    a = _cmsReadOutputLUT(h, INTENT_RELATIVE_COLORIMETRIC);
-    if (a) cmsPipelineFree(a);
-
-    a = _cmsReadOutputLUT(h, INTENT_SATURATION);
-    if (a) cmsPipelineFree(a);
-
-    a = _cmsReadOutputLUT(h, INTENT_ABSOLUTE_COLORIMETRIC);
-    if (a) cmsPipelineFree(a);
-
-
-    a = _cmsReadDevicelinkLUT(h, INTENT_PERCEPTUAL);
-    if (a) cmsPipelineFree(a);
-
-    a = _cmsReadDevicelinkLUT(h, INTENT_RELATIVE_COLORIMETRIC);
-    if (a) cmsPipelineFree(a);
-
-    a = _cmsReadDevicelinkLUT(h, INTENT_SATURATION);
-    if (a) cmsPipelineFree(a);
-
-    a = _cmsReadDevicelinkLUT(h, INTENT_ABSOLUTE_COLORIMETRIC);
-    if (a) cmsPipelineFree(a);
-
-
-    cmsDetectDestinationBlackPoint(&Black, h, INTENT_PERCEPTUAL, 0);
-    cmsDetectDestinationBlackPoint(&Black, h, INTENT_RELATIVE_COLORIMETRIC, 0);
-    cmsDetectDestinationBlackPoint(&Black, h, INTENT_SATURATION, 0);
-    cmsDetectDestinationBlackPoint(&Black, h, INTENT_ABSOLUTE_COLORIMETRIC, 0);
-    cmsDetectTAC(h);
-}
-
-// Check one specimen in the ZOO
-
-static
-cmsInt32Number CheckSingleSpecimen(const char* Profile)
-{
-    char BuffSrc[256];
-    char BuffDst[256];
-    cmsHPROFILE h;
-
-    sprintf(BuffSrc, "%s%s", ZOOfolder, Profile);
-    sprintf(BuffDst, "%s%s", ZOOwrite,  Profile);
-
-    h = cmsOpenProfileFromFile(BuffSrc, "r");
-    if (h == NULL) return 0;
-
-    printf("%s\n", Profile);
-    PrintAllInfos(h);
-    ReadAllTags(h);
-    // ReadAllRAWTags(h);
-    ReadAllLUTS(h);
-
-    cmsSaveProfileToFile(h, BuffDst);
-    cmsCloseProfile(h);
-
-    h = cmsOpenProfileFromFile(BuffDst, "r");
-    if (h == NULL) return 0;
-    ReadAllTags(h);
-
-
-    cmsCloseProfile(h);
-
-    return 1;
-}
-
-static
-cmsInt32Number CheckRAWSpecimen(const char* Profile)
-{
-    char BuffSrc[256];
-    char BuffDst[256];
-    cmsHPROFILE h;
-
-    sprintf(BuffSrc, "%s%s", ZOOfolder, Profile);
-    sprintf(BuffDst, "%s%s", ZOORawWrite,  Profile);
-
-    h = cmsOpenProfileFromFile(BuffSrc, "r");
-    if (h == NULL) return 0;
-
-    ReadAllTags(h);
-    ReadAllRAWTags(h);
-    cmsSaveProfileToFile(h, BuffDst);
-    cmsCloseProfile(h);
-
-    h = cmsOpenProfileFromFile(BuffDst, "r");
-    if (h == NULL) return 0;
-    ReadAllTags(h);
-    cmsCloseProfile(h);
-
-    return 1;
-}
-
-
-static
-void CheckProfileZOO(void)
-{
-
-    struct _finddata_t c_file;
-    intptr_t hFile;
-
-    cmsSetLogErrorHandler(NULL);
-
-    if ( (hFile = _findfirst("c:\\colormaps\\*.*", &c_file)) == -1L )
-        printf("No files in current directory");
-    else
-    {
-        do
-        {
-
-            printf("%s\n", c_file.name);
-            if (strcmp(c_file.name, ".") != 0 &&
-                strcmp(c_file.name, "..") != 0) {
-
-                    CheckSingleSpecimen( c_file.name);
-                    CheckRAWSpecimen( c_file.name);
-
-                    if (TotalMemory > 0)
-                        printf("Ok, but %s are left!\n", MemStr(TotalMemory));
-                    else
-                        printf("Ok.\n");
-
-            }
-
-        } while ( _findnext(hFile, &c_file) == 0 );
-
-        _findclose(hFile);
-    }
-
-    cmsSetLogErrorHandler(FatalErrorQuit);
-}
-
-#endif
-
-
-#if 0
-#define TYPE_709 709
-static double Rec709Math(int Type, const double Params[], double R)
-{ double Fun;
-
-switch (Type)
-{
-case 709:
-
-if (R <= (Params[3]*Params[4])) Fun = R / Params[3];
-else Fun = pow(((R - Params[2])/Params[1]), Params[0]);
-break;
-
-case -709:
-
-if (R <= Params[4]) Fun = R * Params[3];
-else Fun = Params[1] * pow(R, (1/Params[0])) + Params[2];
-break;
-}
-return Fun;
-}
-
-
-// Add nonstandard TRC curves -> Rec709
-cmsPluginParametricCurves NewCurvePlugin = {
-{ cmsPluginMagicNumber, 2000, cmsPluginParametricCurveSig, NULL },
-1, {TYPE_709}, {5}, Rec709Math};
-#endif
-
-
 
 
 // ---------------------------------------------------------------------------------------
+
+
+#ifdef LCMS_FAST_EXTENSIONS
+    void* cmsFast8Bitextensions(void);
+#endif
 
 int main(int argc, char* argv[])
 {
@@ -8145,6 +8107,8 @@ int main(int argc, char* argv[])
     cmsInt32Number Exhaustive = 0;
     cmsInt32Number DoSpeedTests = 1;
     cmsInt32Number DoCheckTests = 1;
+    cmsInt32Number DoPluginTests = 1;
+    cmsInt32Number DoZooTests = 0;
 
 #ifdef _MSC_VER
     _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
@@ -8158,6 +8122,12 @@ int main(int argc, char* argv[])
         printf("Running exhaustive tests (will take a while...)\n\n");
     }
 
+#ifdef LCMS_FAST_EXTENSIONS
+   printf("Installing fast 8 bit extension ...");   
+   cmsPlugin(cmsFast8Bitextensions());
+   printf("done.\n");
+#endif
+
     printf("Installing debug memory plug-in ... ");
     cmsPlugin(&DebugMemHandler);
     printf("done.\n");
@@ -8166,26 +8136,23 @@ int main(int argc, char* argv[])
     cmsSetLogErrorHandler(FatalErrorQuit);
     printf("done.\n");
 
-#ifdef CMS_IS_WINDOWS_
-      // CheckProfileZOO();
-#endif
 
     PrintSupportedIntents();
 
-
-
-    // Create utility profiles
-    Check("Creation of test profiles", CreateTestProfiles);
-
-    if (DoCheckTests)
-    {
     Check("Base types", CheckBaseTypes);
     Check("endianess", CheckEndianess);
     Check("quick floor", CheckQuickFloor);
     Check("quick floor word", CheckQuickFloorWord);
     Check("Fixed point 15.16 representation", CheckFixedPoint15_16);
     Check("Fixed point 8.8 representation", CheckFixedPoint8_8);
+    Check("D50 roundtrip", CheckD50Roundtrip);
 
+    // Create utility profiles
+    if (DoCheckTests || DoSpeedTests)
+        Check("Creation of test profiles", CreateTestProfiles);
+
+    if (DoCheckTests) {
+   
     // Forward 1D interpolation
     Check("1D interpolation in 2pt tables", Check1DLERP2);
     Check("1D interpolation in 3pt tables", Check1DLERP3);
@@ -8303,7 +8270,7 @@ int main(int argc, char* argv[])
 
     // Profile I/O (this one is huge!)
     Check("Profile creation", CheckProfileCreation);
-
+    Check("Header version", CheckVersionHeaderWriting);
 
     // Error reporting
     Check("Error reporting on bad profiles", CheckErrReportingOnBadProfiles);
@@ -8358,18 +8325,44 @@ int main(int argc, char* argv[])
     Check("Floating Point sampled curve with non-zero start", CheckFloatSamples);
     Check("Floating Point segmented curve with short sampled segement", CheckFloatSegments);
     Check("Read RAW portions", CheckReadRAW);
+    Check("Check MetaTag", CheckMeta);
+    Check("Null transform on floats", CheckFloatNULLxform);
+    }
+
+    if (DoPluginTests)
+    {
+#ifndef CMS_CONTEXT_IN_LEGACY_MODE
+        Check("Context memory handling", CheckAllocContext);
+        Check("Simple context functionality", CheckSimpleContext);
+        Check("Alarm codes context", CheckAlarmColorsContext);
+        Check("Adaptation state context", CheckAdaptationStateContext);
+        Check("1D interpolation plugin", CheckInterp1DPlugin); 
+        Check("3D interpolation plugin", CheckInterp3DPlugin); 
+        Check("Parametric curve plugin", CheckParametricCurvePlugin);        
+        Check("Formatters plugin",       CheckFormattersPlugin);        
+        Check("Tag type plugin",         CheckTagTypePlugin);
+        Check("MPE type plugin",         CheckMPEPlugin);       
+        Check("Optimization plugin",     CheckOptimizationPlugin); 
+        Check("Rendering intent plugin", CheckIntentPlugin);
+        Check("Full transform plugin",   CheckTransformPlugin);
+        Check("Mutex plugin",            CheckMutexPlugin);
+#endif        
     }
 
 
     if (DoSpeedTests)
         SpeedTest();
 
+    if (DoZooTests) 
+         CheckProfileZOO();
+
     DebugMemPrintTotals();
 
     cmsUnregisterPlugins();
 
     // Cleanup
-   RemoveTestProfiles();
+    if (DoCheckTests || DoSpeedTests)
+        RemoveTestProfiles();
 
    return TotalFail;
 }

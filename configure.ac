@@ -7,7 +7,7 @@ AC_PREREQ(2.60)
 #
 # Set the package name and version
 #
-AC_INIT(lcms2,2.5)
+AC_INIT(lcms2,2.6)
 
 #
 # Libtool library revision control info
@@ -31,7 +31,7 @@ AC_INIT(lcms2,2.5)
 #     then set age to 0.
 #
 LIBRARY_CURRENT=2
-LIBRARY_REVISION=5
+LIBRARY_REVISION=6
 LIBRARY_AGE=0
 
 AC_SUBST(LIBRARY_CURRENT)dnl
@@ -43,17 +43,41 @@ AC_CANONICAL_HOST
 
 AM_INIT_AUTOMAKE([foreign 1.7.2 no-define dist-zip])
 
-# Disable JPEG.
+# Point to JPEG installed in DIR or disable JPEG with --without-jpeg.
 AC_ARG_WITH(jpeg,
-	      [  --without-jpeg          disable JPEG support],
-	      [with_jpeg=$withval],
-	      [with_jpeg='yes'])
+            [  --with-jpeg=DIR         use jpeg installed in DIR],
+            [
+            if [ test "x$withval" = "xno" ]; then
+              [with_jpeg='no']
+            else
+              if [ test "x$withval" != "xyes" ]; then
+                with_jpeg=$withval
+                JPEG_DIR=$withval
+                CPPFLAGS="$CPPFLAGS -I$JPEG_DIR/include"
+                LDFLAGS="$LDFLAGS -L$JPEG_DIR/lib"
+              fi
+              [with_jpeg='yes']
+            fi
+            ],
+	        [with_jpeg='yes'])
 
-# Disable TIFF.
+# Point to TIFF installed in DIR or disable TIFF with --without-tiff.
 AC_ARG_WITH(tiff,
-	      [  --without-tiff          disable TIFF support],
-	      [with_tiff=$withval],
-	      [with_tiff='yes'])
+            [  --with-tiff=DIR         use tiff installed in DIR],
+            [
+            if [ test "x$withval" = "xno" ]; then
+              [with_tiff='no']
+            else
+              if [ test "x$withval" != "xyes" ]; then
+                with_tiff=$withval
+                TIFF_DIR=$withval
+                CPPFLAGS="$CPPFLAGS -I$TIFF_DIR/include"
+                LDFLAGS="$LDFLAGS -L$TIFF_DIR/lib"
+              fi
+              [with_tiff='yes']  
+            fi
+            ],
+	        [with_tiff='yes'])
 
 # Disable ZLIB
 AC_ARG_WITH(zlib,
@@ -116,7 +140,7 @@ have_jpeg='no'
 LIB_JPEG=''
 if test ! "$with_jpeg" = 'no'
 then
-    AC_MSG_CHECKING(for JPEG support )
+    AC_MSG_CHECKING([for JPEG support])
     AC_MSG_RESULT()
     failed=0;
     passed=0;
@@ -221,7 +245,7 @@ have_tiff='no'
 LIB_TIFF=''
 if test ! "$with_tiff" = 'no'
 then
-    AC_MSG_CHECKING(for TIFF support )
+    AC_MSG_CHECKING([for TIFF support])
     AC_MSG_RESULT()
     failed=0;
     passed=0;

@@ -60,54 +60,49 @@ typedef struct _cmsTagTypeLinkedList_st {
 // Helper macro to define a MPE handler. Callbacks do have a fixed naming convention
 #define TYPE_MPE_HANDLER(t, x)  { (t), READ_FN(x), WRITE_FN(x), GenericMPEdup, GenericMPEfree, NULL, 0 }
 
-// Register a new type handler. This routine is shared between normal types and MPE
+// Register a new type handler. This routine is shared between normal types and MPE. LinkedList points to the optional list head
 static
-cmsBool RegisterTypesPlugin(cmsContext id, cmsPluginBase* Data, _cmsTagTypeLinkedList* LinkedList, cmsUInt32Number DefaultListCount)
+cmsBool RegisterTypesPlugin(cmsContext id, cmsPluginBase* Data, _cmsMemoryClient pos)
 {
     cmsPluginTagType* Plugin = (cmsPluginTagType*) Data;
-    _cmsTagTypeLinkedList *pt, *Anterior = NULL;
+    _cmsTagTypePluginChunkType* ctx = ( _cmsTagTypePluginChunkType*) _cmsContextGetClientChunk(id, pos);
+    _cmsTagTypeLinkedList *pt;
 
     // Calling the function with NULL as plug-in would unregister the plug in.
     if (Data == NULL) {
 
-        LinkedList[DefaultListCount-1].Next = NULL;
+        // There is no need to set free the memory, as pool is destroyed as a whole.
+        ctx ->TagTypes = NULL;
         return TRUE;
     }
 
-    pt = Anterior = LinkedList;
-    while (pt != NULL) {
-
-        if (Plugin->Handler.Signature == pt -> Handler.Signature) {
-            pt ->Handler = Plugin ->Handler;    // Replace old behaviour.
-            // Note that since no memory is allocated, unregister does not
-            // reset this action.
-            return TRUE;
-        }
-
-        Anterior = pt;
-        pt = pt ->Next;
-    }
-
-    // Registering happens in plug-in memory pool
+    // Registering happens in plug-in memory pool.
     pt = (_cmsTagTypeLinkedList*) _cmsPluginMalloc(id, sizeof(_cmsTagTypeLinkedList));
     if (pt == NULL) return FALSE;
 
     pt ->Handler   = Plugin ->Handler;
-    pt ->Next      = NULL;
+    pt ->Next      = ctx ->TagTypes;
 
-    if (Anterior)
-        Anterior -> Next = pt;
-
+    ctx ->TagTypes = pt;
+     
     return TRUE;
 }
 
-// Return handler for a given type or NULL if not found. Shared between normal types and MPE
+// Return handler for a given type or NULL if not found. Shared between normal types and MPE. It first tries the additons 
+// made by plug-ins and then the built-in defaults.
 static
-cmsTagTypeHandler* GetHandler(cmsTagTypeSignature sig, _cmsTagTypeLinkedList* LinkedList)
+cmsTagTypeHandler* GetHandler(cmsTagTypeSignature sig, _cmsTagTypeLinkedList* PluginLinkedList, _cmsTagTypeLinkedList* DefaultLinkedList)
 {
     _cmsTagTypeLinkedList* pt;
 
-    for (pt = LinkedList;
+    for (pt = PluginLinkedList;
+         pt != NULL;
+         pt = pt ->Next) {
+
+            if (sig == pt -> Handler.Signature) return &pt ->Handler;
+    }
+
+    for (pt = DefaultLinkedList;
          pt != NULL;
          pt = pt ->Next) {
 
@@ -134,6 +129,7 @@ cmsBool _cmsWriteWCharArray(cmsIOHANDLER* io, cmsUInt32Number n, const wchar_t* 
     return TRUE;
 }
 
+// Auxiliar to read an array of wchar_t
 static
 cmsBool _cmsReadWCharArray(cmsIOHANDLER* io, cmsUInt32Number n, wchar_t* Array)
 {
@@ -748,6 +744,8 @@ cmsBool Type_Text_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
 
     // Create memory
     Text = (char*) _cmsMalloc(self ->ContextID, size);
+    if (Text == NULL) return FALSE;
+
     cmsMLUgetASCII(mlu, cmsNoLanguage, cmsNoCountry, Text, size);
 
     // Write it, including separator
@@ -4355,7 +4353,7 @@ static _cmsTagTypeLinkedList SupportedMPEtypes[] = {
 {TYPE_MPE_HANDLER((cmsTagTypeSignature) cmsSigCLutElemType,         MPEclut),        NULL },
 };
 
-#define DEFAULT_MPE_TYPE_COUNT  (sizeof(SupportedMPEtypes) / sizeof(_cmsTagTypeLinkedList))
+_cmsTagTypePluginChunkType _cmsMPETypePluginChunk = { NULL };
 
 static
 cmsBool ReadMPEElem(struct _cms_typehandler_struct* self,
@@ -4368,6 +4366,8 @@ cmsBool ReadMPEElem(struct _cms_typehandler_struct* self,
     cmsTagTypeHandler* TypeHandler;
     cmsUInt32Number nItems;
     cmsPipeline *NewLUT = (cmsPipeline *) Cargo;
+    _cmsTagTypePluginChunkType* MPETypePluginChunk  = ( _cmsTagTypePluginChunkType*) _cmsContextGetClientChunk(self->ContextID, MPEPlugin);
+
 
     // Take signature and channels for each element.
     if (!_cmsReadUInt32Number(io, (cmsUInt32Number*) &ElementSig)) return FALSE;
@@ -4376,7 +4376,7 @@ cmsBool ReadMPEElem(struct _cms_typehandler_struct* self,
     if (!_cmsReadUInt32Number(io, NULL)) return FALSE;
 
     // Read diverse MPE types
-    TypeHandler = GetHandler((cmsTagTypeSignature) ElementSig, SupportedMPEtypes);
+    TypeHandler = GetHandler((cmsTagTypeSignature) ElementSig, MPETypePluginChunk ->TagTypes, SupportedMPEtypes);
     if (TypeHandler == NULL)  {
 
         char String[5];
@@ -4453,6 +4453,7 @@ cmsBool Type_MPE_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, v
     cmsPipeline* Lut = (cmsPipeline*) Ptr;
     cmsStage* Elem = Lut ->Elements;
     cmsTagTypeHandler* TypeHandler;
+    _cmsTagTypePluginChunkType* MPETypePluginChunk  = ( _cmsTagTypePluginChunkType*) _cmsContextGetClientChunk(self->ContextID, MPEPlugin);
 
     BaseOffset = io ->Tell(io) - sizeof(_cmsTagBase);
 
@@ -4486,7 +4487,7 @@ cmsBool Type_MPE_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, v
 
         ElementSig = Elem ->Type;
 
-        TypeHandler = GetHandler((cmsTagTypeSignature) ElementSig, SupportedMPEtypes);
+        TypeHandler = GetHandler((cmsTagTypeSignature) ElementSig, MPETypePluginChunk->TagTypes, SupportedMPEtypes);
         if (TypeHandler == NULL)  {
 
                 char String[5];
@@ -5263,24 +5264,95 @@ static _cmsTagTypeLinkedList SupportedTagTypes[] = {
 {TYPE_HANDLER(cmsSigVcgtType,                  vcgt),                NULL }
 };
 
-#define DEFAULT_TAG_TYPE_COUNT  (sizeof(SupportedTagTypes) / sizeof(_cmsTagTypeLinkedList))
+
+_cmsTagTypePluginChunkType _cmsTagTypePluginChunk = { NULL };
+
+
+
+// Duplicates the zone of memory used by the plug-in in the new context
+static
+void DupTagTypeList(struct _cmsContext_struct* ctx, 
+                    const struct _cmsContext_struct* src, 
+                    int loc)
+{
+   _cmsTagTypePluginChunkType newHead = { NULL };
+   _cmsTagTypeLinkedList*  entry;
+   _cmsTagTypeLinkedList*  Anterior = NULL;
+   _cmsTagTypePluginChunkType* head = (_cmsTagTypePluginChunkType*) src->chunks[loc];
+
+   // Walk the list copying all nodes
+   for (entry = head->TagTypes;
+       entry != NULL;
+       entry = entry ->Next) {
+
+           _cmsTagTypeLinkedList *newEntry = ( _cmsTagTypeLinkedList *) _cmsSubAllocDup(ctx ->MemPool, entry, sizeof(_cmsTagTypeLinkedList));
+
+           if (newEntry == NULL) 
+               return;
+
+           // We want to keep the linked list order, so this is a little bit tricky
+           newEntry -> Next = NULL;
+           if (Anterior)
+               Anterior -> Next = newEntry;
+
+           Anterior = newEntry;
+
+           if (newHead.TagTypes == NULL)
+               newHead.TagTypes = newEntry;
+   }
+
+   ctx ->chunks[loc] = _cmsSubAllocDup(ctx->MemPool, &newHead, sizeof(_cmsTagTypePluginChunkType));
+}
+
+
+void _cmsAllocTagTypePluginChunk(struct _cmsContext_struct* ctx, 
+                                 const struct _cmsContext_struct* src)
+{
+    if (src != NULL) {
+        
+        // Duplicate the LIST
+        DupTagTypeList(ctx, src, TagTypePlugin);
+    }
+    else {
+        static _cmsTagTypePluginChunkType TagTypePluginChunk = { NULL };
+        ctx ->chunks[TagTypePlugin] = _cmsSubAllocDup(ctx ->MemPool, &TagTypePluginChunk, sizeof(_cmsTagTypePluginChunkType));
+    }
+}
+
+void _cmsAllocMPETypePluginChunk(struct _cmsContext_struct* ctx, 
+                               const struct _cmsContext_struct* src)
+{
+    if (src != NULL) {
+        
+        // Duplicate the LIST
+        DupTagTypeList(ctx, src, MPEPlugin);
+    }
+    else {
+        static _cmsTagTypePluginChunkType TagTypePluginChunk = { NULL };
+        ctx ->chunks[MPEPlugin] = _cmsSubAllocDup(ctx ->MemPool, &TagTypePluginChunk, sizeof(_cmsTagTypePluginChunkType));
+    }
+
+}
+
 
 // Both kind of plug-ins share same structure
 cmsBool  _cmsRegisterTagTypePlugin(cmsContext id, cmsPluginBase* Data)
 {
-    return RegisterTypesPlugin(id, Data, SupportedTagTypes, DEFAULT_TAG_TYPE_COUNT);
+    return RegisterTypesPlugin(id, Data, TagTypePlugin);
 }
 
 cmsBool  _cmsRegisterMultiProcessElementPlugin(cmsContext id, cmsPluginBase* Data)
 {
-    return RegisterTypesPlugin(id, Data, SupportedMPEtypes, DEFAULT_MPE_TYPE_COUNT);
+    return RegisterTypesPlugin(id, Data,MPEPlugin);
 }
 
 
 // Wrapper for tag types
-cmsTagTypeHandler* _cmsGetTagTypeHandler(cmsTagTypeSignature sig)
+cmsTagTypeHandler* _cmsGetTagTypeHandler(cmsContext ContextID, cmsTagTypeSignature sig)
 {
-    return GetHandler(sig, SupportedTagTypes);
+    _cmsTagTypePluginChunkType* ctx = ( _cmsTagTypePluginChunkType*) _cmsContextGetClientChunk(ContextID, TagTypePlugin);
+
+    return GetHandler(sig, ctx->TagTypes, SupportedTagTypes);
 }
 
 // ********************************************************************************
@@ -5395,30 +5467,68 @@ static _cmsTagLinkedList SupportedTags[] = {
     cmsSigDeviceSettingsTag   ==> Deprecated, useless
 */
 
-#define DEFAULT_TAG_COUNT  (sizeof(SupportedTags) / sizeof(_cmsTagLinkedList))
+
+_cmsTagPluginChunkType _cmsTagPluginChunk = { NULL };
+
+
+// Duplicates the zone of memory used by the plug-in in the new context
+static
+void DupTagList(struct _cmsContext_struct* ctx, 
+                    const struct _cmsContext_struct* src)
+{
+   _cmsTagPluginChunkType newHead = { NULL };
+   _cmsTagLinkedList*  entry;
+   _cmsTagLinkedList*  Anterior = NULL;
+   _cmsTagPluginChunkType* head = (_cmsTagPluginChunkType*) src->chunks[TagPlugin];
+
+   // Walk the list copying all nodes
+   for (entry = head->Tag;
+       entry != NULL;
+       entry = entry ->Next) {
+
+           _cmsTagLinkedList *newEntry = ( _cmsTagLinkedList *) _cmsSubAllocDup(ctx ->MemPool, entry, sizeof(_cmsTagLinkedList));
+
+           if (newEntry == NULL) 
+               return;
+
+           // We want to keep the linked list order, so this is a little bit tricky
+           newEntry -> Next = NULL;
+           if (Anterior)
+               Anterior -> Next = newEntry;
+
+           Anterior = newEntry;
+
+           if (newHead.Tag == NULL)
+               newHead.Tag = newEntry;
+   }
+
+   ctx ->chunks[TagPlugin] = _cmsSubAllocDup(ctx->MemPool, &newHead, sizeof(_cmsTagPluginChunkType));
+}
+
+void _cmsAllocTagPluginChunk(struct _cmsContext_struct* ctx, 
+                                 const struct _cmsContext_struct* src)
+{
+    if (src != NULL) {
+
+        DupTagList(ctx, src);
+    }
+    else {
+        static _cmsTagPluginChunkType TagPluginChunk = { NULL };
+        ctx ->chunks[TagPlugin] = _cmsSubAllocDup(ctx ->MemPool, &TagPluginChunk, sizeof(_cmsTagPluginChunkType));
+    }
+
+}
 
 cmsBool  _cmsRegisterTagPlugin(cmsContext id, cmsPluginBase* Data)
 {
     cmsPluginTag* Plugin = (cmsPluginTag*) Data;
-    _cmsTagLinkedList *pt, *Anterior;
-
+    _cmsTagLinkedList *pt;
+    _cmsTagPluginChunkType* TagPluginChunk = ( _cmsTagPluginChunkType*) _cmsContextGetClientChunk(id, TagPlugin);
 
     if (Data == NULL) {
 
-        SupportedTags[DEFAULT_TAG_COUNT-1].Next = NULL;
+        TagPluginChunk->Tag = NULL;
         return TRUE;
-    }
-
-    pt = Anterior = SupportedTags;
-    while (pt != NULL) {
-
-        if (Plugin->Signature == pt -> Signature) {
-            pt ->Descriptor = Plugin ->Descriptor;  // Replace old behaviour
-            return TRUE;
-        }
-
-        Anterior = pt;
-        pt = pt ->Next;
     }
 
     pt = (_cmsTagLinkedList*) _cmsPluginMalloc(id, sizeof(_cmsTagLinkedList));
@@ -5426,17 +5536,25 @@ cmsBool  _cmsRegisterTagPlugin(cmsContext id, cmsPluginBase* Data)
 
     pt ->Signature  = Plugin ->Signature;
     pt ->Descriptor = Plugin ->Descriptor;
-    pt ->Next       = NULL;
+    pt ->Next       = TagPluginChunk ->Tag;
 
-    if (Anterior != NULL) Anterior -> Next = pt;
-
+    TagPluginChunk ->Tag = pt;
+    
     return TRUE;
 }
 
 // Return a descriptor for a given tag or NULL
-cmsTagDescriptor* _cmsGetTagDescriptor(cmsTagSignature sig)
+cmsTagDescriptor* _cmsGetTagDescriptor(cmsContext ContextID, cmsTagSignature sig)
 {
     _cmsTagLinkedList* pt;
+    _cmsTagPluginChunkType* TagPluginChunk = ( _cmsTagPluginChunkType*) _cmsContextGetClientChunk(ContextID, TagPlugin);
+
+    for (pt = TagPluginChunk->Tag;
+             pt != NULL;
+             pt = pt ->Next) {
+
+                if (sig == pt -> Signature) return &pt ->Descriptor;
+    }
 
     for (pt = SupportedTags;
             pt != NULL;

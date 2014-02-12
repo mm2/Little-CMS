@@ -13,11 +13,11 @@ check_PROGRAMS = testcms
 
 testcms_LDADD = $(top_builddir)/src/liblcms2.la 
 testcms_LDFLAGS = @LDFLAGS@
-testcms_SOURCES = testcms2.c
+testcms_SOURCES = testcms2.c testplugin.c zoo_icc.c testcms2.h
 
 EXTRA_DIST = test1.icc bad.icc toosmall.icc test2.icc \
              test3.icc test4.icc \
-             test5.icc  
+             test5.icc ibm-t61.icc new.icc
 
 check:
 	if [ $(top_srcdir) != $(top_builddir) ]; then \

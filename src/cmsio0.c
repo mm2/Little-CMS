@@ -471,6 +471,9 @@ cmsHPROFILE CMSEXPORT cmsCreateProfilePlaceholder(cmsContext ContextID)
     // Set creation date/time
     memmove(&Icc ->Created, gmtime(&now), sizeof(Icc ->Created));
 
+    // Create a mutex if the user provided proper plugin. NULL otherwise
+    Icc ->UsrMutex = _cmsCreateMutex(ContextID);
+
     // Return the handle
     return (cmsHPROFILE) Icc;
 }
@@ -549,9 +552,38 @@ int _cmsSearchTag(_cmsICCPROFILE* Icc, cmsTagSignature sig, cmsBool lFollowLinks
     return n;
 }
 
+// Deletes a tag entry
 
-// Create a new tag entry
+static
+void _cmsDeleteTagByPos(_cmsICCPROFILE* Icc, int i)
+{
+    _cmsAssert(Icc != NULL);
+    _cmsAssert(i >= 0);
 
+   
+    if (Icc -> TagPtrs[i] != NULL) {
+
+        // Free previous version
+        if (Icc ->TagSaveAsRaw[i]) {
+            _cmsFree(Icc ->ContextID, Icc ->TagPtrs[i]);
+        }
+        else {
+            cmsTagTypeHandler* TypeHandler = Icc ->TagTypeHandlers[i];
+
+            if (TypeHandler != NULL) {
+
+                cmsTagTypeHandler LocalTypeHandler = *TypeHandler;
+                LocalTypeHandler.ContextID = Icc ->ContextID;              // As an additional parameter
+                LocalTypeHandler.ICCVersion = Icc ->Version;
+                LocalTypeHandler.FreePtr(&LocalTypeHandler, Icc -> TagPtrs[i]);
+            }
+        }
+
+    } 
+}
+
+
+// Creates a new tag entry
 static
 cmsBool _cmsNewTag(_cmsICCPROFILE* Icc, cmsTagSignature sig, int* NewPos)
 {
@@ -559,15 +591,15 @@ cmsBool _cmsNewTag(_cmsICCPROFILE* Icc, cmsTagSignature sig, int* NewPos)
 
     // Search for the tag
     i = _cmsSearchTag(Icc, sig, FALSE);
-
-    // Now let's do it easy. If the tag has been already written, that's an error
     if (i >= 0) {
-        cmsSignalError(Icc ->ContextID, cmsERROR_ALREADY_DEFINED, "Tag '%x' already exists", sig);
-        return FALSE;
+
+        // Already exists? delete it
+        _cmsDeleteTagByPos(Icc, i);
+        *NewPos = i;
     }
     else  {
 
-        // New one
+        // No, make a new one
 
         if (Icc -> TagCount >= MAX_TABLE_TAG) {
             cmsSignalError(Icc ->ContextID, cmsERROR_RANGE, "Too many tags (%d)", MAX_TABLE_TAG);
@@ -924,7 +956,7 @@ void  CMSEXPORT cmsSetProfileVersion(cmsHPROFILE hProfile, cmsFloat64Number Vers
 
     // 4.2 -> 0x4200000
 
-    Icc -> Version = BaseToBase((cmsUInt32Number) floor(Version * 100.0), 10, 16) << 16;
+    Icc -> Version = BaseToBase((cmsUInt32Number) floor(Version * 100.0 + 0.5), 10, 16) << 16;
 }
 
 cmsFloat64Number CMSEXPORT cmsGetProfileVersion(cmsHPROFILE hProfile)
@@ -1147,7 +1179,7 @@ cmsBool SaveTags(_cmsICCPROFILE* Icc, _cmsICCPROFILE* FileOrig)
         else {
 
             // Search for support on this tag
-            TagDescriptor = _cmsGetTagDescriptor(Icc -> TagNames[i]);
+            TagDescriptor = _cmsGetTagDescriptor(Icc-> ContextID, Icc -> TagNames[i]);
             if (TagDescriptor == NULL) continue;                        // Unsupported, ignore it
            
             if (TagDescriptor ->DecideType != NULL) {
@@ -1159,7 +1191,7 @@ cmsBool SaveTags(_cmsICCPROFILE* Icc, _cmsICCPROFILE* FileOrig)
                 Type = TagDescriptor ->SupportedTypes[0];
             }
 
-            TypeHandler =  _cmsGetTagTypeHandler(Type);
+            TypeHandler =  _cmsGetTagTypeHandler(Icc->ContextID, Type);
 
             if (TypeHandler == NULL) {
                 cmsSignalError(Icc ->ContextID, cmsERROR_INTERNAL, "(Internal) no handler for tag %x", Icc -> TagNames[i]);
@@ -1227,7 +1259,7 @@ cmsUInt32Number CMSEXPORT cmsSaveProfileToIOhandler(cmsHPROFILE hProfile, cmsIOH
 {
     _cmsICCPROFILE* Icc = (_cmsICCPROFILE*) hProfile;
     _cmsICCPROFILE Keep;
-    cmsIOHANDLER* PrevIO;
+    cmsIOHANDLER* PrevIO = NULL;
     cmsUInt32Number UsedSpace;
     cmsContext ContextID;
 
@@ -1241,8 +1273,8 @@ cmsUInt32Number CMSEXPORT cmsSaveProfileToIOhandler(cmsHPROFILE hProfile, cmsIOH
 
     // Pass #1 does compute offsets
 
-    if (!_cmsWriteHeader(Icc, 0)) return 0;
-    if (!SaveTags(Icc, &Keep)) return 0;
+    if (!_cmsWriteHeader(Icc, 0)) goto Error;
+    if (!SaveTags(Icc, &Keep)) goto Error;
 
     UsedSpace = PrevIO ->UsedSpace;
 
@@ -1251,9 +1283,9 @@ cmsUInt32Number CMSEXPORT cmsSaveProfileToIOhandler(cmsHPROFILE hProfile, cmsIOH
     if (io != NULL) {
 
         Icc ->IOhandler = io;
-        if (!SetLinks(Icc)) goto CleanUp;
-        if (!_cmsWriteHeader(Icc, UsedSpace)) goto CleanUp;
-        if (!SaveTags(Icc, &Keep)) goto CleanUp;
+        if (!SetLinks(Icc)) goto Error;
+        if (!_cmsWriteHeader(Icc, UsedSpace)) goto Error;
+        if (!SaveTags(Icc, &Keep)) goto Error;
     }
 
     memmove(Icc, &Keep, sizeof(_cmsICCPROFILE));
@@ -1262,7 +1294,7 @@ cmsUInt32Number CMSEXPORT cmsSaveProfileToIOhandler(cmsHPROFILE hProfile, cmsIOH
     return UsedSpace;
 
 
-CleanUp:
+Error:
     cmsCloseIOhandler(PrevIO);
     memmove(Icc, &Keep, sizeof(_cmsICCPROFILE));
     return 0;
@@ -1310,11 +1342,13 @@ cmsBool CMSEXPORT cmsSaveProfileToMem(cmsHPROFILE hProfile, void *MemPtr, cmsUIn
     cmsIOHANDLER* io;
     cmsContext ContextID = cmsGetProfileContextID(hProfile);
 
+    _cmsAssert(BytesNeeded != NULL);
+
     // Should we just calculate the needed space?
     if (MemPtr == NULL) {
 
            *BytesNeeded =  cmsSaveProfileToIOhandler(hProfile, NULL);
-            return TRUE;
+            return (*BytesNeeded == 0) ? FALSE : TRUE;
     }
 
     // That is a real write operation
@@ -1367,6 +1401,8 @@ cmsBool  CMSEXPORT cmsCloseProfile(cmsHPROFILE hProfile)
         rc &= cmsCloseIOhandler(Icc->IOhandler);
     }
 
+    _cmsDestroyMutex(Icc->ContextID, Icc->UsrMutex);
+
     _cmsFree(Icc ->ContextID, Icc);   // Free placeholder memory
 
     return rc;
@@ -1407,14 +1443,18 @@ void* CMSEXPORT cmsReadTag(cmsHPROFILE hProfile, cmsTagSignature sig)
     cmsUInt32Number ElemCount;
     int n;
 
+    if (!_cmsLockMutex(Icc->ContextID, Icc ->UsrMutex)) return NULL;
+
     n = _cmsSearchTag(Icc, sig, TRUE);
-    if (n < 0) return NULL;                 // Not found, return NULL
+    if (n < 0) goto Error;               // Not found, return NULL
 
 
     // If the element is already in memory, return the pointer
     if (Icc -> TagPtrs[n]) {
 
-        if (Icc ->TagSaveAsRaw[n]) return NULL;  // We don't support read raw tags as cooked
+        if (Icc ->TagSaveAsRaw[n]) goto Error;  // We don't support read raw tags as cooked
+
+        _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
         return Icc -> TagPtrs[n];
     }
 
@@ -1424,23 +1464,32 @@ void* CMSEXPORT cmsReadTag(cmsHPROFILE hProfile, cmsTagSignature sig)
 
     // Seek to its location
     if (!io -> Seek(io, Offset))
-        return NULL;
+        goto Error;
 
     // Search for support on this tag
-    TagDescriptor = _cmsGetTagDescriptor(sig);
-    if (TagDescriptor == NULL) return NULL;     // Unsupported.
+    TagDescriptor = _cmsGetTagDescriptor(Icc-> ContextID, sig);
+    if (TagDescriptor == NULL) {
+
+        char String[5];
+
+        _cmsTagSignature2String(String, sig);
+
+        // An unknown element was found.
+        cmsSignalError(Icc ->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unknown tag type '%s' found.", String);
+        goto Error;     // Unsupported.
+    }
 
     // if supported, get type and check if in list
     BaseType = _cmsReadTypeBase(io);
-    if (BaseType == 0) return NULL;
+    if (BaseType == 0) goto Error;
 
-    if (!IsTypeSupported(TagDescriptor, BaseType)) return NULL;
+    if (!IsTypeSupported(TagDescriptor, BaseType)) goto Error;
 
     TagSize  -= 8;                      // Alredy read by the type base logic
 
     // Get type handler
-    TypeHandler = _cmsGetTagTypeHandler(BaseType);
-    if (TypeHandler == NULL) return NULL;
+    TypeHandler = _cmsGetTagTypeHandler(Icc ->ContextID, BaseType);
+    if (TypeHandler == NULL) goto Error;
     LocalTypeHandler = *TypeHandler;
 
 
@@ -1459,7 +1508,7 @@ void* CMSEXPORT cmsReadTag(cmsHPROFILE hProfile, cmsTagSignature sig)
 
         _cmsTagSignature2String(String, sig);
         cmsSignalError(Icc ->ContextID, cmsERROR_CORRUPTION_DETECTED, "Corrupted tag '%s'", String);
-        return NULL;
+        goto Error;
     }
 
     // This is a weird error that may be a symptom of something more serious, the number of
@@ -1475,7 +1524,14 @@ void* CMSEXPORT cmsReadTag(cmsHPROFILE hProfile, cmsTagSignature sig)
 
 
     // Return the data
+    _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
     return Icc -> TagPtrs[n];
+
+
+    // Return error and unlock tha data
+Error:
+    _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
+    return NULL;
 }
 
 
@@ -1509,49 +1565,26 @@ cmsBool CMSEXPORT cmsWriteTag(cmsHPROFILE hProfile, cmsTagSignature sig, const v
     cmsFloat64Number Version;
     char TypeString[5], SigString[5];
 
+    if (!_cmsLockMutex(Icc->ContextID, Icc ->UsrMutex)) return FALSE;
 
+    // To delete tags.
     if (data == NULL) {
 
+         // Delete the tag
          i = _cmsSearchTag(Icc, sig, FALSE);
-         if (i >= 0)
+         if (i >= 0) {
+                
+             // Use zero as a mark of deleted 
+             _cmsDeleteTagByPos(Icc, i);
              Icc ->TagNames[i] = (cmsTagSignature) 0;
-         // Unsupported by now, reserved for future ampliations (delete)
-         return FALSE;
+             _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
+             return TRUE;
+         }
+         // Didn't find the tag
+        goto Error;
     }
 
-    i = _cmsSearchTag(Icc, sig, FALSE);
-    if (i >=0) {
-
-        if (Icc -> TagPtrs[i] != NULL) {
-
-            // Already exists. Free previous version
-            if (Icc ->TagSaveAsRaw[i]) {
-                _cmsFree(Icc ->ContextID, Icc ->TagPtrs[i]);
-            }
-            else {
-                TypeHandler = Icc ->TagTypeHandlers[i];
-
-                if (TypeHandler != NULL) {
-
-                    LocalTypeHandler = *TypeHandler;
-                    LocalTypeHandler.ContextID = Icc ->ContextID;              // As an additional parameter
-                    LocalTypeHandler.ICCVersion = Icc ->Version;
-                    LocalTypeHandler.FreePtr(&LocalTypeHandler, Icc -> TagPtrs[i]);
-                }
-            }
-        }
-    }
-    else  {
-        // New one
-        i = Icc -> TagCount;
-
-        if (i >= MAX_TABLE_TAG) {
-            cmsSignalError(Icc ->ContextID, cmsERROR_RANGE, "Too many tags (%d)", MAX_TABLE_TAG);
-            return FALSE;
-        }
-
-        Icc -> TagCount++;
-    }
+    if (!_cmsNewTag(Icc, sig, &i)) goto Error;
 
     // This is not raw
     Icc ->TagSaveAsRaw[i] = FALSE;
@@ -1560,10 +1593,10 @@ cmsBool CMSEXPORT cmsWriteTag(cmsHPROFILE hProfile, cmsTagSignature sig, const v
     Icc ->TagLinked[i] = (cmsTagSignature) 0;
 
     // Get information about the TAG.
-    TagDescriptor = _cmsGetTagDescriptor(sig);
+    TagDescriptor = _cmsGetTagDescriptor(Icc-> ContextID, sig);
     if (TagDescriptor == NULL){
          cmsSignalError(Icc ->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unsupported tag '%x'", sig);
-        return FALSE;
+        goto Error;
     }
 
 
@@ -1581,7 +1614,6 @@ cmsBool CMSEXPORT cmsWriteTag(cmsHPROFILE hProfile, cmsTagSignature sig, const v
     }
     else {
 
-
         Type = TagDescriptor ->SupportedTypes[0];
     }
 
@@ -1592,18 +1624,18 @@ cmsBool CMSEXPORT cmsWriteTag(cmsHPROFILE hProfile, cmsTagSignature sig, const v
         _cmsTagSignature2String(SigString,  sig);
 
         cmsSignalError(Icc ->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unsupported type '%s' for tag '%s'", TypeString, SigString);
-        return FALSE;
+        goto Error;
     }
 
     // Does we have a handler for this type?
-    TypeHandler =  _cmsGetTagTypeHandler(Type);
+    TypeHandler =  _cmsGetTagTypeHandler(Icc->ContextID, Type);
     if (TypeHandler == NULL) {
 
         _cmsTagSignature2String(TypeString, (cmsTagSignature) Type);
         _cmsTagSignature2String(SigString,  sig);
 
         cmsSignalError(Icc ->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unsupported type '%s' for tag '%s'", TypeString, SigString);
-        return FALSE;           // Should never happen
+        goto Error;           // Should never happen
     }
 
 
@@ -1616,7 +1648,7 @@ cmsBool CMSEXPORT cmsWriteTag(cmsHPROFILE hProfile, cmsTagSignature sig, const v
     LocalTypeHandler = *TypeHandler;
     LocalTypeHandler.ContextID  = Icc ->ContextID;
     LocalTypeHandler.ICCVersion = Icc ->Version;
-    Icc ->TagPtrs[i]         = LocalTypeHandler.DupPtr(&LocalTypeHandler, data, TagDescriptor ->ElemCount);
+    Icc ->TagPtrs[i]            = LocalTypeHandler.DupPtr(&LocalTypeHandler, data, TagDescriptor ->ElemCount);
 
     if (Icc ->TagPtrs[i] == NULL)  {
 
@@ -1624,10 +1656,16 @@ cmsBool CMSEXPORT cmsWriteTag(cmsHPROFILE hProfile, cmsTagSignature sig, const v
         _cmsTagSignature2String(SigString,  sig);
         cmsSignalError(Icc ->ContextID, cmsERROR_CORRUPTION_DETECTED, "Malformed struct in type '%s' for tag '%s'", TypeString, SigString);
 
-        return FALSE;
+        goto Error;
     }
 
+    _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
     return TRUE;
+
+Error:
+    _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
+    return FALSE;
+
 }
 
 // Read and write raw data. The only way those function would work and keep consistence with normal read and write
@@ -1648,9 +1686,11 @@ cmsInt32Number CMSEXPORT cmsReadRawTag(cmsHPROFILE hProfile, cmsTagSignature sig
     cmsUInt32Number rc;
     cmsUInt32Number Offset, TagSize;
 
+    if (!_cmsLockMutex(Icc->ContextID, Icc ->UsrMutex)) return 0;
+
     // Search for given tag in ICC profile directory
     i = _cmsSearchTag(Icc, sig, TRUE);
-    if (i < 0) return 0;                 // Not found, return 0
+    if (i < 0) goto Error;                 // Not found, 
 
     // It is already read?
     if (Icc -> TagPtrs[i] == NULL) {
@@ -1665,12 +1705,13 @@ cmsInt32Number CMSEXPORT cmsReadRawTag(cmsHPROFILE hProfile, cmsTagSignature sig
             if (BufferSize < TagSize)
                 TagSize = BufferSize;
 
-            if (!Icc ->IOhandler ->Seek(Icc ->IOhandler, Offset)) return 0;
-            if (!Icc ->IOhandler ->Read(Icc ->IOhandler, data, 1, TagSize)) return 0;
+            if (!Icc ->IOhandler ->Seek(Icc ->IOhandler, Offset)) goto Error;
+            if (!Icc ->IOhandler ->Read(Icc ->IOhandler, data, 1, TagSize)) goto Error;
 
             return TagSize;
         }
 
+        _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
         return Icc ->TagSizes[i];
     }
 
@@ -1686,16 +1727,18 @@ cmsInt32Number CMSEXPORT cmsReadRawTag(cmsHPROFILE hProfile, cmsTagSignature sig
 
             memmove(data, Icc ->TagPtrs[i], TagSize);
 
+            _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
             return TagSize;
         }
 
+        _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
         return Icc ->TagSizes[i];
     }
 
     // Already readed, or previously set by cmsWriteTag(). We need to serialize that
     // data to raw in order to maintain consistency.
     Object = cmsReadTag(hProfile, sig);
-    if (Object == NULL) return 0;
+    if (Object == NULL) goto Error;
 
     // Now we need to serialize to a memory block: just use a memory iohandler
 
@@ -1704,17 +1747,18 @@ cmsInt32Number CMSEXPORT cmsReadRawTag(cmsHPROFILE hProfile, cmsTagSignature sig
     } else{
         MemIO = cmsOpenIOhandlerFromMem(cmsGetProfileContextID(hProfile), data, BufferSize, "w");
     }
-    if (MemIO == NULL) return 0;
+    if (MemIO == NULL) goto Error;
 
     // Obtain type handling for the tag
     TypeHandler = Icc ->TagTypeHandlers[i];
-    TagDescriptor = _cmsGetTagDescriptor(sig);
+    TagDescriptor = _cmsGetTagDescriptor(Icc-> ContextID, sig);
     if (TagDescriptor == NULL) {
         cmsCloseIOhandler(MemIO);
-        return 0;
+        goto Error;
     }
+    
+    if (TypeHandler == NULL) goto Error;
 
-    // FIXME: No handling for TypeHandler == NULL here?
     // Serialize
     LocalTypeHandler = *TypeHandler;
     LocalTypeHandler.ContextID  = Icc ->ContextID;
@@ -1722,19 +1766,24 @@ cmsInt32Number CMSEXPORT cmsReadRawTag(cmsHPROFILE hProfile, cmsTagSignature sig
 
     if (!_cmsWriteTypeBase(MemIO, TypeHandler ->Signature)) {
         cmsCloseIOhandler(MemIO);
-        return 0;
+        goto Error;
     }
 
     if (!LocalTypeHandler.WritePtr(&LocalTypeHandler, MemIO, Object, TagDescriptor ->ElemCount)) {
         cmsCloseIOhandler(MemIO);
-        return 0;
+        goto Error;
     }
 
     // Get Size and close
     rc = MemIO ->Tell(MemIO);
     cmsCloseIOhandler(MemIO);      // Ignore return code this time
 
+    _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
     return rc;
+
+Error:
+    _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
+    return 0;
 }
 
 // Similar to the anterior. This function allows to write directly to the ICC profile any data, without
@@ -1746,7 +1795,12 @@ cmsBool CMSEXPORT cmsWriteRawTag(cmsHPROFILE hProfile, cmsTagSignature sig, cons
     _cmsICCPROFILE* Icc = (_cmsICCPROFILE*) hProfile;
     int i;
 
-    if (!_cmsNewTag(Icc, sig, &i)) return FALSE;
+    if (!_cmsLockMutex(Icc->ContextID, Icc ->UsrMutex)) return 0;
+
+    if (!_cmsNewTag(Icc, sig, &i)) {
+        _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
+         return FALSE;
+    }
 
     // Mark the tag as being written as RAW
     Icc ->TagSaveAsRaw[i] = TRUE;
@@ -1757,6 +1811,7 @@ cmsBool CMSEXPORT cmsWriteRawTag(cmsHPROFILE hProfile, cmsTagSignature sig, cons
     Icc ->TagPtrs[i]  = _cmsDupMem(Icc ->ContextID, data, Size);
     Icc ->TagSizes[i] = Size;
 
+    _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
     return TRUE;
 }
 
@@ -1766,7 +1821,12 @@ cmsBool CMSEXPORT cmsLinkTag(cmsHPROFILE hProfile, cmsTagSignature sig, cmsTagSi
     _cmsICCPROFILE* Icc = (_cmsICCPROFILE*) hProfile;
     int i;
 
-    if (!_cmsNewTag(Icc, sig, &i)) return FALSE;
+     if (!_cmsLockMutex(Icc->ContextID, Icc ->UsrMutex)) return FALSE;
+
+    if (!_cmsNewTag(Icc, sig, &i)) {
+        _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
+        return FALSE;
+    }
 
     // Keep necessary information
     Icc ->TagSaveAsRaw[i] = FALSE;
@@ -1777,6 +1837,7 @@ cmsBool CMSEXPORT cmsLinkTag(cmsHPROFILE hProfile, cmsTagSignature sig, cmsTagSi
     Icc ->TagSizes[i]   = 0;
     Icc ->TagOffsets[i] = 0;
 
+    _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
     return TRUE;
 }
 

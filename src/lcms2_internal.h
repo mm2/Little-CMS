@@ -164,16 +164,16 @@ cmsINLINE cmsUInt16Number _cmsQuickSaturateWord(cmsFloat64Number d)
     return _cmsQuickFloorWord(d);
 }
 
-// Plug-In registering ---------------------------------------------------------------
+// Plug-In registration ---------------------------------------------------------------
 
 // Specialized function for plug-in memory management. No pairing free() since whole pool is freed at once.
 void* _cmsPluginMalloc(cmsContext ContextID, cmsUInt32Number size);
 
 // Memory management
-cmsBool   _cmsRegisterMemHandlerPlugin(cmsPluginBase* Plugin);
+cmsBool   _cmsRegisterMemHandlerPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
 
 // Interpolation
-cmsBool  _cmsRegisterInterpPlugin(cmsPluginBase* Plugin);
+cmsBool  _cmsRegisterInterpPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
 
 // Parametric curves
 cmsBool  _cmsRegisterParametricCurvesPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
@@ -198,6 +198,9 @@ cmsBool  _cmsRegisterOptimizationPlugin(cmsContext ContextID, cmsPluginBase* Plu
 
 // Transform
 cmsBool  _cmsRegisterTransformPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
+
+// Mutex
+cmsBool _cmsRegisterMutexPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
 
 // ---------------------------------------------------------------------------------------------------------
 
@@ -224,9 +227,266 @@ typedef struct {
 _cmsSubAllocator* _cmsCreateSubAlloc(cmsContext ContextID, cmsUInt32Number Initial);
 void              _cmsSubAllocDestroy(_cmsSubAllocator* s);
 void*             _cmsSubAlloc(_cmsSubAllocator* s, cmsUInt32Number size);
+void*             _cmsSubAllocDup(_cmsSubAllocator* s, const void *ptr, cmsUInt32Number size);
 
 // ----------------------------------------------------------------------------------
 
+// The context clients. 
+typedef enum {
+
+    UserPtr,            // User-defined pointer
+    Logger,
+    AlarmCodesContext,
+    AdaptationStateContext, 
+    MemPlugin,
+    InterpPlugin,
+    CurvesPlugin,
+    FormattersPlugin,
+    TagTypePlugin,
+    TagPlugin,
+    IntentPlugin,
+    MPEPlugin,
+    OptimizationPlugin,
+    TransformPlugin,
+    MutexPlugin,
+
+    // Last in list
+    MemoryClientMax
+
+} _cmsMemoryClient;
+
+// Magic number for identifying a valid context
+#define cmsContextMagicNumber 0x63747832  // 'ctx2'
+
+// Container for memory management plug-in.
+typedef struct {
+
+    _cmsMallocFnPtrType     MallocPtr;    
+    _cmsMalloZerocFnPtrType MallocZeroPtr;
+    _cmsFreeFnPtrType       FreePtr;
+    _cmsReallocFnPtrType    ReallocPtr;
+    _cmsCallocFnPtrType     CallocPtr;
+    _cmsDupFnPtrType        DupPtr;
+
+} _cmsMemPluginChunkType;
+
+// Copy memory management function pointers from plug-in to chunk, taking care of missing routines
+void  _cmsInstallAllocFunctions(cmsPluginMemHandler* Plugin, _cmsMemPluginChunkType* ptr);
+
+// Internal structure for context
+struct _cmsContext_struct {
+    
+    cmsUInt32Number   Magic;          // Magic number that identifies a valid context id in the new style
+    _cmsSubAllocator* MemPool;        // The memory pool that stores context data
+    
+    void* chunks[MemoryClientMax];    // array of pointers to client chunks. Memory itself is hold in the suballocator. 
+                                      // If NULL, then it reverts to global Context0
+
+    _cmsMemPluginChunkType DefaultMemoryManager;  // The allocators used for creating the context itself. Cannot be overriden
+};
+
+// Returns a pointer to a valid context structure, including the global one if id is zero. 
+// Verifies the magic number.
+struct _cmsContext_struct* _cmsGetContext(cmsContext ContextID);
+
+// Returns the block assigned to the specific zone. 
+void*     _cmsContextGetClientChunk(cmsContext id, _cmsMemoryClient mc);
+
+
+// Chunks of context memory by plug-in client -------------------------------------------------------
+
+// Those structures encapsulates all variables needed by the several context clients (mostly plug-ins)
+
+// Container for error logger -- not a plug-in
+typedef struct {
+
+    cmsLogErrorHandlerFunction LogErrorHandler;  // Set to NULL for Context0 fallback
+
+} _cmsLogErrorChunkType;
+
+// The global Context0 storage for error logger
+extern  _cmsLogErrorChunkType  _cmsLogErrorChunk;
+
+// Allocate and init error logger container. 
+void _cmsAllocLogErrorChunk(struct _cmsContext_struct* ctx, 
+                            const struct _cmsContext_struct* src);
+
+// Container for alarm codes -- not a plug-in
+typedef struct {
+   
+    cmsUInt16Number AlarmCodes[cmsMAXCHANNELS];
+
+} _cmsAlarmCodesChunkType;
+
+// The global Context0 storage for alarm codes
+extern  _cmsAlarmCodesChunkType _cmsAlarmCodesChunk;
+
+// Allocate and init alarm codes container. 
+void _cmsAllocAlarmCodesChunk(struct _cmsContext_struct* ctx, 
+                            const struct _cmsContext_struct* src);
+
+// Container for adaptation state -- not a plug-in
+typedef struct {
+    
+    cmsFloat64Number  AdaptationState;
+
+} _cmsAdaptationStateChunkType;
+
+// The global Context0 storage for adaptation state
+extern  _cmsAdaptationStateChunkType    _cmsAdaptationStateChunk;
+
+// Allocate and init adaptation state container.
+void _cmsAllocAdaptationStateChunk(struct _cmsContext_struct* ctx, 
+                                   const struct _cmsContext_struct* src);
+
+
+// The global Context0 storage for memory management
+extern  _cmsMemPluginChunkType _cmsMemPluginChunk;
+
+// Allocate and init memory management container.
+void _cmsAllocMemPluginChunk(struct _cmsContext_struct* ctx, 
+                             const struct _cmsContext_struct* src);
+
+// Container for interpolation plug-in
+typedef struct {
+
+    cmsInterpFnFactory Interpolators;
+
+} _cmsInterpPluginChunkType;
+
+// The global Context0 storage for interpolation plug-in
+extern  _cmsInterpPluginChunkType _cmsInterpPluginChunk;
+
+// Allocate and init interpolation container.
+void _cmsAllocInterpPluginChunk(struct _cmsContext_struct* ctx, 
+                                const struct _cmsContext_struct* src);
+
+// Container for parametric curves plug-in
+typedef struct {
+
+    struct _cmsParametricCurvesCollection_st* ParametricCurves;
+
+} _cmsCurvesPluginChunkType;
+
+// The global Context0 storage for tone curves plug-in
+extern  _cmsCurvesPluginChunkType _cmsCurvesPluginChunk;
+
+// Allocate and init parametric curves container.
+void _cmsAllocCurvesPluginChunk(struct _cmsContext_struct* ctx, 
+                                                      const struct _cmsContext_struct* src);
+
+// Container for formatters plug-in
+typedef struct {
+
+    struct _cms_formatters_factory_list* FactoryList;
+
+} _cmsFormattersPluginChunkType;
+
+// The global Context0 storage for formatters plug-in
+extern  _cmsFormattersPluginChunkType _cmsFormattersPluginChunk;
+
+// Allocate and init formatters container.
+void _cmsAllocFormattersPluginChunk(struct _cmsContext_struct* ctx, 
+                                                       const struct _cmsContext_struct* src);
+
+// This chunk type is shared by TagType plug-in and MPE Plug-in
+typedef struct {
+
+    struct _cmsTagTypeLinkedList_st* TagTypes;
+
+} _cmsTagTypePluginChunkType;
+
+
+// The global Context0 storage for tag types plug-in
+extern  _cmsTagTypePluginChunkType      _cmsTagTypePluginChunk;
+
+
+// The global Context0 storage for mult process elements plug-in
+extern  _cmsTagTypePluginChunkType      _cmsMPETypePluginChunk;
+
+// Allocate and init Tag types container.
+void _cmsAllocTagTypePluginChunk(struct _cmsContext_struct* ctx, 
+                                                        const struct _cmsContext_struct* src);
+// Allocate and init MPE container.
+void _cmsAllocMPETypePluginChunk(struct _cmsContext_struct* ctx, 
+                                                        const struct _cmsContext_struct* src);
+// Container for tag plug-in
+typedef struct {
+   
+    struct _cmsTagLinkedList_st* Tag;
+
+} _cmsTagPluginChunkType;
+
+
+// The global Context0 storage for tag plug-in
+extern  _cmsTagPluginChunkType _cmsTagPluginChunk;
+
+// Allocate and init Tag container.
+void _cmsAllocTagPluginChunk(struct _cmsContext_struct* ctx, 
+                                                      const struct _cmsContext_struct* src); 
+
+// Container for intents plug-in
+typedef struct {
+
+    struct _cms_intents_list* Intents;
+
+} _cmsIntentsPluginChunkType;
+
+
+// The global Context0 storage for intents plug-in
+extern  _cmsIntentsPluginChunkType _cmsIntentsPluginChunk;
+
+// Allocate and init intents container.
+void _cmsAllocIntentsPluginChunk(struct _cmsContext_struct* ctx, 
+                                                        const struct _cmsContext_struct* src); 
+
+// Container for optimization plug-in
+typedef struct {
+
+    struct _cmsOptimizationCollection_st* OptimizationCollection;
+
+} _cmsOptimizationPluginChunkType;
+
+
+// The global Context0 storage for optimizers plug-in
+extern  _cmsOptimizationPluginChunkType _cmsOptimizationPluginChunk;
+
+// Allocate and init optimizers container.
+void _cmsAllocOptimizationPluginChunk(struct _cmsContext_struct* ctx, 
+                                         const struct _cmsContext_struct* src);
+
+// Container for transform plug-in
+typedef struct {
+
+    struct _cmsTransformCollection_st* TransformCollection;
+
+} _cmsTransformPluginChunkType;
+
+// The global Context0 storage for full-transform replacement plug-in
+extern  _cmsTransformPluginChunkType _cmsTransformPluginChunk;
+
+// Allocate and init transform container.
+void _cmsAllocTransformPluginChunk(struct _cmsContext_struct* ctx, 
+                                        const struct _cmsContext_struct* src);
+
+// Container for mutex plug-in
+typedef struct {
+
+    _cmsCreateMutexFnPtrType  CreateMutexPtr;
+    _cmsDestroyMutexFnPtrType DestroyMutexPtr;
+    _cmsLockMutexFnPtrType    LockMutexPtr;
+    _cmsUnlockMutexFnPtrType  UnlockMutexPtr;
+
+} _cmsMutexPluginChunkType;
+
+// The global Context0 storage for mutex plug-in
+extern  _cmsMutexPluginChunkType _cmsMutexPluginChunk;
+
+// Allocate and init mutex container.
+void _cmsAllocMutexPluginChunk(struct _cmsContext_struct* ctx, 
+                                        const struct _cmsContext_struct* src);
+
+// ----------------------------------------------------------------------------------
 // MLU internal representation
 typedef struct {
 
@@ -318,9 +578,13 @@ typedef struct _cms_iccprofile_struct {
     cmsBool                  TagSaveAsRaw[MAX_TABLE_TAG];        // True to write uncooked
     void *                   TagPtrs[MAX_TABLE_TAG];
     cmsTagTypeHandler*       TagTypeHandlers[MAX_TABLE_TAG];     // Same structure may be serialized on different types
-                                                                 // depending on profile version, so we keep track of the                                                             // type handler for each tag in the list.
+                                                                 // depending on profile version, so we keep track of the
+                                                                 // type handler for each tag in the list.
     // Special
     cmsBool                  IsWrite;
+
+    // Keep a mutex for cmsReadTag -- Note that this only works if the user includes a mutex plugin
+    void *                   UsrMutex;
 
 } _cmsICCPROFILE;
 
@@ -330,9 +594,9 @@ cmsBool              _cmsWriteHeader(_cmsICCPROFILE* Icc, cmsUInt32Number UsedSp
 int                  _cmsSearchTag(_cmsICCPROFILE* Icc, cmsTagSignature sig, cmsBool lFollowLinks);
 
 // Tag types
-cmsTagTypeHandler*   _cmsGetTagTypeHandler(cmsTagTypeSignature sig);
+cmsTagTypeHandler*   _cmsGetTagTypeHandler(cmsContext ContextID, cmsTagTypeSignature sig);
 cmsTagTypeSignature  _cmsGetTagTrueType(cmsHPROFILE hProfile, cmsTagSignature sig);
-cmsTagDescriptor*    _cmsGetTagDescriptor(cmsTagSignature sig);
+cmsTagDescriptor*    _cmsGetTagDescriptor(cmsContext ContextID, cmsTagSignature sig);
 
 // Error logging ---------------------------------------------------------------------------------------------------------
 
@@ -343,7 +607,7 @@ void                 _cmsTagSignature2String(char String[5], cmsTagSignature sig
 cmsInterpParams*     _cmsComputeInterpParams(cmsContext ContextID, int nSamples, int InputChan, int OutputChan, const void* Table, cmsUInt32Number dwFlags);
 cmsInterpParams*     _cmsComputeInterpParamsEx(cmsContext ContextID, const cmsUInt32Number nSamples[], int InputChan, int OutputChan, const void* Table, cmsUInt32Number dwFlags);
 void                 _cmsFreeInterpParams(cmsInterpParams* p);
-cmsBool              _cmsSetInterpolationRoutine(cmsInterpParams* p);
+cmsBool              _cmsSetInterpolationRoutine(cmsContext ContextID, cmsInterpParams* p);
 
 // Curves ----------------------------------------------------------------------------------------------------------------
 
@@ -474,7 +738,8 @@ cmsBool          _cmsEndPointsBySpace(cmsColorSpaceSignature Space,
                                       cmsUInt16Number **Black,
                                       cmsUInt32Number *nOutputs);
 
-cmsBool          _cmsOptimizePipeline(cmsPipeline**    Lut,
+cmsBool          _cmsOptimizePipeline(cmsContext ContextID,
+                                      cmsPipeline**    Lut,
                                       int              Intent,
                                       cmsUInt32Number* InputFormat,
                                       cmsUInt32Number* OutputFormat,
@@ -499,7 +764,8 @@ cmsPipeline*     _cmsCreateGamutCheckPipeline(cmsContext ContextID,
 cmsBool         _cmsFormatterIsFloat(cmsUInt32Number Type);
 cmsBool         _cmsFormatterIs8bit(cmsUInt32Number Type);
 
-cmsFormatter    _cmsGetFormatter(cmsUInt32Number Type,          // Specific type, i.e. TYPE_RGB_8
+cmsFormatter    _cmsGetFormatter(cmsContext ContextID,
+                                 cmsUInt32Number Type,          // Specific type, i.e. TYPE_RGB_8
                                  cmsFormatterDirection Dir,
                                  cmsUInt32Number dwFlags);
 

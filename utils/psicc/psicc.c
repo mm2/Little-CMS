@@ -185,7 +185,7 @@ void GenerateCRD(void)
 	if (n == 0) return;
 
 	Buffer = (char*) malloc(n + 1);
-    cmsGetPostScriptCRD(0, hProfile, Intent, dwFlags, Buffer, n);
+    cmsGetPostScriptCRD(0, hProfile, Intent, dwFlags, Buffer, (cmsUInt32Number) n);
 	Buffer[n] = 0;
 
 	fprintf(OutFile, "%s", Buffer);			
