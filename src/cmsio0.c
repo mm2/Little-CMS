@@ -576,6 +576,7 @@ void _cmsDeleteTagByPos(_cmsICCPROFILE* Icc, int i)
                 LocalTypeHandler.ContextID = Icc ->ContextID;              // As an additional parameter
                 LocalTypeHandler.ICCVersion = Icc ->Version;
                 LocalTypeHandler.FreePtr(&LocalTypeHandler, Icc -> TagPtrs[i]);
+                Icc ->TagPtrs[i] = NULL;
             }
         }
 
