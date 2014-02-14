@@ -255,8 +255,6 @@ typedef enum {
 
 } _cmsMemoryClient;
 
-// Magic number for identifying a valid context
-#define cmsContextMagicNumber 0x63747832  // 'ctx2'
 
 // Container for memory management plug-in.
 typedef struct {
@@ -276,7 +274,7 @@ void  _cmsInstallAllocFunctions(cmsPluginMemHandler* Plugin, _cmsMemPluginChunkT
 // Internal structure for context
 struct _cmsContext_struct {
     
-    cmsUInt32Number   Magic;          // Magic number that identifies a valid context id in the new style
+    struct _cmsContext_struct* Next;  // Points to next context in the new style
     _cmsSubAllocator* MemPool;        // The memory pool that stores context data
     
     void* chunks[MemoryClientMax];    // array of pointers to client chunks. Memory itself is hold in the suballocator. 

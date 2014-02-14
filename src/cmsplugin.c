@@ -623,7 +623,7 @@ void CMSEXPORT cmsUnregisterPlugins(void)
 // pointers structure. All global vars are referenced here.
 static struct _cmsContext_struct globalContext = {
 
-    cmsContextMagicNumber,
+    NULL,                              // Not in the linked list
     NULL,                              // No suballocator
     {
         NULL,                          //  UserPtr,            
@@ -647,35 +647,31 @@ static struct _cmsContext_struct globalContext = {
 };
 
 
-// This is a replacement for (intptr_t), which despite C99, is not supported by some compilers.
-// Clever idea from Robin, to use pointer substraction.
-#define PTR_TO_INT(ptr)  (((cmsUInt8Number*) (ptr)) - (cmsUInt8Number*) 0)
+// The context pool (linked list head)
+static struct _cmsContext_struct* _cmsContextPoolHead = NULL;
 
 // Internal, get associated pointer, with guessing. Never returns NULL.
 struct _cmsContext_struct* _cmsGetContext(cmsContext ContextID)
 {
-#ifdef CMS_CONTEXT_IN_LEGACY_MODE
-    
-    return &globalContext;
-    cmsUNUSED_PARAMETER(ContextID);
-#else
-    struct _cmsContext_struct* ctx = (struct _cmsContext_struct*) ContextID;
+    struct _cmsContext_struct* id = (struct _cmsContext_struct*) ContextID;
+    struct _cmsContext_struct* ctx;
 
-    // Check for low numbers. Yes, I  know, it is a hack... but it works    
-    if ((PTR_TO_INT(ContextID) < 0x1000) && (PTR_TO_INT(ContextID) > 0)) 
-         return &globalContext;
 
     // On 0, use global settings
-    if (ctx == NULL) 
+    if (id == NULL) 
         return &globalContext;
 
-    // Validate across magic number
-    if (ctx ->Magic != cmsContextMagicNumber)        
-        return &globalContext;
+    // Search
+    for (ctx = _cmsContextPoolHead;
+         ctx != NULL;
+         ctx = ctx ->Next) {
 
-    // New-style context, 
-    return ctx;
-#endif
+            // Found it?
+            if (id == ctx)
+                return ctx; // New-style context, 
+    }
+
+    return &globalContext;
 }
 
 
@@ -752,15 +748,6 @@ cmsPluginMemHandler* _cmsFindMemoryPlugin(void* PluginBundle)
 // data that will be forwarded to plug-ins and logger.
 cmsContext CMSEXPORT cmsCreateContext(void* Plugin, void* UserData)
 {
-#ifdef CMS_CONTEXT_IN_LEGACY_MODE
-    cmsSignalError(0, cmsERROR_NOT_SUITABLE, "Lcms is compiled as legacy context mode and you called an advanced context function");
-    return UserData;
-
-    cmsUNUSED_PARAMETER(Plugin);
-    cmsUNUSED_PARAMETER(UserData);
-#else
-
-
     struct _cmsContext_struct* ctx;
     struct _cmsContext_struct  fakeContext;
         
@@ -780,8 +767,10 @@ cmsContext CMSEXPORT cmsCreateContext(void* Plugin, void* UserData)
     // Keep memory manager
     memcpy(&ctx->DefaultMemoryManager, &fakeContext.DefaultMemoryManager, sizeof(_cmsMemPluginChunk)); 
    
-    // Identify it as a context
-    ctx ->Magic   = cmsContextMagicNumber;
+    // Maintain the linked list
+    ctx ->Next = _cmsContextPoolHead;
+    _cmsContextPoolHead = ctx;
+
 
     ctx ->chunks[UserPtr]     = UserData;
     ctx ->chunks[MemPlugin]   = &ctx->DefaultMemoryManager;
@@ -817,7 +806,6 @@ cmsContext CMSEXPORT cmsCreateContext(void* Plugin, void* UserData)
     }
 
     return (cmsContext) ctx;  
-#endif
 }
 
 // Duplicates a context with all associated plug-ins. 
@@ -825,12 +813,6 @@ cmsContext CMSEXPORT cmsCreateContext(void* Plugin, void* UserData)
 // data that will be forwarded to plug-ins and logger. 
 cmsContext CMSEXPORT cmsDupContext(cmsContext ContextID, void* NewUserData)
 {
-#ifdef CMS_CONTEXT_IN_LEGACY_MODE
-    cmsSignalError(ContextID, cmsERROR_NOT_SUITABLE, "Lcms is compiled as legacy context mode and you called an advanced context function");
-    return ContextID;
-    cmsUNUSED_PARAMETER(NewUserData);
-
-#else
     int i;
     struct _cmsContext_struct* ctx;
     const struct _cmsContext_struct* src = _cmsGetContext(ContextID);
@@ -845,7 +827,9 @@ cmsContext CMSEXPORT cmsDupContext(cmsContext ContextID, void* NewUserData)
     // Setup default memory allocators
     memcpy(&ctx->DefaultMemoryManager, &src->DefaultMemoryManager, sizeof(ctx->DefaultMemoryManager));
 
-    ctx ->Magic   = cmsContextMagicNumber;
+    // Maintain the linked list
+    ctx ->Next = _cmsContextPoolHead;
+    _cmsContextPoolHead = ctx;
 
     ctx ->chunks[UserPtr]    = userData;
     ctx ->chunks[MemPlugin]  = &ctx->DefaultMemoryManager;
@@ -883,8 +867,25 @@ cmsContext CMSEXPORT cmsDupContext(cmsContext ContextID, void* NewUserData)
     }
 
     return (cmsContext) ctx;
-#endif
+}
 
+
+
+static
+struct _cmsContext_struct* FindPrev(struct _cmsContext_struct* id)
+{
+    struct _cmsContext_struct* prev;
+
+    // Search for previous
+    for (prev = _cmsContextPoolHead; 
+             prev != NULL;
+             prev = prev ->Next)
+    {
+        if (prev ->Next == id)
+            return prev;
+    }
+
+    return NULL;  // List is empty or only one element!
 }
 
 // Frees any resources associated with the given context, 
@@ -892,21 +893,16 @@ cmsContext CMSEXPORT cmsDupContext(cmsContext ContextID, void* NewUserData)
 // The ContextID can no longer be used in any THR operation.  
 void CMSEXPORT cmsDeleteContext(cmsContext ContextID)
 {
-#ifdef CMS_CONTEXT_IN_LEGACY_MODE
-    cmsSignalError(ContextID, cmsERROR_NOT_SUITABLE, "Lcms is compiled as legacy context mode and you called an advanced context function");
-    cmsUNUSED_PARAMETER(ContextID);
-#else
-
     if (ContextID != NULL) {
 
         struct _cmsContext_struct* ctx = (struct _cmsContext_struct*) ContextID;              
-        struct _cmsContext_struct  fakeContext;   
+        struct _cmsContext_struct  fakeContext;  
+        struct _cmsContext_struct* prev;
 
         memcpy(&fakeContext.DefaultMemoryManager, &ctx->DefaultMemoryManager, sizeof(ctx->DefaultMemoryManager));
 
         fakeContext.chunks[UserPtr]     = ctx ->chunks[UserPtr];
         fakeContext.chunks[MemPlugin]   = &fakeContext.DefaultMemoryManager;
-
 
         // Get rid of plugins
         cmsUnregisterPluginsTHR(ContextID); 
@@ -916,21 +912,34 @@ void CMSEXPORT cmsDeleteContext(cmsContext ContextID)
               _cmsSubAllocDestroy(ctx ->MemPool);
         ctx -> MemPool = NULL;
 
+        // Maintain list
+        if (_cmsContextPoolHead == ctx) { 
+
+            _cmsContextPoolHead = ctx->Next;
+        }
+        else {
+
+            // Search for previous
+            for (prev = _cmsContextPoolHead; 
+                prev != NULL;
+                prev = prev ->Next)
+            {
+                if (prev -> Next == ctx) {
+                    prev -> Next = ctx ->Next;
+                    break;
+                }
+            }
+        }
+
         // free the memory block itself
         _cmsFree(&fakeContext, ctx);
     }
-#endif
 }
 
 // Returns the user data associated to the given ContextID, or NULL if no user data was attached on context creation
 void* CMSEXPORT cmsGetContextUserData(cmsContext ContextID)
 {
-#ifdef CMS_CONTEXT_IN_LEGACY_MODE
-    cmsSignalError(ContextID, cmsERROR_NOT_SUITABLE, "Lcms is compiled as legacy context mode and you called an advanced context function");
-    return ContextID;
-#else
     return _cmsContextGetClientChunk(ContextID, UserPtr);
-#endif
 }
 
 

@@ -34,8 +34,9 @@
 		546B296310AC5E600054D33A /* lcms2.h in Headers */ = {isa = PBXBuildFile; fileRef = 546B296110AC5E600054D33A /* lcms2.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		546B296410AC5E600054D33A /* lcms2_plugin.h in Headers */ = {isa = PBXBuildFile; fileRef = 546B296210AC5E600054D33A /* lcms2_plugin.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		546B29AE10AC68410054D33A /* testcms2.c in Sources */ = {isa = PBXBuildFile; fileRef = 546B29AD10AC68410054D33A /* testcms2.c */; };
-		54DBD06115A202B200180017 /* cmshalf.c in Sources */ = {isa = PBXBuildFile; fileRef = 54DBD06015A202B200180017 /* cmshalf.c */; };
 		54DBD06215A202BB00180017 /* cmshalf.c in Sources */ = {isa = PBXBuildFile; fileRef = 54DBD06015A202B200180017 /* cmshalf.c */; };
+		54E6DC7E18AE052800445185 /* testplugin.c in Sources */ = {isa = PBXBuildFile; fileRef = 54E6DC7D18AE052800445185 /* testplugin.c */; };
+		54E6DC8018AE054800445185 /* zoo_icc.c in Sources */ = {isa = PBXBuildFile; fileRef = 54E6DC7F18AE054800445185 /* zoo_icc.c */; };
 		8D07F2BE0486CC7A007CD1D0 /* LittleCMS_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 32BAE0B70371A74B00C91783 /* LittleCMS_Prefix.pch */; settings = {ATTRIBUTES = (Private, ); }; };
 		8D07F2C00486CC7A007CD1D0 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C1666FE841158C02AAC07 /* InfoPlist.strings */; };
 		8D07F2C40486CC7A007CD1D0 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08FB77AAFE841565C02AAC07 /* Carbon.framework */; };
@@ -86,6 +87,8 @@
 		546B29AC10AC682F0054D33A /* lcms2_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lcms2_internal.h; path = ../../../src/lcms2_internal.h; sourceTree = SOURCE_ROOT; };
 		546B29AD10AC68410054D33A /* testcms2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testcms2.c; path = ../../../testbed/testcms2.c; sourceTree = SOURCE_ROOT; };
 		54DBD06015A202B200180017 /* cmshalf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmshalf.c; path = ../../../src/cmshalf.c; sourceTree = "<group>"; };
+		54E6DC7D18AE052800445185 /* testplugin.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testplugin.c; path = ../../../testbed/testplugin.c; sourceTree = SOURCE_ROOT; };
+		54E6DC7F18AE054800445185 /* zoo_icc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zoo_icc.c; path = ../../../testbed/zoo_icc.c; sourceTree = SOURCE_ROOT; };
 		8D07F2C70486CC7A007CD1D0 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		8D07F2C80486CC7A007CD1D0 /* LittleCMS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LittleCMS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -121,6 +124,8 @@
 		0867D691FE84028FC02AAC07 /* LittleCMS */ = {
 			isa = PBXGroup;
 			children = (
+				54E6DC7F18AE054800445185 /* zoo_icc.c */,
+				54E6DC7D18AE052800445185 /* testplugin.c */,
 				08FB77ACFE841707C02AAC07 /* Source */,
 				089C1665FE841158C02AAC07 /* Resources */,
 				0867D69AFE84028FC02AAC07 /* External Frameworks and Libraries */,
@@ -283,7 +288,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				546B29AE10AC68410054D33A /* testcms2.c in Sources */,
-				54DBD06115A202B200180017 /* cmshalf.c in Sources */,
+				54E6DC7E18AE052800445185 /* testplugin.c in Sources */,
+				54E6DC8018AE054800445185 /* zoo_icc.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

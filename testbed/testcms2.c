@@ -7693,6 +7693,33 @@ cmsInt32Number CheckFloatNULLxform(void)
     return 1;
 }
 
+static
+cmsInt32Number CheckRemoveTag(void)
+{
+    cmsHPROFILE p;
+    cmsMLU *mlu;
+    int ret;
+
+    p = cmsCreate_sRGBProfileTHR(NULL);
+
+    /* set value */
+    mlu = cmsMLUalloc (NULL, 1);
+    ret = cmsMLUsetASCII (mlu, "en", "US", "bar");
+    if (!ret) return 0;
+
+    ret = cmsWriteTag (p, cmsSigDeviceMfgDescTag, mlu);
+    if (!ret) return 0;
+     
+    cmsMLUfree (mlu);
+
+    /* remove the tag  */
+    ret = cmsWriteTag (p, cmsSigDeviceMfgDescTag, NULL);
+    if (!ret) return 0;
+
+    /* THIS EXPLODES */
+    cmsCloseProfile(p);
+    return 1;
+}
 
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
@@ -8327,6 +8354,7 @@ int main(int argc, char* argv[])
     Check("Read RAW portions", CheckReadRAW);
     Check("Check MetaTag", CheckMeta);
     Check("Null transform on floats", CheckFloatNULLxform);
+    Check("Set free a tag", CheckRemoveTag);
     }
 
     if (DoPluginTests)

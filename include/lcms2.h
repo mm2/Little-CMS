@@ -23,7 +23,7 @@
 //
 //---------------------------------------------------------------------------------
 //
-// Version 2.6
+// Version 2.6rc1
 //
 
 #ifndef _lcms2_H
@@ -54,10 +54,6 @@
 
 // Uncomment to get rid of the tables for "half" float support
 // #define CMS_NO_HALF_SUPPORT 1
-
-// Uncomment to get cmsContext legacy behavior: just a void pointer passed through. 
-// DON'T USE UNLESS STRICTLY NECESSARY!
-// #define CMS_CONTEXT_IN_LEGACY_MODE 1
 
 // ********** End of configuration toggles ******************************
 
