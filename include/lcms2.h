@@ -206,6 +206,9 @@ typedef int                  cmsBool;
 # ifdef __BIG_ENDIAN__
 #   define CMS_USE_BIG_ENDIAN      1
 # endif
+# ifdef __LITTLE_ENDIAN__
+#   undef CMS_USE_BIG_ENDIAN
+# endif
 #endif
 
 // Calling convention -- this is hardly platform and compiler dependent
