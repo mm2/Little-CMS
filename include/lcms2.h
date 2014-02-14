@@ -23,7 +23,7 @@
 //
 //---------------------------------------------------------------------------------
 //
-// Version 2.6rc1
+// Version 2.6rc2
 //
 
 #ifndef _lcms2_H
@@ -54,6 +54,9 @@
 
 // Uncomment to get rid of the tables for "half" float support
 // #define CMS_NO_HALF_SUPPORT 1
+
+// Uncomment to get rif of pthreads/windows dependency
+// #define CMS_NO_PTHREADS  1
 
 // ********** End of configuration toggles ******************************
 

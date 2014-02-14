@@ -134,6 +134,15 @@ LIBS="$LIB_MATH $LIBS"
 AC_SUBST(LIB_MATH)
 
 #
+# Find pthread library
+#
+LIB_PTHREAD=''
+AC_CHECK_HEADERS(pthread.h,, [AC_MSG_ERROR([pthread.h required])])
+AC_CHECK_LIB(pthread,pthread_create,LIB_PTHREAD="-lpthread",,)
+LIBS="$LIB_PTHREAD $LIBS"
+AC_SUBST(LIB_PTHREAD)
+
+#
 # Check for JPEG
 #
 have_jpeg='no'
@@ -277,7 +286,7 @@ AM_CONDITIONAL(HasTIFF, test "$have_tiff" = 'yes')
 AC_SUBST(LIB_TIFF)
 
 # Libraries that the LCMS library depends on
-LCMS_LIB_DEPLIBS="$LIB_MATH"
+LCMS_LIB_DEPLIBS="$LIB_MATH $LIB_PTHREAD"
 LCMS_LIB_DEPLIBS=`echo $LCMS_LIB_DEPLIBS | sed -e 's/  */ /g'`
 AC_SUBST(LCMS_LIB_DEPLIBS)
 

@@ -1709,6 +1709,7 @@ cmsInt32Number CMSEXPORT cmsReadRawTag(cmsHPROFILE hProfile, cmsTagSignature sig
             if (!Icc ->IOhandler ->Seek(Icc ->IOhandler, Offset)) goto Error;
             if (!Icc ->IOhandler ->Read(Icc ->IOhandler, data, 1, TagSize)) goto Error;
 
+            _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
             return TagSize;
         }
 
@@ -1738,7 +1739,11 @@ cmsInt32Number CMSEXPORT cmsReadRawTag(cmsHPROFILE hProfile, cmsTagSignature sig
 
     // Already readed, or previously set by cmsWriteTag(). We need to serialize that
     // data to raw in order to maintain consistency.
+
+    _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
     Object = cmsReadTag(hProfile, sig);
+    if (!_cmsLockMutex(Icc->ContextID, Icc ->UsrMutex)) return 0;
+
     if (Object == NULL) goto Error;
 
     // Now we need to serialize to a memory block: just use a memory iohandler
