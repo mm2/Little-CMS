@@ -578,8 +578,9 @@ static
 void* defMtxCreate(cmsContext id)
 {
     pthread_mutex_t* ptr_mutex = _cmsMalloc(id, sizeof(pthread_mutex_t));
+    pthread_mutex_t  init = PTHREAD_MUTEX_INITIALIZER;
 
-    *ptr_mutex = PTHREAD_MUTEX_INITIALIZER;
+    *ptr_mutex = init;
     if (pthread_mutex_init(ptr_mutex, NULL) != 0) {    
           return NULL;
     }
