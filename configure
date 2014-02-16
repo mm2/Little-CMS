@@ -644,8 +644,13 @@ HasZLIB_TRUE
 LIB_JPEG
 HasJPEG_FALSE
 HasJPEG_TRUE
-LIB_PTHREAD
+LIB_THREAD
 LIB_MATH
+PTHREAD_CFLAGS
+PTHREAD_LIBS
+PTHREAD_CXX
+PTHREAD_CC
+acx_pthread_config
 inline
 MAINT
 MAINTAINER_MODE_FALSE
@@ -773,9 +778,6 @@ SHELL'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
-with_jpeg
-with_tiff
-with_zlib
 enable_dependency_tracking
 enable_shared
 enable_static
@@ -785,6 +787,10 @@ with_gnu_ld
 with_sysroot
 enable_libtool_lock
 enable_maintainer_mode
+with_jpeg
+with_tiff
+with_zlib
+with_threads
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1430,14 +1436,15 @@ Optional Features:
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
   --without-PACKAGE       do not use PACKAGE (same as --with-PACKAGE=no)
-  --with-jpeg=DIR         use jpeg installed in DIR
-  --with-tiff=DIR         use tiff installed in DIR
-  --without-zlib          disable ZLIB support
   --with-pic              try to use only PIC/non-PIC objects [default=use
                           both]
   --with-gnu-ld           assume the C compiler uses GNU ld [default=no]
   --with-sysroot=DIR Search for dependent libraries within DIR
                         (or the compiler's sysroot if not specified).
+  --with-jpeg=DIR         use jpeg installed in DIR
+  --with-tiff=DIR         use tiff installed in DIR
+  --without-zlib          disable ZLIB support
+  --without-threads       disable POSIX threads API support
 
 Some influential environment variables:
   CC          C compiler command
@@ -2353,6 +2360,9 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+# Specify directory where m4 macros may be found.
+
+
 #
 # Libtool library revision control info
 # See the libtool documentation under the heading "Libtool's versioning
@@ -2950,59 +2960,6 @@ am__tar='$${TAR-tar} chof - "$$tardir"' am__untar='$${TAR-tar} xf -'
 
 
 
-
-# Point to JPEG installed in DIR or disable JPEG with --without-jpeg.
-
-# Check whether --with-jpeg was given.
-if test "${with_jpeg+set}" = set; then :
-  withval=$with_jpeg;
-            if  test "x$withval" = "xno" ; then
-              with_jpeg='no'
-            else
-              if  test "x$withval" != "xyes" ; then
-                with_jpeg=$withval
-                JPEG_DIR=$withval
-                CPPFLAGS="$CPPFLAGS -I$JPEG_DIR/include"
-                LDFLAGS="$LDFLAGS -L$JPEG_DIR/lib"
-              fi
-              with_jpeg='yes'
-            fi
-
-else
-  with_jpeg='yes'
-fi
-
-
-# Point to TIFF installed in DIR or disable TIFF with --without-tiff.
-
-# Check whether --with-tiff was given.
-if test "${with_tiff+set}" = set; then :
-  withval=$with_tiff;
-            if  test "x$withval" = "xno" ; then
-              with_tiff='no'
-            else
-              if  test "x$withval" != "xyes" ; then
-                with_tiff=$withval
-                TIFF_DIR=$withval
-                CPPFLAGS="$CPPFLAGS -I$TIFF_DIR/include"
-                LDFLAGS="$LDFLAGS -L$TIFF_DIR/lib"
-              fi
-              with_tiff='yes'
-            fi
-
-else
-  with_tiff='yes'
-fi
-
-
-# Disable ZLIB
-
-# Check whether --with-zlib was given.
-if test "${with_zlib+set}" = set; then :
-  withval=$with_zlib; with_zlib=$withval
-else
-  with_zlib='yes'
-fi
 
 
 # Check for programs
@@ -15932,6 +15889,542 @@ $as_echo "#define AC_APPLE_UNIVERSAL_BUILD 1" >>confdefs.h
  esac
 
 
+# Point to JPEG installed in DIR or disable JPEG with --without-jpeg.
+
+# Check whether --with-jpeg was given.
+if test "${with_jpeg+set}" = set; then :
+  withval=$with_jpeg;
+            if  test "x$withval" = "xno" ; then
+              with_jpeg='no'
+            else
+              if  test "x$withval" != "xyes" ; then
+                with_jpeg=$withval
+                JPEG_DIR=$withval
+                CPPFLAGS="$CPPFLAGS -I$JPEG_DIR/include"
+                LDFLAGS="$LDFLAGS -L$JPEG_DIR/lib"
+              fi
+              with_jpeg='yes'
+            fi
+
+else
+  with_jpeg='yes'
+fi
+
+
+# Point to TIFF installed in DIR or disable TIFF with --without-tiff.
+
+# Check whether --with-tiff was given.
+if test "${with_tiff+set}" = set; then :
+  withval=$with_tiff;
+            if  test "x$withval" = "xno" ; then
+              with_tiff='no'
+            else
+              if  test "x$withval" != "xyes" ; then
+                with_tiff=$withval
+                TIFF_DIR=$withval
+                CPPFLAGS="$CPPFLAGS -I$TIFF_DIR/include"
+                LDFLAGS="$LDFLAGS -L$TIFF_DIR/lib"
+              fi
+              with_tiff='yes'
+            fi
+
+else
+  with_tiff='yes'
+fi
+
+
+# Disable ZLIB
+
+# Check whether --with-zlib was given.
+if test "${with_zlib+set}" = set; then :
+  withval=$with_zlib; with_zlib=$withval
+else
+  with_zlib='yes'
+fi
+
+
+#
+# Determine POSIX threads settings
+#
+# Enable support for POSIX thread APIs
+
+# Check whether --with-threads was given.
+if test "${with_threads+set}" = set; then :
+  withval=$with_threads; with_threads=$withval
+else
+  with_threads='yes'
+fi
+
+
+have_threads=no
+if test "$with_threads" != 'no'
+then
+
+
+
+
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+acx_pthread_ok=no
+
+# We used to check for pthread.h first, but this fails if pthread.h
+# requires special compiler flags (e.g. on True64 or Sequent).
+# It gets checked for in the link test anyway.
+
+# First of all, check if the user has set any of the PTHREAD_LIBS,
+# etcetera environment variables, and if threads linking works using
+# them:
+if test x"$PTHREAD_LIBS$PTHREAD_CFLAGS" != x; then
+        save_CFLAGS="$CFLAGS"
+        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+        save_LIBS="$LIBS"
+        LIBS="$PTHREAD_LIBS $LIBS"
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_join in LIBS=$PTHREAD_LIBS with CFLAGS=$PTHREAD_CFLAGS" >&5
+$as_echo_n "checking for pthread_join in LIBS=$PTHREAD_LIBS with CFLAGS=$PTHREAD_CFLAGS... " >&6; }
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char pthread_join ();
+int
+main ()
+{
+return pthread_join ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  acx_pthread_ok=yes
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_pthread_ok" >&5
+$as_echo "$acx_pthread_ok" >&6; }
+        if test x"$acx_pthread_ok" = xno; then
+                PTHREAD_LIBS=""
+                PTHREAD_CFLAGS=""
+        fi
+        LIBS="$save_LIBS"
+        CFLAGS="$save_CFLAGS"
+fi
+
+# We must check for the threads library under a number of different
+# names; the ordering is very important because some systems
+# (e.g. DEC) have both -lpthread and -lpthreads, where one of the
+# libraries is broken (non-POSIX).
+
+# Create a list of thread flags to try.  Items starting with a "-" are
+# C compiler flags, and other items are library names, except for "none"
+# which indicates that we try without any flags at all, and "pthread-config"
+# which is a program returning the flags for the Pth emulation library.
+
+acx_pthread_flags="pthreads none -Kthread -kthread lthread -pthread -pthreads -mthreads pthread --thread-safe -mt lpthread pthread-config"
+
+# The ordering *is* (sometimes) important.  Some notes on the
+# individual items follow:
+
+# pthreads: AIX (must check this before -lpthread)
+# none: in case threads are in libc; should be tried before -Kthread and
+#       other compiler flags to prevent continual compiler warnings
+# -Kthread: Sequent (threads in libc, but -Kthread needed for pthread.h)
+# -kthread: FreeBSD kernel threads (preferred to -pthread since SMP-able)
+# lthread: LinuxThreads port on FreeBSD (also preferred to -pthread)
+# -pthread: Linux/gcc (kernel threads), BSD/gcc (userland threads)
+# -pthreads: Solaris/gcc
+# -mthreads: Mingw32/gcc, Lynx/gcc
+# -mt: Sun Workshop C (may only link SunOS threads [-lthread], but it
+#      doesn't hurt to check since this sometimes defines pthreads too;
+#      also defines -D_REENTRANT)
+#      ... -mt is also the pthreads flag for HP/aCC
+# pthread: Linux, etcetera
+# --thread-safe: KAI C++
+# pthread-config: use pthread-config program (for GNU Pth library)
+
+case "${host_cpu}-${host_os}" in
+        *solaris*)
+
+        # On Solaris (at least, for some versions), libc contains stubbed
+        # (non-functional) versions of the pthreads routines, so link-based
+        # tests will erroneously succeed.  (We need to link with -pthreads/-mt/
+        # -lpthread.)  (The stubs are missing pthread_cleanup_push, or rather
+        # a function called by this macro, so we could check for that, but
+        # who knows whether they'll stub that too in a future libc.)  So,
+        # we'll just look for -pthreads and -lpthread first:
+
+        acx_pthread_flags="-pthreads pthread -mt -pthread $acx_pthread_flags"
+        ;;
+
+        # The HP-UX compiler just warns about options it does not understand
+        # but it needs -mt.
+        *-hpux*)
+        acx_pthread_flags="-mt $acx_pthread_flags"
+        ;;
+esac
+
+if test x"$acx_pthread_ok" = xno; then
+for flag in $acx_pthread_flags; do
+
+        case $flag in
+                none)
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether pthreads work without any flags" >&5
+$as_echo_n "checking whether pthreads work without any flags... " >&6; }
+                ;;
+
+                -*)
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether pthreads work with $flag" >&5
+$as_echo_n "checking whether pthreads work with $flag... " >&6; }
+                PTHREAD_CFLAGS="$flag"
+                ;;
+
+		pthread-config)
+		# Extract the first word of "pthread-config", so it can be a program name with args.
+set dummy pthread-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_acx_pthread_config+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$acx_pthread_config"; then
+  ac_cv_prog_acx_pthread_config="$acx_pthread_config" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_acx_pthread_config="yes"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_acx_pthread_config" && ac_cv_prog_acx_pthread_config="no"
+fi
+fi
+acx_pthread_config=$ac_cv_prog_acx_pthread_config
+if test -n "$acx_pthread_config"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_pthread_config" >&5
+$as_echo "$acx_pthread_config" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+		if test x"$acx_pthread_config" = xno; then continue; fi
+		PTHREAD_CFLAGS="`pthread-config --cflags`"
+		PTHREAD_LIBS="`pthread-config --ldflags` `pthread-config --libs`"
+		;;
+
+                *)
+                { $as_echo "$as_me:${as_lineno-$LINENO}: checking for the pthreads library -l$flag" >&5
+$as_echo_n "checking for the pthreads library -l$flag... " >&6; }
+                PTHREAD_LIBS="-l$flag"
+                ;;
+        esac
+
+        save_LIBS="$LIBS"
+        save_CFLAGS="$CFLAGS"
+        LIBS="$PTHREAD_LIBS $LIBS"
+        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+
+        # Check for various functions.  We must include pthread.h,
+        # since some functions may be macros.  (On the Sequent, we
+        # need a special flag -Kthread to make this header compile.)
+        # We check for pthread_join because it is in -lpthread on IRIX
+        # while pthread_create is in libc.  We check for pthread_attr_init
+        # due to DEC craziness with -lpthreads.  We check for
+        # pthread_cleanup_push because it is one of the few pthread
+        # functions on Solaris that doesn't have a non-functional libc stub.
+        # We try pthread_create on general principles.
+        cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <pthread.h>
+int
+main ()
+{
+pthread_t th; pthread_join(th, 0);
+                     pthread_attr_init(0); pthread_cleanup_push(0, 0);
+                     pthread_create(0,0,0,0); pthread_cleanup_pop(0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  acx_pthread_ok=yes
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+        LIBS="$save_LIBS"
+        CFLAGS="$save_CFLAGS"
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $acx_pthread_ok" >&5
+$as_echo "$acx_pthread_ok" >&6; }
+        if test "x$acx_pthread_ok" = xyes; then
+                break;
+        fi
+
+        PTHREAD_LIBS=""
+        PTHREAD_CFLAGS=""
+done
+fi
+
+# Various other checks:
+if test "x$acx_pthread_ok" = xyes; then
+        save_LIBS="$LIBS"
+        LIBS="$PTHREAD_LIBS $LIBS"
+        save_CFLAGS="$CFLAGS"
+        CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+
+        # Detect AIX lossage: JOINABLE attribute is called UNDETACHED.
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for joinable pthread attribute" >&5
+$as_echo_n "checking for joinable pthread attribute... " >&6; }
+	attr_name=unknown
+	for attr in PTHREAD_CREATE_JOINABLE PTHREAD_CREATE_UNDETACHED; do
+	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <pthread.h>
+int
+main ()
+{
+int attr=$attr; return attr;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  attr_name=$attr; break
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+	done
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: $attr_name" >&5
+$as_echo "$attr_name" >&6; }
+        if test "$attr_name" != PTHREAD_CREATE_JOINABLE; then
+
+cat >>confdefs.h <<_ACEOF
+#define PTHREAD_CREATE_JOINABLE $attr_name
+_ACEOF
+
+        fi
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if more special flags are required for pthreads" >&5
+$as_echo_n "checking if more special flags are required for pthreads... " >&6; }
+        flag=no
+        case "${host_cpu}-${host_os}" in
+            *-aix* | *-freebsd* | *-darwin*) flag="-D_THREAD_SAFE";;
+            *solaris* | *-osf* | *-hpux*) flag="-D_REENTRANT";;
+        esac
+        { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${flag}" >&5
+$as_echo "${flag}" >&6; }
+        if test "x$flag" != xno; then
+            PTHREAD_CFLAGS="$flag $PTHREAD_CFLAGS"
+        fi
+
+        LIBS="$save_LIBS"
+        CFLAGS="$save_CFLAGS"
+
+        # More AIX lossage: must compile with xlc_r or cc_r
+        case "${host_os}" in
+          aix* )
+            if test x"$GCC" != xyes; then
+              case "$CC" in
+                *xlc )
+                  # Extract the first word of "xlc_r", so it can be a program name with args.
+set dummy xlc_r; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_PTHREAD_CC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$PTHREAD_CC"; then
+  ac_cv_prog_PTHREAD_CC="$PTHREAD_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_PTHREAD_CC="xlc_r"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_PTHREAD_CC" && ac_cv_prog_PTHREAD_CC="${CC}"
+fi
+fi
+PTHREAD_CC=$ac_cv_prog_PTHREAD_CC
+if test -n "$PTHREAD_CC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PTHREAD_CC" >&5
+$as_echo "$PTHREAD_CC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+ ;;
+                *cc )
+                  # Extract the first word of "cc_r", so it can be a program name with args.
+set dummy cc_r; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_PTHREAD_CC+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$PTHREAD_CC"; then
+  ac_cv_prog_PTHREAD_CC="$PTHREAD_CC" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_PTHREAD_CC="cc_r"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_PTHREAD_CC" && ac_cv_prog_PTHREAD_CC="${CC}"
+fi
+fi
+PTHREAD_CC=$ac_cv_prog_PTHREAD_CC
+if test -n "$PTHREAD_CC"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PTHREAD_CC" >&5
+$as_echo "$PTHREAD_CC" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+ ;;
+              esac
+            fi
+            case "$CXX" in
+              *xlC )
+                # Extract the first word of "xlC_r", so it can be a program name with args.
+set dummy xlC_r; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_prog_PTHREAD_CXX+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if test -n "$PTHREAD_CXX"; then
+  ac_cv_prog_PTHREAD_CXX="$PTHREAD_CXX" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_PTHREAD_CXX="xlC_r"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_prog_PTHREAD_CXX" && ac_cv_prog_PTHREAD_CXX="${CXX}"
+fi
+fi
+PTHREAD_CXX=$ac_cv_prog_PTHREAD_CXX
+if test -n "$PTHREAD_CXX"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PTHREAD_CXX" >&5
+$as_echo "$PTHREAD_CXX" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+ ;;
+            esac
+            ;;
+        esac
+fi
+
+if test "${PTHREAD_CC}x" = "x"
+then
+  PTHREAD_CC="$CC"
+fi
+if test "${PTHREAD_CXX}x" = "x"
+then
+  PTHREAD_CXX="$CXX"
+fi
+
+
+
+
+
+
+# Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
+if test x"$acx_pthread_ok" = xyes; then
+
+$as_echo "#define HAVE_PTHREAD 1" >>confdefs.h
+
+        :
+else
+        acx_pthread_ok=no
+
+fi
+ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+
+
+  if test "$acx_pthread_ok" = yes
+  then
+    have_threads=yes
+
+    DEF_THREAD="$PTHREAD_CFLAGS"
+    CFLAGS="$CFLAGS $DEF_THREAD"
+    CXXFLAGS="$CXXFLAGS $DEF_THREAD"
+
+    if test "$CC" != "$PTHREAD_CC"
+    then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Replacing compiler $CC with compiler $PTHREAD_CC to support pthreads." >&5
+$as_echo "$as_me: WARNING: Replacing compiler $CC with compiler $PTHREAD_CC to support pthreads." >&2;}
+      CC="$PTHREAD_CC"
+    fi
+    if test "$CXX" != "$PTHREAD_CXX"
+    then
+      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Replacing compiler $CXX with compiler $PTHREAD_CXX to support pthreads." >&5
+$as_echo "$as_me: WARNING: Replacing compiler $CXX with compiler $PTHREAD_CXX to support pthreads." >&2;}
+      CXX="$PTHREAD_CXX"
+    fi
+  fi
+fi
+
+
 #
 # Find math library
 #
@@ -15980,30 +16473,22 @@ LIBS="$LIB_MATH $LIBS"
 
 
 #
-# Find pthread library
+# Find Posix threads library
 #
-LIB_PTHREAD=''
-for ac_header in pthread.h
-do :
-  ac_fn_c_check_header_mongrel "$LINENO" "pthread.h" "ac_cv_header_pthread_h" "$ac_includes_default"
-if test "x$ac_cv_header_pthread_h" = xyes; then :
-  cat >>confdefs.h <<_ACEOF
-#define HAVE_PTHREAD_H 1
-_ACEOF
-
-else
-  as_fn_error $? "pthread.h required" "$LINENO" 5
-fi
-
-done
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_create in -lpthread" >&5
-$as_echo_n "checking for pthread_create in -lpthread... " >&6; }
-if ${ac_cv_lib_pthread_pthread_create+:} false; then :
+LIB_THREAD=''
+if test "$with_threads" != 'no' && test "$have_threads" = 'yes'
+then
+  for lib in pthread pthreads
+  do
+    if test "x$PTHREAD_LIBS" = "x" ; then
+      as_ac_Lib=`$as_echo "ac_cv_lib_$lib''_pthread_mutex_lock" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_mutex_lock in -l$lib" >&5
+$as_echo_n "checking for pthread_mutex_lock in -l$lib... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lpthread  $LIBS"
+LIBS="-l$lib  $LIBS"
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -16013,31 +16498,44 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 #ifdef __cplusplus
 extern "C"
 #endif
-char pthread_create ();
+char pthread_mutex_lock ();
 int
 main ()
 {
-return pthread_create ();
+return pthread_mutex_lock ();
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_link "$LINENO"; then :
-  ac_cv_lib_pthread_pthread_create=yes
+  eval "$as_ac_Lib=yes"
 else
-  ac_cv_lib_pthread_pthread_create=no
+  eval "$as_ac_Lib=no"
 fi
 rm -f core conftest.err conftest.$ac_objext \
     conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_pthread_pthread_create" >&5
-$as_echo "$ac_cv_lib_pthread_pthread_create" >&6; }
-if test "x$ac_cv_lib_pthread_pthread_create" = xyes; then :
-  LIB_PTHREAD="-lpthread"
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+  PTHREAD_LIBS=-l$lib
 fi
 
-LIBS="$LIB_PTHREAD $LIBS"
+    fi
+  done
+
+  LIB_THREAD="$PTHREAD_LIBS"
+  LIBS="$LIBS $LIB_THREAD"
+
+$as_echo "#define HasTHREADS 1" >>confdefs.h
+
+else
+
+$as_echo "#define HasTHREADS 0" >>confdefs.h
+
+fi
 
 
 #
@@ -16723,18 +17221,19 @@ fi
 
 
 
+
 # Libraries that the LCMS library depends on
-LCMS_LIB_DEPLIBS="$LIB_MATH $LIB_PTHREAD"
+LCMS_LIB_DEPLIBS="$LIB_MATH $LIB_THREAD"
 LCMS_LIB_DEPLIBS=`echo $LCMS_LIB_DEPLIBS | sed -e 's/  */ /g'`
 
 
 # Libraries that the jpegicc program depends on
-JPEGICC_DEPLIBS="$LIB_JPEG $LIB_MATH"
+JPEGICC_DEPLIBS="$LIB_JPEG $LIB_MATH $LIB_THREAD"
 JPEGICC_DEPLIBS=`echo $JPEGICC_DEPLIBS | sed -e 's/  */ /g'`
 
 
 # Libraries that the tifficc program depends on
-TIFFICC_DEPLIBS="$LIB_TIFF $LIB_JPEG $LIB_ZLIB $LIB_MATH"
+TIFFICC_DEPLIBS="$LIB_TIFF $LIB_JPEG $LIB_ZLIB $LIB_MATH $LIB_THREAD"
 TIFFICC_DEPLIBS=`echo $TIFFICC_DEPLIBS | sed -e 's/  */ /g'`
 
 

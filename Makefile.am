@@ -5,6 +5,8 @@
 # Don't require all the GNU mandated files
 AUTOMAKE_OPTIONS = 1.7.2 dist-zip foreign
 
+ACLOCAL_AMFLAGS = -I m4
+
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 

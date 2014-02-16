@@ -237,6 +237,14 @@ typedef int                  cmsBool;
 # define CMSAPI
 #endif
 
+#ifdef HasTHREADS
+# if HasTHREADS == 1
+#    undef CMS_NO_PTHREADS
+# else
+#    define CMS_NO_PTHREADS 1
+# endif
+#endif
+
 // Some common definitions
 #define cmsMAX_PATH     256
 

@@ -164,6 +164,161 @@ cmsINLINE cmsUInt16Number _cmsQuickSaturateWord(cmsFloat64Number d)
     return _cmsQuickFloorWord(d);
 }
 
+
+// Pthread support --------------------------------------------------------------------
+#ifndef CMS_NO_PTHREADS
+
+// This is the threading support. Unfortunately, it has to be platform-dependent because 
+// windows does not support pthreads. 
+
+#ifdef CMS_IS_WINDOWS_
+
+#define WIN32_LEAN_AND_MEAN 1
+#include <Windows.h>
+
+
+// From: http://locklessinc.com/articles/pthreads_on_windows/
+// The pthreads API has an initialization macro that has no correspondence to anything in 
+// the windows API. By investigating the internal definition of the critical section type, 
+// one may work out how to initialize one without calling InitializeCriticalSection(). 
+// The trick here is that InitializeCriticalSection() is not allowed to fail. It tries 
+// to allocate a critical section debug object, but if no memory is available, it sets 
+// the pointer to a specific value. (One would expect that value to be NULL, but it is 
+// actually (void *)-1 for some reason.) Thus we can use this special value for that 
+// pointer, and the critical section code will work.
+
+// The other important part of the critical section type to initialize is the number 
+// of waiters. This controls whether or not the mutex is locked. Fortunately, this 
+// part of the critical section is unlikely to change. Apparently, many programs 
+// already test critical sections to see if they are locked using this value, so 
+// Microsoft felt that it was necessary to keep it set at -1 for an unlocked critical
+// section, even when they changed the underlying algorithm to be more scalable. 
+// The final parts of the critical section object are unimportant, and can be set 
+// to zero for their defaults. This yields an initialization macro:
+
+typedef CRITICAL_SECTION _cmsMutex;
+
+#define CMS_MUTEX_INITIALIZER {((void*) (intptr_t) -1),-1,0,0,0,0}
+
+cmsINLINE int _cmsLockPrimitive(_cmsMutex *m)
+{
+	EnterCriticalSection(m);
+	return 0;
+}
+
+cmsINLINE int _cmsUnlockPrimitive(_cmsMutex *m)
+{
+	LeaveCriticalSection(m);
+	return 0;
+}
+	
+cmsINLINE int _cmsInitMutexPrimitive(_cmsMutex *m)
+{
+	InitializeCriticalSection(m);
+	return 0;
+}
+
+cmsINLINE int _cmsDestroyMutexPrimitive(_cmsMutex *m)
+{
+	DeleteCriticalSection(m);
+	return 0;
+}
+
+cmsINLINE int _cmsEnterCriticalSectionPrimitive(_cmsMutex *m)
+{
+	EnterCriticalSection(m);
+	return 0;
+}
+
+cmsINLINE int _cmsLeaveCriticalSectionPrimitive(_cmsMutex *m)
+{
+	LeaveCriticalSection(m);
+	return 0;
+}
+
+#else
+
+// Rest of the wide world
+#include <pthread.h>
+
+#define CMS_MUTEX_INITIALIZER PTHREAD_MUTEX_INITIALIZER
+typedef pthread_mutex_t _cmsMutex;
+
+
+cmsINLINE int _cmsLockPrimitive(_cmsMutex *m)
+{
+	return pthread_mutex_lock(m);
+}
+
+cmsINLINE int _cmsUnlockPrimitive(_cmsMutex *m)
+{
+	return pthread_mutex_unlock(m);
+}
+	
+cmsINLINE int _cmsInitMutexPrimitive(_cmsMutex *m)
+{
+	return pthread_mutex_init(m, NULL);
+}
+
+cmsINLINE int _cmsDestroyMutexPrimitive(_cmsMutex *m)
+{
+	return pthread_mutex_destroy(m);
+}
+
+cmsINLINE int _cmsEnterCriticalSectionPrimitive(_cmsMutex *m)
+{
+	return pthread_mutex_lock(m);
+}
+
+cmsINLINE int _cmsLeaveCriticalSectionPrimitive(_cmsMutex *m)
+{
+	return pthread_mutex_unlock(m);
+}
+
+#endif
+#else
+
+#define CMS_MUTEX_INITIALIZER 0
+typedef int _cmsMutex;
+
+
+cmsINLINE int _cmsLockPrimitive(_cmsMutex *m)
+{
+	return 0;
+    cmsUNUSED_PARAMETER(m);
+}
+
+cmsINLINE int _cmsUnlockPrimitive(_cmsMutex *m)
+{
+	return 0;
+    cmsUNUSED_PARAMETER(m);
+}
+	
+cmsINLINE int _cmsInitMutexPrimitive(_cmsMutex *m)
+{
+	return 0;
+    cmsUNUSED_PARAMETER(m);
+}
+
+cmsINLINE int _cmsDestroyMutexPrimitive(_cmsMutex *m)
+{
+	return 0;
+    cmsUNUSED_PARAMETER(m);
+}
+
+cmsINLINE int _cmsEnterCriticalSectionPrimitive(_cmsMutex *m)
+{
+	return 0;
+    cmsUNUSED_PARAMETER(m);
+}
+
+cmsINLINE int _cmsLeaveCriticalSectionPrimitive(_cmsMutex *m)
+{
+	return 0;
+    cmsUNUSED_PARAMETER(m);
+}
+#endif
+
 // Plug-In registration ---------------------------------------------------------------
 
 // Specialized function for plug-in memory management. No pairing free() since whole pool is freed at once.

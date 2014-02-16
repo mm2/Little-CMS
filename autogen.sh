@@ -5,6 +5,7 @@ srcdir=`dirname $0`
 test -z "$srcdir" && srcdir=.
 
 DIE=0
+ACLOCAL_FLAGS="-I m4"
 
 (test -f $srcdir/configure.ac) || {
     echo -n "**Error**: Directory $srcdir does not look like the"

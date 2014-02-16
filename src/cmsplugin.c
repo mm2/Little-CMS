@@ -648,6 +648,7 @@ static struct _cmsContext_struct globalContext = {
 
 
 // The context pool (linked list head)
+static _cmsMutex _cmsContextPoolHeadMutex = CMS_MUTEX_INITIALIZER;
 static struct _cmsContext_struct* _cmsContextPoolHead = NULL;
 
 // Internal, get associated pointer, with guessing. Never returns NULL.
@@ -767,10 +768,11 @@ cmsContext CMSEXPORT cmsCreateContext(void* Plugin, void* UserData)
     // Keep memory manager
     memcpy(&ctx->DefaultMemoryManager, &fakeContext.DefaultMemoryManager, sizeof(_cmsMemPluginChunk)); 
    
-    // Maintain the linked list
-    ctx ->Next = _cmsContextPoolHead;
-    _cmsContextPoolHead = ctx;
-
+    // Maintain the linked list (with proper locking)
+   _cmsEnterCriticalSectionPrimitive(&_cmsContextPoolHeadMutex);
+       ctx ->Next = _cmsContextPoolHead;
+       _cmsContextPoolHead = ctx;
+    _cmsLeaveCriticalSectionPrimitive(&_cmsContextPoolHeadMutex);
 
     ctx ->chunks[UserPtr]     = UserData;
     ctx ->chunks[MemPlugin]   = &ctx->DefaultMemoryManager;
@@ -828,8 +830,10 @@ cmsContext CMSEXPORT cmsDupContext(cmsContext ContextID, void* NewUserData)
     memcpy(&ctx->DefaultMemoryManager, &src->DefaultMemoryManager, sizeof(ctx->DefaultMemoryManager));
 
     // Maintain the linked list
-    ctx ->Next = _cmsContextPoolHead;
-    _cmsContextPoolHead = ctx;
+    _cmsEnterCriticalSectionPrimitive(&_cmsContextPoolHeadMutex);
+       ctx ->Next = _cmsContextPoolHead;
+       _cmsContextPoolHead = ctx;
+    _cmsLeaveCriticalSectionPrimitive(&_cmsContextPoolHeadMutex);
 
     ctx ->chunks[UserPtr]    = userData;
     ctx ->chunks[MemPlugin]  = &ctx->DefaultMemoryManager;
@@ -913,6 +917,7 @@ void CMSEXPORT cmsDeleteContext(cmsContext ContextID)
         ctx -> MemPool = NULL;
 
         // Maintain list
+        _cmsEnterCriticalSectionPrimitive(&_cmsContextPoolHeadMutex);
         if (_cmsContextPoolHead == ctx) { 
 
             _cmsContextPoolHead = ctx->Next;
@@ -930,6 +935,7 @@ void CMSEXPORT cmsDeleteContext(cmsContext ContextID)
                 }
             }
         }
+        _cmsLeaveCriticalSectionPrimitive(&_cmsContextPoolHeadMutex);
 
         // free the memory block itself
         _cmsFree(&fakeContext, ctx);

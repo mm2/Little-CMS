@@ -532,66 +532,19 @@ void _cmsTagSignature2String(char String[5], cmsTagSignature sig)
 
 //--------------------------------------------------------------------------------------------------
 
-#ifndef CMS_NO_PTHREADS
-
-#ifdef CMS_IS_WINDOWS_
-
-// Windows funtions
-#define WIN32_LEAN_AND_MEAN 1
-#include <Windows.h>
 
 static
 void* defMtxCreate(cmsContext id)
 {
-    cmsUNUSED_PARAMETER(id);
-    return (void*) CreateMutex( NULL, FALSE, NULL);   
-}
-
-static
-void defMtxDestroy(cmsContext id, void* mtx)
-{
-    cmsUNUSED_PARAMETER(id);
-    CloseHandle((HANDLE) mtx);
-}
-
-static
-cmsBool defMtxLock(cmsContext id, void* mtx)
-{
-    cmsUNUSED_PARAMETER(id);
-    WaitForSingleObject((HANDLE) mtx, INFINITE);
-    return TRUE;
-}
-
-static
-void defMtxUnlock(cmsContext id, void* mtx)
-{
-    cmsUNUSED_PARAMETER(id);
-    ReleaseMutex((HANDLE) mtx);
-}
-
-#else
-
-// Rest of the wide world
-#include <pthread.h>
-
-static
-void* defMtxCreate(cmsContext id)
-{
-    pthread_mutex_t* ptr_mutex = _cmsMalloc(id, sizeof(pthread_mutex_t));
-    pthread_mutex_t  init = PTHREAD_MUTEX_INITIALIZER;
-
-    *ptr_mutex = init;
-    if (pthread_mutex_init(ptr_mutex, NULL) != 0) {    
-          return NULL;
-    }
-
+    _cmsMutex* ptr_mutex = (_cmsMutex*) _cmsMalloc(id, sizeof(_cmsMutex));
+    _cmsInitMutexPrimitive(ptr_mutex);
     return (void*) ptr_mutex;   
 }
 
 static
 void defMtxDestroy(cmsContext id, void* mtx)
 {
-    pthread_mutex_destroy((pthread_mutex_t *) mtx); 
+    _cmsDestroyMutexPrimitive((_cmsMutex *) mtx); 
     _cmsFree(id, mtx);
 }
 
@@ -599,50 +552,17 @@ static
 cmsBool defMtxLock(cmsContext id, void* mtx)
 {
     cmsUNUSED_PARAMETER(id);
-    return pthread_mutex_lock((pthread_mutex_t *) mtx) == 0;     
+    return _cmsLockPrimitive((_cmsMutex *) mtx) == 0;     
 }
 
 static
 void defMtxUnlock(cmsContext id, void* mtx)
 {
     cmsUNUSED_PARAMETER(id);
-    pthread_mutex_unlock((pthread_mutex_t *) mtx); 
+    _cmsUnlockPrimitive((_cmsMutex *) mtx); 
 }
 
-#endif
-#else
 
-// Multithreading locking is disabled  
-static
-void* defMtxCreate(cmsContext id)
-{
-   return NULL;
-}
-
-static
-void defMtxDestroy(cmsContext id, void* mtx)
-{
-    cmsUNUSED_PARAMETER(id);
-    cmsUNUSED_PARAMETER(mtx);
-}
-
-static
-cmsBool defMtxLock(cmsContext id, void* mtx)
-{    
-    cmsUNUSED_PARAMETER(id);
-    cmsUNUSED_PARAMETER(mtx);
-
-    return TRUE;
-}
-
-static
-void defMtxUnlock(cmsContext id, void* mtx)
-{   
-    cmsUNUSED_PARAMETER(id);
-    cmsUNUSED_PARAMETER(mtx);
-}
-
-#endif
 
 // Pointers to memory manager functions in Context0
 _cmsMutexPluginChunkType _cmsMutexPluginChunk = { defMtxCreate, defMtxDestroy, defMtxLock, defMtxUnlock };

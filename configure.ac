@@ -9,6 +9,9 @@ AC_PREREQ(2.60)
 #
 AC_INIT(lcms2,2.6)
 
+# Specify directory where m4 macros may be found.
+AC_CONFIG_MACRO_DIR([m4])
+
 #
 # Libtool library revision control info
 # See the libtool documentation under the heading "Libtool's versioning
@@ -42,6 +45,47 @@ AC_SUBST(LIBRARY_AGE)dnl
 AC_CANONICAL_HOST
 
 AM_INIT_AUTOMAKE([foreign 1.7.2 no-define dist-zip])
+
+
+# Check for programs
+AC_PROG_CC_STDC
+AC_PROG_CPP
+AC_PROG_CXX
+
+#AM_PROG_LD
+#AC_SUBST(LD)
+#AC_PROG_INSTALL
+#AC_PROG_MAKE_SET
+#AC_PROG_LN_S
+
+#
+# Tests for Windows
+#
+AC_EXEEXT
+AC_OBJEXT
+
+# Configure libtool
+AC_ENABLE_SHARED
+AC_ENABLE_STATIC
+AC_LIBTOOL_WIN32_DLL
+AC_LIBTOOL_SETUP
+AC_PROG_LIBTOOL
+AC_SUBST(LIBTOOL_DEPS)
+
+# Add configure option --enable-maintainer-mode which enables dependency
+# checking and generation useful to package maintainers.  This is made an
+# option to avoid confusing end users.
+AM_MAINTAINER_MODE
+
+# If the C compiler supports the keyword inline, do nothing. Otherwise
+# define inline to __inline__ or __inline if it accepts one of those,
+# otherwise define inline to be empty.
+AC_C_INLINE
+AC_SUBST(inline)
+
+# If words are stored with the most significant byte first (like
+# Motorola and SPARC CPUs), define `WORDS_BIGENDIAN'.
+AC_C_BIGENDIAN
 
 # Point to JPEG installed in DIR or disable JPEG with --without-jpeg.
 AC_ARG_WITH(jpeg,
@@ -85,45 +129,43 @@ AC_ARG_WITH(zlib,
 	      [with_zlib=$withval],
 	      [with_zlib='yes'])
 
-# Check for programs
-AC_PROG_CC_STDC
-AC_PROG_CPP
-AC_PROG_CXX
-
-#AM_PROG_LD
-#AC_SUBST(LD)
-#AC_PROG_INSTALL
-#AC_PROG_MAKE_SET
-#AC_PROG_LN_S
-
 #
-# Tests for Windows
+# Determine POSIX threads settings
 #
-AC_EXEEXT
-AC_OBJEXT
+# Enable support for POSIX thread APIs
+AC_ARG_WITH(threads,
+	      AS_HELP_STRING([--without-threads],
+                             [disable POSIX threads API support]),
+	      [with_threads=$withval],
+	      [with_threads='yes'])
 
-# Configure libtool
-AC_ENABLE_SHARED
-AC_ENABLE_STATIC
-AC_LIBTOOL_WIN32_DLL
-AC_LIBTOOL_SETUP
-AC_PROG_LIBTOOL
-AC_SUBST(LIBTOOL_DEPS)
+have_threads=no
+if test "$with_threads" != 'no'
+then
 
-# Add configure option --enable-maintainer-mode which enables dependency
-# checking and generation useful to package maintainers.  This is made an
-# option to avoid confusing end users.
-AM_MAINTAINER_MODE
+  ACX_PTHREAD()
+ 
+  if test "$acx_pthread_ok" = yes
+  then
+    have_threads=yes
 
-# If the C compiler supports the keyword inline, do nothing. Otherwise
-# define inline to __inline__ or __inline if it accepts one of those,
-# otherwise define inline to be empty.
-AC_C_INLINE
-AC_SUBST(inline)
+    DEF_THREAD="$PTHREAD_CFLAGS"
+    CFLAGS="$CFLAGS $DEF_THREAD"
+    CXXFLAGS="$CXXFLAGS $DEF_THREAD"
 
-# If words are stored with the most significant byte first (like
-# Motorola and SPARC CPUs), define `WORDS_BIGENDIAN'.
-AC_C_BIGENDIAN
+    if test "$CC" != "$PTHREAD_CC"
+    then
+      AC_MSG_WARN([Replacing compiler $CC with compiler $PTHREAD_CC to support pthreads.])
+      CC="$PTHREAD_CC"
+    fi
+    if test "$CXX" != "$PTHREAD_CXX"
+    then
+      AC_MSG_WARN([Replacing compiler $CXX with compiler $PTHREAD_CXX to support pthreads.])
+      CXX="$PTHREAD_CXX"
+    fi
+  fi
+fi
+
 
 #
 # Find math library
@@ -134,13 +176,25 @@ LIBS="$LIB_MATH $LIBS"
 AC_SUBST(LIB_MATH)
 
 #
-# Find pthread library
+# Find Posix threads library
 #
-LIB_PTHREAD=''
-AC_CHECK_HEADERS(pthread.h,, [AC_MSG_ERROR([pthread.h required])])
-AC_CHECK_LIB(pthread,pthread_create,LIB_PTHREAD="-lpthread",,)
-LIBS="$LIB_PTHREAD $LIBS"
-AC_SUBST(LIB_PTHREAD)
+LIB_THREAD=''
+if test "$with_threads" != 'no' && test "$have_threads" = 'yes'
+then
+  for lib in pthread pthreads
+  do
+    if test "x$PTHREAD_LIBS" = "x" ; then
+      AC_CHECK_LIB([$lib],pthread_mutex_lock,[PTHREAD_LIBS=-l$lib],,)
+    fi
+  done
+
+  LIB_THREAD="$PTHREAD_LIBS"
+  LIBS="$LIBS $LIB_THREAD"
+  AC_DEFINE(HasTHREADS,1,[Define if you have pthreads library])
+else
+  AC_DEFINE(HasTHREADS,0,[Define if you dont have pthreads library])
+fi
+AC_SUBST(LIB_THREAD)
 
 #
 # Check for JPEG
@@ -285,18 +339,19 @@ fi
 AM_CONDITIONAL(HasTIFF, test "$have_tiff" = 'yes')
 AC_SUBST(LIB_TIFF)
 
+
 # Libraries that the LCMS library depends on
-LCMS_LIB_DEPLIBS="$LIB_MATH $LIB_PTHREAD"
+LCMS_LIB_DEPLIBS="$LIB_MATH $LIB_THREAD"
 LCMS_LIB_DEPLIBS=`echo $LCMS_LIB_DEPLIBS | sed -e 's/  */ /g'`
 AC_SUBST(LCMS_LIB_DEPLIBS)
 
 # Libraries that the jpegicc program depends on
-JPEGICC_DEPLIBS="$LIB_JPEG $LIB_MATH"
+JPEGICC_DEPLIBS="$LIB_JPEG $LIB_MATH $LIB_THREAD"
 JPEGICC_DEPLIBS=`echo $JPEGICC_DEPLIBS | sed -e 's/  */ /g'`
 AC_SUBST(JPEGICC_DEPLIBS)
 
 # Libraries that the tifficc program depends on
-TIFFICC_DEPLIBS="$LIB_TIFF $LIB_JPEG $LIB_ZLIB $LIB_MATH"
+TIFFICC_DEPLIBS="$LIB_TIFF $LIB_JPEG $LIB_ZLIB $LIB_MATH $LIB_THREAD"
 TIFFICC_DEPLIBS=`echo $TIFFICC_DEPLIBS | sed -e 's/  */ /g'`
 AC_SUBST(TIFFICC_DEPLIBS)
 
