@@ -136,6 +136,7 @@ Big revamp on Contexts, from Artifex
 New locking plug-in, from Artifex
 Added directories for tiff, jpeg in configure script
 Fix for delete tag memory corruption
+Added pthread dependency. From now lcms supports multithreading
 
 -----------------------
 2.6 Featured release
