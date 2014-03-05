@@ -144,7 +144,7 @@ void GenerateCSA(void)
     Buffer = (char*) malloc(n + 1);
     if (Buffer != NULL) {
 
-        cmsGetPostScriptCSA(0, hProfile, Intent, 0, Buffer, n);
+        cmsGetPostScriptCSA(0, hProfile, Intent, 0, Buffer, (cmsUInt32Number) n);
         Buffer[n] = 0;
 
         fprintf(OutFile, "%s", Buffer);	

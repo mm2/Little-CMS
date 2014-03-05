@@ -50,7 +50,7 @@ static DWORD WINAPI one_thread(LPVOID lpParameter)
     Sleep(rand() % 500 );
     cmsHTRANSFORM xform = cmsCreateTransformTHR(ctx, prof_rgb, TYPE_RGB_8, prof_cmyk, TYPE_CMYK_8, 0, 0);
 
-    for (i=0; i < 10000; i++) {
+    for (i=0; i < 100000; i++) {
 
         for (j=0; j < 1000; j++) 
         {
@@ -86,7 +86,7 @@ int WINAPI WinMain(HINSTANCE hInstance,HINSTANCE hPrevInstance,LPSTR lpCmdLine,i
 
     OutputDebugString(L"Test in progress...\n"); 
 
-    ctx = cmsCreateContext(&MutexPluginSample, 0);
+    ctx = cmsCreateContext(NULL, 0);
 
     prof_cmyk = cmsOpenProfileFromFileTHR(ctx, "USWebCoatedSWOP.icc", "r");
     prof_rgb = cmsOpenProfileFromFileTHR(ctx, "AdobeRGB1998.icc","r");

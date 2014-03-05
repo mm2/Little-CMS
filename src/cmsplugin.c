@@ -518,22 +518,28 @@ cmsBool CMSEXPORT _cmsIOPrintf(cmsIOHANDLER* io, const char* frm, ...)
 // Specialized malloc for plug-ins, that is freed upon exit.
 void* _cmsPluginMalloc(cmsContext ContextID, cmsUInt32Number size)
 {
-     struct _cmsContext_struct* ctx = _cmsGetContext(ContextID);
+    struct _cmsContext_struct* ctx = _cmsGetContext(ContextID);
 
-     if (ctx ->MemPool == NULL) {
+    if (ctx ->MemPool == NULL) {
 
-         cmsSignalError(ContextID, cmsERROR_CORRUPTION_DETECTED, "NULL memory pool on context");
-         return NULL;
-     }
+        if (ContextID == NULL) {
 
-     return _cmsSubAlloc(ctx->MemPool, size);
+            ctx->MemPool = _cmsCreateSubAlloc(0, 2*1024);
+        }
+        else {
+            cmsSignalError(ContextID, cmsERROR_CORRUPTION_DETECTED, "NULL memory pool on context");
+            return NULL;
+        }
+    }
+
+    return _cmsSubAlloc(ctx->MemPool, size);
 }
 
 
 // Main plug-in dispatcher
 cmsBool CMSEXPORT cmsPlugin(void* Plug_in)
 {
-  return cmsPluginTHR(NULL, Plug_in);
+    return cmsPluginTHR(NULL, Plug_in);
 }
 
 cmsBool CMSEXPORT cmsPluginTHR(cmsContext id, void* Plug_in)
@@ -769,7 +775,7 @@ cmsContext CMSEXPORT cmsCreateContext(void* Plugin, void* UserData)
     memcpy(&ctx->DefaultMemoryManager, &fakeContext.DefaultMemoryManager, sizeof(_cmsMemPluginChunk)); 
    
     // Maintain the linked list (with proper locking)
-   _cmsEnterCriticalSectionPrimitive(&_cmsContextPoolHeadMutex);
+    _cmsEnterCriticalSectionPrimitive(&_cmsContextPoolHeadMutex);
        ctx ->Next = _cmsContextPoolHead;
        _cmsContextPoolHead = ctx;
     _cmsLeaveCriticalSectionPrimitive(&_cmsContextPoolHeadMutex);

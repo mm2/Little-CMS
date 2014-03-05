@@ -198,7 +198,7 @@ cmsINLINE cmsUInt16Number _cmsQuickSaturateWord(cmsFloat64Number d)
 
 typedef CRITICAL_SECTION _cmsMutex;
 
-#define CMS_MUTEX_INITIALIZER {((void*) (intptr_t) -1),-1,0,0,0,0}
+#define CMS_MUTEX_INITIALIZER {(void*) -1,-1,0,0,0,0}
 
 cmsINLINE int _cmsLockPrimitive(_cmsMutex *m)
 {
