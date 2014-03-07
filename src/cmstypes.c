@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2011 Marti Maria Saguer
+//  Copyright (c) 1998-2014 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -32,7 +32,7 @@
 // are no profiles holding them. The programmer can also extend this list by defining his own types
 // by using the appropiate plug-in. There are three types of plug ins regarding that. First type
 // allows to define new tags using any existing type. Next plug-in type allows to define new types
-// and the third one is very specific: allows to extend the number of elements in the multiprofile
+// and the third one is very specific: allows to extend the number of elements in the multiprocessing
 // elements special type.
 //--------------------------------------------------------------------------------------------------
 
@@ -1752,7 +1752,6 @@ void *Type_LUT8_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cms
     if (!_cmsReadUInt8Number(io, NULL)) goto Error;
 
     // Do some checking
-
     if (InputChannels > cmsMAXCHANNELS)  goto Error;
     if (OutputChannels > cmsMAXCHANNELS) goto Error;
 

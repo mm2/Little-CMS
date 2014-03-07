@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2013 Marti Maria Saguer
+//  Copyright (c) 1998-2014 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -1013,11 +1013,7 @@ CMSAPI long int          CMSEXPORT cmsfilelength(FILE* f);
 // Each context holds its owns globals and its own plug-ins. There is a global context with the id = 0 for lecacy compatibility
 // though using the global context is not recomended. Proper context handling makes lcms more thread-safe.
 
-#ifdef CMS_CONTEXT_IN_LEGACY_MODE
-    typedef void* cmsContext;
-#else
-    typedef struct _cmsContext_struct* cmsContext;
-#endif
+typedef struct _cmsContext_struct* cmsContext;
 
 CMSAPI cmsContext       CMSEXPORT cmsCreateContext(void* Plugin, void* UserData);
 CMSAPI void             CMSEXPORT cmsDeleteContext(cmsContext ContexID);

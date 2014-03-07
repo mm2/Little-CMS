@@ -1,7 +1,7 @@
 
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2011 Marti Maria Saguer
+//  Copyright (c) 1998-2014 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -174,7 +174,7 @@ cmsINLINE cmsUInt16Number _cmsQuickSaturateWord(cmsFloat64Number d)
 #ifdef CMS_IS_WINDOWS_
 
 #define WIN32_LEAN_AND_MEAN 1
-#include <Windows.h>
+#include <windows.h>
 
 
 // From: http://locklessinc.com/articles/pthreads_on_windows/
@@ -359,7 +359,7 @@ cmsBool _cmsRegisterMutexPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
 
 // ---------------------------------------------------------------------------------------------------------
 
-// Suballocators. Those are blocks of memory that is freed at the end on whole block.
+// Suballocators. 
 typedef struct _cmsSubAllocator_chunk_st {
 
     cmsUInt8Number* Block;
