@@ -981,7 +981,7 @@ int TransformImage(char *cDefInpProf, char *cOutProf)
 
         if (!hIn)
             FatalError("Input profile couldn't be read.");
-        if (!hOut)
+        if (!lIsDeviceLink && !hOut)
             FatalError("Output profile couldn't be read.");
 
        // Assure both, input profile and input JPEG are on same colorspace
