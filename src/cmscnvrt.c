@@ -1045,7 +1045,7 @@ cmsPipeline* _cmsLinkProfiles(cmsContext     ContextID,
         if (TheIntents[i] == INTENT_PERCEPTUAL || TheIntents[i] == INTENT_SATURATION) {
 
             // Force BPC for V4 profiles in perceptual and saturation
-            if (cmsGetProfileVersion(hProfiles[i]) >= 4.0)
+            if (cmsGetEncodedICCversion(hProfiles[i]) >= 0x4000000)
                 BPC[i] = TRUE;
         }
     }

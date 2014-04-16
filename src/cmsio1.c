@@ -906,7 +906,7 @@ cmsBool _cmsWriteProfileSequence(cmsHPROFILE hProfile, const cmsSEQ* seq)
 {
     if (!cmsWriteTag(hProfile, cmsSigProfileSequenceDescTag, seq)) return FALSE;
 
-    if (cmsGetProfileVersion(hProfile) >= 4.0) {
+    if (cmsGetEncodedICCversion(hProfile) >= 0x4000000) {
 
             if (!cmsWriteTag(hProfile, cmsSigProfileSequenceIdTag, seq)) return FALSE;
     }

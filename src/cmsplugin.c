@@ -932,8 +932,8 @@ void CMSEXPORT cmsDeleteContext(cmsContext ContextID)
 
             // Search for previous
             for (prev = _cmsContextPoolHead; 
-                prev != NULL;
-                prev = prev ->Next)
+                 prev != NULL;
+                 prev = prev ->Next)
             {
                 if (prev -> Next == ctx) {
                     prev -> Next = ctx ->Next;
