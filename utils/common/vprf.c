@@ -156,7 +156,7 @@ void PrintInfo(cmsHPROFILE h, cmsInfoType Info)
     len = cmsGetProfileInfoASCII(h, Info, "en", "US", NULL, 0);
     if (len == 0) return;
 
-    text = malloc(len * sizeof(char));
+    text = (char*) malloc(len * sizeof(char));
     if (text == NULL) return;
 
     cmsGetProfileInfoASCII(h, Info, "en", "US", text, len);
@@ -180,7 +180,7 @@ void PrintColorantTable(cmsHPROFILE hInput, cmsTagSignature Sig, const char* Tit
 
         printf("%s:\n", Title);
 
-        list = cmsReadTag(hInput, Sig);
+        list = (cmsNAMEDCOLORLIST*) cmsReadTag(hInput, Sig);
         if (list == NULL) {
             printf("(Unavailable)\n");
             return;
@@ -329,5 +329,3 @@ int ChanCountFromPixelType(int ColorChannels)
           return -1;
     }
 }
-
-

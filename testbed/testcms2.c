@@ -52,9 +52,13 @@ static cmsInt32Number SimultaneousErrors;
 #define cmsmin(a, b) (((a) < (b)) ? (a) : (b))
 
 // Die, a fatal unexpected error is detected!
-void Die(const char* Reason)
+void Die(const char* Reason, ...)
 {
-    printf("\n\nArrrgggg!!: %s!\n\n", Reason);
+    va_list args;
+    va_start(args, Reason);
+    vsprintf(ReasonToFailBuffer, Reason, args);
+    va_end(args);
+    printf("\n%s\n", ReasonToFailBuffer);
     fflush(stdout);
     exit(1);
 }
@@ -768,7 +772,7 @@ cmsInt32Number CheckEndianess(void)
 #endif
 
     if (!IsOk) {
-        Fail("\nOOOPPSS! You have CMS_USE_BIG_ENDIAN toggle misconfigured!\n\n"
+        Die("\nOOOPPSS! You have CMS_USE_BIG_ENDIAN toggle misconfigured!\n\n"
             "Please, edit lcms2.h and %s the CMS_USE_BIG_ENDIAN toggle.\n", BigEndian? "uncomment" : "comment");
         return 0;
     }
@@ -785,7 +789,7 @@ cmsInt32Number CheckQuickFloor(void)
         (_cmsQuickFloor(-1.234) != -2) ||
         (_cmsQuickFloor(-32767.1) != -32768)) {
 
-            Fail("\nOOOPPSS! _cmsQuickFloor() does not work as expected in your machine!\n\n"
+            Die("\nOOOPPSS! _cmsQuickFloor() does not work as expected in your machine!\n\n"
                 "Please, edit lcms2.h and uncomment the CMS_DONT_USE_FAST_FLOOR toggle.\n");
             return 0;
 
@@ -804,7 +808,7 @@ cmsInt32Number CheckQuickFloorWord(void)
 
         if (_cmsQuickFloorWord((cmsFloat64Number) i + 0.1234) != i) {
 
-            Fail("\nOOOPPSS! _cmsQuickFloorWord() does not work as expected in your machine!\n\n"
+            Die("\nOOOPPSS! _cmsQuickFloorWord() does not work as expected in your machine!\n\n"
                 "Please, edit lcms2.h and uncomment the CMS_DONT_USE_FAST_FLOOR toggle.\n");
             return 0;
         }
@@ -6171,17 +6175,17 @@ cmsInt32Number Chack_sRGB_Float(void)
     MaxErr = 0;
 
     // Xform 1 goes from 8 bits to XYZ,
-    rc  = CheckOneRGB_f(xform1, 1, 1, 1,        0.0002926, 0.00030352, 0.00025037, 0.0001);
-    rc  &= CheckOneRGB_f(xform1, 127, 127, 127, 0.2046329, 0.212230,   0.175069,   0.0001);
-    rc  &= CheckOneRGB_f(xform1, 12, 13, 15,    0.0038364, 0.0039928,  0.00385212, 0.0001);
-    rc  &= CheckOneRGB_f(xform1, 128, 0, 0,     0.0940846, 0.0480030,  0.00300543, 0.0001);
-    rc  &= CheckOneRGB_f(xform1, 190, 25, 210,  0.3203491, 0.1605240,  0.46817115, 0.0001);
+    rc  = CheckOneRGB_f(xform1, 1, 1, 1,        0.0002927, 0.0003035,  0.000250,  0.0001);
+    rc  &= CheckOneRGB_f(xform1, 127, 127, 127, 0.2046329, 0.212230,   0.175069,  0.0001);
+    rc  &= CheckOneRGB_f(xform1, 12, 13, 15,    0.0038364, 0.0039928,  0.003853,  0.0001);
+    rc  &= CheckOneRGB_f(xform1, 128, 0, 0,     0.0941240, 0.0480256,  0.003005,  0.0001);
+    rc  &= CheckOneRGB_f(xform1, 190, 25, 210,  0.3204592, 0.1605926,  0.468213,  0.0001);
 
     // Xform 2 goes from 8 bits to Lab, we allow 0.01 error max
-    rc  &= CheckOneRGB_f(xform2, 1, 1, 1,       0.2741748, 0, 0,                  0.01);
-    rc  &= CheckOneRGB_f(xform2, 127, 127, 127, 53.192776, 0, 0,                  0.01);
-    rc  &= CheckOneRGB_f(xform2, 190, 25, 210,  47.043171, 74.564576, -56.89373,  0.01);
-    rc  &= CheckOneRGB_f(xform2, 128, 0, 0,     26.158100, 48.474477, 39.425916,  0.01);
+    rc  &= CheckOneRGB_f(xform2, 1, 1, 1,       0.2741748, 0, 0,                   0.01);
+    rc  &= CheckOneRGB_f(xform2, 127, 127, 127, 53.192776, 0, 0,                   0.01);
+    rc  &= CheckOneRGB_f(xform2, 190, 25, 210,  47.052136, 74.565610, -56.883274,  0.01);
+    rc  &= CheckOneRGB_f(xform2, 128, 0, 0,     26.164701, 48.478171, 39.4384713,  0.01);
 
     cmsDeleteTransform(xform1);
     cmsDeleteTransform(xform2);
@@ -8123,7 +8127,6 @@ void PrintSupportedIntents(void)
 
 // ---------------------------------------------------------------------------------------
 
-
 #ifdef LCMS_FAST_EXTENSIONS
     void* cmsFast8Bitextensions(void);
 #endif
@@ -8359,7 +8362,7 @@ int main(int argc, char* argv[])
 
     if (DoPluginTests)
     {
-#ifndef CMS_CONTEXT_IN_LEGACY_MODE
+
         Check("Context memory handling", CheckAllocContext);
         Check("Simple context functionality", CheckSimpleContext);
         Check("Alarm codes context", CheckAlarmColorsContext);
@@ -8374,7 +8377,7 @@ int main(int argc, char* argv[])
         Check("Rendering intent plugin", CheckIntentPlugin);
         Check("Full transform plugin",   CheckTransformPlugin);
         Check("Mutex plugin",            CheckMutexPlugin);
-#endif        
+       
     }
 
 
