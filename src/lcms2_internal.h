@@ -284,38 +284,38 @@ typedef int _cmsMutex;
 
 cmsINLINE int _cmsLockPrimitive(_cmsMutex *m)
 {
-	return 0;
     cmsUNUSED_PARAMETER(m);
+	return 0;
 }
 
 cmsINLINE int _cmsUnlockPrimitive(_cmsMutex *m)
 {
-	return 0;
     cmsUNUSED_PARAMETER(m);
+	return 0;
 }
 	
 cmsINLINE int _cmsInitMutexPrimitive(_cmsMutex *m)
 {
-	return 0;
     cmsUNUSED_PARAMETER(m);
+	return 0;
 }
 
 cmsINLINE int _cmsDestroyMutexPrimitive(_cmsMutex *m)
 {
-	return 0;
     cmsUNUSED_PARAMETER(m);
+	return 0;
 }
 
 cmsINLINE int _cmsEnterCriticalSectionPrimitive(_cmsMutex *m)
 {
-	return 0;
     cmsUNUSED_PARAMETER(m);
+	return 0;
 }
 
 cmsINLINE int _cmsLeaveCriticalSectionPrimitive(_cmsMutex *m)
 {
-	return 0;
     cmsUNUSED_PARAMETER(m);
+	return 0;
 }
 #endif
 
