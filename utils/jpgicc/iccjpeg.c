@@ -217,7 +217,7 @@ read_icc_profile (j_decompress_ptr cinfo,
     total_length += data_length[seq_no];
   }
 
-  if (total_length <= 0)
+  if (total_length == 0)
     return FALSE;		/* found only empty markers? */
 
   /* Allocate space for assembled data */
