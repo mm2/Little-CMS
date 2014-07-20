@@ -58,29 +58,7 @@ if test -z "$*"; then
   echo
 fi
 
-case $CC in
-xlc )
-  am_opt=--include-deps;;
-esac
-
-      aclocalinclude="$ACLOCAL_FLAGS"
-
-      if grep "^LT_INIT" configure.ac >/dev/null; then
-	if test -z "$NO_LIBTOOLIZE" ; then 
-	  echo "Running libtoolize..."
-	  libtoolize --force --copy
-	fi
-      fi
-      echo "Running aclocal $aclocalinclude ..."
-      aclocal $aclocalinclude
-      if grep "^AC_CONFIG_HEADERS" configure.ac >/dev/null; then
-	echo "Running autoheader..."
-	autoheader
-      fi
-      echo "Running automake --add-missing --gnu -Wno-portability $am_opt ..."
-      automake --add-missing --gnu -Wno-portability $am_opt
-      echo "Running autoconf ..."
-      autoconf
+autoreconf -vfi
 
 conf_flags="--enable-maintainer-mode"
 
