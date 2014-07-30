@@ -988,12 +988,14 @@ typedef struct {
 
 } cmsAllowedLUT;
 
+#define cmsSig0 ((cmsTagSignature) 0) 
+
 static const cmsAllowedLUT AllowedLUTTypes[] = {
 
-    { FALSE, 0,              cmsSigLut16Type,    4,  { cmsSigMatrixElemType,   cmsSigCurveSetElemType, cmsSigCLutElemType, cmsSigCurveSetElemType}},
-    { FALSE, 0,              cmsSigLut16Type,    3,  { cmsSigCurveSetElemType, cmsSigCLutElemType, cmsSigCurveSetElemType}},
-    { FALSE, 0,              cmsSigLut16Type,    2,  { cmsSigCurveSetElemType, cmsSigCLutElemType}},
-    { TRUE , 0,              cmsSigLutAtoBType,  1,  { cmsSigCurveSetElemType }},
+    { FALSE, cmsSig0,        cmsSigLut16Type, 4, { cmsSigMatrixElemType, cmsSigCurveSetElemType, cmsSigCLutElemType, cmsSigCurveSetElemType } },
+    { FALSE, cmsSig0,        cmsSigLut16Type, 3, { cmsSigCurveSetElemType, cmsSigCLutElemType, cmsSigCurveSetElemType } },
+    { FALSE, cmsSig0,        cmsSigLut16Type, 2, { cmsSigCurveSetElemType, cmsSigCLutElemType } },
+    { TRUE,  cmsSig0,        cmsSigLutAtoBType, 1, { cmsSigCurveSetElemType } },
     { TRUE , cmsSigAToB0Tag, cmsSigLutAtoBType,  3,  { cmsSigCurveSetElemType, cmsSigMatrixElemType, cmsSigCurveSetElemType } },
     { TRUE , cmsSigAToB0Tag, cmsSigLutAtoBType,  3,  { cmsSigCurveSetElemType, cmsSigCLutElemType, cmsSigCurveSetElemType   } },
     { TRUE , cmsSigAToB0Tag, cmsSigLutAtoBType,  5,  { cmsSigCurveSetElemType, cmsSigCLutElemType, cmsSigCurveSetElemType, cmsSigMatrixElemType, cmsSigCurveSetElemType }},

@@ -251,12 +251,12 @@ static
 void* Prelin16dup(cmsContext ContextID, const void* ptr)
 {
     Prelin16Data* p16 = (Prelin16Data*) ptr;
-    Prelin16Data* Duped = _cmsDupMem(ContextID, p16, sizeof(Prelin16Data));
+    Prelin16Data* Duped = (Prelin16Data*) _cmsDupMem(ContextID, p16, sizeof(Prelin16Data));
 
     if (Duped == NULL) return NULL;
 
-    Duped ->EvalCurveOut16   = _cmsDupMem(ContextID, p16 ->EvalCurveOut16, p16 ->nOutputs * sizeof(_cmsInterpFn16));
-    Duped ->ParamsCurveOut16 = _cmsDupMem(ContextID, p16 ->ParamsCurveOut16, p16 ->nOutputs * sizeof(cmsInterpParams* ));
+    Duped->EvalCurveOut16 = (_cmsInterpFn16*) _cmsDupMem(ContextID, p16->EvalCurveOut16, p16->nOutputs * sizeof(_cmsInterpFn16));
+    Duped->ParamsCurveOut16 = (cmsInterpParams**)_cmsDupMem(ContextID, p16->ParamsCurveOut16, p16->nOutputs * sizeof(cmsInterpParams*));
 
     return Duped;
 }
@@ -269,7 +269,7 @@ Prelin16Data* PrelinOpt16alloc(cmsContext ContextID,
                                int nOutputs, cmsToneCurve** Out )
 {
     int i;
-    Prelin16Data* p16 = _cmsMallocZero(ContextID, sizeof(Prelin16Data));
+    Prelin16Data* p16 = (Prelin16Data*)_cmsMallocZero(ContextID, sizeof(Prelin16Data));
     if (p16 == NULL) return NULL;
 
     p16 ->nInputs = nInputs;
@@ -758,7 +758,7 @@ Prelin8Data* PrelinOpt8alloc(cmsContext ContextID, const cmsInterpParams* p, cms
     cmsS15Fixed16Number v1, v2, v3;
     Prelin8Data* p8;
 
-    p8 = _cmsMallocZero(ContextID, sizeof(Prelin8Data));
+    p8 = (Prelin8Data*)_cmsMallocZero(ContextID, sizeof(Prelin8Data));
     if (p8 == NULL) return NULL;
 
     // Since this only works for 8 bit input, values comes always as x * 257,
@@ -832,7 +832,7 @@ void PrelinEval8(register const cmsUInt16Number Input[],
     Prelin8Data* p8 = (Prelin8Data*) D;
     register const cmsInterpParams* p = p8 ->p;
     int                    TotalOut = p -> nOutputs;
-    const cmsUInt16Number* LutTable = p -> Table;
+    const cmsUInt16Number* LutTable = (const cmsUInt16Number*) p->Table;
 
     r = Input[0] >> 8;
     g = Input[1] >> 8;
@@ -1151,15 +1151,15 @@ void CurvesFree(cmsContext ContextID, void* ptr)
 static
 void* CurvesDup(cmsContext ContextID, const void* ptr)
 {
-    Curves16Data* Data = _cmsDupMem(ContextID, ptr, sizeof(Curves16Data));
+    Curves16Data* Data = (Curves16Data*)_cmsDupMem(ContextID, ptr, sizeof(Curves16Data));
     int i;
 
     if (Data == NULL) return NULL;
 
-    Data ->Curves = _cmsDupMem(ContextID, Data ->Curves, Data ->nCurves * sizeof(cmsUInt16Number*));
+    Data->Curves = (cmsUInt16Number**) _cmsDupMem(ContextID, Data->Curves, Data->nCurves * sizeof(cmsUInt16Number*));
 
     for (i=0; i < Data -> nCurves; i++) {
-        Data ->Curves[i] = _cmsDupMem(ContextID, Data ->Curves[i], Data -> nElements * sizeof(cmsUInt16Number));
+        Data->Curves[i] = (cmsUInt16Number*) _cmsDupMem(ContextID, Data->Curves[i], Data->nElements * sizeof(cmsUInt16Number));
     }
 
     return (void*) Data;
@@ -1172,18 +1172,18 @@ Curves16Data* CurvesAlloc(cmsContext ContextID, int nCurves, int nElements, cmsT
     int i, j;
     Curves16Data* c16;
 
-    c16 = _cmsMallocZero(ContextID, sizeof(Curves16Data));
+    c16 = (Curves16Data*)_cmsMallocZero(ContextID, sizeof(Curves16Data));
     if (c16 == NULL) return NULL;
 
     c16 ->nCurves = nCurves;
     c16 ->nElements = nElements;
 
-    c16 ->Curves = _cmsCalloc(ContextID, nCurves, sizeof(cmsUInt16Number*));
+    c16->Curves = (cmsUInt16Number**) _cmsCalloc(ContextID, nCurves, sizeof(cmsUInt16Number*));
     if (c16 ->Curves == NULL) return NULL;
 
     for (i=0; i < nCurves; i++) {
 
-        c16->Curves[i] = _cmsCalloc(ContextID, nElements, sizeof(cmsUInt16Number));
+        c16->Curves[i] = (cmsUInt16Number*) _cmsCalloc(ContextID, nElements, sizeof(cmsUInt16Number));
 
         if (c16->Curves[i] == NULL) {
 

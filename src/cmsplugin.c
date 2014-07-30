@@ -880,7 +880,7 @@ cmsContext CMSEXPORT cmsDupContext(cmsContext ContextID, void* NewUserData)
 }
 
 
-
+/*
 static
 struct _cmsContext_struct* FindPrev(struct _cmsContext_struct* id)
 {
@@ -897,6 +897,7 @@ struct _cmsContext_struct* FindPrev(struct _cmsContext_struct* id)
 
     return NULL;  // List is empty or only one element!
 }
+*/
 
 // Frees any resources associated with the given context, 
 // and destroys the context placeholder. 
