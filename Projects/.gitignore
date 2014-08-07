@@ -1,6 +1,6 @@
-**.opensdf
-**.sdf
-**.suo
-**.user
+*.opensdf
+*.sdf
+*.suo
+*.user
 Debug/
 Release/
