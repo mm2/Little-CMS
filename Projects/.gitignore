@@ -2,5 +2,9 @@
 *.sdf
 *.suo
 *.user
+coverity/cov-int
+coverity/lcms.lzma
+coverity/lcms.tar
+coverity/lcms.tgz
 Debug/
 Release/
