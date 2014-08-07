@@ -6,4 +6,7 @@
     <paths>
         <dir name="../../src"/>
     </paths>
+    <suppressions>
+        <suppression>variableScope</suppression>
+    </suppressions>
 </project>
