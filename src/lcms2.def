@@ -339,3 +339,4 @@ _cmsCreateMutex                          =   _cmsCreateMutex
 _cmsDestroyMutex                         =   _cmsDestroyMutex
 _cmsLockMutex                            =   _cmsLockMutex   
 _cmsUnlockMutex                          =   _cmsUnlockMutex 
+cmsGetProfileIOhandler                   =   cmsGetProfileIOhandler

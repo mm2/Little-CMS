@@ -453,6 +453,14 @@ cmsBool CMSEXPORT cmsCloseIOhandler(cmsIOHANDLER* io)
 
 // -------------------------------------------------------------------------------------------------------
 
+cmsIOHANDLER* CMSEXPORT cmsGetProfileIOhandler(cmsHPROFILE hProfile)
+{
+	_cmsICCPROFILE* Icc = (_cmsICCPROFILE*)hProfile;
+
+	if (Icc == NULL) return NULL;
+	return Icc->IOhandler;
+}
+
 // Creates an empty structure holding all required parameters
 cmsHPROFILE CMSEXPORT cmsCreateProfilePlaceholder(cmsContext ContextID)
 {
