@@ -1852,6 +1852,11 @@ cmsBool CMSEXPORT cmsWriteRawTag(cmsHPROFILE hProfile, cmsTagSignature sig, cons
     Icc ->TagSizes[i] = Size;
 
     _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
+
+    if (Icc->TagPtrs[i] == NULL) {           
+           Icc->TagNames[i] = 0;
+           return FALSE;
+    }
     return TRUE;
 }
 
