@@ -683,15 +683,21 @@ struct _cmsContext_struct* _cmsGetContext(cmsContext ContextID)
 
 
 // Internal: get the memory area associanted with each context client
-// Returns the block assigned to the specific zone. 
+// Returns the block assigned to the specific zone. Never return NULL.
 void* _cmsContextGetClientChunk(cmsContext ContextID, _cmsMemoryClient mc)
 {
     struct _cmsContext_struct* ctx;
     void *ptr;
 
     if (mc < 0 || mc >= MemoryClientMax) {
-        cmsSignalError(ContextID, cmsERROR_RANGE, "Bad context client");
-        return NULL;
+        
+           cmsSignalError(ContextID, cmsERROR_INTERNAL, "Bad context client -- possible corruption");
+
+           // This is catastrophic. Never should reach here
+           _cmsAssert(0);
+
+           // Reverts to global context
+           return globalContext.chunks[UserPtr];
     }
     
     ctx = _cmsGetContext(ContextID);

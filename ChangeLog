@@ -141,3 +141,18 @@ Added pthread dependency. From now lcms supports multithreading
 -----------------------
 2.6 Featured release
 -----------------------
+
+Fixed a possible segmentation fault in a non-happy path
+Fixed a macro clash on SNONE. Added a safety check on named color lists
+Added a function to retrieve the iohandler of a given profile object
+Remove unused vcproj files
+Some maintenance fixes
+utils/jpgicc/iccjpeg.c: Fix check if unsigned variable 'total_length'… …
+Add missing comma in CGATS parser    
+Remove dead code.
+Move code before the `return` statements.
+
+
+-----------------------
+2.7 Maintenance release
+-----------------------
