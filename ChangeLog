@@ -151,7 +151,8 @@ utils/jpgicc/iccjpeg.c: Fix check if unsigned variable 'total_length'… …
 Add missing comma in CGATS parser    
 Remove dead code.
 Move code before the `return` statements.
-
+Added code to clip negative values in unbounded transforms (only gray, rgb, cmyk)
+Added a global optimization that merges consecutive matrices in pipelines
 
 -----------------------
 2.7 Maintenance release

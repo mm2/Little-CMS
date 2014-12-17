@@ -200,6 +200,12 @@ typedef CRITICAL_SECTION _cmsMutex;
 
 #define CMS_MUTEX_INITIALIZER {(PRTL_CRITICAL_SECTION_DEBUG) -1,-1,0,0,0,0}
 
+#ifdef _MSC_VER
+#    if (_MSC_VER >= 1800)
+#          pragma warning(disable : 26135)
+#    endif
+#endif
+
 cmsINLINE int _cmsLockPrimitive(_cmsMutex *m)
 {
 	EnterCriticalSection(m);
@@ -823,6 +829,8 @@ cmsStage*        _cmsStageNormalizeFromLabFloat(cmsContext ContextID);
 cmsStage*        _cmsStageNormalizeFromXyzFloat(cmsContext ContextID);
 cmsStage*        _cmsStageNormalizeToLabFloat(cmsContext ContextID);
 cmsStage*        _cmsStageNormalizeToXyzFloat(cmsContext ContextID);
+cmsStage*        _cmsStageClipNegatives(cmsContext ContextID, int nChannels);
+
 
 // For curve set only
 cmsToneCurve**     _cmsStageGetPtrToCurveSet(const cmsStage* mpe);
