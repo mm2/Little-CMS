@@ -153,6 +153,7 @@ Remove dead code.
 Move code before the `return` statements.
 Added code to clip negative values in unbounded transforms (only gray, rgb, cmyk)
 Added a global optimization that merges consecutive matrices in pipelines
+New project for mac
 
 -----------------------
 2.7 Maintenance release
