@@ -697,6 +697,10 @@ cmsInt32Number CreateTestProfiles(void)
     h = CreateFakeCMYK(300, FALSE);
     if (!OneVirtual(h, "Fake CMYK profile", "lcms2cmyk.icc")) return 0;
 
+    // ---
+
+    h = cmsCreateBCHSWabstractProfileTHR(DbgThread(), 17, 0, 1.2, 0, 3, 5000, 5000);
+    if (!OneVirtual(h, "Brightness", "brightness.icc")) return 0;
     return 1;
 }
 
@@ -718,6 +722,7 @@ void RemoveTestProfiles(void)
     remove("glablcms2.icc");
     remove("lcms2link.icc");
     remove("lcms2link2.icc");
+    remove("brightness.icc");
 }
 
 // -------------------------------------------------------------------------------------------------
@@ -1535,7 +1540,7 @@ cmsInt32Number CheckReverseInterpolation3x3(void)
 {
  cmsPipeline* Lut;
  cmsStage* clut;
- cmsFloat32Number Target[3], Result[3], Hint[3];
+ cmsFloat32Number Target[4], Result[4], Hint[4];
  cmsFloat32Number err, max;
  cmsInt32Number i;
  cmsUInt16Number Table[] = {
@@ -6553,7 +6558,7 @@ cmsInt32Number CheckGamutCheck(void)
         cmsHPROFILE hSRGB, hAbove;
         cmsHTRANSFORM xform;
         cmsInt32Number rc;
-        cmsUInt16Number Alarm[3] = { 0xDEAD, 0xBABE, 0xFACE };
+        cmsUInt16Number Alarm[16] = { 0xDEAD, 0xBABE, 0xFACE };
 
         // Set alarm codes to fancy values so we could check the out of gamut condition
         cmsSetAlarmCodes(Alarm);
