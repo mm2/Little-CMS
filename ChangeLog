@@ -157,6 +157,7 @@ Added a global optimization that merges consecutive matrices in pipelines. Fixes
 New project for mac
 Added license for iccjpeg.c
 Added a project for VS2013
+Fixed wrong handling of extra channels in some formatters.
 
 -----------------------
 2.7 Maintenance release

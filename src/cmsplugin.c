@@ -689,11 +689,11 @@ void* _cmsContextGetClientChunk(cmsContext ContextID, _cmsMemoryClient mc)
     struct _cmsContext_struct* ctx;
     void *ptr;
 
-    if (mc < 0 || mc >= MemoryClientMax) {
+    if ((int) mc < 0 || mc >= MemoryClientMax) {
         
            cmsSignalError(ContextID, cmsERROR_INTERNAL, "Bad context client -- possible corruption");
 
-           // This is catastrophic. Never should reach here
+           // This is catastrophic. Should never reach here
            _cmsAssert(0);
 
            // Reverts to global context

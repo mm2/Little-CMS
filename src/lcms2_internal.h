@@ -194,7 +194,7 @@ cmsINLINE cmsUInt16Number _cmsQuickSaturateWord(cmsFloat64Number d)
 // Microsoft felt that it was necessary to keep it set at -1 for an unlocked critical
 // section, even when they changed the underlying algorithm to be more scalable. 
 // The final parts of the critical section object are unimportant, and can be set 
-// to zero for their defaults. This yields an initialization macro:
+// to zero for their defaults. This yields to an initialization macro:
 
 typedef CRITICAL_SECTION _cmsMutex;
 
