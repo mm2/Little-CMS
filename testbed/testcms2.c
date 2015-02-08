@@ -7734,24 +7734,24 @@ cmsInt32Number CheckRemoveTag(void)
 static
 cmsInt32Number CheckMatrixSimplify(void)
 {
-       cmsContext ctx;
+     
        cmsHPROFILE pIn;
        cmsHPROFILE pOut;
        cmsHTRANSFORM t;
        unsigned char buf[3] = { 127, 32, 64 };
 
-       ctx = cmsCreateContext(NULL, NULL);
-       pIn = cmsCreate_sRGBProfileTHR(ctx);
-       pOut = cmsOpenProfileFromFileTHR(ctx, "ibm-t61.icc", "r");
+       
+       pIn = cmsCreate_sRGBProfile();
+       pOut = cmsOpenProfileFromFile("ibm-t61.icc", "r");
        if (pIn == NULL || pOut == NULL)
               return 0;
 
-       t = cmsCreateTransformTHR(ctx, pIn, TYPE_RGB_8, pOut, TYPE_RGB_8, INTENT_PERCEPTUAL, 0);
+       t = cmsCreateTransform(pIn, TYPE_RGB_8, pOut, TYPE_RGB_8, INTENT_PERCEPTUAL, 0);
        cmsDoTransformStride(t, buf, buf, 1, 1);
        cmsDeleteTransform(t);
        cmsCloseProfile(pIn);
        cmsCloseProfile(pOut);
-       cmsDeleteContext(ctx);
+      
 
        return buf[0] == 144 && buf[1] == 0 && buf[2] == 69;
 }
