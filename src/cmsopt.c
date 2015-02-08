@@ -164,7 +164,27 @@ cmsBool _Remove2Op(cmsPipeline* Lut, cmsStageSignature Op1, cmsStageSignature Op
 }
 
 
-// if two adjacent matrices are found, multiply them
+static
+cmsBool CloseEnoughFloat(cmsFloat64Number a, cmsFloat64Number b)
+{
+       return fabs(b - a) < 0.00001f;
+}
+
+static
+cmsBool  isFloatMatrixIdentity(const cmsMAT3* a)
+{
+       cmsMAT3 Identity;
+       int i, j;
+
+       _cmsMAT3identity(&Identity);
+
+       for (i = 0; i < 3; i++)
+              for (j = 0; j < 3; j++)
+                     if (!CloseEnoughFloat(a->v[i].n[j], Identity.v[i].n[j])) return FALSE;
+
+       return TRUE;
+}
+// if two adjacent matrices are found, multiply them. 
 static
 cmsBool _MultiplyMatrix(cmsPipeline* Lut)
 {
@@ -188,7 +208,7 @@ cmsBool _MultiplyMatrix(cmsPipeline* Lut)
                      _cmsStageMatrixData* m2 = (_cmsStageMatrixData*) cmsStageData(*pt2);
                      cmsMAT3 res;
                      
-                     // Input offset should be zero
+                     // Input offset and output offset should be zero to use this optimization
                      if (m1->Offset != NULL || m2 ->Offset != NULL || 
                             cmsStageInputChannels(*pt1) != 3 || cmsStageOutputChannels(*pt1) != 3 ||                            
                             cmsStageInputChannels(*pt2) != 3 || cmsStageOutputChannels(*pt2) != 3)
@@ -205,7 +225,7 @@ cmsBool _MultiplyMatrix(cmsPipeline* Lut)
                      _RemoveElement(pt1);
 
                      // Now what if the result is a plain identity?                     
-                     if (!_cmsMAT3isIdentity(&res)) {
+                     if (!isFloatMatrixIdentity(&res)) {
 
                             // We can not get rid of full matrix                            
                             cmsStage* Multmat = cmsStageAllocMatrix(Lut->ContextID, 3, 3, (const cmsFloat64Number*) &res, NULL);
@@ -223,6 +243,7 @@ cmsBool _MultiplyMatrix(cmsPipeline* Lut)
 
        return AnyOpt;
 }
+
 
 // Preoptimize just gets rif of no-ops coming paired. Conversion from v2 to v4 followed
 // by a v4 to v2 and vice-versa. The elements are then discarded.
@@ -256,7 +277,7 @@ cmsBool PreOptimize(cmsPipeline* Lut)
         // Remove float pcs Lab conversions
         Opt |= _Remove2Op(Lut, cmsSigXYZ2FloatPCS, cmsSigFloatPCS2XYZ);
 
-        // Simplify matrix
+        // Simplify matrix. 
         Opt |= _MultiplyMatrix(Lut);
 
         if (Opt) AnyOpt = TRUE;
@@ -1595,49 +1616,83 @@ cmsBool SetMatShaper(cmsPipeline* Dest, cmsToneCurve* Curve1[3], cmsMAT3* Mat, c
 }
 
 //  8 bits on input allows matrix-shaper boot up to 25 Mpixels per second on RGB. That's fast!
-// TODO: Allow a third matrix for abs. colorimetric
 static
 cmsBool OptimizeMatrixShaper(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt32Number* InputFormat, cmsUInt32Number* OutputFormat, cmsUInt32Number* dwFlags)
 {
-    cmsStage* Curve1, *Curve2;
-    cmsStage* Matrix1, *Matrix2;
-    _cmsStageMatrixData* Data1;
-    _cmsStageMatrixData* Data2;
-    cmsMAT3 res;
-    cmsBool IdentityMat;
-    cmsPipeline* Dest, *Src;
+       cmsStage* Curve1, *Curve2;
+       cmsStage* Matrix1, *Matrix2;
+       cmsMAT3 res;
+       cmsBool IdentityMat;
+       cmsPipeline* Dest, *Src;
+       cmsFloat64Number* Offset;
 
-    // Only works on RGB to RGB
-    if (T_CHANNELS(*InputFormat) != 3 || T_CHANNELS(*OutputFormat) != 3) return FALSE;
+       // Only works on RGB to RGB
+       if (T_CHANNELS(*InputFormat) != 3 || T_CHANNELS(*OutputFormat) != 3) return FALSE;
 
-    // Only works on 8 bit input
-    if (!_cmsFormatterIs8bit(*InputFormat)) return FALSE;
+       // Only works on 8 bit input
+       if (!_cmsFormatterIs8bit(*InputFormat)) return FALSE;
 
-    // Seems suitable, proceed
-    Src = *Lut;
+       // Seems suitable, proceed
+       Src = *Lut;
 
-    // Check for shaper-matrix-matrix-shaper structure, that is what this optimizer stands for
-    if (!cmsPipelineCheckAndRetreiveStages(Src, 4,
-        cmsSigCurveSetElemType, cmsSigMatrixElemType, cmsSigMatrixElemType, cmsSigCurveSetElemType,
-        &Curve1, &Matrix1, &Matrix2, &Curve2)) return FALSE;
+       // Check for:
+       // 
+       //    shaper-matrix-matrix-shaper 
+       //    shaper-matrix-shaper
+       // 
+       // Both of those constructs are possible (first because abs. colorimetric). 
+       // additionally, In the first case, the input matrix offset should be zero.
 
-    // Get both matrices
-    Data1 = (_cmsStageMatrixData*) cmsStageData(Matrix1);
-    Data2 = (_cmsStageMatrixData*) cmsStageData(Matrix2);
+       IdentityMat = FALSE;
+       if (cmsPipelineCheckAndRetreiveStages(Src, 4,
+              cmsSigCurveSetElemType, cmsSigMatrixElemType, cmsSigMatrixElemType, cmsSigCurveSetElemType,
+              &Curve1, &Matrix1, &Matrix2, &Curve2)) {
 
-    // Input offset should be zero
-    if (Data1 ->Offset != NULL) return FALSE;
+              // Get both matrices
+              _cmsStageMatrixData* Data1 = (_cmsStageMatrixData*)cmsStageData(Matrix1);
+              _cmsStageMatrixData* Data2 = (_cmsStageMatrixData*)cmsStageData(Matrix2);
 
-    // Multiply both matrices to get the result
-    _cmsMAT3per(&res, (cmsMAT3*) Data2 ->Double, (cmsMAT3*) Data1 ->Double);
+              // Input offset should be zero
+              if (Data1->Offset != NULL) return FALSE;
 
-    // Now the result is in res + Data2 -> Offset. Maybe is a plain identity?
-    IdentityMat = FALSE;
-    if (_cmsMAT3isIdentity(&res) && Data2 ->Offset == NULL) {
+              // Multiply both matrices to get the result
+              _cmsMAT3per(&res, (cmsMAT3*)Data2->Double, (cmsMAT3*)Data1->Double);
 
-        // We can get rid of full matrix
-        IdentityMat = TRUE;
-    }
+              // Only 2nd matrix has offset, or it is zero 
+              Offset = Data2->Offset;
+
+              // Now the result is in res + Data2 -> Offset. Maybe is a plain identity?
+              if (_cmsMAT3isIdentity(&res) && Offset == NULL) {
+
+                     // We can get rid of full matrix
+                     IdentityMat = TRUE;
+              }
+
+       }
+       else {
+
+              if (cmsPipelineCheckAndRetreiveStages(Src, 3,
+                     cmsSigCurveSetElemType, cmsSigMatrixElemType, cmsSigCurveSetElemType,
+                     &Curve1, &Matrix1, &Curve2)) {
+
+                     _cmsStageMatrixData* Data = (_cmsStageMatrixData*)cmsStageData(Matrix1);
+
+                     // Copy the matrix to our result
+                     memcpy(&res, Data->Double, sizeof(res));
+
+                     // Preserve the Odffset (may be NULL as a zero offset)
+                     Offset = Data->Offset;
+
+                     if (_cmsMAT3isIdentity(&res) && Offset == NULL) {
+
+                            // We can get rid of full matrix
+                            IdentityMat = TRUE;
+                     }
+              }
+              else
+                     return FALSE; // Not optimizeable this time
+
+       }
 
       // Allocate an empty LUT
     Dest =  cmsPipelineAlloc(Src ->ContextID, Src ->InputChannels, Src ->OutputChannels);
@@ -1647,9 +1702,12 @@ cmsBool OptimizeMatrixShaper(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
     if (!cmsPipelineInsertStage(Dest, cmsAT_BEGIN, cmsStageDup(Curve1)))
         goto Error;
 
-    if (!IdentityMat)
-        if (!cmsPipelineInsertStage(Dest, cmsAT_END, cmsStageAllocMatrix(Dest ->ContextID, 3, 3, (const cmsFloat64Number*) &res, Data2 ->Offset)))
-            goto Error;
+    if (!IdentityMat) {
+
+           if (!cmsPipelineInsertStage(Dest, cmsAT_END, cmsStageAllocMatrix(Dest->ContextID, 3, 3, (const cmsFloat64Number*)&res, Offset)))
+                  goto Error;
+    }
+
     if (!cmsPipelineInsertStage(Dest, cmsAT_END, cmsStageDup(Curve2)))
         goto Error;
 
@@ -1667,7 +1725,7 @@ cmsBool OptimizeMatrixShaper(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
         *dwFlags |= cmsFLAGS_NOCACHE;
 
         // Setup the optimizarion routines
-        SetMatShaper(Dest, mpeC1 ->TheCurves, &res, (cmsVEC3*) Data2 ->Offset, mpeC2->TheCurves, OutputFormat);
+        SetMatShaper(Dest, mpeC1 ->TheCurves, &res, (cmsVEC3*) Offset, mpeC2->TheCurves, OutputFormat);
     }
 
     cmsPipelineFree(Src);
