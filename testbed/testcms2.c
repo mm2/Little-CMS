@@ -7742,7 +7742,7 @@ cmsInt32Number CheckMatrixSimplify(void)
 
        ctx = cmsCreateContext(NULL, NULL);
        pIn = cmsCreate_sRGBProfileTHR(ctx);
-       pOut = cmsOpenProfileFromFile("ibm-t61.icc", "r");
+       pOut = cmsOpenProfileFromFileTHR(ctx, "ibm-t61.icc", "r");
        if (pIn == NULL || pOut == NULL)
               return 0;
 
