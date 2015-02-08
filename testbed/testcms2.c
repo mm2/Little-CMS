@@ -7730,6 +7730,33 @@ cmsInt32Number CheckRemoveTag(void)
     return 1;
 }
 
+
+static
+cmsInt32Number CheckMatrixSimplify(void)
+{
+       cmsContext ctx;
+       cmsHPROFILE pIn;
+       cmsHPROFILE pOut;
+       cmsHTRANSFORM t;
+       unsigned char buf[3] = { 127, 32, 64 };
+
+       ctx = cmsCreateContext(NULL, NULL);
+       pIn = cmsCreate_sRGBProfileTHR(ctx);
+       pOut = cmsOpenProfileFromFile("ibm-t61.icc", "r");
+       if (pIn == NULL || pOut == NULL)
+              return 0;
+
+       t = cmsCreateTransformTHR(ctx, pIn, TYPE_RGB_8, pOut, TYPE_RGB_8, INTENT_PERCEPTUAL, 0);
+       cmsDoTransformStride(t, buf, buf, 1, 1);
+       cmsDeleteTransform(t);
+       cmsCloseProfile(pIn);
+       cmsCloseProfile(pOut);
+       cmsDeleteContext(ctx);
+
+       return buf[0] == 144 && buf[1] == 0 && buf[2] == 69;
+}
+
+
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
 // --------------------------------------------------------------------------------------------------
@@ -8363,6 +8390,7 @@ int main(int argc, char* argv[])
     Check("Check MetaTag", CheckMeta);
     Check("Null transform on floats", CheckFloatNULLxform);
     Check("Set free a tag", CheckRemoveTag);
+    Check("Matrix simplification", CheckMatrixSimplify);
     }
 
     if (DoPluginTests)
