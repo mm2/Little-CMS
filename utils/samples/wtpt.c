@@ -1,94 +1,144 @@
 //
 //  Little cms
-//  Copyright (C) 1998-2000 Marti Maria
+//  Copyright (C) 1998-2015 Marti Maria
 //
-// THIS SOFTWARE IS PROVIDED "AS-IS" AND WITHOUT WARRANTY OF ANY KIND,
-// EXPRESS, IMPLIED OR OTHERWISE, INCLUDING WITHOUT LIMITATION, ANY
-// WARRANTY OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.
+//---------------------------------------------------------------------------------
 //
-// IN NO EVENT SHALL MARTI MARIA BE LIABLE FOR ANY SPECIAL, INCIDENTAL,
-// INDIRECT OR CONSEQUENTIAL DAMAGES OF ANY KIND,
-// OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
-// WHETHER OR NOT ADVISED OF THE POSSIBILITY OF DAMAGE, AND ON ANY THEORY OF
-// LIABILITY, ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE
-// OF THIS SOFTWARE.
+//  Little Color Management System
+//  Copyright (c) 1998-2014 Marti Maria Saguer
 //
+// Permission is hereby granted, free of charge, to any person obtaining
+// a copy of this software and associated documentation files (the "Software"),
+// to deal in the Software without restriction, including without limitation
+// the rights to use, copy, modify, merge, publish, distribute, sublicense,
+// and/or sell copies of the Software, and to permit persons to whom the Software
+// is furnished to do so, subject to the following conditions:
 //
-// This library is free software; you can redistribute it and/or
-// modify it under the terms of the GNU Lesser General Public
-// License as published by the Free Software Foundation; either
-// version 2 of the License, or (at your option) any later version.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
-// This library is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-// Lesser General Public License for more details.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+// EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO
+// THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+// NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+// LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+// OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 //
-// You should have received a copy of the GNU Lesser General Public
-// License along with this library; if not, write to the Free Software
-// Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+//---------------------------------------------------------------------------------
 
-// Example: how to show white points of profiles
+#include "utils.h"
 
 
-#include "lcms.h"
+// The toggles stuff
+
+static cmsBool lShowXYZ = TRUE;
+static cmsBool lShowLab = FALSE;
+static cmsBool lShowLCh = FALSE;
+
+static
+void HandleSwitches(int argc, char *argv[])
+{
+       int s;
+
+       while ((s = xgetopt(argc, argv, "lcx")) != EOF) {
+
+              switch (s){
+
+
+              case 'l':
+                     lShowLab = TRUE;
+                     break;
+
+              case 'c':
+                     lShowLCh = TRUE;
+                     break;
+
+              case 'x':
+                     lShowXYZ = FALSE;
+                     break;
+
+              default:
+
+                     FatalError("Unknown option - run without args to see valid ones.\n");
+              }
+       }
+}
+
+static
+void Help(void)
+{
+       fprintf(stderr, "little CMS ICC white point utility - v3 [LittleCMS %2.2f]\n", LCMS_VERSION / 1000.0);
+
+       fprintf(stderr, "usage: wtpt [flags] [<ICC profile>]\n\n");
+
+       fprintf(stderr, "flags:\n\n");
+       
+       fprintf(stderr, "%cl - CIE Lab\n", SW);
+       fprintf(stderr, "%cc - CIE LCh\n", SW);
+       fprintf(stderr, "%cx - Don't show XYZ\n", SW);
+
+       fprintf(stderr, "\nIf no parameters are given, then this program will\n");
+       fprintf(stderr, "ask for XYZ value of media white. If parameter given, it must be\n");
+       fprintf(stderr, "the profile to inspect.\n\n");
+
+       fprintf(stderr, "This program is intended to be a demo of the little cms\n"
+              "engine. Both lcms and this program are freeware. You can\n"
+              "obtain both in source code at http://www.littlecms.com\n"
+              "For suggestions, comments, bug reports etc. send mail to\n"
+              "info@littlecms.com\n\n");
+       exit(0);
+}
 
 
 
 static
-void ShowWhitePoint(LPcmsCIEXYZ WtPt)
-{       
-	   cmsCIELab Lab;
-	   cmsCIELCh LCh;
-	   cmsCIExyY xyY;
-       char Buffer[1024];
+void ShowWhitePoint(cmsCIEXYZ* WtPt)
+{
+       cmsCIELab Lab;
+       cmsCIELCh LCh;
+       cmsCIExyY xyY;
 
-		
-	   _cmsIdentifyWhitePoint(Buffer, WtPt);
-       printf("%s\n", Buffer);
-       
+
        cmsXYZ2Lab(NULL, &Lab, WtPt);
-	   cmsLab2LCh(&LCh, &Lab);
-	   cmsXYZ2xyY(&xyY, WtPt);
+       cmsLab2LCh(&LCh, &Lab);
+       cmsXYZ2xyY(&xyY, WtPt);
 
-	   printf("XYZ=(%3.1f, %3.1f, %3.1f)\n", WtPt->X, WtPt->Y, WtPt->Z);
-       printf("Lab=(%3.3f, %3.3f, %3.3f)\n", Lab.L, Lab.a, Lab.b);
-	   printf("(x,y)=(%3.3f, %3.3f)\n", xyY.x, xyY.y);
-	   printf("Hue=%3.2f, Chroma=%3.2f\n", LCh.h, LCh.C);
-       printf("\n");
-       
+
+       if (lShowXYZ) printf("XYZ=(%3.1f, %3.1f, %3.1f)\n", WtPt->X, WtPt->Y, WtPt->Z);
+       if (lShowLab) printf("Lab=(%3.3f, %3.3f, %3.3f)\n", Lab.L, Lab.a, Lab.b);
+       if (lShowLCh) printf("LCh=(%3.3f, %3.3f, %3.3f)\n", LCh.L, LCh.C, LCh.h);
+       {
+              double Ssens = (LCh.C * 100.0 )/ sqrt(LCh.C*LCh.C + LCh.L * LCh.L) ;
+              printf("Sens = %f\n", Ssens);
+       }
+
 }
 
 
-int main (int argc, char *argv[])
+int main(int argc, char *argv[])
 {
-       printf("Show media white of profiles, identifying black body locus. v2\n\n");
+       int nargs;
 
+       InitUtils("wtpt");
+       
+       HandleSwitches(argc, argv);
 
-       if (argc == 2) {
-				  cmsCIEXYZ WtPt;
-		          cmsHPROFILE hProfile = cmsOpenProfileFromFile(argv[1], "r");
+       nargs = (argc - xoptind);
 
-				  printf("%s\n", cmsTakeProductName(hProfile));
-				  cmsTakeMediaWhitePoint(&WtPt, hProfile);
-				  ShowWhitePoint(&WtPt);
-				  cmsCloseProfile(hProfile);
-              }
-       else
-              {
-              cmsCIEXYZ xyz;
-              
-              printf("usage:\n\nIf no parameters are given, then this program will\n");
-              printf("ask for XYZ value of media white. If parameter given, it must be\n");
-              printf("the profile to inspect.\n\n");
+       if (nargs != 1)
+              Help();
 
-              printf("X? "); scanf("%lf", &xyz.X);
-              printf("Y? "); scanf("%lf", &xyz.Y);
-              printf("Z? "); scanf("%lf", &xyz.Z);
+       else {
+              cmsCIEXYZ* WtPt;
+              cmsHPROFILE hProfile = cmsOpenProfileFromFile(argv[xoptind], "r");  
+              if (hProfile == NULL) return 1;
 
-			  ShowWhitePoint(&xyz);
-              }
-
-	   return 0;
+              WtPt = cmsReadTag(hProfile, cmsSigMediaWhitePointTag);
+              ShowWhitePoint(WtPt);
+              cmsCloseProfile(hProfile);
+       }
+       
+       return 0;
 }
 
