@@ -158,6 +158,7 @@ New project for mac
 Added license for iccjpeg.c
 Added a project for VS2013
 Fixed wrong handling of extra channels in some formatters.
+Added an option in transicc for working in bounded mode
 
 -----------------------
 2.7 Maintenance release

@@ -44,6 +44,7 @@ static cmsBool           Width16                = FALSE;
 static cmsBool           BlackPointCompensation = FALSE;
 static cmsBool           lIsDeviceLink          = FALSE;
 static cmsBool           lQuantize              = FALSE;
+static cmsBool           lUnbounded             = TRUE;
 static cmsBool           lIsFloat               = TRUE;
 
 static cmsUInt32Number   Intent           = INTENT_PERCEPTUAL;
@@ -99,9 +100,10 @@ void Help(void)
 
     fprintf(stderr, "%ce[op] - Encoded representation of numbers\n", SW);
     fprintf(stderr, "\t%cw - use 16 bits\n", SW);     
-    fprintf(stderr, "\t%cx - Hexadecimal\n", SW);
-    fprintf(stderr, "%cq - Quantize CGATS to 8 bits\n\n", SW);
+    fprintf(stderr, "\t%cx - Hexadecimal\n\n", SW);
 
+    fprintf(stderr, "%cs - bounded mode (clip negatives and highliths)\n", SW);
+    fprintf(stderr, "%cq - Quantize (round decimals)\n\n", SW);
 
     fprintf(stderr, "%ci<profile> - Input profile (defaults to sRGB)\n", SW);
     fprintf(stderr, "%co<profile> - Output profile (defaults to sRGB)\n", SW);   
@@ -143,7 +145,7 @@ void HandleSwitches(int argc, char *argv[])
     int s;
 
     while ((s = xgetopt(argc, argv,
-        "bBC:c:d:D:eEgGI:i:L:l:m:M:nNO:o:p:P:QqT:t:V:v:WwxX!:")) != EOF) {
+        "bBC:c:d:D:eEgGI:i:L:l:m:M:nNO:o:p:P:QqSsT:t:V:v:WwxX!:")) != EOF) {
 
     switch (s){
 
@@ -226,11 +228,17 @@ void HandleSwitches(int argc, char *argv[])
             cProofing = xoptarg;
             break;      
 
-            // Quantize to 16 bits
+            // Quantize (get rid of decimals)
         case 'q':
         case 'Q': 
             lQuantize = TRUE;
             break;
+
+            // Inhibit unbounded mode
+        case 's':
+        case 'S':
+               lUnbounded = FALSE;
+               break;
 
             // The intent
         case 't':
@@ -660,6 +668,14 @@ void PrintFloatResults(cmsFloat64Number Value[])
 
         if (lQuantize) 
             v = floor(v + 0.5);
+
+        if (!lUnbounded) {
+
+               if (v < 0)
+                      v = 0;
+               if (v > OutputRange)
+                      v = OutputRange;
+        }
 
         if (Verbose <= 0)
             printf("%.4f ", v);
@@ -1224,7 +1240,7 @@ int main(int argc, char *argv[])
 
     int nPatch = 0;
 
-    fprintf(stderr, "LittleCMS ColorSpace conversion calculator - 4.2 [LittleCMS %2.2f]\n", LCMS_VERSION / 1000.0);
+    fprintf(stderr, "LittleCMS ColorSpace conversion calculator - 4.3 [LittleCMS %2.2f]\n", LCMS_VERSION / 1000.0);
 
     InitUtils("transicc");
 
