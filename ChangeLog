@@ -159,6 +159,7 @@ Added license for iccjpeg.c
 Added a project for VS2013
 Fixed wrong handling of extra channels in some formatters.
 Added an option in transicc for working in bounded mode
+Added a version retrieval function 
 
 -----------------------
 2.7 Maintenance release

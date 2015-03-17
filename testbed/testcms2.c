@@ -8165,7 +8165,6 @@ void PrintSupportedIntents(void)
 
 int main(int argc, char* argv[])
 {
-
     cmsInt32Number Exhaustive = 0;
     cmsInt32Number DoSpeedTests = 1;
     cmsInt32Number DoCheckTests = 1;
@@ -8175,6 +8174,11 @@ int main(int argc, char* argv[])
 #ifdef _MSC_VER
     _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
+
+    // First of all, check for the right header
+   if (cmsGetEncodedCMMversion() != LCMS_VERSION) {
+          Die("Oops, you are mixing header and shared lib!\nHeader version reports to be '%d' and shared lib '%d'\n", LCMS_VERSION, cmsGetEncodedCMMversion());
+   }
 
     printf("LittleCMS %2.2f test bed %s %s\n\n", LCMS_VERSION / 1000.0, __DATE__, __TIME__);
 
@@ -8189,6 +8193,7 @@ int main(int argc, char* argv[])
    cmsPlugin(cmsFast8Bitextensions());
    printf("done.\n");
 #endif
+
 
     printf("Installing debug memory plug-in ... ");
     cmsPlugin(&DebugMemHandler);

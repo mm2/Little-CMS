@@ -23,7 +23,7 @@
 //
 //---------------------------------------------------------------------------------
 //
-// Version 2.7rc2
+// Version 2.7
 //
 
 #ifndef _lcms2_H
@@ -1000,6 +1000,10 @@ typedef struct {
         cmsUInt32Number IlluminantType;  // viewing condition
 
     } cmsICCViewingConditions;
+
+// Get LittleCMS version (for shared objects) -----------------------------------------------------------------------------
+
+CMSAPI int               CMSEXPORT cmsGetEncodedCMMversion(void);
 
 // Support of non-standard functions --------------------------------------------------------------------------------------
 
