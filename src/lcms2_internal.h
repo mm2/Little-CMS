@@ -57,7 +57,15 @@
 #define _cmsALIGNLONG(x) (((x)+(sizeof(cmsUInt32Number)-1)) & ~(sizeof(cmsUInt32Number)-1))
 
 // Alignment to memory pointer
-#define _cmsALIGNMEM(x)  (((x)+(sizeof(void *) - 1)) & ~(sizeof(void *) - 1))
+
+// (Ultra)SPARC with gcc requires ptr alignment of 8 bytes
+// even though sizeof(void *) is only four: for greatest flexibility
+// allow the build to specify ptr alignment.
+#ifndef CMS_PTR_ALIGNMENT
+# define CMS_PTR_ALIGNMENT sizeof(void *)
+#endif
+
+#define _cmsALIGNMEM(x)  (((x)+(CMS_PTR_ALIGNMENT - 1)) & ~(CMS_PTR_ALIGNMENT - 1))
 
 // Maximum encodeable values in floating point
 #define MAX_ENCODEABLE_XYZ  (1.0 + 32767.0/32768.0)
