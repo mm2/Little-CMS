@@ -529,7 +529,7 @@ cmsBool OpenTransforms(void)
 
     // For named color, there is a specialized formatter
     if (cmsGetDeviceClass(hInput) == cmsSigNamedColorClass) {
-        dwOut = dwIn;
+        
         dwIn = TYPE_NAMED_COLOR_INDEX;
         InputNamedColor = TRUE;
     }

@@ -164,3 +164,5 @@ Added a version retrieval function
 -----------------------
 2.7 Maintenance release
 -----------------------
+
+Fixed a bug in transicc for named color profiles
