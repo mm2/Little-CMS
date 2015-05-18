@@ -675,7 +675,7 @@ cmsBool OptimizeByResampling(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
         cmsStage* PreLin = cmsPipelineGetPtrToFirstStage(Src);
 
         // Check if suitable
-        if (PreLin ->Type == cmsSigCurveSetElemType) {
+        if (PreLin && PreLin ->Type == cmsSigCurveSetElemType) {
 
             // Maybe this is a linear tram, so we can avoid the whole stuff
             if (!AllCurvesAreLinear(PreLin)) {
@@ -708,7 +708,7 @@ cmsBool OptimizeByResampling(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
         cmsStage* PostLin = cmsPipelineGetPtrToLastStage(Src);
 
         // Check if suitable
-        if (cmsStageType(PostLin) == cmsSigCurveSetElemType) {
+        if (PostLin && cmsStageType(PostLin) == cmsSigCurveSetElemType) {
 
             // Maybe this is a linear tram, so we can avoid the whole stuff
             if (!AllCurvesAreLinear(PostLin)) {
