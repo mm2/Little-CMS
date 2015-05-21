@@ -173,43 +173,44 @@ typedef int                  cmsBool;
 #  define CMS_IS_WINDOWS_ 1
 #endif
 
-// Try to detect big endian platforms. This list can be endless, so only some checks are performed over here.
-// you can pass this toggle to the compiler by using -DCMS_USE_BIG_ENDIAN or something similar
+// Try to detect big endian platforms. This list can be endless, so primarily rely on the configure script
+// on Unix-like systems, and allow it to be set on the compiler command line using
+// -DCMS_USE_BIG_ENDIAN or something similar
+#ifdef CMS_USE_BIG_ENDIAN // set at compiler command line takes overall precedence
 
-#if defined(__sgi__) || defined(__sgi) || defined(sparc)
-#   define CMS_USE_BIG_ENDIAN      1
-#endif
+#  if CMS_USE_BIG_ENDIAN == 0
+#    undef CMS_USE_BIG_ENDIAN
+#  endif
 
-#if defined(__s390__) || defined(__s390x__)
-#   define CMS_USE_BIG_ENDIAN   1
-#endif
+#else // CMS_USE_BIG_ENDIAN
 
+#  ifdef WORDS_BIGENDIAN // set by configure (or explicitly on compiler command line)
+#    define CMS_USE_BIG_ENDIAN 1
+#  else // WORDS_BIGENDIAN
+// Fall back to platform/compiler specific tests
+#    if defined(__sgi__) || defined(__sgi) || defined(sparc)
+#      define CMS_USE_BIG_ENDIAN      1
+#    endif
 
-#if defined(__powerpc__) || defined(__ppc__) || defined(TARGET_CPU_PPC)
-#  if __powerpc__ || __ppc__ || TARGET_CPU_PPC
-#   define CMS_USE_BIG_ENDIAN   1
-#   if defined (__GNUC__) && defined(__BYTE_ORDER__) && defined(__ORDER_LITTLE_ENDIAN__)
-#       if __BYTE_ORDER__  == __ORDER_LITTLE_ENDIAN__
-                // Don't use big endian for PowerPC little endian mode
-#                undef CMS_USE_BIG_ENDIAN
-#       endif
-#     endif
-#   endif
-#endif
+#    if defined(__s390__) || defined(__s390x__)
+#      define CMS_USE_BIG_ENDIAN   1
+#    endif
 
-#ifdef macintosh
-# ifdef __BIG_ENDIAN__
-#   define CMS_USE_BIG_ENDIAN      1
-# endif
-# ifdef __LITTLE_ENDIAN__
-#   undef CMS_USE_BIG_ENDIAN
-# endif
-#endif
+#    ifdef macintosh
+#      ifdef __BIG_ENDIAN__
+#        define CMS_USE_BIG_ENDIAN      1
+#      endif
+#      ifdef __LITTLE_ENDIAN__
+#        undef CMS_USE_BIG_ENDIAN
+#      endif
+#    endif
+#  endif  // WORDS_BIGENDIAN
 
-// WORDS_BIGENDIAN takes precedence
-#if defined(_HOST_BIG_ENDIAN) || defined(__BIG_ENDIAN__) || defined(WORDS_BIGENDIAN)
-#   define CMS_USE_BIG_ENDIAN      1
-#endif
+#  if defined(_HOST_BIG_ENDIAN) || defined(__BIG_ENDIAN__)
+#    define CMS_USE_BIG_ENDIAN      1
+#  endif
+
+#endif  // CMS_USE_BIG_ENDIAN
 
 
 // Calling convention -- this is hardly platform and compiler dependent
