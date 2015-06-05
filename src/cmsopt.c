@@ -229,6 +229,7 @@ cmsBool _MultiplyMatrix(cmsPipeline* Lut)
 
                             // We can not get rid of full matrix                            
                             cmsStage* Multmat = cmsStageAllocMatrix(Lut->ContextID, 3, 3, (const cmsFloat64Number*) &res, NULL);
+                            if (Multmat == NULL) return AnyOpt;
 
                             // Recover the chain
                             Multmat->Next = chain;
@@ -1720,8 +1721,8 @@ cmsBool OptimizeMatrixShaper(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
         _cmsStageToneCurvesData* mpeC1 = (_cmsStageToneCurvesData*) cmsStageData(Curve1);
         _cmsStageToneCurvesData* mpeC2 = (_cmsStageToneCurvesData*) cmsStageData(Curve2);
 
-        // In this particular optimization, caché does not help as it takes more time to deal with
-        // the caché that with the pixel handling
+        // In this particular optimization, cachÃ© does not help as it takes more time to deal with
+        // the cachÃ© than that with the pixel handling
         *dwFlags |= cmsFLAGS_NOCACHE;
 
         // Setup the optimizarion routines
