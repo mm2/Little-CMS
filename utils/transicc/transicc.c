@@ -719,7 +719,7 @@ void TakeFloatValues(cmsFloat64Number Float[])
 {
     cmsUInt32Number i, n;
     char ChannelName[cmsMAX_PATH];
-    char Buffer[cmsMAX_PATH];
+    char Buffer[4096];
 
     if (xisatty(stdin))
         fprintf(stderr, "\nEnter values, 'q' to quit\n");
