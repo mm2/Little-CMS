@@ -525,6 +525,7 @@ void* _cmsPluginMalloc(cmsContext ContextID, cmsUInt32Number size)
         if (ContextID == NULL) {
 
             ctx->MemPool = _cmsCreateSubAlloc(0, 2*1024);
+            if (ctx->MemPool == NULL) return NULL;
         }
         else {
             cmsSignalError(ContextID, cmsERROR_CORRUPTION_DETECTED, "NULL memory pool on context");
