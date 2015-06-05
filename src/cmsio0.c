@@ -1854,7 +1854,7 @@ cmsBool CMSEXPORT cmsWriteRawTag(cmsHPROFILE hProfile, cmsTagSignature sig, cons
     _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
 
     if (Icc->TagPtrs[i] == NULL) {           
-           Icc->TagNames[i] = 0;
+           Icc->TagNames[i] = (cmsTagSignature) 0;
            return FALSE;
     }
     return TRUE;
