@@ -102,7 +102,8 @@ am_liblcms2_la_OBJECTS = cmscnvrt.lo cmserr.lo cmsgamma.lo cmsgmt.lo \
 	cmsintrp.lo cmsio0.lo cmsio1.lo cmslut.lo cmsplugin.lo \
 	cmssm.lo cmsmd5.lo cmsmtrx.lo cmspack.lo cmspcs.lo cmswtpnt.lo \
 	cmsxform.lo cmssamp.lo cmsnamed.lo cmscam02.lo cmsvirt.lo \
-	cmstypes.lo cmscgats.lo cmsps2.lo cmsopt.lo cmshalf.lo
+	cmstypes.lo cmscgats.lo cmsps2.lo cmsopt.lo cmshalf.lo \
+	cmsalpha.lo
 liblcms2_la_OBJECTS = $(am_liblcms2_la_OBJECTS)
 liblcms2_la_LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
@@ -285,7 +286,7 @@ liblcms2_la_SOURCES = \
   cmscnvrt.c cmserr.c cmsgamma.c cmsgmt.c cmsintrp.c cmsio0.c cmsio1.c cmslut.c \
   cmsplugin.c cmssm.c cmsmd5.c cmsmtrx.c cmspack.c cmspcs.c cmswtpnt.c cmsxform.c \
   cmssamp.c cmsnamed.c cmscam02.c cmsvirt.c cmstypes.c cmscgats.c cmsps2.c cmsopt.c \
-  cmshalf.c lcms2_internal.h
+  cmshalf.c cmsalpha.c lcms2_internal.h
 
 all: all-am
 
@@ -362,6 +363,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmsalpha.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmscam02.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmscgats.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmscnvrt.Plo@am__quote@
