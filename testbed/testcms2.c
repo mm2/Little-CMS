@@ -7757,6 +7757,118 @@ cmsInt32Number CheckMatrixSimplify(void)
 }
 
 
+
+static
+cmsInt32Number CheckTransformLineStride(void)
+{
+
+       cmsHPROFILE pIn;
+       cmsHPROFILE pOut;
+       cmsHTRANSFORM t;
+
+       // Our buffer is formed by 4 RGB8 lines, each line is 2 pixels wide plus a padding of one byte
+
+       cmsUInt8Number buf1[]= { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0,
+                                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 
+                                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0, 
+                                0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0, };
+
+       // Our buffer2 is formed by 4 RGBA lines, each line is 2 pixels wide plus a padding of one byte
+
+       cmsUInt8Number buf2[] = { 0xff, 0xff, 0xff, 1, 0xff, 0xff, 0xff, 1, 0,
+                                 0xff, 0xff, 0xff, 1, 0xff, 0xff, 0xff, 1, 0,
+                                 0xff, 0xff, 0xff, 1, 0xff, 0xff, 0xff, 1, 0,
+                                 0xff, 0xff, 0xff, 1, 0xff, 0xff, 0xff, 1, 0};
+
+       // Our buffer3 is formed by 4 RGBA16 lines, each line is 2 pixels wide plus a padding of two bytes
+
+       cmsUInt16Number buf3[] = { 0xffff, 0xffff, 0xffff, 0x0101, 0xffff, 0xffff, 0xffff, 0x0101, 0,
+                                  0xffff, 0xffff, 0xffff, 0x0101, 0xffff, 0xffff, 0xffff, 0x0101, 0,
+                                  0xffff, 0xffff, 0xffff, 0x0101, 0xffff, 0xffff, 0xffff, 0x0101, 0,
+                                  0xffff, 0xffff, 0xffff, 0x0101, 0xffff, 0xffff, 0xffff, 0x0101, 0 };
+
+       cmsUInt8Number out[1024];
+
+
+       memset(out, 0, sizeof(out));
+       pIn = cmsCreate_sRGBProfile();
+       pOut = cmsOpenProfileFromFile("ibm-t61.icc", "r");
+       if (pIn == NULL || pOut == NULL)
+              return 0;
+
+       t = cmsCreateTransform(pIn, TYPE_RGB_8, pOut, TYPE_RGB_8, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA);
+       
+       cmsDoTransformLineStride(t, buf1, out, 2, 4, 7, 7, 0, 0);
+       cmsDeleteTransform(t);
+
+       if (memcmp(out, buf1, sizeof(buf1)) != 0) {
+              Fail("Failed transform line stride on RGB8");
+              cmsCloseProfile(pIn);
+              cmsCloseProfile(pOut);
+              return 0;
+       }
+
+       memset(out, 0, sizeof(out));
+
+       t = cmsCreateTransform(pIn, TYPE_RGBA_8, pOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA);
+       
+       cmsDoTransformLineStride(t, buf2, out, 2, 4, 9, 9, 0, 0);
+
+       cmsDeleteTransform(t);
+
+
+       if (memcmp(out, buf2, sizeof(buf2)) != 0) {
+              cmsCloseProfile(pIn);
+              cmsCloseProfile(pOut);
+              Fail("Failed transform line stride on RGBA8");
+              return 0;
+       }
+
+       memset(out, 0, sizeof(out));
+
+       t = cmsCreateTransform(pIn, TYPE_RGBA_16, pOut, TYPE_RGBA_16, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA);
+
+       cmsDoTransformLineStride(t, buf3, out, 2, 4, 18, 18, 0, 0);
+
+       cmsDeleteTransform(t);
+
+       if (memcmp(out, buf3, sizeof(buf3)) != 0) {
+              cmsCloseProfile(pIn);
+              cmsCloseProfile(pOut);
+              Fail("Failed transform line stride on RGBA16");
+              return 0;
+       }
+
+
+       memset(out, 0, sizeof(out));
+
+
+       // From 8 to 16
+       t = cmsCreateTransform(pIn, TYPE_RGBA_8, pOut, TYPE_RGBA_16, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA);
+
+       cmsDoTransformLineStride(t, buf2, out, 2, 4, 9, 18, 0, 0);
+
+       cmsDeleteTransform(t);
+
+       if (memcmp(out, buf3, sizeof(buf3)) != 0) {
+              cmsCloseProfile(pIn);
+              cmsCloseProfile(pOut);
+              Fail("Failed transform line stride on RGBA16");
+              return 0;
+       }
+
+
+
+       cmsCloseProfile(pIn);
+       cmsCloseProfile(pOut);
+
+       return 1;
+}
+
+
+
+
+
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
 // --------------------------------------------------------------------------------------------------
@@ -8396,6 +8508,10 @@ int main(int argc, char* argv[])
     Check("Null transform on floats", CheckFloatNULLxform);
     Check("Set free a tag", CheckRemoveTag);
     Check("Matrix simplification", CheckMatrixSimplify);
+
+
+    Check("Transform line stride RGB", CheckTransformLineStride);
+
     }
 
     if (DoPluginTests)
@@ -8422,8 +8538,11 @@ int main(int argc, char* argv[])
     if (DoSpeedTests)
         SpeedTest();
 
+
+#ifdef CMS_IS_WINDOWS_
     if (DoZooTests) 
          CheckProfileZOO();
+#endif
 
     DebugMemPrintTotals();
 

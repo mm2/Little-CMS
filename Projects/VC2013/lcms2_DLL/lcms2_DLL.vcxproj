@@ -206,6 +206,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\src\cmsalpha.c" />
     <ClCompile Include="..\..\..\src\cmscam02.c" />
     <ClCompile Include="..\..\..\src\cmscgats.c" />
     <ClCompile Include="..\..\..\src\cmscnvrt.c" />

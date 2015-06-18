@@ -807,7 +807,7 @@ cmsBool _cmsWriteHeader(_cmsICCPROFILE* Icc, cmsUInt32Number UsedSpace)
 
     // Get true count
     for (i=0;  i < Icc -> TagCount; i++) {
-        if (Icc ->TagNames[i] != 0)
+        if (Icc ->TagNames[i] != (cmsTagSignature) 0)
             Count++;
     }
 
@@ -816,7 +816,7 @@ cmsBool _cmsWriteHeader(_cmsICCPROFILE* Icc, cmsUInt32Number UsedSpace)
 
     for (i=0; i < Icc -> TagCount; i++) {
 
-        if (Icc ->TagNames[i] == 0) continue;   // It is just a placeholder
+        if (Icc ->TagNames[i] == (cmsTagSignature) 0) continue;   // It is just a placeholder
 
         Tag.sig    = (cmsTagSignature) _cmsAdjustEndianess32((cmsInt32Number) Icc -> TagNames[i]);
         Tag.offset = _cmsAdjustEndianess32((cmsInt32Number) Icc -> TagOffsets[i]);
@@ -1166,7 +1166,7 @@ cmsBool SaveTags(_cmsICCPROFILE* Icc, _cmsICCPROFILE* FileOrig)
 
     for (i=0; i < Icc -> TagCount; i++) {
 
-        if (Icc ->TagNames[i] == 0) continue;
+        if (Icc ->TagNames[i] == (cmsTagSignature) 0) continue;
 
         // Linked tags are not written
         if (Icc ->TagLinked[i] != (cmsTagSignature) 0) continue;
@@ -1854,7 +1854,7 @@ cmsBool CMSEXPORT cmsWriteRawTag(cmsHPROFILE hProfile, cmsTagSignature sig, cons
     _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
 
     if (Icc->TagPtrs[i] == NULL) {           
-           Icc->TagNames[i] = 0;
+           Icc->TagNames[i] = (cmsTagSignature) 0;
            return FALSE;
     }
     return TRUE;

@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2014 Marti Maria Saguer
+//  Copyright (c) 1998-2015 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
 //
 //---------------------------------------------------------------------------------
 //
-// Version 2.7
+// Version 2.8beta0
 //
 
 #ifndef _lcms2_H
@@ -75,7 +75,7 @@ extern "C" {
 #endif
 
 // Version/release
-#define LCMS_VERSION        2070
+#define LCMS_VERSION        2080
 
 // I will give the chance of redefining basic types for compilers that are not fully C99 compliant
 #ifndef CMS_BASIC_TYPES_ALREADY_DEFINED
@@ -220,7 +220,7 @@ typedef int                  cmsBool;
 #        define CMSEXPORT       __stdcall _export
 #        define CMSAPI
 #     else
-#        define CMSEXPORT      _stdcall
+#        define CMSEXPORT      __stdcall
 #        ifdef CMS_DLL_BUILD
 #            define CMSAPI    __declspec(dllexport)
 #        else
@@ -898,7 +898,7 @@ typedef void* cmsHTRANSFORM;
 #define TYPE_ARGB_FLT         (FLOAT_SH(1)|COLORSPACE_SH(PT_RGB)|EXTRA_SH(1)|CHANNELS_SH(3)|BYTES_SH(4)|SWAPFIRST_SH(1))
 #define TYPE_BGR_FLT          (FLOAT_SH(1)|COLORSPACE_SH(PT_RGB)|CHANNELS_SH(3)|BYTES_SH(4)|DOSWAP_SH(1))
 #define TYPE_BGRA_FLT         (FLOAT_SH(1)|COLORSPACE_SH(PT_RGB)|EXTRA_SH(1)|CHANNELS_SH(3)|BYTES_SH(4)|DOSWAP_SH(1)|SWAPFIRST_SH(1))
-#define TYPE_ABGR_FLT         (FLOAT_SH(1)|COLORSPACE_SH(PT_RGB)|CHANNELS_SH(3)|BYTES_SH(4)|DOSWAP_SH(1))
+#define TYPE_ABGR_FLT         (FLOAT_SH(1)|COLORSPACE_SH(PT_RGB)|EXTRA_SH(1)|CHANNELS_SH(3)|BYTES_SH(4)|DOSWAP_SH(1))
 
 #define TYPE_CMYK_FLT         (FLOAT_SH(1)|COLORSPACE_SH(PT_CMYK)|CHANNELS_SH(4)|BYTES_SH(4))
 
@@ -1651,6 +1651,8 @@ CMSAPI cmsUInt32Number  CMSEXPORT cmsGetSupportedIntentsTHR(cmsContext ContextID
 // Specific to unbounded mode
 #define cmsFLAGS_NONEGATIVES              0x8000    // Prevent negative numbers in floating point transforms
 
+// Copy alpha channels when transforming           
+#define cmsFLAGS_COPY_ALPHA               0x04000000 // Alpha channels are copied on cmsDoTransform()
 
 // Fine-tune control over number of gridpoints
 #define cmsFLAGS_GRIDPOINTS(n)           (((n) & 0xFF) << 16)
@@ -1729,11 +1731,21 @@ CMSAPI void             CMSEXPORT cmsDoTransform(cmsHTRANSFORM Transform,
                                                  void * OutputBuffer,
                                                  cmsUInt32Number Size);
 
-CMSAPI void             CMSEXPORT cmsDoTransformStride(cmsHTRANSFORM Transform,
+CMSAPI void             CMSEXPORT cmsDoTransformStride(cmsHTRANSFORM Transform,   // Deprecated
                                                  const void * InputBuffer,
                                                  void * OutputBuffer,
                                                  cmsUInt32Number Size,
                                                  cmsUInt32Number Stride);
+
+CMSAPI void             CMSEXPORT cmsDoTransformLineStride(cmsHTRANSFORM  Transform,
+                                                 const void* InputBuffer,
+                                                 void* OutputBuffer,
+                                                 cmsUInt32Number PixelsPerLine,
+                                                 cmsUInt32Number LineCount,
+                                                 cmsUInt32Number BytesPerLineIn,
+                                                 cmsUInt32Number BytesPerLineOut,
+                                                 cmsUInt32Number BytesPerPlaneIn,
+                                                 cmsUInt32Number BytesPerPlaneOut);
 
 
 CMSAPI void             CMSEXPORT cmsSetAlarmCodes(const cmsUInt16Number NewAlarm[cmsMAXCHANNELS]);

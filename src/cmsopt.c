@@ -229,6 +229,7 @@ cmsBool _MultiplyMatrix(cmsPipeline* Lut)
 
                             // We can not get rid of full matrix                            
                             cmsStage* Multmat = cmsStageAllocMatrix(Lut->ContextID, 3, 3, (const cmsFloat64Number*) &res, NULL);
+                            if (Multmat == NULL) return FALSE;  // Should never happen
 
                             // Recover the chain
                             Multmat->Next = chain;

@@ -166,3 +166,5 @@ Added a version retrieval function
 -----------------------
 
 Fixed a bug in transicc for named color profiles
+added an extra _ to _stdcall to make it more portable
+Big amount of functionality contributed by AlienSkin software: TransformStride, copyAlpha, performance plug-ins
