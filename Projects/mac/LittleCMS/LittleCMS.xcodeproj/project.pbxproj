@@ -3,19 +3,10 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 44;
+	objectVersion = 46;
 	objects = {
 
 /* Begin PBXBuildFile section */
-		5413685C19BF607700A27B70 /* fast_float_15bits.c in Sources */ = {isa = PBXBuildFile; fileRef = 5413685419BF607700A27B70 /* fast_float_15bits.c */; };
-		5413685D19BF607700A27B70 /* fast_float_15mats.c in Sources */ = {isa = PBXBuildFile; fileRef = 5413685519BF607700A27B70 /* fast_float_15mats.c */; };
-		5413685E19BF607700A27B70 /* fast_float_curves.c in Sources */ = {isa = PBXBuildFile; fileRef = 5413685619BF607700A27B70 /* fast_float_curves.c */; };
-		5413685F19BF607700A27B70 /* fast_float_internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 5413685719BF607700A27B70 /* fast_float_internal.h */; };
-		5413686019BF607700A27B70 /* fast_float_matsh.c in Sources */ = {isa = PBXBuildFile; fileRef = 5413685819BF607700A27B70 /* fast_float_matsh.c */; };
-		5413686119BF607700A27B70 /* fast_float_separate.c in Sources */ = {isa = PBXBuildFile; fileRef = 5413685919BF607700A27B70 /* fast_float_separate.c */; };
-		5413686219BF607700A27B70 /* fast_float_sup.c in Sources */ = {isa = PBXBuildFile; fileRef = 5413685A19BF607700A27B70 /* fast_float_sup.c */; };
-		5413686319BF607700A27B70 /* fast_float_tethra.c in Sources */ = {isa = PBXBuildFile; fileRef = 5413685B19BF607700A27B70 /* fast_float_tethra.c */; };
-		5413687319BF64F900A27B70 /* lcms2_fast_float.h in Headers */ = {isa = PBXBuildFile; fileRef = 5413687219BF64F900A27B70 /* lcms2_fast_float.h */; };
 		546B294910AC5E4A0054D33A /* cmscam02.c in Sources */ = {isa = PBXBuildFile; fileRef = 546B293110AC5E4A0054D33A /* cmscam02.c */; };
 		546B294A10AC5E4A0054D33A /* cmscgats.c in Sources */ = {isa = PBXBuildFile; fileRef = 546B293210AC5E4A0054D33A /* cmscgats.c */; };
 		546B294B10AC5E4A0054D33A /* cmscnvrt.c in Sources */ = {isa = PBXBuildFile; fileRef = 546B293310AC5E4A0054D33A /* cmscnvrt.c */; };
@@ -44,13 +35,32 @@
 		546B296410AC5E600054D33A /* lcms2_plugin.h in Headers */ = {isa = PBXBuildFile; fileRef = 546B296210AC5E600054D33A /* lcms2_plugin.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		546B29AE10AC68410054D33A /* testcms2.c in Sources */ = {isa = PBXBuildFile; fileRef = 546B29AD10AC68410054D33A /* testcms2.c */; };
 		54DBD06215A202BB00180017 /* cmshalf.c in Sources */ = {isa = PBXBuildFile; fileRef = 54DBD06015A202B200180017 /* cmshalf.c */; };
-		54E17D6619BF66F300040CD3 /* fast_float_testbed.c in Sources */ = {isa = PBXBuildFile; fileRef = 54E17D6519BF66F300040CD3 /* fast_float_testbed.c */; };
 		54E6DC7E18AE052800445185 /* testplugin.c in Sources */ = {isa = PBXBuildFile; fileRef = 54E6DC7D18AE052800445185 /* testplugin.c */; };
 		54E6DC8018AE054800445185 /* zoo_icc.c in Sources */ = {isa = PBXBuildFile; fileRef = 54E6DC7F18AE054800445185 /* zoo_icc.c */; };
 		8D07F2BE0486CC7A007CD1D0 /* LittleCMS_Prefix.pch in Headers */ = {isa = PBXBuildFile; fileRef = 32BAE0B70371A74B00C91783 /* LittleCMS_Prefix.pch */; settings = {ATTRIBUTES = (Private, ); }; };
 		8D07F2C00486CC7A007CD1D0 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C1666FE841158C02AAC07 /* InfoPlist.strings */; };
 		8D07F2C40486CC7A007CD1D0 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08FB77AAFE841565C02AAC07 /* Carbon.framework */; };
+		CE509F071A31DF4100A1D3F6 /* new.icc in CopyFiles */ = {isa = PBXBuildFile; fileRef = CE509F011A31DF4100A1D3F6 /* new.icc */; };
+		CE509F081A31DF4100A1D3F6 /* test1.icc in CopyFiles */ = {isa = PBXBuildFile; fileRef = CE509F021A31DF4100A1D3F6 /* test1.icc */; };
+		CE509F091A31DF4100A1D3F6 /* test2.icc in CopyFiles */ = {isa = PBXBuildFile; fileRef = CE509F031A31DF4100A1D3F6 /* test2.icc */; };
+		CE509F0A1A31DF4100A1D3F6 /* test3.icc in CopyFiles */ = {isa = PBXBuildFile; fileRef = CE509F041A31DF4100A1D3F6 /* test3.icc */; };
+		CE509F0B1A31DF4100A1D3F6 /* test4.icc in CopyFiles */ = {isa = PBXBuildFile; fileRef = CE509F051A31DF4100A1D3F6 /* test4.icc */; };
+		CE509F0C1A31DF4100A1D3F6 /* test5.icc in CopyFiles */ = {isa = PBXBuildFile; fileRef = CE509F061A31DF4100A1D3F6 /* test5.icc */; };
+		CE509F0E1A31DFB200A1D3F6 /* ibm-t61.icc in CopyFiles */ = {isa = PBXBuildFile; fileRef = CE509F0D1A31DFB200A1D3F6 /* ibm-t61.icc */; };
+		CE790F6B1A31C2400083D722 /* lcms2_internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 546B29AC10AC682F0054D33A /* lcms2_internal.h */; };
+		CED42AD51B3C0BAE00C80A57 /* cmsalpha.c in Sources */ = {isa = PBXBuildFile; fileRef = CED42AD41B3C0BAE00C80A57 /* cmsalpha.c */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXBuildRule section */
+		CE509EFF1A31D4C500A1D3F6 /* PBXBuildRule */ = {
+			isa = PBXBuildRule;
+			compilerSpec = com.apple.compilers.proxy.script;
+			fileType = pattern.proxy;
+			isEditable = 1;
+			outputFiles = (
+			);
+		};
+/* End PBXBuildRule section */
 
 /* Begin PBXContainerItemProxy section */
 		546B29A710AC67870054D33A /* PBXContainerItemProxy */ = {
@@ -60,28 +70,31 @@
 			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
 			remoteInfo = LittleCMS;
 		};
-		54E17D5A19BF669300040CD3 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 0867D690FE84028FC02AAC07 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 8D07F2BC0486CC7A007CD1D0;
-			remoteInfo = LittleCMS;
-		};
 /* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		CE509F001A31DEDD00A1D3F6 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (
+				CE509F071A31DF4100A1D3F6 /* new.icc in CopyFiles */,
+				CE509F0E1A31DFB200A1D3F6 /* ibm-t61.icc in CopyFiles */,
+				CE509F081A31DF4100A1D3F6 /* test1.icc in CopyFiles */,
+				CE509F091A31DF4100A1D3F6 /* test2.icc in CopyFiles */,
+				CE509F0A1A31DF4100A1D3F6 /* test3.icc in CopyFiles */,
+				CE509F0B1A31DF4100A1D3F6 /* test4.icc in CopyFiles */,
+				CE509F0C1A31DF4100A1D3F6 /* test5.icc in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		089C1667FE841158C02AAC07 /* English */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = English; path = English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		08FB77AAFE841565C02AAC07 /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
-		32BAE0B70371A74B00C91783 /* LittleCMS_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LittleCMS_Prefix.pch; sourceTree = "<group>"; };
-		5413685419BF607700A27B70 /* fast_float_15bits.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fast_float_15bits.c; path = ../../../commercial/fast_float/src/fast_float_15bits.c; sourceTree = SOURCE_ROOT; };
-		5413685519BF607700A27B70 /* fast_float_15mats.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fast_float_15mats.c; path = ../../../commercial/fast_float/src/fast_float_15mats.c; sourceTree = SOURCE_ROOT; };
-		5413685619BF607700A27B70 /* fast_float_curves.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fast_float_curves.c; path = ../../../commercial/fast_float/src/fast_float_curves.c; sourceTree = SOURCE_ROOT; };
-		5413685719BF607700A27B70 /* fast_float_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = fast_float_internal.h; path = ../../../commercial/fast_float/src/fast_float_internal.h; sourceTree = SOURCE_ROOT; };
-		5413685819BF607700A27B70 /* fast_float_matsh.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fast_float_matsh.c; path = ../../../commercial/fast_float/src/fast_float_matsh.c; sourceTree = SOURCE_ROOT; };
-		5413685919BF607700A27B70 /* fast_float_separate.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fast_float_separate.c; path = ../../../commercial/fast_float/src/fast_float_separate.c; sourceTree = SOURCE_ROOT; };
-		5413685A19BF607700A27B70 /* fast_float_sup.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fast_float_sup.c; path = ../../../commercial/fast_float/src/fast_float_sup.c; sourceTree = SOURCE_ROOT; };
-		5413685B19BF607700A27B70 /* fast_float_tethra.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fast_float_tethra.c; path = ../../../commercial/fast_float/src/fast_float_tethra.c; sourceTree = SOURCE_ROOT; };
-		5413687219BF64F900A27B70 /* lcms2_fast_float.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lcms2_fast_float.h; path = ../../../commercial/fast_float/include/lcms2_fast_float.h; sourceTree = SOURCE_ROOT; };
+		32BAE0B70371A74B00C91783 /* LittleCMS_Prefix.pch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LittleCMS_Prefix.pch; sourceTree = SOURCE_ROOT; };
 		546B293110AC5E4A0054D33A /* cmscam02.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmscam02.c; path = ../../../src/cmscam02.c; sourceTree = SOURCE_ROOT; };
 		546B293210AC5E4A0054D33A /* cmscgats.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmscgats.c; path = ../../../src/cmscgats.c; sourceTree = SOURCE_ROOT; };
 		546B293310AC5E4A0054D33A /* cmscnvrt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmscnvrt.c; path = ../../../src/cmscnvrt.c; sourceTree = SOURCE_ROOT; };
@@ -108,32 +121,27 @@
 		546B294810AC5E4A0054D33A /* cmsxform.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsxform.c; path = ../../../src/cmsxform.c; sourceTree = SOURCE_ROOT; };
 		546B296110AC5E600054D33A /* lcms2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lcms2.h; path = ../../../include/lcms2.h; sourceTree = SOURCE_ROOT; };
 		546B296210AC5E600054D33A /* lcms2_plugin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lcms2_plugin.h; path = ../../../include/lcms2_plugin.h; sourceTree = SOURCE_ROOT; };
-		546B296B10AC5EAA0054D33A /* TestBed-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "TestBed-Info.plist"; sourceTree = "<group>"; };
 		546B29A310AC677E0054D33A /* testbed */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testbed; sourceTree = BUILT_PRODUCTS_DIR; };
 		546B29AC10AC682F0054D33A /* lcms2_internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lcms2_internal.h; path = ../../../src/lcms2_internal.h; sourceTree = SOURCE_ROOT; };
 		546B29AD10AC68410054D33A /* testcms2.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testcms2.c; path = ../../../testbed/testcms2.c; sourceTree = SOURCE_ROOT; };
-		54DBD06015A202B200180017 /* cmshalf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmshalf.c; path = ../../../src/cmshalf.c; sourceTree = "<group>"; };
-		54E17D3619BF660D00040CD3 /* testbed_fast_float_plugin-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "testbed_fast_float_plugin-Info.plist"; sourceTree = "<group>"; };
-		54E17D4019BF665100040CD3 /* testbed_float_plugin-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "testbed_float_plugin-Info.plist"; sourceTree = "<group>"; };
-		54E17D4D19BF665800040CD3 /* testbed_float_plugin-Info copy.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "testbed_float_plugin-Info copy.plist"; sourceTree = "<group>"; };
-		54E17D5419BF668400040CD3 /* testbed_plugin_float-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "testbed_plugin_float-Info.plist"; sourceTree = "<group>"; };
-		54E17D6319BF669300040CD3 /* testbed_plugin_float */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = testbed_plugin_float; sourceTree = BUILT_PRODUCTS_DIR; };
-		54E17D6519BF66F300040CD3 /* fast_float_testbed.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fast_float_testbed.c; path = ../../../commercial/fast_float/testbed/fast_float_testbed.c; sourceTree = SOURCE_ROOT; };
+		54DBD06015A202B200180017 /* cmshalf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmshalf.c; path = ../../../src/cmshalf.c; sourceTree = SOURCE_ROOT; };
 		54E6DC7D18AE052800445185 /* testplugin.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = testplugin.c; path = ../../../testbed/testplugin.c; sourceTree = SOURCE_ROOT; };
 		54E6DC7F18AE054800445185 /* zoo_icc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zoo_icc.c; path = ../../../testbed/zoo_icc.c; sourceTree = SOURCE_ROOT; };
-		8D07F2C70486CC7A007CD1D0 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
+		8D07F2C70486CC7A007CD1D0 /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = SOURCE_ROOT; };
 		8D07F2C80486CC7A007CD1D0 /* LittleCMS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = LittleCMS.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		CE509F011A31DF4100A1D3F6 /* new.icc */ = {isa = PBXFileReference; lastKnownFileType = file; name = new.icc; path = ../../../testbed/new.icc; sourceTree = "<group>"; };
+		CE509F021A31DF4100A1D3F6 /* test1.icc */ = {isa = PBXFileReference; lastKnownFileType = file; name = test1.icc; path = ../../../testbed/test1.icc; sourceTree = "<group>"; };
+		CE509F031A31DF4100A1D3F6 /* test2.icc */ = {isa = PBXFileReference; lastKnownFileType = file; name = test2.icc; path = ../../../testbed/test2.icc; sourceTree = "<group>"; };
+		CE509F041A31DF4100A1D3F6 /* test3.icc */ = {isa = PBXFileReference; lastKnownFileType = file; name = test3.icc; path = ../../../testbed/test3.icc; sourceTree = "<group>"; };
+		CE509F051A31DF4100A1D3F6 /* test4.icc */ = {isa = PBXFileReference; lastKnownFileType = file; name = test4.icc; path = ../../../testbed/test4.icc; sourceTree = "<group>"; };
+		CE509F061A31DF4100A1D3F6 /* test5.icc */ = {isa = PBXFileReference; lastKnownFileType = file; name = test5.icc; path = ../../../testbed/test5.icc; sourceTree = "<group>"; };
+		CE509F0D1A31DFB200A1D3F6 /* ibm-t61.icc */ = {isa = PBXFileReference; lastKnownFileType = file; name = "ibm-t61.icc"; path = "../../../testbed/ibm-t61.icc"; sourceTree = "<group>"; };
+		CE790F6F1A31C3110083D722 /* testcms2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = testcms2.h; path = ../../../testbed/testcms2.h; sourceTree = SOURCE_ROOT; };
+		CED42AD41B3C0BAE00C80A57 /* cmsalpha.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsalpha.c; path = ../../../src/cmsalpha.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		546B29A110AC677E0054D33A /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		54E17D5F19BF669300040CD3 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -156,7 +164,6 @@
 			children = (
 				8D07F2C80486CC7A007CD1D0 /* LittleCMS.framework */,
 				546B29A310AC677E0054D33A /* testbed */,
-				54E17D6319BF669300040CD3 /* testbed_plugin_float */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -164,19 +171,21 @@
 		0867D691FE84028FC02AAC07 /* LittleCMS */ = {
 			isa = PBXGroup;
 			children = (
-				54E17D6519BF66F300040CD3 /* fast_float_testbed.c */,
-				5413685319BF603200A27B70 /* fast_float_plugin */,
+				CE509F0D1A31DFB200A1D3F6 /* ibm-t61.icc */,
+				CE509F011A31DF4100A1D3F6 /* new.icc */,
+				CE509F021A31DF4100A1D3F6 /* test1.icc */,
+				CE509F031A31DF4100A1D3F6 /* test2.icc */,
+				CE509F041A31DF4100A1D3F6 /* test3.icc */,
+				CE509F051A31DF4100A1D3F6 /* test4.icc */,
+				CE509F061A31DF4100A1D3F6 /* test5.icc */,
+				CE790F6F1A31C3110083D722 /* testcms2.h */,
 				54E6DC7F18AE054800445185 /* zoo_icc.c */,
+				546B29AD10AC68410054D33A /* testcms2.c */,
 				54E6DC7D18AE052800445185 /* testplugin.c */,
 				08FB77ACFE841707C02AAC07 /* Source */,
 				089C1665FE841158C02AAC07 /* Resources */,
 				0867D69AFE84028FC02AAC07 /* External Frameworks and Libraries */,
 				034768DDFF38A45A11DB9C8B /* Products */,
-				546B296B10AC5EAA0054D33A /* TestBed-Info.plist */,
-				54E17D3619BF660D00040CD3 /* testbed_fast_float_plugin-Info.plist */,
-				54E17D4019BF665100040CD3 /* testbed_float_plugin-Info.plist */,
-				54E17D4D19BF665800040CD3 /* testbed_float_plugin-Info copy.plist */,
-				54E17D5419BF668400040CD3 /* testbed_plugin_float-Info.plist */,
 			);
 			name = LittleCMS;
 			sourceTree = "<group>";
@@ -201,8 +210,8 @@
 		08FB77ACFE841707C02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				CED42AD41B3C0BAE00C80A57 /* cmsalpha.c */,
 				54DBD06015A202B200180017 /* cmshalf.c */,
-				546B29AD10AC68410054D33A /* testcms2.c */,
 				546B29AC10AC682F0054D33A /* lcms2_internal.h */,
 				546B296110AC5E600054D33A /* lcms2.h */,
 				546B296210AC5E600054D33A /* lcms2_plugin.h */,
@@ -235,22 +244,6 @@
 			name = Source;
 			sourceTree = "<group>";
 		};
-		5413685319BF603200A27B70 /* fast_float_plugin */ = {
-			isa = PBXGroup;
-			children = (
-				5413687219BF64F900A27B70 /* lcms2_fast_float.h */,
-				5413685419BF607700A27B70 /* fast_float_15bits.c */,
-				5413685519BF607700A27B70 /* fast_float_15mats.c */,
-				5413685619BF607700A27B70 /* fast_float_curves.c */,
-				5413685719BF607700A27B70 /* fast_float_internal.h */,
-				5413685819BF607700A27B70 /* fast_float_matsh.c */,
-				5413685919BF607700A27B70 /* fast_float_separate.c */,
-				5413685A19BF607700A27B70 /* fast_float_sup.c */,
-				5413685B19BF607700A27B70 /* fast_float_tethra.c */,
-			);
-			name = fast_float_plugin;
-			sourceTree = "<group>";
-		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -261,8 +254,7 @@
 				8D07F2BE0486CC7A007CD1D0 /* LittleCMS_Prefix.pch in Headers */,
 				546B296310AC5E600054D33A /* lcms2.h in Headers */,
 				546B296410AC5E600054D33A /* lcms2_plugin.h in Headers */,
-				5413685F19BF607700A27B70 /* fast_float_internal.h in Headers */,
-				5413687319BF64F900A27B70 /* lcms2_fast_float.h in Headers */,
+				CE790F6B1A31C2400083D722 /* lcms2_internal.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -275,6 +267,7 @@
 			buildPhases = (
 				546B29A010AC677E0054D33A /* Sources */,
 				546B29A110AC677E0054D33A /* Frameworks */,
+				CE509F001A31DEDD00A1D3F6 /* CopyFiles */,
 			);
 			buildRules = (
 			);
@@ -284,23 +277,6 @@
 			name = testbed;
 			productName = testbed;
 			productReference = 546B29A310AC677E0054D33A /* testbed */;
-			productType = "com.apple.product-type.tool";
-		};
-		54E17D5819BF669300040CD3 /* testbed_plugin_float */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 54E17D6019BF669300040CD3 /* Build configuration list for PBXNativeTarget "testbed_plugin_float" */;
-			buildPhases = (
-				54E17D5B19BF669300040CD3 /* Sources */,
-				54E17D5F19BF669300040CD3 /* Frameworks */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				54E17D5919BF669300040CD3 /* PBXTargetDependency */,
-			);
-			name = testbed_plugin_float;
-			productName = testbed;
-			productReference = 54E17D6319BF669300040CD3 /* testbed_plugin_float */;
 			productType = "com.apple.product-type.tool";
 		};
 		8D07F2BC0486CC7A007CD1D0 /* LittleCMS */ = {
@@ -314,6 +290,7 @@
 				8D07F2C50486CC7A007CD1D0 /* Rez */,
 			);
 			buildRules = (
+				CE509EFF1A31D4C500A1D3F6 /* PBXBuildRule */,
 			);
 			dependencies = (
 			);
@@ -328,9 +305,17 @@
 /* Begin PBXProject section */
 		0867D690FE84028FC02AAC07 /* Project object */ = {
 			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0460;
+				ORGANIZATIONNAME = LittleCMS;
+			};
 			buildConfigurationList = 4FADC24608B4156D00ABE55E /* Build configuration list for PBXProject "LittleCMS" */;
-			compatibilityVersion = "Xcode 3.0";
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				en,
+			);
 			mainGroup = 0867D691FE84028FC02AAC07 /* LittleCMS */;
 			productRefGroup = 034768DDFF38A45A11DB9C8B /* Products */;
 			projectDirPath = "";
@@ -338,7 +323,6 @@
 			targets = (
 				8D07F2BC0486CC7A007CD1D0 /* LittleCMS */,
 				546B29A210AC677E0054D33A /* testbed */,
-				54E17D5819BF669300040CD3 /* testbed_plugin_float */,
 			);
 		};
 /* End PBXProject section */
@@ -375,14 +359,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		54E17D5B19BF669300040CD3 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				54E17D6619BF66F300040CD3 /* fast_float_testbed.c in Sources */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 		8D07F2C10486CC7A007CD1D0 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -412,13 +388,7 @@
 				546B295F10AC5E4A0054D33A /* cmswtpnt.c in Sources */,
 				546B296010AC5E4A0054D33A /* cmsxform.c in Sources */,
 				54DBD06215A202BB00180017 /* cmshalf.c in Sources */,
-				5413685C19BF607700A27B70 /* fast_float_15bits.c in Sources */,
-				5413685D19BF607700A27B70 /* fast_float_15mats.c in Sources */,
-				5413685E19BF607700A27B70 /* fast_float_curves.c in Sources */,
-				5413686019BF607700A27B70 /* fast_float_matsh.c in Sources */,
-				5413686119BF607700A27B70 /* fast_float_separate.c in Sources */,
-				5413686219BF607700A27B70 /* fast_float_sup.c in Sources */,
-				5413686319BF607700A27B70 /* fast_float_tethra.c in Sources */,
+				CED42AD51B3C0BAE00C80A57 /* cmsalpha.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -430,11 +400,6 @@
 			target = 8D07F2BC0486CC7A007CD1D0 /* LittleCMS */;
 			targetProxy = 546B29A710AC67870054D33A /* PBXContainerItemProxy */;
 		};
-		54E17D5919BF669300040CD3 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 8D07F2BC0486CC7A007CD1D0 /* LittleCMS */;
-			targetProxy = 54E17D5A19BF669300040CD3 /* PBXContainerItemProxy */;
-		};
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
@@ -444,7 +409,7 @@
 				089C1667FE841158C02AAC07 /* English */,
 			);
 			name = InfoPlist.strings;
-			sourceTree = "<group>";
+			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXVariantGroup section */
 
@@ -452,13 +417,15 @@
 		4FADC24308B4156D00ABE55E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				"ARCHS[sdk=*]" = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
 				COPY_PHASE_STRIP = NO;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
 				FRAMEWORK_VERSION = A;
 				GCC_CHAR_IS_UNSIGNED_CHAR = YES;
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -468,6 +435,7 @@
 				LIBRARY_STYLE = DYNAMIC;
 				MACH_O_TYPE = mh_dylib;
 				PRODUCT_NAME = LittleCMS;
+				SDKROOT = "";
 				WRAPPER_EXTENSION = framework;
 				ZERO_LINK = YES;
 			};
@@ -476,10 +444,9 @@
 		4FADC24408B4156D00ABE55E /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = (
-					ppc,
-					i386,
-				);
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				COMBINE_HIDPI_IMAGES = YES;
+				COPY_PHASE_STRIP = NO;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 1;
@@ -493,6 +460,7 @@
 				LIBRARY_STYLE = DYNAMIC;
 				MACH_O_TYPE = mh_dylib;
 				PRODUCT_NAME = LittleCMS;
+				SDKROOT = "";
 				WRAPPER_EXTENSION = framework;
 			};
 			name = Release;
@@ -505,9 +473,9 @@
 				HEADER_SEARCH_PATHS = ../../include;
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACH_O_TYPE = mh_execute;
+				MACOSX_DEPLOYMENT_TARGET = "";
 				OTHER_LDFLAGS = "";
-				PREBINDING = NO;
-				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.5.sdk";
+				SDKROOT = "";
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
 			};
 			name = Debug;
@@ -520,9 +488,9 @@
 				HEADER_SEARCH_PATHS = ../../include;
 				LINK_WITH_STANDARD_LIBRARIES = YES;
 				MACH_O_TYPE = mh_execute;
+				MACOSX_DEPLOYMENT_TARGET = "";
 				OTHER_LDFLAGS = "";
-				PREBINDING = NO;
-				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.5.sdk";
+				SDKROOT = "";
 				STANDARD_C_PLUS_PLUS_LIBRARY_TYPE = static;
 			};
 			name = Release;
@@ -532,19 +500,17 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = NO;
 				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
 				GCC_MODEL_TUNING = G5;
 				GCC_OPTIMIZATION_LEVEL = 0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Carbon.framework/Headers/Carbon.h";
-				INSTALL_PATH = /usr/local/bin;
+				INSTALL_PATH = ../../testbed;
 				OTHER_LDFLAGS = (
 					"-framework",
 					Carbon,
 					"-framework",
 					LittleCMS,
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = testbed;
 				ZERO_LINK = YES;
 			};
@@ -555,64 +521,17 @@
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
 				GCC_MODEL_TUNING = G5;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Carbon.framework/Headers/Carbon.h";
-				INSTALL_PATH = /usr/local/bin;
+				INSTALL_PATH = ../../testbed;
 				OTHER_LDFLAGS = (
 					"-framework",
 					Carbon,
 					"-framework",
 					LittleCMS,
 				);
-				PREBINDING = NO;
 				PRODUCT_NAME = testbed;
-				ZERO_LINK = NO;
-			};
-			name = Release;
-		};
-		54E17D6119BF669300040CD3 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COPY_PHASE_STRIP = NO;
-				GCC_DYNAMIC_NO_PIC = NO;
-				GCC_ENABLE_FIX_AND_CONTINUE = YES;
-				GCC_MODEL_TUNING = G5;
-				GCC_OPTIMIZATION_LEVEL = 0;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Carbon.framework/Headers/Carbon.h";
-				INSTALL_PATH = /usr/local/bin;
-				OTHER_LDFLAGS = (
-					"-framework",
-					Carbon,
-					"-framework",
-					LittleCMS,
-				);
-				PREBINDING = NO;
-				PRODUCT_NAME = testbed_plugin_float;
-				ZERO_LINK = YES;
-			};
-			name = Debug;
-		};
-		54E17D6219BF669300040CD3 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				COPY_PHASE_STRIP = YES;
-				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
-				GCC_ENABLE_FIX_AND_CONTINUE = NO;
-				GCC_MODEL_TUNING = G5;
-				GCC_PRECOMPILE_PREFIX_HEADER = YES;
-				GCC_PREFIX_HEADER = "$(SYSTEM_LIBRARY_DIR)/Frameworks/Carbon.framework/Headers/Carbon.h";
-				INSTALL_PATH = /usr/local/bin;
-				OTHER_LDFLAGS = (
-					"-framework",
-					Carbon,
-					"-framework",
-					LittleCMS,
-				);
-				PREBINDING = NO;
-				PRODUCT_NAME = testbed_plugin_float;
 				ZERO_LINK = NO;
 			};
 			name = Release;
@@ -643,15 +562,6 @@
 			buildConfigurations = (
 				546B29A510AC677F0054D33A /* Debug */,
 				546B29A610AC677F0054D33A /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		54E17D6019BF669300040CD3 /* Build configuration list for PBXNativeTarget "testbed_plugin_float" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				54E17D6119BF669300040CD3 /* Debug */,
-				54E17D6219BF669300040CD3 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -15,11 +15,11 @@
 	<key>CFBundlePackageType</key>
 	<string>FMWK</string>
 	<key>CFBundleShortVersionString</key>
-	<string>1.01</string>
+	<string>2.7</string>
 	<key>CFBundleSignature</key>
 	<string>lcms</string>
 	<key>CFBundleVersion</key>
-	<string>2.6</string>
+	<string>2.7</string>
 	<key>CSResourcesFileMapped</key>
 	<true/>
 </dict>
