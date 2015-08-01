@@ -5448,7 +5448,7 @@ static _cmsTagLinkedList SupportedTags[] = {
     { cmsSigScreeningTag,           { 1, 1, { cmsSigScreeningType},          NULL }, &SupportedTags[59]},
     { cmsSigVcgtTag,                { 1, 1, { cmsSigVcgtType},               NULL }, &SupportedTags[60]},
     { cmsSigMetaTag,                { 1, 1, { cmsSigDictType},               NULL }, &SupportedTags[61]},
-    { cmsSigProfileSequenceIdTag,   { 1, 1, { cmsSigProfileSequenceIdType},  NULL },  &SupportedTags[62]},
+    { cmsSigProfileSequenceIdTag,   { 1, 1, { cmsSigProfileSequenceIdType},  NULL }, &SupportedTags[62]},
     { cmsSigProfileDescriptionMLTag,{ 1, 1, { cmsSigMultiLocalizedUnicodeType}, NULL}, NULL}
 
 

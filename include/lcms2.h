@@ -1384,7 +1384,7 @@ typedef struct {
 typedef struct {
 
     cmsUInt32Number n;
-    cmsContext     ContextID;
+    cmsContext      ContextID;
     cmsPSEQDESC*    seq;
 
 } cmsSEQ;

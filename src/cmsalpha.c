@@ -288,6 +288,9 @@ void ComputeIncrementsForChunky(cmsUInt32Number Format,
        int channelSize = trueBytesSize(Format);
        int pixelSize = channelSize * total_chans;
        
+	   // Sanity check
+	   if (total_chans <= 0)
+		   return;
 
        // Separation is independent of starting point and only depends on channel size
        for (i = 0; i < extra; i++)

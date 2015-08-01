@@ -342,8 +342,8 @@ struct _cmstransform_struct;
 
 typedef cmsUInt8Number* (* cmsFormatter16)(register struct _cmstransform_struct* CMMcargo,
                                            register cmsUInt16Number Values[],
-                                           register cmsUInt8Number*  Buffer,
-                                           register cmsUInt32Number  Stride);
+                                           register cmsUInt8Number* Buffer,
+                                           register cmsUInt32Number Stride);
 
 typedef cmsUInt8Number* (* cmsFormatterFloat)(struct _cmstransform_struct* CMMcargo,
                                               cmsFloat32Number Values[],
