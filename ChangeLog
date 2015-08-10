@@ -168,4 +168,4 @@ Added a version retrieval function
 Fixed a bug in transicc for named color profiles
 added an extra _ to _stdcall to make it more portable
 Big amount of functionality contributed/Sponsored  by Alien Skin Software: TransformStride, copyAlpha, performance plug-ins. Fixes some warnings as well.
-
+Fix a bug that prevented to read luminance tag
