@@ -215,22 +215,6 @@ cmsBool CMSEXPORT  _cmsRead15Fixed16Number(cmsIOHANDLER* io, cmsFloat64Number* n
 }
 
 
-// Jun-21-2000: Some profiles (those that comes with W2K) comes
-// with the media white (media black?) x 100. Add a sanity check
-
-static
-void NormalizeXYZ(cmsCIEXYZ* Dest)
-{
-    while (Dest -> X > 2. &&
-           Dest -> Y > 2. &&
-           Dest -> Z > 2.) {
-
-               Dest -> X /= 10.;
-               Dest -> Y /= 10.;
-               Dest -> Z /= 10.;
-       }
-}
-
 cmsBool CMSEXPORT  _cmsReadXYZNumber(cmsIOHANDLER* io, cmsCIEXYZ* XYZ)
 {
     cmsEncodedXYZNumber xyz;
@@ -244,8 +228,6 @@ cmsBool CMSEXPORT  _cmsReadXYZNumber(cmsIOHANDLER* io, cmsCIEXYZ* XYZ)
         XYZ->X = _cms15Fixed16toDouble(_cmsAdjustEndianess32(xyz.X));
         XYZ->Y = _cms15Fixed16toDouble(_cmsAdjustEndianess32(xyz.Y));
         XYZ->Z = _cms15Fixed16toDouble(_cmsAdjustEndianess32(xyz.Z));
-
-        NormalizeXYZ(XYZ);
     }
     return TRUE;
 }

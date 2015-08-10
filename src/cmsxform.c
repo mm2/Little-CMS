@@ -960,6 +960,22 @@ cmsBool  IsProperColorSpace(cmsColorSpaceSignature Check, cmsUInt32Number dwForm
 
 // ----------------------------------------------------------------------------------------------------------------
 
+// Jun-21-2000: Some profiles (those that comes with W2K) comes
+// with the media white (media black?) x 100. Add a sanity check
+
+static
+void NormalizeXYZ(cmsCIEXYZ* Dest)
+{
+    while (Dest -> X > 2. &&
+           Dest -> Y > 2. &&
+           Dest -> Z > 2.) {
+
+               Dest -> X /= 10.;
+               Dest -> Y /= 10.;
+               Dest -> Z /= 10.;
+       }
+}
+
 static
 void SetWhitePoint(cmsCIEXYZ* wtPt, const cmsCIEXYZ* src)
 {
@@ -972,6 +988,8 @@ void SetWhitePoint(cmsCIEXYZ* wtPt, const cmsCIEXYZ* src)
         wtPt ->X = src->X;
         wtPt ->Y = src->Y;
         wtPt ->Z = src->Z;
+
+        NormalizeXYZ(wtPt);
     }
 
 }
