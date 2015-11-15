@@ -1,6 +1,6 @@
 //{{NO_DEPENDENCIES}}
-// Microsoft Developer Studio generated include file.
-// Used by lcms.rc
+// Microsoft Visual C++ generated include file.
+// Used by lcms2.rc
 //
 
 // Next default values for new objects
