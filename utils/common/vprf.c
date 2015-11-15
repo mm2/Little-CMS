@@ -203,6 +203,11 @@ void PrintColorantTable(cmsHPROFILE hInput, cmsTagSignature Sig, const char* Tit
 
 void PrintProfileInformation(cmsHPROFILE hInput)
 {
+    if (hInput == NULL) {
+			fprintf(stderr, "*Wrong or corrupted profile*\n");
+            return;
+    }
+
     PrintInfo(hInput, cmsInfoDescription);
     PrintInfo(hInput, cmsInfoManufacturer);
     PrintInfo(hInput, cmsInfoModel);

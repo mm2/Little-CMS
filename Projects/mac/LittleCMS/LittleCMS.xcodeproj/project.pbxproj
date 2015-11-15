@@ -48,7 +48,6 @@
 		CE509F0C1A31DF4100A1D3F6 /* test5.icc in CopyFiles */ = {isa = PBXBuildFile; fileRef = CE509F061A31DF4100A1D3F6 /* test5.icc */; };
 		CE509F0E1A31DFB200A1D3F6 /* ibm-t61.icc in CopyFiles */ = {isa = PBXBuildFile; fileRef = CE509F0D1A31DFB200A1D3F6 /* ibm-t61.icc */; };
 		CE790F6B1A31C2400083D722 /* lcms2_internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 546B29AC10AC682F0054D33A /* lcms2_internal.h */; };
-		CED42AD51B3C0BAE00C80A57 /* cmsalpha.c in Sources */ = {isa = PBXBuildFile; fileRef = CED42AD41B3C0BAE00C80A57 /* cmsalpha.c */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXBuildRule section */
@@ -137,7 +136,6 @@
 		CE509F061A31DF4100A1D3F6 /* test5.icc */ = {isa = PBXFileReference; lastKnownFileType = file; name = test5.icc; path = ../../../testbed/test5.icc; sourceTree = "<group>"; };
 		CE509F0D1A31DFB200A1D3F6 /* ibm-t61.icc */ = {isa = PBXFileReference; lastKnownFileType = file; name = "ibm-t61.icc"; path = "../../../testbed/ibm-t61.icc"; sourceTree = "<group>"; };
 		CE790F6F1A31C3110083D722 /* testcms2.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = testcms2.h; path = ../../../testbed/testcms2.h; sourceTree = SOURCE_ROOT; };
-		CED42AD41B3C0BAE00C80A57 /* cmsalpha.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = cmsalpha.c; path = ../../../src/cmsalpha.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -210,7 +208,6 @@
 		08FB77ACFE841707C02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
-				CED42AD41B3C0BAE00C80A57 /* cmsalpha.c */,
 				54DBD06015A202B200180017 /* cmshalf.c */,
 				546B29AC10AC682F0054D33A /* lcms2_internal.h */,
 				546B296110AC5E600054D33A /* lcms2.h */,
@@ -388,7 +385,6 @@
 				546B295F10AC5E4A0054D33A /* cmswtpnt.c in Sources */,
 				546B296010AC5E4A0054D33A /* cmsxform.c in Sources */,
 				54DBD06215A202BB00180017 /* cmshalf.c in Sources */,
-				CED42AD51B3C0BAE00C80A57 /* cmsalpha.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

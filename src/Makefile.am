@@ -16,7 +16,7 @@ LIBRARY_CURRENT    = @LIBRARY_CURRENT@
 LIBRARY_REVISION   = @LIBRARY_REVISION@
 LIBRARY_AGE        = @LIBRARY_AGE@
 
-INCLUDES = -I$(top_builddir)/include -I$(top_srcdir)/include
+AM_CPPFLAGS = -I$(top_builddir)/include -I$(top_srcdir)/include
 
 liblcms2_la_LDFLAGS = -no-undefined \
   -version-info $(LIBRARY_CURRENT):$(LIBRARY_REVISION):$(LIBRARY_AGE)

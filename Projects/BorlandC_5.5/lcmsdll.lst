@@ -26,3 +26,4 @@
 ..\..\src\cmswtpnt.c
 ..\..\src\cmsxform.c
 ..\..\src\cmshalf.c
+..\..\src\cmsalpha.c

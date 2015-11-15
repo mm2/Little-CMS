@@ -175,10 +175,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\src\cmshalf.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\src\cmsintrp.c"
 				>
 			</File>
