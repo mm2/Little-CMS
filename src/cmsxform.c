@@ -249,7 +249,7 @@ void FloatXFORM(_cmsTRANSFORM* p,
     cmsUInt8Number* output;
     cmsFloat32Number fIn[cmsMAXCHANNELS], fOut[cmsMAXCHANNELS];
     cmsFloat32Number OutOfGamut;
-    cmsUInt32Number i, j, strideIn, strideOut;
+    cmsUInt32Number i, j, c, strideIn, strideOut;
 
     _cmsHandleExtraChannels(p, in, out, PixelsPerLine, LineCount, Stride);
 
@@ -275,8 +275,8 @@ void FloatXFORM(_cmsTRANSFORM* p,
             if (OutOfGamut > 0.0) {
 
                 // Certainly, out of gamut
-                for (j=0; j < cmsMAXCHANNELS; j++)
-                    fOut[j] = -1.0;
+                for (c = 0; c < cmsMAXCHANNELS; c++)
+                    fOut[c] = -1.0;
 
             }
             else {
