@@ -1328,7 +1328,9 @@ cmsUInt32Number CMSEXPORT cmsSaveProfileToIOhandler(cmsHPROFILE hProfile, cmsIOH
     }
 
     memmove(Icc, &Keep, sizeof(_cmsICCPROFILE));
-    if (!cmsCloseIOhandler(PrevIO)) return 0;
+    if (!cmsCloseIOhandler(PrevIO)) 
+        UsedSpace = 0; // As a error marker
+
     _cmsUnlockMutex(Icc->ContextID, Icc->UsrMutex);
 
     return UsedSpace;
