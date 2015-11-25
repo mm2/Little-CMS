@@ -53,7 +53,18 @@ int main(int  argc, char* argv[])
     }
 
     hProfile = cmsOpenProfileFromFile(argv[1], "r");
+    if (hProfile == NULL)
+    {
+        printf("invalid profile\n");
+        return 1;
+    }
+
     xform = cmsCreateTransform(hProfile,TYPE_RGB_8, hProfile, TYPE_RGB_8, INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_NOOPTIMIZE);
+    if (xform == NULL)
+    {
+        printf("Not a valid RGB profile\n");
+        return 1;
+    }
 
     for (r=0; r< 256; r++) {
         printf("%d  \r", r);
