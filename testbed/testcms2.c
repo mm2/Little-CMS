@@ -7866,6 +7866,23 @@ cmsInt32Number CheckTransformLineStride(void)
 }
 
 
+static
+int CheckPlanar8opt(void)
+{
+    cmsHPROFILE aboveRGB = Create_AboveRGB();
+    cmsHPROFILE sRGB = cmsCreate_sRGBProfile();
+
+    cmsHTRANSFORM transform = cmsCreateTransform(sRGB, TYPE_RGB_8_PLANAR,
+        aboveRGB, TYPE_RGB_8_PLANAR,
+        INTENT_PERCEPTUAL, 0);
+
+    cmsDeleteTransform(transform);
+    cmsCloseProfile(aboveRGB);
+    cmsCloseProfile(sRGB);
+
+    return 1;
+}
+
 
 
 
@@ -8314,8 +8331,7 @@ int main(int argc, char* argv[])
     printf("Installing error logger ... ");
     cmsSetLogErrorHandler(FatalErrorQuit);
     printf("done.\n");
-
-
+    
     PrintSupportedIntents();
 
     Check("Base types", CheckBaseTypes);
@@ -8508,7 +8524,7 @@ int main(int argc, char* argv[])
     Check("Null transform on floats", CheckFloatNULLxform);
     Check("Set free a tag", CheckRemoveTag);
     Check("Matrix simplification", CheckMatrixSimplify);
-
+    Check("Planar 8 optimization", CheckPlanar8opt);
 
     Check("Transform line stride RGB", CheckTransformLineStride);
 
