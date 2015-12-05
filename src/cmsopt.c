@@ -1041,9 +1041,12 @@ cmsBool OptimizeByComputingLinearization(cmsPipeline** Lut, cmsUInt32Number Inte
     // This is a loosy optimization! does not apply in floating-point cases
     if (_cmsFormatterIsFloat(*InputFormat) || _cmsFormatterIsFloat(*OutputFormat)) return FALSE;
 
-    // Only on RGB
+    // Only on chunky RGB
     if (T_COLORSPACE(*InputFormat)  != PT_RGB) return FALSE;
+    if (T_PLANAR(*InputFormat)) return FALSE;
+
     if (T_COLORSPACE(*OutputFormat) != PT_RGB) return FALSE;
+    if (T_PLANAR(*OutputFormat)) return FALSE;
 
 
     // On 16 bits, user has to specify the feature

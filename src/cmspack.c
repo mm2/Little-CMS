@@ -3007,9 +3007,6 @@ cmsFormatter _cmsGetStockInputFormatter(cmsUInt32Number dwInput, cmsUInt32Number
     cmsUInt32Number i;
     cmsFormatter fr;
 
-    // Optimization is only a hint
-    dwInput &= ~OPTIMIZED_SH(1);
-
     switch (dwFlags) {
 
     case CMS_PACK_FLAGS_16BITS: {
