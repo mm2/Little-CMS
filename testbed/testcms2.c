@@ -101,7 +101,7 @@ cmsContext DbgThread(void)
 {
     static cmsUInt32Number n = 1;
 
-    return (cmsContext) (n++ % 0xff0);
+    return (cmsContext) (void*)(n++ % 0xff0);
 }
 
 // The allocate routine
