@@ -962,7 +962,7 @@ cmsBool  Type_Text_Description_Write(struct _cms_typehandler_struct* self, cmsIO
     len = cmsMLUgetASCII(mlu, cmsNoLanguage, cmsNoCountry, NULL, 0);
 
     // From ICC3.4: It has been found that textDescriptionType can contain misaligned data
-    //(see clause 4.1 for the definition of “aligned”). Because the Unicode language
+    //(see clause 4.1 for the definition of Â“alignedÂ”). Because the Unicode language
     // code and Unicode count immediately follow the ASCII description, their
     // alignment is not correct if the ASCII count is not a multiple of four. The
     // ScriptCode code is misaligned when the ASCII count is odd. Profile reading and
@@ -3055,10 +3055,10 @@ void Type_ColorantTable_Free(struct _cms_typehandler_struct* self, void* Ptr)
 //The namedColor2Type is a count value and array of structures that provide color
 //coordinates for 7-bit ASCII color names. For each named color, a PCS and optional
 //device representation of the color are given. Both representations are 16-bit values.
-//The device representation corresponds to the header’s “color space of data” field.
-//This representation should be consistent with the “number of device components”
+//The device representation corresponds to the headerÂ’s Â“color space of dataÂ” field.
+//This representation should be consistent with the Â“number of device componentsÂ”
 //field in the namedColor2Type. If this field is 0, device coordinates are not provided.
-//The PCS representation corresponds to the header’s PCS field. The PCS representation
+//The PCS representation corresponds to the headerÂ’s PCS field. The PCS representation
 //is always provided. Color names are fixed-length, 32-byte fields including null
 //termination. In order to maintain maximum portability, it is strongly recommended
 //that special characters of the 7-bit ASCII set not be used.
@@ -3126,8 +3126,8 @@ static
 cmsBool Type_NamedColor_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, void* Ptr, cmsUInt32Number nItems)
 {
     cmsNAMEDCOLORLIST* NamedColorList = (cmsNAMEDCOLORLIST*) Ptr;
-    char                prefix[32];     // Prefix for each color name
-    char                suffix[32];     // Suffix for each color name
+    char                prefix[33];     // Prefix for each color name
+    char                suffix[33];     // Suffix for each color name
     int i, nColors;
 
     nColors = cmsNamedColorCount(NamedColorList);
@@ -3139,7 +3139,7 @@ cmsBool Type_NamedColor_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER
     strncpy(prefix, (const char*) NamedColorList->Prefix, 32);
     strncpy(suffix, (const char*) NamedColorList->Suffix, 32);
 
-    suffix[31] = prefix[31] = 0;
+    suffix[32] = prefix[32] = 0;
 
     if (!io ->Write(io, 32, prefix)) return FALSE;
     if (!io ->Write(io, 32, suffix)) return FALSE;
@@ -3152,6 +3152,7 @@ cmsBool Type_NamedColor_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER
 
         if (!cmsNamedColorInfo(NamedColorList, i, Root, NULL, NULL, PCS, Colorant)) return 0;
         if (!io ->Write(io, 32 , Root)) return FALSE;
+        Root[32] = '\0';
         if (!_cmsWriteUInt16Array(io, 3, PCS)) return FALSE;
         if (!_cmsWriteUInt16Array(io, NamedColorList ->ColorantCount, Colorant)) return FALSE;
     }
@@ -3800,7 +3801,7 @@ void Type_Screening_Free(struct _cms_typehandler_struct* self, void* Ptr)
 // ********************************************************************************
 //
 //This type represents a set of viewing condition parameters including:
-//CIE ’absolute’ illuminant white point tristimulus values and CIE ’absolute’
+//CIE Â’absoluteÂ’ illuminant white point tristimulus values and CIE Â’absoluteÂ’
 //surround tristimulus values.
 
 static
@@ -3887,7 +3888,7 @@ void GenericMPEfree(struct _cms_typehandler_struct* self, void *Ptr)
 }
 
 // Each curve is stored in one or more curve segments, with break-points specified between curve segments.
-// The first curve segment always starts at –Infinity, and the last curve segment always ends at +Infinity. The
+// The first curve segment always starts at Â–Infinity, and the last curve segment always ends at +Infinity. The
 // first and last curve segments shall be specified in terms of a formula, whereas the other segments shall be
 // specified either in terms of a formula, or by a sampled curve.
 
@@ -4163,7 +4164,7 @@ cmsBool  Type_MPEcurve_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER*
 // The matrix is organized as an array of PxQ+Q elements, where P is the number of input channels to the
 // matrix, and Q is the number of output channels. The matrix elements are each float32Numbers. The array
 // is organized as follows:
-// array = [e11, e12, …, e1P, e21, e22, …, e2P, …, eQ1, eQ2, …, eQP, e1, e2, …, eQ]
+// array = [e11, e12, Â…, e1P, e21, e22, Â…, e2P, Â…, eQ1, eQ2, Â…, eQP, e1, e2, Â…, eQ]
 
 static
 void *Type_MPEmatrix_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag)
@@ -4662,10 +4663,10 @@ void *Type_vcgt_Read(struct _cms_typehandler_struct* self,
             // Y = cX + f             | X < d
 
             // vcgt formula is:
-            // Y = (Max – Min) * (X ^ Gamma) + Min
+            // Y = (Max Â– Min) * (X ^ Gamma) + Min
 
             // So, the translation is
-            // a = (Max – Min) ^ ( 1 / Gamma)
+            // a = (Max Â– Min) ^ ( 1 / Gamma)
             // e = Min
             // b=c=d=f=0
 
