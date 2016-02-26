@@ -866,6 +866,7 @@ static
 void *Type_Text_Description_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag)
 {
     char* Text = NULL;
+    wchar_t* Wide = NULL;
     cmsMLU* mlu = NULL;
     cmsUInt32Number  AsciiCount;
     cmsUInt32Number  i, UnicodeCode, UnicodeCount;
@@ -899,11 +900,6 @@ void *Type_Text_Description_Read(struct _cms_typehandler_struct* self, cmsIOHAND
     // Make sure there is a terminator
     Text[AsciiCount] = 0;
 
-    // Set the MLU entry. From here we can be tolerant to wrong types
-    if (!cmsMLUsetASCII(mlu, cmsNoLanguage, cmsNoCountry, Text)) goto Error;
-    _cmsFree(self ->ContextID, (void*) Text);
-    Text = NULL;
-
     // Skip Unicode code
     if (SizeOfTag < 2* sizeof(cmsUInt32Number)) goto Done;
     if (!_cmsReadUInt32Number(io, &UnicodeCode)) goto Done;
@@ -912,10 +908,23 @@ void *Type_Text_Description_Read(struct _cms_typehandler_struct* self, cmsIOHAND
 
     if (SizeOfTag < UnicodeCount*sizeof(cmsUInt16Number)) goto Done;
 
-    for (i=0; i < UnicodeCount; i++) {
-        if (!io ->Read(io, &Dummy, sizeof(cmsUInt16Number), 1)) goto Done;
+    if (UnicodeCount != 0) { // Set Unicode Text
+        // Allocate memory for the Unicode characters
+        Wide = (wchar_t*) _cmsMalloc(self ->ContextID, (UnicodeCount + 1) * sizeof(wchar_t));
+        if (Wide == NULL) goto Error;
+
+        // Read the Unicode text
+        if (!_cmsReadWCharArray(io, UnicodeCount, Wide)) goto Error;
+        SizeOfTag -= UnicodeCount*sizeof(cmsUInt16Number);
+
+        // Make sure there is a terminator
+        Wide[UnicodeCount] = 0;
+
+        // Set the MLU entry.
+        if (!cmsMLUsetWide(mlu, cmsNoLanguage, cmsNoCountry, Wide)) goto Error;
+        _cmsFree(self ->ContextID, (void*) Wide);
+        Wide = NULL;
     }
-    SizeOfTag -= UnicodeCount*sizeof(cmsUInt16Number);
 
     // Skip ScriptCode code if present. Some buggy profiles does have less
     // data that stricttly required. We need to skip it as this type may come
@@ -933,12 +942,19 @@ void *Type_Text_Description_Read(struct _cms_typehandler_struct* self, cmsIOHAND
     }
 
 Done:
+    if (UnicodeCount == 0) { // Set ASCII text
+        // Set the MLU entry. From here we can be tolerant to wrong types
+        if (!cmsMLUsetASCII(mlu, cmsNoLanguage, cmsNoCountry, Text)) goto Error;
+        _cmsFree(self ->ContextID, (void*) Text);
+        Text = NULL;
+    }
 
     *nItems = 1;
     return mlu;
 
 Error:
     if (Text) _cmsFree(self ->ContextID, (void*) Text);
+    if (Wide) _cmsFree(self ->ContextID, (void*) Wide);
     if (mlu) cmsMLUfree(mlu);
     return NULL;
 }
