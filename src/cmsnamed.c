@@ -375,7 +375,7 @@ cmsUInt32Number CMSEXPORT cmsMLUgetASCII(const cmsMLU* mlu,
 {
     const wchar_t *Wide;
     cmsUInt32Number  StrLen = 0;
-    cmsUInt32Number ASCIIlen, i;
+    cmsUInt32Number WideLen, ASCIIlen = 0, i, j;
 
     cmsUInt16Number Lang  = strTo16(LanguageCode);
     cmsUInt16Number Cntry = strTo16(CountryCode);
@@ -387,7 +387,13 @@ cmsUInt32Number CMSEXPORT cmsMLUgetASCII(const cmsMLU* mlu,
     Wide = _cmsMLUgetWide(mlu, &StrLen, Lang, Cntry, NULL, NULL);
     if (Wide == NULL) return 0;
 
-    ASCIIlen = StrLen / sizeof(wchar_t);
+    WideLen = StrLen / sizeof(wchar_t);
+
+    // Count number of valid ASCII characters
+    for (i=0; i < WideLen; i++) {
+        if ((cmsUInt16Number) Wide[i] <= 127)
+            ++ASCIIlen;
+    }
 
     // Maybe we want only to know the len?
     if (Buffer == NULL) return ASCIIlen + 1; // Note the zero at the end
@@ -399,13 +405,10 @@ cmsUInt32Number CMSEXPORT cmsMLUgetASCII(const cmsMLU* mlu,
     if (BufferSize < ASCIIlen + 1)
         ASCIIlen = BufferSize - 1;
 
-    // Precess each character
-    for (i=0; i < ASCIIlen; i++) {
-
-        if (Wide[i] == 0)
-            Buffer[i] = 0;
-        else
-            Buffer[i] = (char) Wide[i];
+    // Process each character
+    for (i=0, j=0; i < WideLen && j < ASCIIlen; i++) {
+        if ((cmsUInt16Number) Wide[i] <= 127)
+            Buffer[j++] = (char) Wide[i];
     }
 
     // We put a termination "\0"
