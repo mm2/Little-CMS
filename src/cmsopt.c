@@ -1900,6 +1900,11 @@ cmsBool _cmsOptimizePipeline(cmsContext ContextID,
         _cmsPipelineSetOptimizationParameters(*PtrLut, FastIdentity16, (void*) *PtrLut, NULL, NULL);
         return TRUE;
     }
+	
+	// Tone Curve Stages with a slope limit cannot be optimized. The following line switches off optimization
+	// completely and is a workaround until _cmsStage_struct.Implements correctly signifies that this
+	// stage cannot be optimized
+	if (*dwFlags & (cmsFLAGS_SLOPE_LIMIT_16 | cmsFLAGS_SLOPE_LIMIT_32)) *dwFlags |= cmsFLAGS_NOOPTIMIZE;
 
     // Do not optimize, keep all precision
     if (*dwFlags & cmsFLAGS_NOOPTIMIZE)

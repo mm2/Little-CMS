@@ -1639,6 +1639,10 @@ CMSAPI cmsUInt32Number  CMSEXPORT cmsGetSupportedIntentsTHR(cmsContext ContextID
 #define cmsFLAGS_HIGHRESPRECALC           0x0400    // Use more memory to give better accurancy
 #define cmsFLAGS_LOWRESPRECALC            0x0800    // Use less memory to minimize resouces
 
+// Slope Limit
+#define cmsFLAGS_SLOPE_LIMIT_16       0x40000000    // Enable Slope Limit 16 (emulate ColorSync & Kodak CMM)
+#define cmsFLAGS_SLOPE_LIMIT_32       0x80000000    // Enable Slope Limit 32 (emulate Adobe CMM)
+
 // For devicelink creation
 #define cmsFLAGS_8BITS_DEVICELINK         0x0008   // Create 8 bits devicelinks
 #define cmsFLAGS_GUESSDEVICECLASS         0x0020   // Guess device class (for transform2devicelink)

@@ -153,7 +153,7 @@ cmsBool ReadICCMatrixRGB2XYZ(cmsMAT3* r, cmsHPROFILE hProfile)
 
 // Gray input pipeline
 static
-cmsPipeline* BuildGrayInputMatrixPipeline(cmsHPROFILE hProfile)
+cmsPipeline* BuildGrayInputMatrixPipeline(cmsHPROFILE hProfile, int SlopeLimit)
 {
     cmsToneCurve *GrayTRC;
     cmsPipeline* Lut;
@@ -183,7 +183,7 @@ cmsPipeline* BuildGrayInputMatrixPipeline(cmsHPROFILE hProfile)
         LabCurves[2] = EmptyTab;
 
         if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, OneToThreeInputMatrix, NULL)) ||
-            !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, LabCurves))) {
+            !cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocToneCurvesWithSlopeLimit(ContextID, 3, LabCurves, SlopeLimit))) {
                 cmsFreeToneCurve(EmptyTab);
                 goto Error;
         }
@@ -193,7 +193,7 @@ cmsPipeline* BuildGrayInputMatrixPipeline(cmsHPROFILE hProfile)
     }
     else  {
 
-        if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &GrayTRC)) ||
+        if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocToneCurvesWithSlopeLimit(ContextID, 1, &GrayTRC, SlopeLimit)) ||
             !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3,  1, GrayInputMatrix, NULL)))
             goto Error;
     }
@@ -208,7 +208,7 @@ Error:
 
 // RGB Matrix shaper
 static
-cmsPipeline* BuildRGBInputMatrixShaper(cmsHPROFILE hProfile)
+cmsPipeline* BuildRGBInputMatrixShaper(cmsHPROFILE hProfile, int SlopeLimit)
 {
     cmsPipeline* Lut;
     cmsMAT3 Mat;
@@ -237,7 +237,7 @@ cmsPipeline* BuildRGBInputMatrixShaper(cmsHPROFILE hProfile)
     Lut = cmsPipelineAlloc(ContextID, 3, 3);
     if (Lut != NULL) {
 
-        if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, Shapes)) ||
+        if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocToneCurvesWithSlopeLimit(ContextID, 3, Shapes, SlopeLimit)) ||
             !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3, 3, (cmsFloat64Number*) &Mat, NULL)))
             goto Error;
 
@@ -307,7 +307,7 @@ Error:
 // Read and create a BRAND NEW MPE LUT from a given profile. All stuff dependent of version, etc
 // is adjusted here in order to create a LUT that takes care of all those details.
 // We add intent = -1 as a way to read matrix shaper always, no matter of other LUT
-cmsPipeline* _cmsReadInputLUT(cmsHPROFILE hProfile, int Intent)
+cmsPipeline* _cmsReadInputLUT(cmsHPROFILE hProfile, int Intent, int SlopeLimit)
 {
     cmsTagTypeSignature OriginalType;
     cmsTagSignature tag16;
@@ -396,11 +396,11 @@ Error:
 
         // if so, build appropiate conversion tables.
         // The tables are the PCS iluminant, scaled across GrayTRC
-        return BuildGrayInputMatrixPipeline(hProfile);
+        return BuildGrayInputMatrixPipeline(hProfile, SlopeLimit);
     }
 
     // Not gray, create a normal matrix-shaper
-    return BuildRGBInputMatrixShaper(hProfile);
+    return BuildRGBInputMatrixShaper(hProfile, SlopeLimit);
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -411,7 +411,7 @@ Error:
 // The complete pipeline on XYZ is Matrix[3:1] -> Tone curve and in Lab Matrix[3:1] -> Tone Curve as well.
 
 static
-cmsPipeline* BuildGrayOutputPipeline(cmsHPROFILE hProfile)
+cmsPipeline* BuildGrayOutputPipeline(cmsHPROFILE hProfile, int SlopeLimit)
 {
     cmsToneCurve *GrayTRC, *RevGrayTRC;
     cmsPipeline* Lut;
@@ -439,7 +439,7 @@ cmsPipeline* BuildGrayOutputPipeline(cmsHPROFILE hProfile)
             goto Error;
     }
 
-    if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 1, &RevGrayTRC)))
+    if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocToneCurvesWithSlopeLimit(ContextID, 1, &RevGrayTRC, SlopeLimit)))
         goto Error;
 
     cmsFreeToneCurve(RevGrayTRC);
@@ -453,7 +453,7 @@ Error:
 
 
 static
-cmsPipeline* BuildRGBOutputMatrixShaper(cmsHPROFILE hProfile)
+cmsPipeline* BuildRGBOutputMatrixShaper(cmsHPROFILE hProfile, int SlopeLimit)
 {
     cmsPipeline* Lut;
     cmsToneCurve *Shapes[3], *InvShapes[3];
@@ -503,7 +503,7 @@ cmsPipeline* BuildRGBOutputMatrixShaper(cmsHPROFILE hProfile)
         }
 
         if (!cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocMatrix(ContextID, 3, 3, (cmsFloat64Number*) &Inv, NULL)) ||
-            !cmsPipelineInsertStage(Lut, cmsAT_END, cmsStageAllocToneCurves(ContextID, 3, InvShapes)))
+            !cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageAllocToneCurvesWithSlopeLimit(ContextID, 3, InvShapes, SlopeLimit)))
             goto Error;
     }
 
@@ -582,7 +582,7 @@ Error:
 }
 
 // Create an output MPE LUT from agiven profile. Version mismatches are handled here
-cmsPipeline* _cmsReadOutputLUT(cmsHPROFILE hProfile, int Intent)
+cmsPipeline* _cmsReadOutputLUT(cmsHPROFILE hProfile, int Intent, int SlopeLimit)
 {
     cmsTagTypeSignature OriginalType;
     cmsTagSignature tag16;
@@ -653,11 +653,11 @@ Error:
 
         // if so, build appropiate conversion tables.
         // The tables are the PCS iluminant, scaled across GrayTRC
-        return BuildGrayOutputPipeline(hProfile);
+        return BuildGrayOutputPipeline(hProfile, SlopeLimit);
     }
 
     // Not gray, create a normal matrix-shaper, which only operates in XYZ space  
-    return BuildRGBOutputMatrixShaper(hProfile);
+    return BuildRGBOutputMatrixShaper(hProfile, SlopeLimit);
 }
 
 // ---------------------------------------------------------------------------------------------------------------

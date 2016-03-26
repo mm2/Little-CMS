@@ -1073,7 +1073,7 @@ cmsUInt32Number GenerateCSA(cmsContext ContextID,
 
 
         // Read the lut with all necessary conversion stages
-        lut = _cmsReadInputLUT(hProfile, Intent);
+        lut = _cmsReadInputLUT(hProfile, Intent, 0);
         if (lut == NULL) goto Error;
 
 
