@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2014 Marti Maria Saguer
+//  Copyright (c) 1998-2016 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -7245,7 +7245,7 @@ int CheckLinking(void)
 
 //  TestMPE
 //
-//  Created by Paul Miller on 30/08/2012.
+//  Created by Paul Miller on 30/08/2016.
 //
 static 
 cmsHPROFILE IdentityMatrixProfile( cmsColorSpaceSignature dataSpace)
