@@ -3109,6 +3109,8 @@ void *Type_NamedColor_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* i
 
         memset(Colorant, 0, sizeof(Colorant));
         if (io -> Read(io, Root, 32, 1) != 1) return NULL;
+        Root[32] = 0;  // To prevent exploits
+
         if (!_cmsReadUInt16Array(io, 3, PCS)) goto Error;
         if (!_cmsReadUInt16Array(io, nDeviceCoords, Colorant)) goto Error;
 
@@ -3131,8 +3133,8 @@ static
 cmsBool Type_NamedColor_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, void* Ptr, cmsUInt32Number nItems)
 {
     cmsNAMEDCOLORLIST* NamedColorList = (cmsNAMEDCOLORLIST*) Ptr;
-    char                prefix[32];     // Prefix for each color name
-    char                suffix[32];     // Suffix for each color name
+    char                prefix[33];     // Prefix for each color name
+    char                suffix[33];     // Suffix for each color name
     int i, nColors;
 
     nColors = cmsNamedColorCount(NamedColorList);
@@ -3144,7 +3146,7 @@ cmsBool Type_NamedColor_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER
     strncpy(prefix, (const char*) NamedColorList->Prefix, 32);
     strncpy(suffix, (const char*) NamedColorList->Suffix, 32);
 
-    suffix[31] = prefix[31] = 0;
+    suffix[32] = prefix[32] = 0;
 
     if (!io ->Write(io, 32, prefix)) return FALSE;
     if (!io ->Write(io, 32, suffix)) return FALSE;
@@ -3156,6 +3158,7 @@ cmsBool Type_NamedColor_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER
        char Root[33];
 
         if (!cmsNamedColorInfo(NamedColorList, i, Root, NULL, NULL, PCS, Colorant)) return 0;
+        Root[32] = 0;
         if (!io ->Write(io, 32 , Root)) return FALSE;
         if (!_cmsWriteUInt16Array(io, 3, PCS)) return FALSE;
         if (!_cmsWriteUInt16Array(io, NamedColorList ->ColorantCount, Colorant)) return FALSE;

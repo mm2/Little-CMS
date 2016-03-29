@@ -2517,9 +2517,9 @@ int LocateSample(cmsIT8* it8, const char* cSample)
 
         fld = GetDataFormat(it8, i);
         if (fld != NULL) {
-        if (cmsstrcasecmp(fld, cSample) == 0)
-            return i;
-    }
+            if (cmsstrcasecmp(fld, cSample) == 0)
+                return i;
+        }
     }
 
     return -1;
