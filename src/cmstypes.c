@@ -951,7 +951,7 @@ cmsBool  Type_Text_Description_Write(struct _cms_typehandler_struct* self, cmsIO
     cmsMLU* mlu = (cmsMLU*) Ptr;
     char *Text = NULL;
     wchar_t *Wide = NULL;
-    cmsUInt32Number len, len_aligned, len_filler_alignment;
+    cmsUInt32Number len, len_text, len_tag_requirement, len_aligned;
     cmsBool  rc = FALSE;
     char Filler[68];
 
@@ -961,17 +961,18 @@ cmsBool  Type_Text_Description_Write(struct _cms_typehandler_struct* self, cmsIO
     // Get the len of string
     len = cmsMLUgetASCII(mlu, cmsNoLanguage, cmsNoCountry, NULL, 0);
 
-    // From ICC3.4: It has been found that textDescriptionType can contain misaligned data
+    // Specification ICC.1:2001-04 (v2.4.0): It has been found that textDescriptionType can contain misaligned data
     //(see clause 4.1 for the definition of “aligned”). Because the Unicode language
     // code and Unicode count immediately follow the ASCII description, their
     // alignment is not correct if the ASCII count is not a multiple of four. The
     // ScriptCode code is misaligned when the ASCII count is odd. Profile reading and
     // writing software must be written carefully in order to handle these alignment
     // problems.
-
-    // Compute an aligned size
-    len_aligned = _cmsALIGNLONG(len);
-    len_filler_alignment = len_aligned - len;
+    //
+    // The above last sentence suggest to handle alignment issues in the
+    // parser. The provided example (Table 69 on Page 60) makes this clear. 
+    // The padding only in the ASCII count is not sufficient for a aligned tag
+    // size, with the same text size in ASCII and Unicode.
 
     // Null strings
     if (len <= 0) {
@@ -992,6 +993,12 @@ cmsBool  Type_Text_Description_Write(struct _cms_typehandler_struct* self, cmsIO
         cmsMLUgetWide(mlu,  cmsNoLanguage, cmsNoCountry,  Wide, len * sizeof(wchar_t));
     }
 
+    // Tell the real text len including the null terminator and padding
+    len_text = strlen(Text) + 1;
+    // Compute an total tag size requirement
+    len_tag_requirement = (8+4+len_text+4+4+2*len_text+2+1+67);
+    len_aligned = _cmsALIGNLONG(len_tag_requirement);
+
   // * cmsUInt32Number       count;          * Description length
   // * cmsInt8Number         desc[count]     * NULL terminated ascii string
   // * cmsUInt32Number       ucLangCode;     * UniCode language code
@@ -1001,26 +1008,24 @@ cmsBool  Type_Text_Description_Write(struct _cms_typehandler_struct* self, cmsIO
   // * cmsUInt8Number        scCount;        * ScriptCode count
   // * cmsInt8Number         scDesc[67];     * ScriptCode Description
 
-    if (!_cmsWriteUInt32Number(io, len_aligned)) goto Error;
-    if (!io ->Write(io, len, Text)) goto Error;
-    if (!io ->Write(io, len_filler_alignment, Filler)) goto Error;
+    if (!_cmsWriteUInt32Number(io, len_text)) goto Error;
+    if (!io ->Write(io, len_text, Text)) goto Error;
 
     if (!_cmsWriteUInt32Number(io, 0)) goto Error;  // ucLanguageCode
 
-    // This part is tricky: we need an aligned tag size, and the ScriptCode part
-    // takes 70 bytes, so we need 2 extra bytes to do the alignment
-
-    if (!_cmsWriteUInt32Number(io, len_aligned+1)) goto Error;
-
+    if (!_cmsWriteUInt32Number(io, len_text)) goto Error;
     // Note that in some compilers sizeof(cmsUInt16Number) != sizeof(wchar_t)
-    if (!_cmsWriteWCharArray(io, len, Wide)) goto Error;
-    if (!_cmsWriteUInt16Array(io, len_filler_alignment+1, (cmsUInt16Number*) Filler)) goto Error;
+    if (!_cmsWriteWCharArray(io, len_text, Wide)) goto Error;
 
     // ScriptCode Code & count (unused)
     if (!_cmsWriteUInt16Number(io, 0)) goto Error;
     if (!_cmsWriteUInt8Number(io, 0)) goto Error;
 
     if (!io ->Write(io, 67, Filler)) goto Error;
+
+    // possibly add pad at the end of tag
+    if(len_aligned - len_tag_requirement > 0)
+      if (!io ->Write(io, len_aligned - len_tag_requirement, Filler)) goto Error;
 
     rc = TRUE;
 
