@@ -23,7 +23,7 @@ check:
 	if [ $(top_srcdir) != $(top_builddir) ]; then \
 		cp $(top_srcdir)/testbed/*.ic? $(top_builddir)/testbed; \
 	fi
-	./testcms
+	LD_LIBRARY_PATH=$(top_builddir)/src/.libs ./testcms
 	if [ $(top_srcdir) != $(top_builddir) ]; then \
 		rm -f $(top_builddir)/testbed/*.ic?; \
 	fi
