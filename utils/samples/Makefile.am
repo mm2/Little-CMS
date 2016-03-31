@@ -4,7 +4,7 @@
 # Additions and bugs by Marti Maria 
 
 # Don't require all the GNU mandated files
-AUTOMAKE_OPTIONS = 1.7 foreign
+AUTOMAKE_OPTIONS = 1.7 foreign no-dependencies
 
 AM_CPPFLAGS =  -I$(top_builddir)/include -I$(top_srcdir)/include \
                -I$(top_srcdir)/utils/common -I$(top_builddir)/utils/common
