@@ -1419,6 +1419,7 @@ cmsBool OptimizeByJoiningCurves(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUI
     }
 
     if (GammaTables != NULL) _cmsFree(Src ->ContextID, GammaTables);
+    GammaTables = NULL;
 
     // Maybe the curves are linear at the end
     if (!AllCurvesAreLinear(ObtainedCurves)) {
@@ -1451,6 +1452,7 @@ cmsBool OptimizeByJoiningCurves(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUI
 
         // LUT optimizes to nothing. Set the identity LUT
         cmsStageFree(ObtainedCurves);
+        ObtainedCurves = NULL;
 
         if (!cmsPipelineInsertStage(Dest, cmsAT_BEGIN, cmsStageAllocIdentity(Dest ->ContextID, Src ->InputChannels)))
             goto Error;
@@ -1738,8 +1740,8 @@ cmsBool OptimizeMatrixShaper(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
         _cmsStageToneCurvesData* mpeC1 = (_cmsStageToneCurvesData*) cmsStageData(Curve1);
         _cmsStageToneCurvesData* mpeC2 = (_cmsStageToneCurvesData*) cmsStageData(Curve2);
 
-        // In this particular optimization, caché does not help as it takes more time to deal with
-        // the caché that with the pixel handling
+        // In this particular optimization, cachÃ© does not help as it takes more time to deal with
+        // the cachÃ© than that with the pixel handling
         *dwFlags |= cmsFLAGS_NOCACHE;
 
         // Setup the optimizarion routines
