@@ -1393,14 +1393,15 @@ void BuildColorantList(char *Colorant, int nColorant, cmsUInt16Number Out[])
     if (nColorant > cmsMAXCHANNELS)
         nColorant = cmsMAXCHANNELS;
 
-    for (j=0; j < nColorant; j++) {
+    for (j = 0; j < nColorant; j++) {
 
-                sprintf(Buff, "%.3f", Out[j] / 65535.0);
-                strcat(Colorant, Buff);
-                if (j < nColorant -1)
-                        strcat(Colorant, " ");
+        snprintf(Buff, 31, "%.3f", Out[j] / 65535.0);
+        Buff[31] = 0;
+        strcat(Colorant, Buff);
+        if (j < nColorant - 1)
+            strcat(Colorant, " ");
 
-        }
+    }
 }
 
 

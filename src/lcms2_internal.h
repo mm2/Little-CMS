@@ -670,8 +670,8 @@ struct _cms_MLU_struct {
     cmsContext ContextID;
 
     // The directory
-    int AllocatedEntries;
-    int UsedEntries;
+    cmsUInt32Number  AllocatedEntries;
+    cmsUInt32Number  UsedEntries;
     _cmsMLUentry* Entries;     // Array of pointers to strings allocated in MemPool
 
     // The Pool

@@ -1453,7 +1453,8 @@ cmsPipeline* CMSEXPORT cmsPipelineDup(const cmsPipeline* lut)
                  First = FALSE;
              }
              else {
-                Anterior ->Next = NewMPE;
+                if (Anterior != NULL) 
+                    Anterior ->Next = NewMPE;
              }
 
             Anterior = NewMPE;
@@ -1499,7 +1500,8 @@ int CMSEXPORT cmsPipelineInsertStage(cmsPipeline* lut, cmsStageLoc loc, cmsStage
                      pt != NULL;
                      pt = pt -> Next) Anterior = pt;
 
-                Anterior ->Next = mpe;
+                if (Anterior != NULL) 
+                    Anterior ->Next = mpe;
                 mpe ->Next = NULL;
             }
             break;
