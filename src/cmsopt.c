@@ -1418,8 +1418,10 @@ cmsBool OptimizeByJoiningCurves(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUI
         GammaTables[i] = NULL;
     }
 
-    if (GammaTables != NULL) _cmsFree(Src ->ContextID, GammaTables);
-    GammaTables = NULL;
+    if (GammaTables != NULL) {
+        _cmsFree(Src ->ContextID, GammaTables);
+        GammaTables = NULL;
+    }
 
     // Maybe the curves are linear at the end
     if (!AllCurvesAreLinear(ObtainedCurves)) {
