@@ -1499,9 +1499,8 @@ int CMSEXPORT cmsPipelineInsertStage(cmsPipeline* lut, cmsStageLoc loc, cmsStage
                 for (pt = lut ->Elements;
                      pt != NULL;
                      pt = pt -> Next) Anterior = pt;
-
-                if (Anterior != NULL) 
-                    Anterior ->Next = mpe;
+                
+                Anterior ->Next = mpe;
                 mpe ->Next = NULL;
             }
             break;
