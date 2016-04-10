@@ -817,9 +817,9 @@ struct _cmsStage_struct {
 
     // A generic pointer to whatever memory needed by the stage
     void*               Data;
-	
-	// Slope limit setting for tone curves (used internally)
-	int                 SlopeLimit;
+
+    // Slope limit setting for tone curves (used internally)
+    int                 SlopeLimit;
 
     // Maintains linked list (used internally)
     struct _cmsStage_struct* Next;

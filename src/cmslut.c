@@ -55,7 +55,7 @@ cmsStage* _cmsStageAllocPlaceholderWithSlopeLimit(cmsContext ContextID,
     ph ->DupElemPtr     = DupElemPtr;
     ph ->FreePtr        = FreePtr;
     ph ->Data           = Data;
-	ph ->SlopeLimit     = SlopeLimit;
+    ph ->SlopeLimit     = SlopeLimit;
 
     return ph;
 }
@@ -71,14 +71,14 @@ cmsStage* CMSEXPORT _cmsStageAllocPlaceholder(cmsContext ContextID,
                                 void*             Data)
 {
     return _cmsStageAllocPlaceholderWithSlopeLimit(ContextID,
-	                               Type,
-								   InputChannels,
-								   OutputChannels,
-								   EvalPtr,
-								   DupElemPtr,
-								   FreePtr,
-								   Data,
-								   0);
+                                   Type,
+                                   InputChannels,
+                                   OutputChannels,
+                                   EvalPtr,
+                                   DupElemPtr,
+                                   FreePtr,
+                                   Data,
+                                   0);
 }
 
 
