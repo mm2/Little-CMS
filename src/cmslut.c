@@ -36,7 +36,7 @@ cmsStage* _cmsStageAllocPlaceholderWithSlopeLimit(cmsContext ContextID,
                                 _cmsStageEvalFn     EvalPtr,
                                 _cmsStageDupElemFn  DupElemPtr,
                                 _cmsStageFreeElemFn FreePtr,
-                                void*             Data,
+                                void*               Data,
                                 int                 SlopeLimit)
 {
     cmsStage* ph = (cmsStage*) _cmsMallocZero(ContextID, sizeof(cmsStage));
@@ -62,23 +62,23 @@ cmsStage* _cmsStageAllocPlaceholderWithSlopeLimit(cmsContext ContextID,
 
 
 cmsStage* CMSEXPORT _cmsStageAllocPlaceholder(cmsContext ContextID,
-                                cmsStageSignature Type,
-                                cmsUInt32Number InputChannels,
-                                cmsUInt32Number OutputChannels,
+                                cmsStageSignature   Type,
+                                cmsUInt32Number     InputChannels,
+                                cmsUInt32Number     OutputChannels,
                                 _cmsStageEvalFn     EvalPtr,
                                 _cmsStageDupElemFn  DupElemPtr,
                                 _cmsStageFreeElemFn FreePtr,
-                                void*             Data)
+                                void*               Data)
 {
     return _cmsStageAllocPlaceholderWithSlopeLimit(ContextID,
-                                   Type,
-                                   InputChannels,
-                                   OutputChannels,
-                                   EvalPtr,
-                                   DupElemPtr,
-                                   FreePtr,
-                                   Data,
-                                   0);
+                                    Type,
+                                    InputChannels,
+                                    OutputChannels,
+                                    EvalPtr,
+                                    DupElemPtr,
+                                    FreePtr,
+                                    Data,
+                                    0);
 }
 
 
