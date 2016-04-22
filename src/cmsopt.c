@@ -1033,8 +1033,8 @@ cmsBool OptimizeByComputingLinearization(cmsPipeline** Lut, cmsUInt32Number Inte
     cmsColorSpaceSignature ColorSpace, OutputColorSpace;
     cmsStage* OptimizedPrelinMpe;
     cmsStage* mpe;
-    cmsToneCurve**   OptimizedPrelinCurves;
-    _cmsStageCLutData*     OptimizedPrelinCLUT;
+    cmsToneCurve** OptimizedPrelinCurves;
+    _cmsStageCLutData* OptimizedPrelinCLUT;
 
 
     // This is a loosy optimization! does not apply in floating-point cases
