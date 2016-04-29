@@ -4278,6 +4278,36 @@ cmsInt32Number CheckGamma(cmsInt32Number Pass, cmsHPROFILE hProfile, cmsTagSigna
 }
 
 static
+cmsInt32Number CheckTextSingle(cmsInt32Number Pass, cmsHPROFILE hProfile, cmsTagSignature tag)
+{
+    cmsMLU *m, *Pt;
+    cmsInt32Number rc;
+    char Buffer[256];
+
+
+    switch (Pass) {
+
+    case 1:
+        m = cmsMLUalloc(DbgThread(), 0);
+        cmsMLUsetASCII(m, cmsNoLanguage, cmsNoCountry, "Test test");    
+        rc = cmsWriteTag(hProfile, tag, m);
+        cmsMLUfree(m);
+        return rc;
+
+    case 2:
+        Pt = cmsReadTag(hProfile, tag);
+        if (Pt == NULL) return 0;
+        cmsMLUgetASCII(Pt, cmsNoLanguage, cmsNoCountry, Buffer, 256);
+        if (strcmp(Buffer, "Test test") != 0) return FALSE;
+        return TRUE;
+
+    default:
+        return 0;
+    }
+}
+
+
+static
 cmsInt32Number CheckText(cmsInt32Number Pass, cmsHPROFILE hProfile, cmsTagSignature tag)
 {
     cmsMLU *m, *Pt;
@@ -4290,6 +4320,10 @@ cmsInt32Number CheckText(cmsInt32Number Pass, cmsHPROFILE hProfile, cmsTagSignat
         case 1:
             m = cmsMLUalloc(DbgThread(), 0);
             cmsMLUsetASCII(m, cmsNoLanguage, cmsNoCountry, "Test test");
+            cmsMLUsetASCII(m, "en",  "US",  "1 1 1 1");
+            cmsMLUsetASCII(m, "es",  "ES",  "2 2 2 2");
+            cmsMLUsetASCII(m, "ct",  "ES",  "3 3 3 3");
+            cmsMLUsetASCII(m, "en",  "GB",  "444444444");
             rc = cmsWriteTag(hProfile, tag, m);
             cmsMLUfree(m);
             return rc;
@@ -4298,7 +4332,16 @@ cmsInt32Number CheckText(cmsInt32Number Pass, cmsHPROFILE hProfile, cmsTagSignat
             Pt = cmsReadTag(hProfile, tag);
             if (Pt == NULL) return 0;
             cmsMLUgetASCII(Pt, cmsNoLanguage, cmsNoCountry, Buffer, 256);
-            return strcmp(Buffer, "Test test") == 0;
+            if (strcmp(Buffer, "Test test") != 0) return FALSE;
+            cmsMLUgetASCII(Pt, "en", "US", Buffer, 256);
+            if (strcmp(Buffer, "1 1 1 1") != 0) return FALSE;
+            cmsMLUgetASCII(Pt, "es", "ES", Buffer, 256);
+            if (strcmp(Buffer, "2 2 2 2") != 0) return FALSE;
+            cmsMLUgetASCII(Pt, "ct", "ES", Buffer, 256);
+            if (strcmp(Buffer, "3 3 3 3") != 0) return FALSE;
+            cmsMLUgetASCII(Pt, "en", "GB",  Buffer, 256);
+            if (strcmp(Buffer, "444444444") != 0) return FALSE;
+            return TRUE;
 
         default:
             return 0;
@@ -5232,13 +5275,16 @@ cmsInt32Number CheckProfileCreation(void)
 
         SubTest("Tags holding text");
 
-        if (!CheckText(Pass, h, cmsSigCharTargetTag)) return 0;
+        if (!CheckTextSingle(Pass, h, cmsSigCharTargetTag)) return 0;
+        if (!CheckTextSingle(Pass, h, cmsSigScreeningDescTag)) return 0;
+
         if (!CheckText(Pass, h, cmsSigCopyrightTag)) return 0;
         if (!CheckText(Pass, h, cmsSigProfileDescriptionTag)) return 0;
         if (!CheckText(Pass, h, cmsSigDeviceMfgDescTag)) return 0;
         if (!CheckText(Pass, h, cmsSigDeviceModelDescTag)) return 0;
         if (!CheckText(Pass, h, cmsSigViewingCondDescTag)) return 0;
-        if (!CheckText(Pass, h, cmsSigScreeningDescTag)) return 0;
+
+     
 
         SubTest("Tags holding cmsICCData");
 
@@ -5388,6 +5434,29 @@ cmsInt32Number CheckVersionHeaderWriting(void)
     }
     return 1;
 }
+
+
+// Test on Richard Hughes "crayons.icc"
+static
+cmsInt32Number CheckMultilocalizedProfile(void)
+{
+    cmsHPROFILE hProfile;
+    cmsMLU *Pt;
+    char Buffer[256];
+
+    hProfile = cmsOpenProfileFromFile("crayons.icc", "r");
+
+    Pt = cmsReadTag(hProfile, cmsSigProfileDescriptionTag);
+    cmsMLUgetASCII(Pt, "en", "GB", Buffer, 256);
+    if (strcmp(Buffer, "Crayon Colours") != 0) return FALSE;
+    cmsMLUgetASCII(Pt, "en", "US", Buffer, 256);
+    if (strcmp(Buffer, "Crayon Colors") != 0) return FALSE;
+
+    cmsCloseProfile(hProfile);
+
+    return TRUE;
+}
+
 
 // Error reporting  -------------------------------------------------------------------------------------------------------
 
@@ -8466,6 +8535,7 @@ int main(int argc, char* argv[])
     // Profile I/O (this one is huge!)
     Check("Profile creation", CheckProfileCreation);
     Check("Header version", CheckVersionHeaderWriting);
+    Check("Multilocalized profile", CheckMultilocalizedProfile);
 
     // Error reporting
     Check("Error reporting on bad profiles", CheckErrReportingOnBadProfiles);
