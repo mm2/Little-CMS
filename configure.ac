@@ -192,7 +192,7 @@ then
   LIBS="$LIBS $LIB_THREAD"
   AC_DEFINE(HasTHREADS,1,[Define if you have pthreads library])
 else
-  AC_DEFINE(HasTHREADS,0,[Define if you dont have pthreads library])
+  AC_DEFINE(HasTHREADS,0,[Define if you don't have pthreads library])
 fi
 AC_SUBST(LIB_THREAD)
 

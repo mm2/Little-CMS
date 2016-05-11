@@ -146,7 +146,7 @@ void PrintBuiltins(void)
 }
 
 
-// Auxiliar for printing information on profile
+// Auxiliary for printing information on profile
 static
 void PrintInfo(cmsHPROFILE h, cmsInfoType Info)
 {

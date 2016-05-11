@@ -59,7 +59,7 @@ Fixed Absolute colorimetric intent issues
 Fixed a bug on the range of data in transicc, when colorant tag is specified
 Adding a memory alignment macro for CGATS parser
 Updated to ICC spec 4.3
-Added compatibilty with Argyll's CGATS parser
+Added compatibility with Argyll's CGATS parser
 
 -----------------------
 2.3 Maintenance release
@@ -130,7 +130,7 @@ Fixed a double free in recovering from a previous error in default intent handle
 Fixed some indexing out of bounds in floating point interpolation
 Fixed a bug in PCS/Colorspace order when reading V2 Lab devicelinks
 Added a way to retrieve matrix shaper always, no matter LUT is present
-Changed endianess detection for PowerPC
+Changed endianness detection for PowerPC
 Fixed memory leaks on error handling
 Big revamp on Contexts, from Artifex
 New locking plug-in, from Artifex
