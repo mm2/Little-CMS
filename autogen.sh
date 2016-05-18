@@ -77,8 +77,8 @@ esac
 	echo "Running autoheader..."
 	autoheader
       fi
-      echo "Running automake --add-missing --gnu -Wno-portability $am_opt ..."
-      automake --add-missing --gnu -Wno-portability $am_opt
+      echo "Running automake --add-missing -copy --gnu -Wno-portability $am_opt ..."
+      automake --add-missing --copy --gnu -Wno-portability $am_opt
       echo "Running autoconf ..."
       autoconf
 
