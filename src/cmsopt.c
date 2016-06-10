@@ -1231,6 +1231,7 @@ Error:
     return FALSE;
 
     cmsUNUSED_PARAMETER(Intent);
+    cmsUNUSED_PARAMETER(lIsLinear);
 }
 
 

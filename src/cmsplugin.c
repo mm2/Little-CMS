@@ -176,9 +176,9 @@ cmsBool CMSEXPORT  _cmsReadFloat32Number(cmsIOHANDLER* io, cmsFloat32Number* n)
             return FALSE;
 
     if (n != NULL) {
-
+        cmsUInt32Number *ptmp = &tmp;
         tmp = _cmsAdjustEndianess32(tmp);
-        *n = *(cmsFloat32Number*) &tmp;
+        *n = *(cmsFloat32Number*)ptmp;
     }
     return TRUE;
 }
@@ -286,10 +286,11 @@ cmsBool CMSEXPORT  _cmsWriteUInt32Number(cmsIOHANDLER* io, cmsUInt32Number n)
 cmsBool CMSEXPORT  _cmsWriteFloat32Number(cmsIOHANDLER* io, cmsFloat32Number n)
 {
     cmsUInt32Number tmp;
+    cmsFloat32Number *pn = &n;
 
     _cmsAssert(io != NULL);
 
-    tmp = *(cmsUInt32Number*) &n;
+    tmp = *(cmsUInt32Number*)pn;
     tmp = _cmsAdjustEndianess32(tmp);
     if (io -> Write(io, sizeof(cmsUInt32Number), &tmp) != 1)
             return FALSE;
