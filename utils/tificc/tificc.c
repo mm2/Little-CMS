@@ -657,13 +657,16 @@ static
 void DoEmbedProfile(TIFF* Out, const char* ProfileFile)
 {
     FILE* f;
-    cmsUInt32Number size, EmbedLen;
+    cmsInt32Number size;
+    cmsUInt32Number EmbedLen;
     cmsUInt8Number* EmbedBuffer;
 
     f = fopen(ProfileFile, "rb");
     if (f == NULL) return;
 
     size = cmsfilelength(f);
+    if (size < 0) return;
+
     EmbedBuffer = (cmsUInt8Number*) malloc(size + 1);
     if (EmbedBuffer == NULL) { 
         OutOfMem(size+1);
