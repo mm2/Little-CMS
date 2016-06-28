@@ -485,7 +485,10 @@ cmsBool CMSEXPORT _cmsIOPrintf(cmsIOHANDLER* io, const char* frm, ...)
     va_start(args, frm);
 
     len = vsnprintf((char*) Buffer, 2047, frm, args);
-    if (len < 0) return FALSE;   // Truncated, which is a fatal error for us
+    if (len < 0) {
+        va_end(args);
+        return FALSE;   // Truncated, which is a fatal error for us
+    }
 
     rc = io ->Write(io, len, Buffer);
 
