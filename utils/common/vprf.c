@@ -250,17 +250,14 @@ cmsBool SaveMemoryBlock(const cmsUInt8Number* Buffer, cmsUInt32Number dwLen, con
     FILE* out = fopen(Filename, "wb");
     if (out == NULL) {
         FatalError("Cannot create '%s'", Filename);
-        return FALSE;
     }
 
     if (fwrite(Buffer, 1, dwLen, out) != dwLen) {
         FatalError("Cannot write %ld bytes to %s", dwLen, Filename);
-        return FALSE;
     }
 
     if (fclose(out) != 0) {
         FatalError("Error flushing file '%s'", Filename);
-        return FALSE;
     }
 
     return TRUE;
@@ -292,7 +289,6 @@ int PixelTypeFromChanCount(int ColorChannels)
         default:
 
             FatalError("What a weird separation of %d channels?!?!", ColorChannels);
-            return -1;
     }
 }
 
@@ -331,6 +327,5 @@ int ChanCountFromPixelType(int ColorChannels)
       default:
 
           FatalError("Unsupported color space of %d channels", ColorChannels);
-          return -1;
     }
 }
