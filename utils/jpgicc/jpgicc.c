@@ -105,7 +105,7 @@ in the case of future revision (for example, 1994).
 Spatial Resolution: (Two octets) Lightness pixel density in pels/25.4 mm. The basic value is 200. Allowed values are
 100, 200, 300, 400, 600 and 1200 pels/25.4 mm, with square (or equivalent) pels.
 
-NOTE – The functional equivalence of inch-based and mm-based resolutions is maintained. For example, the 200 × 200
+NOTE â€“ The functional equivalence of inch-based and mm-based resolutions is maintained. For example, the 200 Ã— 200
 */
 
 static
@@ -142,8 +142,8 @@ void SetITUFax(j_compress_ptr cinfo)
 // the default range for ITU/T.42 -- See RFC 2301, section 6.2.3 for details
 
 //  L*  =   [0, 100]
-//  a*  =   [–85, 85]
-//  b*  =   [–75, 125]
+//  a*  =   [â€“85, 85]
+//  b*  =   [â€“75, 125]
 
 
 // These functions does convert the encoding of ITUFAX to floating point
@@ -651,7 +651,6 @@ cmsUInt32Number GetInputPixelType(void)
 
      default:
               FatalError("Unsupported color space (0x%x)", Decompressor.jpeg_color_space);
-              return 0;
      }
 
      return (EXTRA_SH(extra)|CHANNELS_SH(ColorChannels)|BYTES_SH(bps)|COLORSPACE_SH(space)|FLAVOR_SH(Flavor));
