@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
     // How many profiles to link?
     nargs = (argc - xoptind);
     if (nargs < 1)
-        return Help(0); 
+        Help(0); 
 
     if (nargs > 255) {
         FatalError("Holy profile! what are you trying to do with so many profiles!?");
