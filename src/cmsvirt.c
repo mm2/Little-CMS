@@ -612,18 +612,18 @@ cmsHPROFILE CMSEXPORT cmsCreateXYZProfile(void)
 
 //sRGB Curves are defined by:
 //
-//If  R’sRGB,G’sRGB, B’sRGB < 0.04045
+//If  RÂ’sRGB,GÂ’sRGB, BÂ’sRGB < 0.04045
 //
-//    R =  R’sRGB / 12.92
-//    G =  G’sRGB / 12.92
-//    B =  B’sRGB / 12.92
+//    R =  RÂ’sRGB / 12.92
+//    G =  GÂ’sRGB / 12.92
+//    B =  BÂ’sRGB / 12.92
 //
 //
-//else if  R’sRGB,G’sRGB, B’sRGB >= 0.04045
+//else if  RÂ’sRGB,GÂ’sRGB, BÂ’sRGB >= 0.04045
 //
-//    R = ((R’sRGB + 0.055) / 1.055)^2.4
-//    G = ((G’sRGB + 0.055) / 1.055)^2.4
-//    B = ((B’sRGB + 0.055) / 1.055)^2.4
+//    R = ((RÂ’sRGB + 0.055) / 1.055)^2.4
+//    G = ((GÂ’sRGB + 0.055) / 1.055)^2.4
+//    B = ((BÂ’sRGB + 0.055) / 1.055)^2.4
 
 static
 cmsToneCurve* Build_sRGBGamma(cmsContext ContextID)
@@ -1142,7 +1142,7 @@ cmsHPROFILE CMSEXPORT cmsTransform2DeviceLink(cmsHTRANSFORM hTransform, cmsFloat
         _cmsOptimizePipeline(ContextID, &LUT, xform ->RenderingIntent, &FrmIn, &FrmOut, &dwFlags);
 
         // Put identity curves if needed
-        if (cmsPipelineGetPtrToFirstStage(LUT) ->Type != cmsSigCurveSetElemType)
+        if (cmsPipelineGetPtrToFirstStage(LUT) && cmsPipelineGetPtrToFirstStage(LUT) ->Type != cmsSigCurveSetElemType)
              if (!cmsPipelineInsertStage(LUT, cmsAT_BEGIN, _cmsStageAllocIdentityCurves(ContextID, ChansIn)))
                  goto Error;
 
