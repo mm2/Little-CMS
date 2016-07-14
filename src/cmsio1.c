@@ -590,6 +590,7 @@ cmsPipeline* _cmsReadOutputLUT(cmsHPROFILE hProfile, int Intent)
     cmsContext ContextID  = cmsGetProfileContextID(hProfile);
 
 
+    if (Intent >= INTENT_PERCEPTUAL && Intent <= INTENT_ABSOLUTE_COLORIMETRIC) {
 
         tag16 = PCS2Device16[Intent];
         tagFloat = PCS2DeviceFloat[Intent];
