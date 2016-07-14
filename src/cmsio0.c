@@ -388,6 +388,7 @@ cmsIOHANDLER* CMSEXPORT cmsOpenIOhandlerFromFile(cmsContext ContextID, const cha
         fileLen = cmsfilelength(fm);
         if (fileLen < 0)
         {
+            fclose(fm);
             _cmsFree(ContextID, iohandler);
             cmsSignalError(ContextID, cmsERROR_FILE, "Cannot get size of file '%s'", FileName);
             return NULL;

@@ -4312,13 +4312,13 @@ Error:
 static
 cmsBool  Type_MPEclut_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, void* Ptr, cmsUInt32Number nItems)
 {
-    cmsUInt8Number Dimensions8[16];
+    cmsUInt8Number Dimensions8[16];  // 16 because the spec says 16 and not max number of channels
     cmsUInt32Number i;
     cmsStage* mpe = (cmsStage*) Ptr;
     _cmsStageCLutData* clut = (_cmsStageCLutData*) mpe ->Data;
 
-    // Check for maximum number of channels
-    if (mpe -> InputChannels > 15) return FALSE;
+    // Check for maximum number of channels supported by lcms
+    if (mpe -> InputChannels > MAX_INPUT_DIMENSIONS) return FALSE;
 
     // Only floats are supported in MPE
     if (clut ->HasFloatValues == FALSE) return FALSE;
