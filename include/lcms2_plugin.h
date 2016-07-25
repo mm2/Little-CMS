@@ -201,8 +201,8 @@ typedef void*    (* _cmsDupUserDataFn)(cmsContext ContextID, const void* Data);
 #define cmsPluginRenderingIntentSig          0x696E7448     // 'intH'
 #define cmsPluginMultiProcessElementSig      0x6D706548     // 'mpeH'
 #define cmsPluginOptimizationSig             0x6F707448     // 'optH'
-#define cmsPluginTransformSig                0x7A666D48     // 'xfmH'
-#define cmsPluginMutexSig                    0x6D747A48     // 'mtxH'
+#define cmsPluginTransformSig                0x7A666D48     // 'zfmH' (typo, 'xfmH' intended)
+#define cmsPluginMutexSig                    0x6D747A48     // 'mtzH' (typo, 'mtxH' intended)
 
 typedef struct _cmsPluginBaseStruct {
 
