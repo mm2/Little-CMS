@@ -7952,6 +7952,31 @@ int CheckPlanar8opt(void)
     return 1;
 }
 
+/**
+* Bug reported & fixed. Thanks to Kornel Lesinski for spotting this.
+*/
+static
+int CheckSE(void)
+{
+    cmsHPROFILE input_profile = Create_AboveRGB();
+    cmsHPROFILE output_profile = cmsCreate_sRGBProfile();
+
+    cmsHTRANSFORM tr = cmsCreateTransform(input_profile, TYPE_RGBA_8, output_profile, TYPE_RGBA_16_SE, INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_COPY_ALPHA);
+   
+    cmsUInt8Number rgba[4] = { 40, 41, 41, 0xfa };
+    cmsUInt16Number out[4];
+
+    cmsDoTransform(tr, rgba, out, 1);
+    cmsCloseProfile(input_profile);
+    cmsCloseProfile(output_profile);
+    cmsDeleteTransform(tr);
+
+    if (out[0] != 0xf622 || out[1] != 0x7f24 || out[2] != 0x7f24)
+        return 0;
+
+    return 1;
+
+}
 
 
 
@@ -8595,6 +8620,7 @@ int main(int argc, char* argv[])
     Check("Set free a tag", CheckRemoveTag);
     Check("Matrix simplification", CheckMatrixSimplify);
     Check("Planar 8 optimization", CheckPlanar8opt);
+    Check("Swap endian feature", CheckSE);
 
     Check("Transform line stride RGB", CheckTransformLineStride);
 
