@@ -3019,6 +3019,8 @@ cmsBool  Type_ColorantTable_Write(struct _cms_typehandler_struct* self, cmsIOHAN
         char root[33];
         cmsUInt16Number PCS[3];
 
+        memset(root, 0, sizeof(root));
+
         if (!cmsNamedColorInfo(NamedColorList, i, root, NULL, NULL, PCS, NULL)) return 0;
         root[32] = 0;
 
