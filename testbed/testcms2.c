@@ -4000,6 +4000,8 @@ cmsInt32Number CheckFormatters16(void)
    C( TYPE_ALabV2_8 );
    C( TYPE_LabV2_16 );
 
+#ifndef CMS_NO_HALF_SUPPORT 
+
    C( TYPE_GRAY_HALF_FLT );
    C( TYPE_RGB_HALF_FLT  );
    C( TYPE_CMYK_HALF_FLT );
@@ -4011,6 +4013,7 @@ cmsInt32Number CheckFormatters16(void)
    C( TYPE_BGRA_HALF_FLT );
    C( TYPE_ABGR_HALF_FLT );
 
+#endif
 
    return FormatterFailed == 0 ? 1 : 0;
 }
@@ -4106,7 +4109,9 @@ cmsInt32Number CheckFormattersFloat(void)
     C( TYPE_RGB_DBL  );
     C( TYPE_BGR_DBL  );
     C( TYPE_CMYK_DBL );
+    C( TYPE_XYZ_FLT );
 
+#ifndef CMS_NO_HALF_SUPPORT 
    C( TYPE_GRAY_HALF_FLT );
    C( TYPE_RGB_HALF_FLT  );
    C( TYPE_CMYK_HALF_FLT );
@@ -4117,8 +4122,9 @@ cmsInt32Number CheckFormattersFloat(void)
    C( TYPE_BGR_HALF_FLT  );
    C( TYPE_BGRA_HALF_FLT );
    C( TYPE_ABGR_HALF_FLT );
+#endif
 
-   C( TYPE_XYZ_FLT );
+
 
 
    return FormatterFailed == 0 ? 1 : 0;
