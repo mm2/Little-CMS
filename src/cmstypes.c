@@ -1117,7 +1117,10 @@ void *Type_Curve_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cm
                NewGamma = cmsBuildTabulatedToneCurve16(self ->ContextID, Count, NULL);
                if (!NewGamma) return NULL;
 
-               if (!_cmsReadUInt16Array(io, Count, NewGamma -> Table16)) return NULL;
+               if (!_cmsReadUInt16Array(io, Count, NewGamma -> Table16)) {
+                   cmsFreeToneCurve(NewGamma);
+                   return NULL;
+               }
 
                *nItems = 1;
                return NewGamma;
@@ -2353,7 +2356,10 @@ cmsStage* ReadCLUT(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUI
 
         for (i=0; i < Data ->nEntries; i++) {
 
-            if (io ->Read(io, &v, sizeof(cmsUInt8Number), 1) != 1) return NULL;
+            if (io ->Read(io, &v, sizeof(cmsUInt8Number), 1) != 1) {
+                cmsStageFree(CLUT);
+                return NULL;
+            }
             Data ->Tab.T[i] = FROM_8_TO_16(v);
         }
 
