@@ -2988,7 +2988,7 @@ void *Type_ColorantTable_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER
     for (i=0; i < Count; i++) {
 
         if (io ->Read(io, Name, 32, 1) != 1) goto Error;
-        Name[33] = 0;
+        Name[32] = 0;
 
         if (!_cmsReadUInt16Array(io, 3, PCS)) goto Error;
 
