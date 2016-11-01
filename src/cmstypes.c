@@ -3108,7 +3108,7 @@ void *Type_NamedColor_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* i
 
     if (nDeviceCoords > cmsMAXCHANNELS) {
         cmsSignalError(self->ContextID, cmsERROR_RANGE, "Too many device coordinates '%d'", nDeviceCoords);
-        return 0;
+        goto Error;
     }
     for (i=0; i < count; i++) {
 
@@ -3117,7 +3117,7 @@ void *Type_NamedColor_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* i
         char Root[33];
 
         memset(Colorant, 0, sizeof(Colorant));
-        if (io -> Read(io, Root, 32, 1) != 1) return NULL;
+        if (io -> Read(io, Root, 32, 1) != 1) goto Error;
         Root[32] = 0;  // To prevent exploits
 
         if (!_cmsReadUInt16Array(io, 3, PCS)) goto Error;
