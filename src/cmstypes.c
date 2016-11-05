@@ -3977,7 +3977,7 @@ cmsToneCurve* ReadSegmentedCurve(struct _cms_typehandler_struct* self, cmsIOHAND
             case cmsSigSampledCurveSeg: {
                 cmsUInt32Number Count;
 
-                if (!_cmsReadUInt32Number(io, &Count)) return NULL;
+                if (!_cmsReadUInt32Number(io, &Count)) goto Error;
 
                 Segments[i].nGridPoints = Count;
                 Segments[i].SampledPoints = (cmsFloat32Number*) _cmsCalloc(self ->ContextID, Count, sizeof(cmsFloat32Number));
@@ -3996,7 +3996,7 @@ cmsToneCurve* ReadSegmentedCurve(struct _cms_typehandler_struct* self, cmsIOHAND
                 _cmsTagSignature2String(String, (cmsTagSignature) ElementSig);
                 cmsSignalError(self->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unknown curve element type '%s' found.", String);
                 }
-                return NULL;
+                goto Error;
 
          }
      }
@@ -4010,7 +4010,12 @@ cmsToneCurve* ReadSegmentedCurve(struct _cms_typehandler_struct* self, cmsIOHAND
      return Curve;
 
 Error:
-     if (Segments) _cmsFree(self ->ContextID, Segments);
+     if (Segments) {
+         for (i=0; i < nSegments; i++) {
+             if (Segments[i].SampledPoints) _cmsFree(self ->ContextID, Segments[i].SampledPoints);
+         }
+         _cmsFree(self ->ContextID, Segments);
+     }
      return NULL;
 }
 
