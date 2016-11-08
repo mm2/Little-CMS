@@ -4212,7 +4212,11 @@ void *Type_MPEmatrix_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io
 
         cmsFloat32Number v;
 
-        if (!_cmsReadFloat32Number(io, &v)) return NULL;
+        if (!_cmsReadFloat32Number(io, &v)) {
+            _cmsFree(self ->ContextID, Matrix);
+            _cmsFree(self ->ContextID, Offsets);
+            return NULL;
+        }
         Matrix[i] = v;
     }
 
@@ -4221,7 +4225,11 @@ void *Type_MPEmatrix_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io
 
         cmsFloat32Number v;
 
-        if (!_cmsReadFloat32Number(io, &v)) return NULL;
+        if (!_cmsReadFloat32Number(io, &v)) {
+            _cmsFree(self ->ContextID, Matrix);
+            _cmsFree(self ->ContextID, Offsets);
+            return NULL;
+        }
         Offsets[i] = v;
     }
 
