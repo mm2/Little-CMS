@@ -7,5 +7,5 @@ Name: @PACKAGE@
 Description: LCMS Color Management Library
 Version: @VERSION@
 Libs: -L${libdir} -llcms2
-Libs.private: @LIB_MATH@ 
+Libs.private: @LIB_MATH@ @LIB_THREAD@
 Cflags: -I${includedir}
