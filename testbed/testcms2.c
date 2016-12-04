@@ -6861,6 +6861,20 @@ cmsInt32Number CheckCGATS(void)
 
 }
 
+static const cmsUInt8Number junk[] = { 0x0, 0xd, 0xd, 0xa, 0x20, 0xd, 0x20, 0x20, 0x20, 0x3a, 0x31, 0x3d, 0x3d, 0x3d, 0x3d };
+
+static
+cmsInt32Number CheckCGATS2(void)
+{
+    cmsHANDLE handle;
+
+    handle = cmsIT8LoadFromMem(0, (const void*)junk, sizeof(junk));
+    if (handle)
+        cmsIT8Free(handle);
+
+    return 1;
+}
+
 
 // Create CSA/CRD
 
@@ -8611,6 +8625,7 @@ int main(int argc, char* argv[])
     Check("TAC detection", CheckTAC);
 
     Check("CGATS parser", CheckCGATS);
+    Check("CGATS parser on junk", CheckCGATS2);
     Check("PostScript generator", CheckPostScript);
     Check("Segment maxima GBD", CheckGBD);
     Check("MD5 digest", CheckMD5);
