@@ -756,19 +756,19 @@ cmsContext CMSEXPORT cmsCreateContext(void* Plugin, void* UserData)
 #ifndef CMS_RELY_ON_WINDOWS_STATIC_MUTEX_INIT
     {
         static HANDLE _cmsWindowsInitMutex = NULL;
-        static volatile HANDLE *mutex = &_cmsWindowsInitMutex;
+        static volatile HANDLE* mutex = &_cmsWindowsInitMutex;
 
         if (*mutex == NULL)
         {
             HANDLE p = CreateMutex(NULL, FALSE, NULL);
-            if (InterlockedCompareExchangePointer((void **)mutex, (void*)p, NULL) != NULL)
+            if (p && InterlockedCompareExchangePointer((void **)mutex, (void*)p, NULL) != NULL)
                 CloseHandle(p);
         }
-        if (WaitForSingleObject(*mutex, INFINITE) == WAIT_FAILED)
+        if (*mutex == NULL || WaitForSingleObject(*mutex, INFINITE) == WAIT_FAILED)
             return NULL;
         if (((void **)&_cmsContextPoolHeadMutex)[0] == NULL)
             InitializeCriticalSection(&_cmsContextPoolHeadMutex);
-        if (!ReleaseMutex(*mutex))
+        if (*mutex == NULL || !ReleaseMutex(*mutex))
             return NULL;
     }
 #endif
