@@ -1816,8 +1816,10 @@ void *Type_LUT8_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cms
         _cmsFree(self ->ContextID, Temp);
         Temp = NULL;
 
-        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, InputChannels, OutputChannels, T)))
+        if (!cmsPipelineInsertStage(NewLUT, cmsAT_END, cmsStageAllocCLut16bit(self ->ContextID, CLUTpoints, InputChannels, OutputChannels, T))) {
+            _cmsFree(self ->ContextID, T);
             goto Error;
+        }
         _cmsFree(self ->ContextID, T);
     }
 
