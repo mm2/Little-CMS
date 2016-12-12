@@ -573,24 +573,26 @@ static
 cmsFloat64Number EvalSegmentedFn(const cmsToneCurve *g, cmsFloat64Number R)
 {
     int i;
-    cmsFloat32Number Out;
+    cmsFloat32Number Out32;
+    cmsFloat64Number Out;
 
-    for (i = g ->nSegments-1; i >= 0 ; --i) {
+    for (i = g->nSegments - 1; i >= 0; --i) {
 
         // Check for domain
-        if ((R > g ->Segments[i].x0) && (R <= g ->Segments[i].x1)) {
+        if ((R > g->Segments[i].x0) && (R <= g->Segments[i].x1)) {
 
             // Type == 0 means segment is sampled
-            if (g ->Segments[i].Type == 0) {
+            if (g->Segments[i].Type == 0) {
 
-                cmsFloat32Number R1 = (cmsFloat32Number) (R - g ->Segments[i].x0) / (g ->Segments[i].x1 - g ->Segments[i].x0);
-          
+                cmsFloat32Number R1 = (cmsFloat32Number)(R - g->Segments[i].x0) / (g->Segments[i].x1 - g->Segments[i].x0);
+
                 // Setup the table (TODO: clean that)
-                g ->SegInterp[i]-> Table = g ->Segments[i].SampledPoints;
+                g->SegInterp[i]->Table = g->Segments[i].SampledPoints;
 
-                g ->SegInterp[i] -> Interpolation.LerpFloat(&R1, &Out, g ->SegInterp[i]);
+                g->SegInterp[i]->Interpolation.LerpFloat(&R1, &Out32, g->SegInterp[i]);
+                Out = (cmsFloat64Number) Out32;
 
-                            }
+            }
             else {
                 Out = g->Evals[i](g->Segments[i].Type, g->Segments[i].Params, R);
             }
