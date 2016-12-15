@@ -180,7 +180,10 @@ cmsBool CMSEXPORT  _cmsReadFloat32Number(cmsIOHANDLER* io, cmsFloat32Number* n)
         tmp = _cmsAdjustEndianess32(tmp);
         *n = *(cmsFloat32Number*) (void*) &tmp;
     }
-    return TRUE;
+
+    // fpclassify() required by C99
+    return ((fpclassify(*n) == FP_ZERO) || (fpclassify(*n) == FP_NORMAL));
+    
 }
 
 
@@ -194,7 +197,9 @@ cmsBool CMSEXPORT   _cmsReadUInt64Number(cmsIOHANDLER* io, cmsUInt64Number* n)
             return FALSE;
 
     if (n != NULL) _cmsAdjustEndianess64(n, &tmp);
-    return TRUE;
+
+    // fpclassify() required by C99
+    return ((fpclassify(*n) == FP_ZERO) || (fpclassify(*n) == FP_NORMAL));
 }
 
 

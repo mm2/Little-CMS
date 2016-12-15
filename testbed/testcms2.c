@@ -7995,9 +7995,81 @@ int CheckSE(void)
         return 0;
 
     return 1;
-
 }
 
+/**
+* Bug reported.
+*/
+static
+int CheckForgedMPE(void) 
+{
+    cmsUInt32Number i;
+    cmsHPROFILE srcProfile;
+    cmsHPROFILE dstProfile;
+    cmsColorSpaceSignature srcCS;
+    cmsUInt32Number nSrcComponents;
+    cmsUInt32Number srcFormat;
+    cmsUInt32Number intent = 0;
+    cmsUInt32Number flags = 0;
+    cmsHTRANSFORM hTransform;
+    cmsUInt8Number output[4];
+
+    srcProfile = cmsOpenProfileFromFile("bad_mpe.icc", "r");
+    if (!srcProfile)
+        return 0;
+
+    dstProfile = cmsCreate_sRGBProfile();
+    if (!dstProfile) {
+        cmsCloseProfile(srcProfile);
+        return 0;
+    }
+
+    srcCS = cmsGetColorSpace(srcProfile);
+    nSrcComponents = cmsChannelsOf(srcCS);
+    
+    if (srcCS == cmsSigLabData) {
+        srcFormat =
+            COLORSPACE_SH(PT_Lab) | CHANNELS_SH(nSrcComponents) | BYTES_SH(0);
+    }
+    else {
+        srcFormat =
+            COLORSPACE_SH(PT_ANY) | CHANNELS_SH(nSrcComponents) | BYTES_SH(1);
+    }
+
+    cmsSetLogErrorHandler(ErrorReportingFunction);
+
+    hTransform = cmsCreateTransform(srcProfile, srcFormat, dstProfile,
+        TYPE_BGR_8, intent, flags);
+    cmsCloseProfile(srcProfile);
+    cmsCloseProfile(dstProfile);
+
+    cmsSetLogErrorHandler(FatalErrorQuit);    
+
+    // Should report error
+    if (!TrappedError) return 0;
+
+    TrappedError = FALSE;
+
+    // Transform should NOT be created
+    if (!hTransform) return 1;
+    
+    // Never should reach here
+    if (T_BYTES(srcFormat) == 0) {  // 0 means double
+        double input[128];
+        for (i = 0; i < nSrcComponents; i++)
+            input[i] = 0.5f;
+        cmsDoTransform(hTransform, input, output, 1);
+    }
+    else {
+        cmsUInt8Number input[128];
+        for (i = 0; i < nSrcComponents; i++)
+            input[i] = 128;
+        cmsDoTransform(hTransform, input, output, 1);
+    }
+    cmsDeleteTransform(hTransform);
+
+    return 0;
+}
 
 
 // --------------------------------------------------------------------------------------------------
@@ -8644,6 +8716,8 @@ int main(int argc, char* argv[])
     Check("Swap endian feature", CheckSE);
 
     Check("Transform line stride RGB", CheckTransformLineStride);
+
+    Check("Forged MPE profile", CheckForgedMPE);
 
     }
 
