@@ -237,7 +237,7 @@ cmsBool WritePositionTable(struct _cms_typehandler_struct* self,
 
     // Keep starting position of curve offsets
     DirectoryPos = io ->Tell(io);
-
+  
     // Write a fake directory to be filled latter on
     for (i=0; i < Count; i++) {
 
