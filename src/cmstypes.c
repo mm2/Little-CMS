@@ -960,7 +960,7 @@ cmsBool  Type_Text_Description_Write(struct _cms_typehandler_struct* self, cmsIO
     cmsBool  rc = FALSE;
     char Filler[68];
 
-    // Used below for writting zeroes
+    // Used below for writing zeroes
     memset(Filler, 0, sizeof(Filler));
 
     // Get the len of string
@@ -1185,7 +1185,7 @@ void Type_Curve_Free(struct _cms_typehandler_struct* self, void* Ptr)
 // ********************************************************************************
 
 
-// Decide which curve type to use on writting
+// Decide which curve type to use on writing
 static
 cmsTagTypeSignature DecideCurveType(cmsFloat64Number ICCVersion, const void *Data)
 {
@@ -1578,7 +1578,7 @@ void Type_MLU_Free(struct _cms_typehandler_struct* self, void* Ptr)
 // Type cmsSigLut8Type
 // ********************************************************************************
 
-// Decide which LUT type to use on writting
+// Decide which LUT type to use on writing
 static
 cmsTagTypeSignature DecideLUTtypeA2B(cmsFloat64Number ICCVersion, const void *Data)
 {
@@ -4532,7 +4532,7 @@ cmsBool Type_MPE_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, v
 
                 _cmsTagSignature2String(String, (cmsTagSignature) ElementSig);
 
-                 // An unknow element was found.
+                 // An unknown element was found.
                  cmsSignalError(self->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Found unknown MPE type '%s'", String);
                  goto Error;
         }

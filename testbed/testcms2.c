@@ -2731,7 +2731,7 @@ cmsToneCurve* Build_sRGBGamma(void)
 
 
 
-// Join two gamma tables in floting point format. Result should be a straight line
+// Join two gamma tables in floating point format. Result should be a straight line
 static
 cmsToneCurve* CombineGammaFloat(cmsToneCurve* g1, cmsToneCurve* g2)
 {

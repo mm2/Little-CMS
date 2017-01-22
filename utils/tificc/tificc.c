@@ -650,7 +650,7 @@ void CopyOtherTags(TIFF* in, TIFF* out)
 
 }
 
-// A replacement for (the nonstandard) filelenght
+// A replacement for (the nonstandard) filelength
 
 
 static
