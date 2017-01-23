@@ -623,7 +623,7 @@ cmsFloat64Number ParseFloatNumber(const char *Buffer)
     if (*Buffer == '.') {
 
         cmsFloat64Number frac = 0.0;      // fraction
-        int prec = 0;                     // precission
+        int prec = 0;                     // precision
 
         if (*Buffer) Buffer++;
 

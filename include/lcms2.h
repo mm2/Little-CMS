@@ -49,7 +49,7 @@
 // #define CMS_USE_CPP_API
 
 // Uncomment this line if you need strict CGATS syntax. Makes CGATS files to
-// require "KEYWORD" on undefined identifiers, keep it comented out unless needed
+// require "KEYWORD" on undefined identifiers, keep it commented out unless needed
 // #define CMS_STRICT_CGATS  1
 
 // Uncomment to get rid of the tables for "half" float support
@@ -1524,7 +1524,7 @@ CMSAPI cmsBool           CMSEXPORT cmsCloseIOhandler(cmsIOHANDLER* io);
 
 CMSAPI cmsBool           CMSEXPORT cmsMD5computeID(cmsHPROFILE hProfile);
 
-// Profile high level funtions ------------------------------------------------------------------------------------------
+// Profile high level functions ------------------------------------------------------------------------------------------
 
 CMSAPI cmsHPROFILE      CMSEXPORT cmsOpenProfileFromFile(const char *ICCProfile, const char *sAccess);
 CMSAPI cmsHPROFILE      CMSEXPORT cmsOpenProfileFromFileTHR(cmsContext ContextID, const char *ICCProfile, const char *sAccess);
@@ -1640,7 +1640,7 @@ CMSAPI cmsUInt32Number  CMSEXPORT cmsGetSupportedIntentsTHR(cmsContext ContextID
 #define cmsFLAGS_BLACKPOINTCOMPENSATION   0x2000
 #define cmsFLAGS_NOWHITEONWHITEFIXUP      0x0004    // Don't fix scum dot
 #define cmsFLAGS_HIGHRESPRECALC           0x0400    // Use more memory to give better accurancy
-#define cmsFLAGS_LOWRESPRECALC            0x0800    // Use less memory to minimize resouces
+#define cmsFLAGS_LOWRESPRECALC            0x0800    // Use less memory to minimize resources
 
 // For devicelink creation
 #define cmsFLAGS_8BITS_DEVICELINK         0x0008   // Create 8 bits devicelinks

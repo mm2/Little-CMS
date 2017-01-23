@@ -811,7 +811,7 @@ cmsBool CMSEXPORT cmsStageSampleCLut16bit(cmsStage* mpe, cmsSAMPLER16 Sampler, v
     return TRUE;
 }
 
-// Same as anterior, but for floting point
+// Same as anterior, but for floating point
 cmsBool CMSEXPORT cmsStageSampleCLutFloat(cmsStage* mpe, cmsSAMPLERFLOAT Sampler, void * Cargo, cmsUInt32Number dwFlags)
 {
     int i, t, nTotalPoints, index, rest;
@@ -995,7 +995,7 @@ cmsStage* _cmsStageAllocLabV2ToV4curves(cmsContext ContextID)
             return NULL;
         }
 
-        // We need to map * (0xffff / 0xff00), thats same as (257 / 256)
+        // We need to map * (0xffff / 0xff00), that's same as (257 / 256)
         // So we can use 258-entry tables to do the trick (i / 257) * (255 * 257) * (257 / 256);
         for (i=0; i < 257; i++)  {
 
@@ -1277,7 +1277,7 @@ cmsStage* CMSEXPORT cmsStageDup(cmsStage* mpe)
 static
 cmsBool BlessLUT(cmsPipeline* lut)
 {
-    // We can set the input/ouput channels only if we have elements.
+    // We can set the input/output channels only if we have elements.
     if (lut ->Elements != NULL) {
 
         cmsStage* prev;
