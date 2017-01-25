@@ -1361,20 +1361,17 @@ void _LUTevalFloat(register const cmsFloat32Number In[], register cmsFloat32Numb
 }
 
 
-
-
 // LUT Creation & Destruction
-
 cmsPipeline* CMSEXPORT cmsPipelineAlloc(cmsContext ContextID, cmsUInt32Number InputChannels, cmsUInt32Number OutputChannels)
 {
        cmsPipeline* NewLUT;
 
-      if (InputChannels >= cmsMAXCHANNELS ||
-          OutputChannels >= cmsMAXCHANNELS) return NULL;
+       // A value of zero in channels is allowed as placeholder
+       if (InputChannels >= cmsMAXCHANNELS ||
+           OutputChannels >= cmsMAXCHANNELS) return NULL;
 
        NewLUT = (cmsPipeline*) _cmsMallocZero(ContextID, sizeof(cmsPipeline));
        if (NewLUT == NULL) return NULL;
-
 
        NewLUT -> InputChannels  = InputChannels;
        NewLUT -> OutputChannels = OutputChannels;

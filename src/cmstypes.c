@@ -1763,8 +1763,8 @@ void *Type_LUT8_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cms
     if (!_cmsReadUInt8Number(io, NULL)) goto Error;
 
     // Do some checking
-    if (InputChannels > cmsMAXCHANNELS)  goto Error;
-    if (OutputChannels > cmsMAXCHANNELS) goto Error;
+    if (InputChannels == 0 || InputChannels > cmsMAXCHANNELS)  goto Error;
+    if (OutputChannels == 0 || OutputChannels > cmsMAXCHANNELS) goto Error;
 
    // Allocates an empty Pipeline
     NewLUT = cmsPipelineAlloc(self ->ContextID, InputChannels, OutputChannels);
@@ -2058,8 +2058,8 @@ void *Type_LUT16_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cm
     if (!_cmsReadUInt8Number(io, NULL)) return NULL;
 
     // Do some checking
-    if (InputChannels > cmsMAXCHANNELS)  goto Error;
-    if (OutputChannels > cmsMAXCHANNELS) goto Error;
+    if (InputChannels == 0 || InputChannels > cmsMAXCHANNELS)  goto Error;
+    if (OutputChannels == 0 || OutputChannels > cmsMAXCHANNELS) goto Error;
 
     // Allocates an empty LUT
     NewLUT = cmsPipelineAlloc(self ->ContextID, InputChannels, OutputChannels);
@@ -2496,7 +2496,10 @@ void* Type_LUTA2B_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, c
     if (!_cmsReadUInt32Number(io, &offsetC)) return NULL;
     if (!_cmsReadUInt32Number(io, &offsetA)) return NULL;
 
-   // Allocates an empty LUT
+    if (inputChan == 0 || inputChan >= cmsMAXCHANNELS) return NULL;
+    if (outputChan == 0 || outputChan >= cmsMAXCHANNELS) return NULL;
+
+    // Allocates an empty LUT
     NewLUT = cmsPipelineAlloc(self ->ContextID, inputChan, outputChan);
     if (NewLUT == NULL) return NULL;
 
@@ -2803,6 +2806,9 @@ void* Type_LUTB2A_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, c
 
     if (!_cmsReadUInt8Number(io, &inputChan)) return NULL;
     if (!_cmsReadUInt8Number(io, &outputChan)) return NULL;
+
+    if (inputChan == 0 || inputChan >= cmsMAXCHANNELS) return NULL;
+    if (outputChan == 0 || outputChan >= cmsMAXCHANNELS) return NULL;
 
     // Padding
     if (!_cmsReadUInt16Number(io, NULL)) return NULL;
@@ -4456,6 +4462,9 @@ void *Type_MPE_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
     // Read channels and element count
     if (!_cmsReadUInt16Number(io, &InputChans)) return NULL;
     if (!_cmsReadUInt16Number(io, &OutputChans)) return NULL;
+
+    if (InputChans == 0 || InputChans >= cmsMAXCHANNELS) return NULL;
+    if (OutputChans == 0 || OutputChans >= cmsMAXCHANNELS) return NULL;
 
     // Allocates an empty LUT
     NewLUT = cmsPipelineAlloc(self ->ContextID, InputChans, OutputChans);
