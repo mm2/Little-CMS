@@ -87,6 +87,11 @@ AC_SUBST(inline)
 # If supported, defines HAVE_FUNC_ATTRIBUTE_VISIBILITY
 AX_GCC_FUNC_ATTRIBUTE(visibility)
 
+# Check if the compiler supports "-fvisibility=hidden" and if yes, add it to CFLAGS
+# This means that symbols that are not marked explicitly for export (CMSAPI)
+# will not be reachable in the shared library.
+AX_APPEND_COMPILE_FLAGS(["-fvisibility=hidden"])
+
 # If words are stored with the most significant byte first (like
 # Motorola and SPARC CPUs), define `WORDS_BIGENDIAN'.
 AC_C_BIGENDIAN
