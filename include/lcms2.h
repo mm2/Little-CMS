@@ -230,6 +230,9 @@ typedef int                  cmsBool;
 #           define CMSAPI     __declspec(dllimport)
 #        endif
 #     endif
+#  else
+#     define CMSEXPORT
+#     define CMSAPI
 #  endif
 #else  // not Windows
 #  ifdef HAVE_FUNC_ATTRIBUTE_VISIBILITY
