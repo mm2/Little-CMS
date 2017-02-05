@@ -4213,9 +4213,13 @@ void *Type_MPEmatrix_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io
     if (!_cmsReadUInt16Number(io, &OutputChans)) return NULL;
 
 
+    // Input and output chans may be ANY (up to 0xffff), 
+    // but we choose to limit to 16 channels for now
+    if (InputChans >= cmsMAXCHANNELS) return NULL;
+    if (OutputChans >= cmsMAXCHANNELS) return NULL;
+
     nElems = InputChans * OutputChans;
 
-    // Input and output chans may be ANY (up to 0xffff)
     Matrix = (cmsFloat64Number*) _cmsCalloc(self ->ContextID, nElems, sizeof(cmsFloat64Number));
     if (Matrix == NULL) return NULL;
 
