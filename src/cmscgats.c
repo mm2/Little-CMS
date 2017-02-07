@@ -775,14 +775,16 @@ void InSymbol(cmsIT8* it8)
 
                 while (isdigit(it8->ch)) {
 
-                    if ((cmsFloat64Number) it8->inum * 10L > (cmsFloat64Number) +2147483647.0) {
+                    cmsInt32Number digit = (it8->ch - '0');
+
+                    if ((cmsFloat64Number) it8->inum * 10.0 + (cmsFloat64Number) digit > (cmsFloat64Number) +2147483647.0) {
                         ReadReal(it8, it8->inum);
                         it8->sy = SDNUM;
                         it8->dnum *= sign;
                         return;
                     }
 
-                    it8->inum = it8->inum * 10 + (it8->ch - '0');
+                    it8->inum = it8->inum * 10 + digit;
                     NextCh(it8);
                 }
 
