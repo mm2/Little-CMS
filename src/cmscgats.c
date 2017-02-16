@@ -536,13 +536,13 @@ cmsFloat64Number xpow10(int n)
 
 //  Reads a Real number, tries to follow from integer number
 static
-void ReadReal(cmsIT8* it8, int inum)
+void ReadReal(cmsIT8* it8, cmsInt32Number inum)
 {
     it8->dnum = (cmsFloat64Number) inum;
 
     while (isdigit(it8->ch)) {
 
-        it8->dnum = it8->dnum * 10.0 + (it8->ch - '0');
+        it8->dnum = (cmsFloat64Number) it8->dnum * 10.0 + (cmsFloat64Number) (it8->ch - '0');
         NextCh(it8);
     }
 
@@ -585,7 +585,7 @@ void ReadReal(cmsIT8* it8, int inum)
             e = 0;
             while (isdigit(it8->ch)) {
 
-                if ((cmsFloat64Number) e * 10L < (cmsFloat64Number) +2147483647.0)
+                if ((cmsFloat64Number) e * 10.0 < (cmsFloat64Number) +2147483647.0)
                     e = e * 10 + (it8->ch - '0');
 
                 NextCh(it8);
