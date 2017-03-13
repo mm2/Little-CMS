@@ -8096,7 +8096,6 @@ int CheckProofingIntersection(void)
     cmsHPROFILE profile_null, hnd1, hnd2;
     cmsHTRANSFORM transform;
 
-
     hnd1 = cmsCreate_sRGBProfile();
     hnd2 = Create_AboveRGB();
 
@@ -8117,10 +8116,10 @@ int CheckProofingIntersection(void)
     cmsCloseProfile(profile_null);
 
     // Failed?
-    if (transform == NULL) return 0;
+    if (transform == NULL) return 1;
 
     cmsDeleteTransform(transform);
-    return 1;
+    return 0;
 }
 
 // --------------------------------------------------------------------------------------------------
@@ -8540,6 +8539,7 @@ int main(int argc, char* argv[])
 #ifdef _MSC_VER
     _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );
 #endif
+
 
     // First of all, check for the right header
    if (cmsGetEncodedCMMversion() != LCMS_VERSION) {
