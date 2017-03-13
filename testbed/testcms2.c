@@ -8084,6 +8084,44 @@ int CheckForgedMPE(void)
     return 0;
 }
 
+/**
+* What the self test is trying to do is creating a proofing transform
+* with gamut check, so we can getting the coverage of one profile of
+* another, i.e. to approximate the gamut intersection. e.g.
+* Thanks to Richard Hughes for providing the test
+*/
+static
+int CheckProofingIntersection(void)
+{
+    cmsHPROFILE profile_null, hnd1, hnd2;
+    cmsHTRANSFORM transform;
+
+
+    hnd1 = cmsCreate_sRGBProfile();
+    hnd2 = Create_AboveRGB();
+
+    profile_null = cmsCreateNULLProfileTHR(DbgThread());
+    transform = cmsCreateProofingTransformTHR(DbgThread(),
+        hnd1,
+        TYPE_RGB_FLT,
+        profile_null,
+        TYPE_GRAY_FLT,
+        hnd2,
+        INTENT_ABSOLUTE_COLORIMETRIC,
+        INTENT_ABSOLUTE_COLORIMETRIC,
+        cmsFLAGS_GAMUTCHECK |
+        cmsFLAGS_SOFTPROOFING);
+
+    cmsCloseProfile(hnd1);
+    cmsCloseProfile(hnd2);
+    cmsCloseProfile(profile_null);
+
+    // Failed?
+    if (transform == NULL) return 0;
+
+    cmsDeleteTransform(transform);
+    return 1;
+}
 
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
@@ -8532,7 +8570,7 @@ int main(int argc, char* argv[])
     printf("done.\n");
     
     PrintSupportedIntents();
-
+    
     Check("Base types", CheckBaseTypes);
     Check("endianess", CheckEndianess);
     Check("quick floor", CheckQuickFloor);
@@ -8728,11 +8766,9 @@ int main(int argc, char* argv[])
     Check("Matrix simplification", CheckMatrixSimplify);
     Check("Planar 8 optimization", CheckPlanar8opt);
     Check("Swap endian feature", CheckSE);
-
     Check("Transform line stride RGB", CheckTransformLineStride);
-
     Check("Forged MPE profile", CheckForgedMPE);
-
+    Check("Proofing intersection", CheckProofingIntersection);
     }
 
     if (DoPluginTests)

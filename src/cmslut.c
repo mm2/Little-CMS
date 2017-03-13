@@ -1299,7 +1299,9 @@ cmsBool BlessLUT(cmsPipeline* lut)
 
         while (next != NULL)
         {
-            if (next->InputChannels != prev->OutputChannels)
+            // It is admisible to have some unconnected channels, but not to 
+            // have uninitialized channels
+            if (next->InputChannels > prev->OutputChannels)
                 return FALSE;
 
             next = next->Next;
