@@ -711,7 +711,8 @@ cmsHPROFILE GetTIFFProfile(TIFF* in)
         if (Verbose & hProfile != NULL) {
 
             fprintf(stdout, "\n[Embedded profile]\n");
-            PrintProfileInformation(hProfile);                       
+            if (hProfile != NULL)
+                PrintProfileInformation(hProfile);                       
             fflush(stdout);
         }
 
