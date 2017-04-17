@@ -1134,7 +1134,7 @@ cmsBool OptimizeByComputingLinearization(cmsPipeline** Lut, cmsUInt32Number Inte
     }
 
     // If it is not suitable, just quit
-    if (!lIsSuitable) goto Error;
+    if (!lIsSuitable || !lIsLinear) goto Error;
 
     // Invert curves if possible
     for (t = 0; t < OriginalLut ->InputChannels; t++) {
@@ -1756,8 +1756,8 @@ cmsBool OptimizeMatrixShaper(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
         _cmsStageToneCurvesData* mpeC1 = (_cmsStageToneCurvesData*) cmsStageData(Curve1);
         _cmsStageToneCurvesData* mpeC2 = (_cmsStageToneCurvesData*) cmsStageData(Curve2);
 
-        // In this particular optimization, caché does not help as it takes more time to deal with
-        // the caché that with the pixel handling
+        // In this particular optimization, cachÃ© does not help as it takes more time to deal with
+        // the cachÃ© that with the pixel handling
         *dwFlags |= cmsFLAGS_NOCACHE;
 
         // Setup the optimizarion routines
