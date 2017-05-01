@@ -685,17 +685,17 @@ cmsPipeline* _cmsReadFloatDevicelinkTag(cmsHPROFILE hProfile, cmsTagSignature ta
                 goto Error;
         }
 
-        if (PCS == cmsSigLabData)
+    if (PCS == cmsSigLabData)
+    {
+        if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID)))
+            goto Error;
+    }
+    else
+        if (PCS == cmsSigXYZData)
         {
-            if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromLabFloat(ContextID)))
+            if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID)))
                 goto Error;
         }
-        else
-            if (PCS == cmsSigXYZData)
-            {
-                if (!cmsPipelineInsertStage(Lut, cmsAT_END, _cmsStageNormalizeFromXyzFloat(ContextID)))
-                    goto Error;
-            }
 
     return Lut;
 Error:
