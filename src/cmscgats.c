@@ -256,7 +256,7 @@ static PROPERTY PredefinedProperties[] = {
                                // needed.
 
         {"SAMPLE_BACKING",   WRITE_STRINGIFY},   // Identifies the backing material used behind the sample during
-                               // measurement. Allowed values are “black”, “white”, or {"na".
+                               // measurement. Allowed values are Â“blackÂ”, Â“whiteÂ”, or {"na".
 
         {"CHISQ_DOF",        WRITE_STRINGIFY},   // Degrees of freedom associated with the Chi squared statistic
 
@@ -272,7 +272,7 @@ static PROPERTY PredefinedProperties[] = {
                                // denote the use of filters such as none, D65, Red, Green or Blue.
 
        {"POLARIZATION",      WRITE_STRINGIFY},   // Identifies the use of a physical polarization filter during measurement. Allowed
-                               // values are {"yes”, “white”, “none” or “na”.
+                               // values are {"yesÂ”, Â“whiteÂ”, Â“noneÂ” or Â“naÂ”.
 
        {"WEIGHTING_FUNCTION", WRITE_PAIR},   // Indicates such functions as: the CIE standard observer functions used in the
                                // calculation of various data parameters (2 degree and 10 degree), CIE standard
@@ -582,19 +582,19 @@ void ReadReal(cmsIT8* it8, cmsInt32Number inum)
                 NextCh(it8);
             }
 
-            e = 0;
-            while (isdigit(it8->ch)) {
+        e = 0;
+        while (isdigit(it8->ch)) {
 
-                cmsInt32Number digit = (it8->ch - '0');
+            cmsInt32Number digit = (it8->ch - '0');
 
-                if ((cmsFloat64Number) e * 10.0 + (cmsFloat64Number) digit < (cmsFloat64Number) +2147483647.0)
-                    e = e * 10 + digit;
+            if ((cmsFloat64Number) e * 10.0 + (cmsFloat64Number) digit < (cmsFloat64Number) +2147483647.0)
+                e = e * 10 + digit;
 
-                NextCh(it8);
-            }
+            NextCh(it8);
+        }
 
-            e = sgn*e;
-            it8 -> dnum = it8 -> dnum * xpow10(e);
+        e = sgn*e;
+        it8 -> dnum = it8 -> dnum * xpow10(e);
     }
 }
 
@@ -661,19 +661,19 @@ cmsFloat64Number ParseFloatNumber(const char *Buffer)
                 if (*Buffer) Buffer++;
             }
 
-            e = 0;
-            while (*Buffer && isdigit((int) *Buffer)) {
+        e = 0;
+        while (*Buffer && isdigit((int) *Buffer)) {
 
-                cmsInt32Number digit = (*Buffer - '0');
+            cmsInt32Number digit = (*Buffer - '0');
 
-                if ((cmsFloat64Number) e * 10.0 + digit < (cmsFloat64Number)+2147483647.0)
-                    e = e * 10 + digit;
+            if ((cmsFloat64Number) e * 10.0 + digit < (cmsFloat64Number)+2147483647.0)
+                e = e * 10 + digit;
 
-                if (*Buffer) Buffer++;
-            }
+            if (*Buffer) Buffer++;
+        }
 
-            e = sgn*e;
-            dnum = dnum * xpow10(e);
+        e = sgn*e;
+        dnum = dnum * xpow10(e);
     }
 
     return sign * dnum;

@@ -77,7 +77,7 @@ cmsBool  CMSEXPORT cmsWhitePointFromTemp(cmsCIExyY* WhitePoint, cmsFloat64Number
 
         // Obtain y(x)
 
-        y = -3.000*(x*x) + 2.870*x - 0.275;
+    y = -3.000*(x*x) + 2.870*x - 0.275;
 
         // wave factors (not used, but here for futures extensions)
 
