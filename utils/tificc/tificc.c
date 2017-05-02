@@ -708,7 +708,7 @@ cmsHPROFILE GetTIFFProfile(TIFF* in)
         hProfile = cmsOpenProfileFromMem(EmbedBuffer, EmbedLen);
 
         // Print description found in the profile
-        if (Verbose & hProfile != NULL) {
+        if (Verbose && (hProfile != NULL)) {
 
             fprintf(stdout, "\n[Embedded profile]\n");
             PrintProfileInformation(hProfile);                       

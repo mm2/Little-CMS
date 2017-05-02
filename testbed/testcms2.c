@@ -8116,10 +8116,10 @@ int CheckProofingIntersection(void)
     cmsCloseProfile(profile_null);
 
     // Failed?
-    if (transform == NULL) return 1;
+    if (transform == NULL) return 0;
 
     cmsDeleteTransform(transform);
-    return 0;
+    return 1;
 }
 
 // --------------------------------------------------------------------------------------------------
