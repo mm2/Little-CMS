@@ -385,7 +385,7 @@ cmsIOHANDLER* CMSEXPORT cmsOpenIOhandlerFromFile(cmsContext ContextID, const cha
     switch (*AccessMode) {
 
     case 'r':
-        fm = fopen(FileName, "rb");
+        fm = fopen(FileName, "rbe");
         if (fm == NULL) {
             _cmsFree(ContextID, iohandler);
              cmsSignalError(ContextID, cmsERROR_FILE, "File '%s' not found", FileName);
