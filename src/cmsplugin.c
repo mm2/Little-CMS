@@ -181,7 +181,7 @@ cmsBool CMSEXPORT  _cmsReadFloat32Number(cmsIOHANDLER* io, cmsFloat32Number* n)
         *n = *(cmsFloat32Number*)(void*)&tmp;
         
         // Safeguard which covers against absurd values
-        if (*n > 1E+20) return FALSE;
+        if (*n > 1E+20 || *n < -1E+20) return FALSE;
 
         #if defined(_MSC_VER) && _MSC_VER < 1800
            return TRUE;
