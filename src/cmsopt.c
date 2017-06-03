@@ -1552,7 +1552,7 @@ void MatShaperEval16(register const cmsUInt16Number In[],
 
 // This table converts from 8 bits to 1.14 after applying the curve
 static
-void FillFirstShaper(cmsS1Fixed14Number* Table, cmsToneCurve* Curve)
+cmsBool FillFirstShaper(cmsS1Fixed14Number* Table, cmsToneCurve* Curve)
 {
     int i;
     cmsFloat32Number R, y;
@@ -1561,17 +1561,20 @@ void FillFirstShaper(cmsS1Fixed14Number* Table, cmsToneCurve* Curve)
 
         R   = (cmsFloat32Number) (i / 255.0);
         y   = cmsEvalToneCurveFloat(Curve, R);
+        if (isinf(y))
+            return FALSE;
 
         if (y < 131072.0)
             Table[i] = DOUBLE_TO_1FIXED14(y);
         else
             Table[i] = 0x7fffffff;
     }
+    return TRUE;
 }
 
 // This table converts form 1.14 (being 0x4000 the last entry) to 8 bits after applying the curve
 static
-void FillSecondShaper(cmsUInt16Number* Table, cmsToneCurve* Curve, cmsBool Is8BitsOutput)
+cmsBool FillSecondShaper(cmsUInt16Number* Table, cmsToneCurve* Curve, cmsBool Is8BitsOutput)
 {
     int i;
     cmsFloat32Number R, Val;
@@ -1580,6 +1583,8 @@ void FillSecondShaper(cmsUInt16Number* Table, cmsToneCurve* Curve, cmsBool Is8Bi
 
         R   = (cmsFloat32Number) (i / 16384.0);
         Val = cmsEvalToneCurveFloat(Curve, R);    // Val comes 0..1.0
+        if (isinf(Val))
+            return FALSE;
 
         if (Val < 0)
             Val = 0;
@@ -1600,6 +1605,7 @@ void FillSecondShaper(cmsUInt16Number* Table, cmsToneCurve* Curve, cmsBool Is8Bi
         }
         else Table[i]  = _cmsQuickSaturateWord(Val * 65535.0);
     }
+    return TRUE;
 }
 
 // Compute the matrix-shaper structure
@@ -1617,13 +1623,19 @@ cmsBool SetMatShaper(cmsPipeline* Dest, cmsToneCurve* Curve1[3], cmsMAT3* Mat, c
     p -> ContextID = Dest -> ContextID;
 
     // Precompute tables
-    FillFirstShaper(p ->Shaper1R, Curve1[0]);
-    FillFirstShaper(p ->Shaper1G, Curve1[1]);
-    FillFirstShaper(p ->Shaper1B, Curve1[2]);
+    if (!FillFirstShaper(p ->Shaper1R, Curve1[0]))
+        goto Error;
+    if (!FillFirstShaper(p ->Shaper1G, Curve1[1]))
+        goto Error;
+    if (!FillFirstShaper(p ->Shaper1B, Curve1[2]))
+        goto Error;
 
-    FillSecondShaper(p ->Shaper2R, Curve2[0], Is8Bits);
-    FillSecondShaper(p ->Shaper2G, Curve2[1], Is8Bits);
-    FillSecondShaper(p ->Shaper2B, Curve2[2], Is8Bits);
+    if (!FillSecondShaper(p ->Shaper2R, Curve2[0], Is8Bits))
+        goto Error;
+    if (!FillSecondShaper(p ->Shaper2G, Curve2[1], Is8Bits))
+        goto Error;
+    if (!FillSecondShaper(p ->Shaper2B, Curve2[2], Is8Bits))
+        goto Error;
 
     // Convert matrix to nFixed14. Note that those values may take more than 16 bits 
     for (i=0; i < 3; i++) {
@@ -1649,6 +1661,9 @@ cmsBool SetMatShaper(cmsPipeline* Dest, cmsToneCurve* Curve1[3], cmsMAT3* Mat, c
     // Fill function pointers
     _cmsPipelineSetOptimizationParameters(Dest, MatShaperEval16, (void*) p, FreeMatShaper, DupMatShaper);
     return TRUE;
+Error:
+    _cmsFree(Dest->ContextID, p);
+    return FALSE;
 }
 
 //  8 bits on input allows matrix-shaper boot up to 25 Mpixels per second on RGB. That's fast!
@@ -1761,7 +1776,8 @@ cmsBool OptimizeMatrixShaper(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
         *dwFlags |= cmsFLAGS_NOCACHE;
 
         // Setup the optimizarion routines
-        SetMatShaper(Dest, mpeC1 ->TheCurves, &res, (cmsVEC3*) Offset, mpeC2->TheCurves, OutputFormat);
+        if (!SetMatShaper(Dest, mpeC1 ->TheCurves, &res, (cmsVEC3*) Offset, mpeC2->TheCurves, OutputFormat))
+            goto Error;
     }
 
     cmsPipelineFree(Src);
