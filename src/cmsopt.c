@@ -1522,11 +1522,10 @@ void MatShaperEval16(register const cmsUInt16Number In[],
     cmsS1Fixed14Number l1, l2, l3, r, g, b;
     cmsUInt32Number ri, gi, bi;
 
-    // In this case (and only in this case!) we can use this simplification since
-    // In[] is assured to come from a 8 bit number. (a << 8 | a)
-    ri = In[0] & 0xFF;
-    gi = In[1] & 0xFF;
-    bi = In[2] & 0xFF;
+    // Extract the most significant 8-bits
+    ri = (In[0] >> 8) & 0xFF;
+    gi = (In[1] >> 8) & 0xFF;
+    bi = (In[2] >> 8) & 0xFF;
 
     // Across first shaper, which also converts to 1.14 fixed point
     r = p->Shaper1R[ri];
