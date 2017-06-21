@@ -96,6 +96,12 @@
 # ifndef vsnprintf
 #       define vsnprintf  _vsnprintf
 # endif
+
+/// Properly defien some macros to accommodate
+/// older versions of MSVC.
+#include <float.h>
+#define isnan _isnan
+#define isinf(x) (!_finite((x)))
 #endif
 
 
