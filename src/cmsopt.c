@@ -1287,7 +1287,10 @@ Curves16Data* CurvesAlloc(cmsContext ContextID, int nCurves, int nElements, cmsT
     c16 ->nElements = nElements;
 
     c16->Curves = (cmsUInt16Number**) _cmsCalloc(ContextID, nCurves, sizeof(cmsUInt16Number*));
-    if (c16 ->Curves == NULL) return NULL;
+    if (c16->Curves == NULL) {
+        _cmsFree(ContextID, c16);
+        return NULL;
+    }
 
     for (i=0; i < nCurves; i++) {
 

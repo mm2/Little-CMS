@@ -1474,8 +1474,8 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
         if (!_cmsReadUInt32Number(io, &Offset)) goto Error;
 
         // Check for overflow
-        if (Offset < (SizeOfHeader + 8)) goto Error;
-        if ((Offset + Len) > SizeOfTag + 8) goto Error;
+        if (Offset < (SizeOfHeader + 8)) goto Error;        
+        if (((Offset + Len) < Len) || ((Offset + Len) > SizeOfTag + 8)) goto Error;
 
         // True begin of the string
         BeginOfThisString = Offset - SizeOfHeader - 8;
