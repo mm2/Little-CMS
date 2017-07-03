@@ -1,0 +1,5 @@
+module CLCMS {
+    header "lcms2.h"
+    link "lcms2"
+    export *
+}
