@@ -96,8 +96,16 @@
 # ifndef vsnprintf
 #       define vsnprintf  _vsnprintf
 # endif
-#endif
 
+/// Properly define some macros to accommodate
+/// older MSVC versions.
+# if _MSC_VER <= 1700
+        #include <float.h>
+        #define isnan _isnan
+        #define isinf(x) (!_finite((x)))
+# endif
+
+#endif
 
 // A fast way to convert from/to 16 <-> 8 bits
 #define FROM_8_TO_16(rgb) (cmsUInt16Number) ((((cmsUInt16Number) (rgb)) << 8)|(rgb))
