@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2016 Marti Maria Saguer
+//  Copyright (c) 1998-2017 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -23,7 +23,7 @@
 //
 //---------------------------------------------------------------------------------
 //
-// Version 2.8
+// Version 2.9b1
 //
 
 #ifndef _lcms2_H
@@ -78,7 +78,7 @@ extern "C" {
 #endif
 
 // Version/release
-#define LCMS_VERSION        2080
+#define LCMS_VERSION        2090
 
 // I will give the chance of redefining basic types for compilers that are not fully C99 compliant
 #ifndef CMS_BASIC_TYPES_ALREADY_DEFINED
@@ -263,9 +263,9 @@ typedef int                  cmsBool;
 #endif
 
 // D50 XYZ normalized to Y=1.0
-#define cmsD50X             0.9642
-#define cmsD50Y             1.0
-#define cmsD50Z             0.8249
+#define cmsD50X  0.9642
+#define cmsD50Y  1.0
+#define cmsD50Z  0.8249
 
 // V4 perceptual black
 #define cmsPERCEPTUAL_BLACK_X  0.00336
@@ -273,8 +273,8 @@ typedef int                  cmsBool;
 #define cmsPERCEPTUAL_BLACK_Z  0.00287
 
 // Definitions in ICC spec
-#define cmsMagicNumber      0x61637370     // 'acsp'
-#define lcmsSignature       0x6c636d73     // 'lcms'
+#define cmsMagicNumber  0x61637370     // 'acsp'
+#define lcmsSignature   0x6c636d73     // 'lcms'
 
 
 // Base ICC type definitions
