@@ -643,9 +643,9 @@ cmsBool  CMSEXPORT cmsNamedColorInfo(const cmsNAMEDCOLORLIST* NamedColorList, cm
 
     if (nColor >= cmsNamedColorCount(NamedColorList)) return FALSE;
 
-    if (Name) strcpy(Name, NamedColorList->List[nColor].Name);
-    if (Prefix) strcpy(Prefix, NamedColorList->Prefix);
-    if (Suffix) strcpy(Suffix, NamedColorList->Suffix);
+    if (Name) strncpy(Name, NamedColorList->List[nColor].Name, sizeof(Name));
+    if (Prefix) strncpy(Prefix, NamedColorList->Prefix, sizeof(Prefix));
+    if (Suffix) strncpy(Suffix, NamedColorList->Suffix, sizeof(Suffix));
     if (PCS)
         memmove(PCS, NamedColorList ->List[nColor].PCS, 3*sizeof(cmsUInt16Number));
 
@@ -664,11 +664,10 @@ cmsInt32Number CMSEXPORT cmsNamedColorIndex(const cmsNAMEDCOLORLIST* NamedColorL
 
     if (NamedColorList == NULL) return -1;
     n = cmsNamedColorCount(NamedColorList);
-    for (i=0; i < n; i++) {
-        if (cmsstrcasecmp(Name,  NamedColorList->List[i].Name) == 0)
+    for (i = 0; i < n; i++) {
+        if (cmsstrcasecmp(Name, NamedColorList->List[i].Name) == 0)
             return i;
     }
-
     return -1;
 }
 
@@ -721,7 +720,7 @@ void EvalNamedColor(const cmsFloat32Number In[], cmsFloat32Number Out[], const c
 
     }
     else {
-        for (j=0; j < NamedColorList ->ColorantCount; j++)
+        for (j = 0; j < NamedColorList ->ColorantCount; j++)
             Out[j] = (cmsFloat32Number) (NamedColorList->List[index].DeviceColorant[j] / 65535.0);
     }
 }
@@ -777,7 +776,7 @@ cmsSEQ* CMSEXPORT cmsAllocProfileSequenceDescription(cmsContext ContextID, cmsUI
         return NULL;
     }
 
-    for (i=0; i < n; i++) {
+    for (i = 0; i < n; i++) {
         Seq -> seq[i].Manufacturer = NULL;
         Seq -> seq[i].Model        = NULL;
         Seq -> seq[i].Description  = NULL;
@@ -790,7 +789,7 @@ void CMSEXPORT cmsFreeProfileSequenceDescription(cmsSEQ* pseq)
 {
     cmsUInt32Number i;
 
-    for (i=0; i < pseq ->n; i++) {
+    for (i = 0; i < pseq ->n; i++) {
         if (pseq ->seq[i].Manufacturer != NULL) cmsMLUfree(pseq ->seq[i].Manufacturer);
         if (pseq ->seq[i].Model != NULL) cmsMLUfree(pseq ->seq[i].Model);
         if (pseq ->seq[i].Description != NULL) cmsMLUfree(pseq ->seq[i].Description);
@@ -818,7 +817,7 @@ cmsSEQ* CMSEXPORT cmsDupProfileSequenceDescription(const cmsSEQ* pseq)
     NewSeq -> ContextID = pseq ->ContextID;
     NewSeq -> n        = pseq ->n;
 
-    for (i=0; i < pseq->n; i++) {
+    for (i = 0; i < pseq->n; i++) {
 
         memmove(&NewSeq ->seq[i].attributes, &pseq ->seq[i].attributes, sizeof(cmsUInt64Number));
 
