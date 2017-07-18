@@ -256,7 +256,7 @@ static PROPERTY PredefinedProperties[] = {
                                                    // needed.
 
         {"SAMPLE_BACKING",   WRITE_STRINGIFY},     // Identifies the backing material used behind the sample during
-                                                   // measurement. Allowed values are “black”, “white”, or {"na".
+                                                   // measurement. Allowed values are Â“blackÂ”, Â“whiteÂ”, or {"na".
                                                   
         {"CHISQ_DOF",        WRITE_STRINGIFY},     // Degrees of freedom associated with the Chi squared statistic
                                                    // below properties are new in recent specs:
@@ -271,7 +271,7 @@ static PROPERTY PredefinedProperties[] = {
                                                    // denote the use of filters such as none, D65, Red, Green or Blue.
                                                   
        {"POLARIZATION",      WRITE_STRINGIFY},     // Identifies the use of a physical polarization filter during measurement. Allowed
-                                                   // values are {"yes”, “white”, “none” or “na”.
+                                                   // values are {"yesÂ”, Â“whiteÂ”, Â“noneÂ” or Â“naÂ”.
 
        {"WEIGHTING_FUNCTION", WRITE_PAIR},         // Indicates such functions as: the CIE standard observer functions used in the
                                                    // calculation of various data parameters (2 degree and 10 degree), CIE standard
@@ -1503,8 +1503,8 @@ void AllocateDataSet(cmsIT8* it8)
 
     if (t -> Data) return;    // Already allocated
 
-    t-> nSamples   = atoi(cmsIT8GetProperty(it8, "NUMBER_OF_FIELDS"));
-    t-> nPatches   = atoi(cmsIT8GetProperty(it8, "NUMBER_OF_SETS"));
+    t-> nSamples   = (int)strtol(cmsIT8GetProperty(it8, "NUMBER_OF_FIELDS"), (char **)NULL, 10);
+    t-> nPatches   = (int)strtol(cmsIT8GetProperty(it8, "NUMBER_OF_SETS"), (char **)NULL, 10);
 
     t-> Data = (char**)AllocChunk (it8, ((cmsUInt32Number) t->nSamples + 1) * ((cmsUInt32Number) t->nPatches + 1) *sizeof (char*));
     if (t->Data == NULL) {
@@ -1670,11 +1670,11 @@ void WriteHeader(cmsIT8* it8, SAVESTREAM* fp)
                     break;
 
             case WRITE_HEXADECIMAL:
-                    Writef(fp, "\t0x%X", atoi(p ->Value));
+                    Writef(fp, "\t0x%X", (int)strtol(p ->Value, (char **)NULL, 10));
                     break;
 
             case WRITE_BINARY:
-                    Writef(fp, "\t0x%B", atoi(p ->Value));
+                    Writef(fp, "\t0x%B", (int)strtol(p ->Value, (char **)NULL, 10));
                     break;
 
             case WRITE_PAIR:
@@ -1703,7 +1703,7 @@ void WriteDataFormat(SAVESTREAM* fp, cmsIT8* it8)
 
        WriteStr(fp, "BEGIN_DATA_FORMAT\n");
        WriteStr(fp, " ");
-       nSamples = atoi(cmsIT8GetProperty(it8, "NUMBER_OF_FIELDS"));
+       nSamples = (int)strtol(cmsIT8GetProperty(it8, "NUMBER_OF_FIELDS"), (char **)NULL, 10);
 
        for (i = 0; i < nSamples; i++) {
 
@@ -1726,7 +1726,7 @@ void WriteData(SAVESTREAM* fp, cmsIT8* it8)
 
        WriteStr (fp, "BEGIN_DATA\n");
 
-       t->nPatches = atoi(cmsIT8GetProperty(it8, "NUMBER_OF_SETS"));
+       t->nPatches = (int)strtol(cmsIT8GetProperty(it8, "NUMBER_OF_SETS"), (char **)NULL, 10);
 
        for (i = 0; i < t-> nPatches; i++) {
 
