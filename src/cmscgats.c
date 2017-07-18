@@ -1670,11 +1670,11 @@ void WriteHeader(cmsIT8* it8, SAVESTREAM* fp)
                     break;
 
             case WRITE_HEXADECIMAL:
-                    Writef(fp, "\t0x%X", (int)strtol(p ->Value, (char **)NULL, 10);
+                    Writef(fp, "\t0x%X", (int)strtol(p ->Value, (char **)NULL, 10));
                     break;
 
             case WRITE_BINARY:
-                    Writef(fp, "\t0x%B", (int)strtol(p ->Value, (char **)NULL, 10);
+                    Writef(fp, "\t0x%B", (int)strtol(p ->Value, (char **)NULL, 10));
                     break;
 
             case WRITE_PAIR:
