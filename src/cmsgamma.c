@@ -140,7 +140,7 @@ cmsBool _cmsRegisterParametricCurvesPlugin(cmsContext ContextID, cmsPluginBase* 
 
     // Copy the parameters
     fl ->Evaluator  = Plugin ->Evaluator;
-    fl ->nFunctions = Plugin ->nFunctions;
+    fl ->nFunctions = (int) Plugin ->nFunctions;
 
     // Make sure no mem overwrites
     if (fl ->nFunctions > MAX_TYPES_IN_LCMS_PLUGIN)
