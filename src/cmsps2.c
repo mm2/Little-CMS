@@ -996,7 +996,7 @@ int WriteNamedColorCSA(cmsIOHANDLER* m, cmsHPROFILE hNamedColor, int Intent)
     cmsHTRANSFORM xform;
     cmsHPROFILE   hLab;
     int i, nColors;
-    char ColorName[32];
+    char ColorName[cmsMAX_PATH];
     cmsNAMEDCOLORLIST* NamedColorList;
 
     hLab  = cmsCreateLab4ProfileTHR(m ->ContextID, NULL);
@@ -1413,7 +1413,7 @@ int WriteNamedColorCRD(cmsIOHANDLER* m, cmsHPROFILE hNamedColor, int Intent, cms
     cmsHTRANSFORM xform;
     int i, nColors, nColorant;
     cmsUInt32Number OutputFormat;
-    char ColorName[32];
+    char ColorName[cmsMAX_PATH];
     char Colorant[128];
     cmsNAMEDCOLORLIST* NamedColorList;
 

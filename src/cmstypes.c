@@ -3042,7 +3042,7 @@ cmsBool  Type_ColorantTable_Write(struct _cms_typehandler_struct* self, cmsIOHAN
 
     for (i=0; i < nColors; i++) {
 
-        char root[33];
+        char root[cmsMAX_PATH];
         cmsUInt16Number PCS[3];
 
         memset(root, 0, sizeof(root));
@@ -3184,7 +3184,7 @@ cmsBool Type_NamedColor_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER
 
        cmsUInt16Number PCS[3];
        cmsUInt16Number Colorant[cmsMAXCHANNELS];
-       char Root[33];
+       char Root[cmsMAX_PATH];
 
         if (!cmsNamedColorInfo(NamedColorList, i, Root, NULL, NULL, PCS, Colorant)) return 0;
         Root[32] = 0;

@@ -691,7 +691,7 @@ void PrintFloatResults(cmsFloat64Number Value[])
 static
 cmsUInt16Number GetIndex(void)
 {
-    char Buffer[4096], Name[40], Prefix[40], Suffix[40];
+    char Buffer[4096], Name[cmsMAX_PATH], Prefix[40], Suffix[40];
     int index, max;
     const cmsNAMEDCOLORLIST* NamedColorList;
     

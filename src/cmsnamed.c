@@ -643,9 +643,10 @@ cmsBool  CMSEXPORT cmsNamedColorInfo(const cmsNAMEDCOLORLIST* NamedColorList, cm
 
     if (nColor >= cmsNamedColorCount(NamedColorList)) return FALSE;
 
-    if (Name) strncpy(Name, NamedColorList->List[nColor].Name, cmsMAX_PATH);
-    if (Prefix) strncpy(Prefix, NamedColorList->Prefix, 33);
-    if (Suffix) strncpy(Suffix, NamedColorList->Suffix, 33);
+    // strcpy instead of strncpy because many apps are using small buffers
+    if (Name) strcpy(Name, NamedColorList->List[nColor].Name);
+    if (Prefix) strcpy(Prefix, NamedColorList->Prefix);
+    if (Suffix) strcpy(Suffix, NamedColorList->Suffix);
     if (PCS)
         memmove(PCS, NamedColorList ->List[nColor].PCS, 3*sizeof(cmsUInt16Number));
 
