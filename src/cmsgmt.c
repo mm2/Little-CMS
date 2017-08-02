@@ -297,7 +297,7 @@ cmsPipeline* _cmsCreateGamutCheckPipeline(cmsContext ContextID,
     cmsStage* CLUT;
     cmsUInt32Number dwFormat;
     GAMUTCHAIN Chain;
-    int nChannels, nGridpoints;
+    cmsUInt32Number nChannels, nGridpoints;
     cmsColorSpaceSignature ColorSpace;
     cmsUInt32Number i;
     cmsHPROFILE ProfileList[256];
