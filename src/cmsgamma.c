@@ -44,10 +44,11 @@
 // The list of supported parametric curves
 typedef struct _cmsParametricCurvesCollection_st {
 
-    int nFunctions;                                     // Number of supported functions in this chunk
-    int FunctionTypes[MAX_TYPES_IN_LCMS_PLUGIN];        // The identification types
-    int ParameterCount[MAX_TYPES_IN_LCMS_PLUGIN];       // Number of parameters for each function
-    cmsParametricCurveEvaluator    Evaluator;           // The evaluator
+    cmsUInt32Number nFunctions;                                     // Number of supported functions in this chunk
+    cmsInt32Number  FunctionTypes[MAX_TYPES_IN_LCMS_PLUGIN];        // The identification types
+    cmsUInt32Number ParameterCount[MAX_TYPES_IN_LCMS_PLUGIN];       // Number of parameters for each function
+
+    cmsParametricCurveEvaluator Evaluator;                          // The evaluator
 
     struct _cmsParametricCurvesCollection_st* Next; // Next in list
 
@@ -163,7 +164,7 @@ cmsBool _cmsRegisterParametricCurvesPlugin(cmsContext ContextID, cmsPluginBase* 
 static
 int IsInSet(int Type, _cmsParametricCurvesCollection* c)
 {
-    int i;
+    cmsUInt32Number i;
 
     for (i=0; i < c ->nFunctions; i++)
         if (abs(Type) == c ->FunctionTypes[i]) return i;

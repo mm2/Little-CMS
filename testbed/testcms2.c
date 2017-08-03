@@ -1571,7 +1571,7 @@ cmsInt32Number CheckReverseInterpolation3x3(void)
    if (Result[0] != 0 || Result[1] != 0 || Result[2] != 0){
 
        Fail("Reverse interpolation didn't find zero");
-       return 0;
+       goto Error;
    }
 
    // Transverse identity
@@ -1591,6 +1591,10 @@ cmsInt32Number CheckReverseInterpolation3x3(void)
 
     cmsPipelineFree(Lut);
     return (max <= FLOAT_PRECISSION);
+
+Error:
+    cmsPipelineFree(Lut);
+    return 0;
 }
 
 
@@ -1648,9 +1652,9 @@ cmsInt32Number CheckReverseInterpolation4x3(void)
 
        cmsPipelineEvalFloat(Target, Result, Lut);
 
-       if (!IsGoodFixed15_16("0", Target[0], Result[0])) return 0;
-       if (!IsGoodFixed15_16("1", Target[1], Result[1])) return 0;
-       if (!IsGoodFixed15_16("2", Target[2], Result[2])) return 0;
+       if (!IsGoodFixed15_16("0", Target[0], Result[0])) goto Error;
+       if (!IsGoodFixed15_16("1", Target[1], Result[1])) goto Error;
+       if (!IsGoodFixed15_16("2", Target[2], Result[2])) goto Error;
    }
 
    SubTest("4->3 zero");
@@ -1669,7 +1673,7 @@ cmsInt32Number CheckReverseInterpolation4x3(void)
    if (Result[0] != 0 || Result[1] != 0 || Result[2] != 0 || Result[3] != 0){
 
        Fail("Reverse interpolation didn't find zero");
-       return 0;
+       goto Error;
    }
 
    SubTest("4->3 find CMY");
@@ -1689,6 +1693,10 @@ cmsInt32Number CheckReverseInterpolation4x3(void)
 
     cmsPipelineFree(Lut);
     return (max <= FLOAT_PRECISSION);
+
+Error:
+    cmsPipelineFree(Lut);
+    return 0;
 }
 
 
@@ -5246,139 +5254,139 @@ cmsInt32Number CheckProfileCreation(void)
     if (h == NULL) return 0;
 
     cmsSetProfileVersion(h, 4.3);
-    if (cmsGetTagCount(h) != 0) { Fail("Empty profile with nonzero number of tags"); return 0; }
-    if (cmsIsTag(h, cmsSigAToB0Tag)) { Fail("Found a tag in an empty profile"); return 0; }
+    if (cmsGetTagCount(h) != 0) { Fail("Empty profile with nonzero number of tags"); goto Error; }
+    if (cmsIsTag(h, cmsSigAToB0Tag)) { Fail("Found a tag in an empty profile"); goto Error; }
 
     cmsSetColorSpace(h, cmsSigRgbData);
-    if (cmsGetColorSpace(h) !=  cmsSigRgbData) { Fail("Unable to set colorspace"); return 0; }
+    if (cmsGetColorSpace(h) !=  cmsSigRgbData) { Fail("Unable to set colorspace"); goto Error; }
 
     cmsSetPCS(h, cmsSigLabData);
-    if (cmsGetPCS(h) !=  cmsSigLabData) { Fail("Unable to set colorspace"); return 0; }
+    if (cmsGetPCS(h) !=  cmsSigLabData) { Fail("Unable to set colorspace"); goto Error; }
 
     cmsSetDeviceClass(h, cmsSigDisplayClass);
-    if (cmsGetDeviceClass(h) != cmsSigDisplayClass) { Fail("Unable to set deviceclass"); return 0; }
+    if (cmsGetDeviceClass(h) != cmsSigDisplayClass) { Fail("Unable to set deviceclass"); goto Error; }
 
     cmsSetHeaderRenderingIntent(h, INTENT_SATURATION);
-    if (cmsGetHeaderRenderingIntent(h) != INTENT_SATURATION) { Fail("Unable to set rendering intent"); return 0; }
+    if (cmsGetHeaderRenderingIntent(h) != INTENT_SATURATION) { Fail("Unable to set rendering intent"); goto Error; }
 
     for (Pass = 1; Pass <= 2; Pass++) {
 
         SubTest("Tags holding XYZ");
 
-        if (!CheckXYZ(Pass, h, cmsSigBlueColorantTag)) return 0;
-        if (!CheckXYZ(Pass, h, cmsSigGreenColorantTag)) return 0;
-        if (!CheckXYZ(Pass, h, cmsSigRedColorantTag)) return 0;
-        if (!CheckXYZ(Pass, h, cmsSigMediaBlackPointTag)) return 0;
-        if (!CheckXYZ(Pass, h, cmsSigMediaWhitePointTag)) return 0;
-        if (!CheckXYZ(Pass, h, cmsSigLuminanceTag)) return 0;
+        if (!CheckXYZ(Pass, h, cmsSigBlueColorantTag)) goto Error;
+        if (!CheckXYZ(Pass, h, cmsSigGreenColorantTag)) goto Error;
+        if (!CheckXYZ(Pass, h, cmsSigRedColorantTag)) goto Error;
+        if (!CheckXYZ(Pass, h, cmsSigMediaBlackPointTag)) goto Error;
+        if (!CheckXYZ(Pass, h, cmsSigMediaWhitePointTag)) goto Error;
+        if (!CheckXYZ(Pass, h, cmsSigLuminanceTag)) goto Error;
 
         SubTest("Tags holding curves");
 
-        if (!CheckGamma(Pass, h, cmsSigBlueTRCTag)) return 0;
-        if (!CheckGamma(Pass, h, cmsSigGrayTRCTag)) return 0;
-        if (!CheckGamma(Pass, h, cmsSigGreenTRCTag)) return 0;
-        if (!CheckGamma(Pass, h, cmsSigRedTRCTag)) return 0;
+        if (!CheckGamma(Pass, h, cmsSigBlueTRCTag)) goto Error;
+        if (!CheckGamma(Pass, h, cmsSigGrayTRCTag)) goto Error;
+        if (!CheckGamma(Pass, h, cmsSigGreenTRCTag)) goto Error;
+        if (!CheckGamma(Pass, h, cmsSigRedTRCTag)) goto Error;
 
         SubTest("Tags holding text");
 
-        if (!CheckTextSingle(Pass, h, cmsSigCharTargetTag)) return 0;
-        if (!CheckTextSingle(Pass, h, cmsSigScreeningDescTag)) return 0;
+        if (!CheckTextSingle(Pass, h, cmsSigCharTargetTag)) goto Error;
+        if (!CheckTextSingle(Pass, h, cmsSigScreeningDescTag)) goto Error;
 
-        if (!CheckText(Pass, h, cmsSigCopyrightTag)) return 0;
-        if (!CheckText(Pass, h, cmsSigProfileDescriptionTag)) return 0;
-        if (!CheckText(Pass, h, cmsSigDeviceMfgDescTag)) return 0;
-        if (!CheckText(Pass, h, cmsSigDeviceModelDescTag)) return 0;
-        if (!CheckText(Pass, h, cmsSigViewingCondDescTag)) return 0;
+        if (!CheckText(Pass, h, cmsSigCopyrightTag)) goto Error;
+        if (!CheckText(Pass, h, cmsSigProfileDescriptionTag)) goto Error;
+        if (!CheckText(Pass, h, cmsSigDeviceMfgDescTag)) goto Error;
+        if (!CheckText(Pass, h, cmsSigDeviceModelDescTag)) goto Error;
+        if (!CheckText(Pass, h, cmsSigViewingCondDescTag)) goto Error;
 
      
 
         SubTest("Tags holding cmsICCData");
 
-        if (!CheckData(Pass, h, cmsSigPs2CRD0Tag)) return 0;
-        if (!CheckData(Pass, h, cmsSigPs2CRD1Tag)) return 0;
-        if (!CheckData(Pass, h, cmsSigPs2CRD2Tag)) return 0;
-        if (!CheckData(Pass, h, cmsSigPs2CRD3Tag)) return 0;
-        if (!CheckData(Pass, h, cmsSigPs2CSATag)) return 0;
-        if (!CheckData(Pass, h, cmsSigPs2RenderingIntentTag)) return 0;
+        if (!CheckData(Pass, h, cmsSigPs2CRD0Tag)) goto Error;
+        if (!CheckData(Pass, h, cmsSigPs2CRD1Tag)) goto Error;
+        if (!CheckData(Pass, h, cmsSigPs2CRD2Tag)) goto Error;
+        if (!CheckData(Pass, h, cmsSigPs2CRD3Tag)) goto Error;
+        if (!CheckData(Pass, h, cmsSigPs2CSATag)) goto Error;
+        if (!CheckData(Pass, h, cmsSigPs2RenderingIntentTag)) goto Error;
 
         SubTest("Tags holding signatures");
 
-        if (!CheckSignature(Pass, h, cmsSigColorimetricIntentImageStateTag)) return 0;
-        if (!CheckSignature(Pass, h, cmsSigPerceptualRenderingIntentGamutTag)) return 0;
-        if (!CheckSignature(Pass, h, cmsSigSaturationRenderingIntentGamutTag)) return 0;
-        if (!CheckSignature(Pass, h, cmsSigTechnologyTag)) return 0;
+        if (!CheckSignature(Pass, h, cmsSigColorimetricIntentImageStateTag)) goto Error;
+        if (!CheckSignature(Pass, h, cmsSigPerceptualRenderingIntentGamutTag)) goto Error;
+        if (!CheckSignature(Pass, h, cmsSigSaturationRenderingIntentGamutTag)) goto Error;
+        if (!CheckSignature(Pass, h, cmsSigTechnologyTag)) goto Error;
 
         SubTest("Tags holding date_time");
 
-        if (!CheckDateTime(Pass, h, cmsSigCalibrationDateTimeTag)) return 0;
-        if (!CheckDateTime(Pass, h, cmsSigDateTimeTag)) return 0;
+        if (!CheckDateTime(Pass, h, cmsSigCalibrationDateTimeTag)) goto Error;
+        if (!CheckDateTime(Pass, h, cmsSigDateTimeTag)) goto Error;
 
         SubTest("Tags holding named color lists");
 
-        if (!CheckNamedColor(Pass, h, cmsSigColorantTableTag, 15, FALSE)) return 0;
-        if (!CheckNamedColor(Pass, h, cmsSigColorantTableOutTag, 15, FALSE)) return 0;
-        if (!CheckNamedColor(Pass, h, cmsSigNamedColor2Tag, 4096, TRUE)) return 0;
+        if (!CheckNamedColor(Pass, h, cmsSigColorantTableTag, 15, FALSE)) goto Error;
+        if (!CheckNamedColor(Pass, h, cmsSigColorantTableOutTag, 15, FALSE)) goto Error;
+        if (!CheckNamedColor(Pass, h, cmsSigNamedColor2Tag, 4096, TRUE)) goto Error;
 
         SubTest("Tags holding LUTs");
 
-        if (!CheckLUT(Pass, h, cmsSigAToB0Tag)) return 0;
-        if (!CheckLUT(Pass, h, cmsSigAToB1Tag)) return 0;
-        if (!CheckLUT(Pass, h, cmsSigAToB2Tag)) return 0;
-        if (!CheckLUT(Pass, h, cmsSigBToA0Tag)) return 0;
-        if (!CheckLUT(Pass, h, cmsSigBToA1Tag)) return 0;
-        if (!CheckLUT(Pass, h, cmsSigBToA2Tag)) return 0;
-        if (!CheckLUT(Pass, h, cmsSigPreview0Tag)) return 0;
-        if (!CheckLUT(Pass, h, cmsSigPreview1Tag)) return 0;
-        if (!CheckLUT(Pass, h, cmsSigPreview2Tag)) return 0;
-        if (!CheckLUT(Pass, h, cmsSigGamutTag)) return 0;
+        if (!CheckLUT(Pass, h, cmsSigAToB0Tag)) goto Error;
+        if (!CheckLUT(Pass, h, cmsSigAToB1Tag)) goto Error;
+        if (!CheckLUT(Pass, h, cmsSigAToB2Tag)) goto Error;
+        if (!CheckLUT(Pass, h, cmsSigBToA0Tag)) goto Error;
+        if (!CheckLUT(Pass, h, cmsSigBToA1Tag)) goto Error;
+        if (!CheckLUT(Pass, h, cmsSigBToA2Tag)) goto Error;
+        if (!CheckLUT(Pass, h, cmsSigPreview0Tag)) goto Error;
+        if (!CheckLUT(Pass, h, cmsSigPreview1Tag)) goto Error;
+        if (!CheckLUT(Pass, h, cmsSigPreview2Tag)) goto Error;
+        if (!CheckLUT(Pass, h, cmsSigGamutTag)) goto Error;
 
         SubTest("Tags holding CHAD");
-        if (!CheckCHAD(Pass, h, cmsSigChromaticAdaptationTag)) return 0;
+        if (!CheckCHAD(Pass, h, cmsSigChromaticAdaptationTag)) goto Error;
 
         SubTest("Tags holding Chromaticity");
-        if (!CheckChromaticity(Pass, h, cmsSigChromaticityTag)) return 0;
+        if (!CheckChromaticity(Pass, h, cmsSigChromaticityTag)) goto Error;
 
         SubTest("Tags holding colorant order");
-        if (!CheckColorantOrder(Pass, h, cmsSigColorantOrderTag)) return 0;
+        if (!CheckColorantOrder(Pass, h, cmsSigColorantOrderTag)) goto Error;
 
         SubTest("Tags holding measurement");
-        if (!CheckMeasurement(Pass, h, cmsSigMeasurementTag)) return 0;
+        if (!CheckMeasurement(Pass, h, cmsSigMeasurementTag)) goto Error;
 
         SubTest("Tags holding CRD info");
-        if (!CheckCRDinfo(Pass, h, cmsSigCrdInfoTag)) return 0;
+        if (!CheckCRDinfo(Pass, h, cmsSigCrdInfoTag)) goto Error;
 
         SubTest("Tags holding UCR/BG");
-        if (!CheckUcrBg(Pass, h, cmsSigUcrBgTag)) return 0;
+        if (!CheckUcrBg(Pass, h, cmsSigUcrBgTag)) goto Error;
 
         SubTest("Tags holding MPE");
-        if (!CheckMPE(Pass, h, cmsSigDToB0Tag)) return 0;
-        if (!CheckMPE(Pass, h, cmsSigDToB1Tag)) return 0;
-        if (!CheckMPE(Pass, h, cmsSigDToB2Tag)) return 0;
-        if (!CheckMPE(Pass, h, cmsSigDToB3Tag)) return 0;
-        if (!CheckMPE(Pass, h, cmsSigBToD0Tag)) return 0;
-        if (!CheckMPE(Pass, h, cmsSigBToD1Tag)) return 0;
-        if (!CheckMPE(Pass, h, cmsSigBToD2Tag)) return 0;
-        if (!CheckMPE(Pass, h, cmsSigBToD3Tag)) return 0;
+        if (!CheckMPE(Pass, h, cmsSigDToB0Tag)) goto Error;
+        if (!CheckMPE(Pass, h, cmsSigDToB1Tag)) goto Error;
+        if (!CheckMPE(Pass, h, cmsSigDToB2Tag)) goto Error;
+        if (!CheckMPE(Pass, h, cmsSigDToB3Tag)) goto Error;
+        if (!CheckMPE(Pass, h, cmsSigBToD0Tag)) goto Error;
+        if (!CheckMPE(Pass, h, cmsSigBToD1Tag)) goto Error;
+        if (!CheckMPE(Pass, h, cmsSigBToD2Tag)) goto Error;
+        if (!CheckMPE(Pass, h, cmsSigBToD3Tag)) goto Error;
 
         SubTest("Tags using screening");
-        if (!CheckScreening(Pass, h, cmsSigScreeningTag)) return 0;
+        if (!CheckScreening(Pass, h, cmsSigScreeningTag)) goto Error;
 
         SubTest("Tags holding profile sequence description");
-        if (!CheckProfileSequenceTag(Pass, h)) return 0;
-        if (!CheckProfileSequenceIDTag(Pass, h)) return 0;
+        if (!CheckProfileSequenceTag(Pass, h)) goto Error;
+        if (!CheckProfileSequenceIDTag(Pass, h)) goto Error;
 
         SubTest("Tags holding ICC viewing conditions");
-        if (!CheckICCViewingConditions(Pass, h)) return 0;
+        if (!CheckICCViewingConditions(Pass, h)) goto Error;
 
         SubTest("VCGT tags");
-        if (!CheckVCGT(Pass, h)) return 0;
+        if (!CheckVCGT(Pass, h)) goto Error;
 
         SubTest("RAW tags");
-        if (!CheckRAWtags(Pass, h)) return 0;
+        if (!CheckRAWtags(Pass, h)) goto Error;
 
         SubTest("Dictionary meta tags");
-        // if (!CheckDictionary16(Pass, h)) return 0;
-        if (!CheckDictionary24(Pass, h)) return 0;
+        // if (!CheckDictionary16(Pass, h)) goto Error;
+        if (!CheckDictionary24(Pass, h)) goto Error;
 
         if (Pass == 1) {
             cmsSaveProfileToFile(h, "alltags.icc");
@@ -5400,6 +5408,11 @@ cmsInt32Number CheckProfileCreation(void)
     cmsCloseProfile(h);
     remove("alltags.icc");
     return 1;
+
+Error:
+    cmsCloseProfile(h);
+    remove("alltags.icc");
+    return 0;
 }
 
 
