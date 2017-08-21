@@ -5293,7 +5293,7 @@ void Type_Dictionary_Free(struct _cms_typehandler_struct* self, void* Ptr)
 
 
 // This is the list of built-in types
-static _cmsTagTypeLinkedList SupportedTagTypes[] = {
+static const _cmsTagTypeLinkedList SupportedTagTypes[] = {
 
 {TYPE_HANDLER(cmsSigChromaticityType,          Chromaticity),        &SupportedTagTypes[1] },
 {TYPE_HANDLER(cmsSigColorantOrderType,         ColorantOrderType),   &SupportedTagTypes[2] },
@@ -5432,7 +5432,7 @@ typedef struct _cmsTagLinkedList_st {
 } _cmsTagLinkedList;
 
 // This is the list of built-in tags
-static _cmsTagLinkedList SupportedTags[] = {
+static const _cmsTagLinkedList SupportedTags[] = {
 
     { cmsSigAToB0Tag,               { 1, 3,  { cmsSigLut16Type,  cmsSigLutAtoBType, cmsSigLut8Type}, DecideLUTtypeA2B}, &SupportedTags[1]},
     { cmsSigAToB1Tag,               { 1, 3,  { cmsSigLut16Type,  cmsSigLutAtoBType, cmsSigLut8Type}, DecideLUTtypeA2B}, &SupportedTags[2]},
