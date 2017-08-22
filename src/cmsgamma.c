@@ -218,7 +218,7 @@ cmsToneCurve* AllocateToneCurveStruct(cmsContext ContextID, cmsUInt32Number nEnt
     cmsUInt32Number i;
 
     // We allow huge tables, which are then restricted for smoothing operations
-    if (nEntries > 65530 || nEntries == 0) {
+    if (nEntries > 65530) {
         cmsSignalError(ContextID, cmsERROR_RANGE, "Couldn't create tone curve of more than 65530 entries");
         return NULL;
     }
