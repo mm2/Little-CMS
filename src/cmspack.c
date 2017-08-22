@@ -2907,7 +2907,7 @@ cmsUInt8Number* PackHalfFromFloat(_cmsTRANSFORM* info,
 // ----------------------------------------------------------------------------------------------------------------
 
 
-static cmsFormatters16 InputFormatters16[] = {
+static const cmsFormatters16 InputFormatters16[] = {
 
     //    Type                                          Mask                  Function
     //  ----------------------------   ------------------------------------  ----------------------------
@@ -2978,7 +2978,7 @@ static cmsFormatters16 InputFormatters16[] = {
 
 
 
-static cmsFormattersFloat InputFormattersFloat[] = {
+static const cmsFormattersFloat InputFormattersFloat[] = {
 
     //    Type                                          Mask                  Function
     //  ----------------------------   ------------------------------------  ----------------------------
@@ -3041,7 +3041,7 @@ cmsFormatter _cmsGetStockInputFormatter(cmsUInt32Number dwInput, cmsUInt32Number
     return fr;
 }
 
-static cmsFormatters16 OutputFormatters16[] = {
+static const cmsFormatters16 OutputFormatters16[] = {
     //    Type                                          Mask                  Function
     //  ----------------------------   ------------------------------------  ----------------------------
 
