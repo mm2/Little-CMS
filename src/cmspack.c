@@ -3011,7 +3011,7 @@ cmsFormatter _cmsGetStockInputFormatter(cmsUInt32Number dwInput, cmsUInt32Number
 
     case CMS_PACK_FLAGS_16BITS: {
         for (i=0; i < sizeof(InputFormatters16) / sizeof(cmsFormatters16); i++) {
-            cmsFormatters16* f = InputFormatters16 + i;
+            const cmsFormatters16* f = InputFormatters16 + i;
 
             if ((dwInput & ~f ->Mask) == f ->Type) {
                 fr.Fmt16 = f ->Frm;
@@ -3023,7 +3023,7 @@ cmsFormatter _cmsGetStockInputFormatter(cmsUInt32Number dwInput, cmsUInt32Number
 
     case CMS_PACK_FLAGS_FLOAT: {
         for (i=0; i < sizeof(InputFormattersFloat) / sizeof(cmsFormattersFloat); i++) {
-            cmsFormattersFloat* f = InputFormattersFloat + i;
+            const cmsFormattersFloat* f = InputFormattersFloat + i;
 
             if ((dwInput & ~f ->Mask) == f ->Type) {
                 fr.FmtFloat = f ->Frm;
@@ -3168,7 +3168,7 @@ cmsFormatter _cmsGetStockOutputFormatter(cmsUInt32Number dwInput, cmsUInt32Numbe
      case CMS_PACK_FLAGS_16BITS: {
 
         for (i=0; i < sizeof(OutputFormatters16) / sizeof(cmsFormatters16); i++) {
-            cmsFormatters16* f = OutputFormatters16 + i;
+            const cmsFormatters16* f = OutputFormatters16 + i;
 
             if ((dwInput & ~f ->Mask) == f ->Type) {
                 fr.Fmt16 = f ->Frm;
