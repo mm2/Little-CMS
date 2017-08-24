@@ -12,6 +12,7 @@
 *.Po
 *.pc
 *.so
+*.lib
 Thumbs.db
 *.obj
 *.pdb
