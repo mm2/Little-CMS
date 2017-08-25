@@ -5431,96 +5431,95 @@ typedef struct _cmsTagLinkedList_st {
 
 } _cmsTagLinkedList;
 
-// This is the list of built-in tags
-static const _cmsTagLinkedList SupportedTags[] = {
+// This is the list of built-in tags. The data of this list can be modified by plug-ins
+static _cmsTagLinkedList SupportedTags[] = {
 
-    { cmsSigAToB0Tag,               { 1, 3,  { cmsSigLut16Type,  cmsSigLutAtoBType, cmsSigLut8Type}, DecideLUTtypeA2B}, (_cmsTagLinkedList*) &SupportedTags[1]},
-    { cmsSigAToB1Tag,               { 1, 3,  { cmsSigLut16Type,  cmsSigLutAtoBType, cmsSigLut8Type}, DecideLUTtypeA2B}, (_cmsTagLinkedList*) &SupportedTags[2]},
-    { cmsSigAToB2Tag,               { 1, 3,  { cmsSigLut16Type,  cmsSigLutAtoBType, cmsSigLut8Type}, DecideLUTtypeA2B}, (_cmsTagLinkedList*) &SupportedTags[3]},
-    { cmsSigBToA0Tag,               { 1, 3,  { cmsSigLut16Type,  cmsSigLutBtoAType, cmsSigLut8Type}, DecideLUTtypeB2A}, (_cmsTagLinkedList*) &SupportedTags[4]},
-    { cmsSigBToA1Tag,               { 1, 3,  { cmsSigLut16Type,  cmsSigLutBtoAType, cmsSigLut8Type}, DecideLUTtypeB2A}, (_cmsTagLinkedList*) &SupportedTags[5]},
-    { cmsSigBToA2Tag,               { 1, 3,  { cmsSigLut16Type,  cmsSigLutBtoAType, cmsSigLut8Type}, DecideLUTtypeB2A}, (_cmsTagLinkedList*) &SupportedTags[6]},
+    { cmsSigAToB0Tag,               { 1, 3,  { cmsSigLut16Type,  cmsSigLutAtoBType, cmsSigLut8Type}, DecideLUTtypeA2B}, &SupportedTags[1]},
+    { cmsSigAToB1Tag,               { 1, 3,  { cmsSigLut16Type,  cmsSigLutAtoBType, cmsSigLut8Type}, DecideLUTtypeA2B}, &SupportedTags[2]},
+    { cmsSigAToB2Tag,               { 1, 3,  { cmsSigLut16Type,  cmsSigLutAtoBType, cmsSigLut8Type}, DecideLUTtypeA2B}, &SupportedTags[3]},
+    { cmsSigBToA0Tag,               { 1, 3,  { cmsSigLut16Type,  cmsSigLutBtoAType, cmsSigLut8Type}, DecideLUTtypeB2A}, &SupportedTags[4]},
+    { cmsSigBToA1Tag,               { 1, 3,  { cmsSigLut16Type,  cmsSigLutBtoAType, cmsSigLut8Type}, DecideLUTtypeB2A}, &SupportedTags[5]},
+    { cmsSigBToA2Tag,               { 1, 3,  { cmsSigLut16Type,  cmsSigLutBtoAType, cmsSigLut8Type}, DecideLUTtypeB2A}, &SupportedTags[6]},
 
     // Allow corbis  and its broken XYZ type
-    { cmsSigRedColorantTag,         { 1, 2, { cmsSigXYZType, cmsCorbisBrokenXYZtype }, DecideXYZtype}, (_cmsTagLinkedList*) &SupportedTags[7]},
-    { cmsSigGreenColorantTag,       { 1, 2, { cmsSigXYZType, cmsCorbisBrokenXYZtype }, DecideXYZtype}, (_cmsTagLinkedList*) &SupportedTags[8]},
-    { cmsSigBlueColorantTag,        { 1, 2, { cmsSigXYZType, cmsCorbisBrokenXYZtype }, DecideXYZtype}, (_cmsTagLinkedList*) &SupportedTags[9]},
+    { cmsSigRedColorantTag,         { 1, 2, { cmsSigXYZType, cmsCorbisBrokenXYZtype }, DecideXYZtype}, &SupportedTags[7]},
+    { cmsSigGreenColorantTag,       { 1, 2, { cmsSigXYZType, cmsCorbisBrokenXYZtype }, DecideXYZtype}, &SupportedTags[8]},
+    { cmsSigBlueColorantTag,        { 1, 2, { cmsSigXYZType, cmsCorbisBrokenXYZtype }, DecideXYZtype}, &SupportedTags[9]},
 
-    { cmsSigRedTRCTag,              { 1, 3, { cmsSigCurveType, cmsSigParametricCurveType, cmsMonacoBrokenCurveType }, DecideCurveType}, (_cmsTagLinkedList*) &SupportedTags[10]},
-    { cmsSigGreenTRCTag,            { 1, 3, { cmsSigCurveType, cmsSigParametricCurveType, cmsMonacoBrokenCurveType }, DecideCurveType}, (_cmsTagLinkedList*) &SupportedTags[11]},
-    { cmsSigBlueTRCTag,             { 1, 3, { cmsSigCurveType, cmsSigParametricCurveType, cmsMonacoBrokenCurveType }, DecideCurveType}, (_cmsTagLinkedList*) &SupportedTags[12]},
+    { cmsSigRedTRCTag,              { 1, 3, { cmsSigCurveType, cmsSigParametricCurveType, cmsMonacoBrokenCurveType }, DecideCurveType}, &SupportedTags[10]},
+    { cmsSigGreenTRCTag,            { 1, 3, { cmsSigCurveType, cmsSigParametricCurveType, cmsMonacoBrokenCurveType }, DecideCurveType}, &SupportedTags[11]},
+    { cmsSigBlueTRCTag,             { 1, 3, { cmsSigCurveType, cmsSigParametricCurveType, cmsMonacoBrokenCurveType }, DecideCurveType}, &SupportedTags[12]},
 
-    { cmsSigCalibrationDateTimeTag, { 1, 1, { cmsSigDateTimeType }, NULL}, (_cmsTagLinkedList*) &SupportedTags[13]},
-    { cmsSigCharTargetTag,          { 1, 1, { cmsSigTextType },     NULL}, (_cmsTagLinkedList*) &SupportedTags[14]},
+    { cmsSigCalibrationDateTimeTag, { 1, 1, { cmsSigDateTimeType }, NULL}, &SupportedTags[13]},
+    { cmsSigCharTargetTag,          { 1, 1, { cmsSigTextType },     NULL}, &SupportedTags[14]},
 
-    { cmsSigChromaticAdaptationTag, { 9, 1, { cmsSigS15Fixed16ArrayType }, NULL}, (_cmsTagLinkedList*) &SupportedTags[15]},
-    { cmsSigChromaticityTag,        { 1, 1, { cmsSigChromaticityType    }, NULL}, (_cmsTagLinkedList*) &SupportedTags[16]},
-    { cmsSigColorantOrderTag,       { 1, 1, { cmsSigColorantOrderType   }, NULL}, (_cmsTagLinkedList*) &SupportedTags[17]},
-    { cmsSigColorantTableTag,       { 1, 1, { cmsSigColorantTableType   }, NULL}, (_cmsTagLinkedList*) &SupportedTags[18]},
-    { cmsSigColorantTableOutTag,    { 1, 1, { cmsSigColorantTableType   }, NULL}, (_cmsTagLinkedList*) &SupportedTags[19]},
+    { cmsSigChromaticAdaptationTag, { 9, 1, { cmsSigS15Fixed16ArrayType }, NULL}, &SupportedTags[15]},
+    { cmsSigChromaticityTag,        { 1, 1, { cmsSigChromaticityType    }, NULL}, &SupportedTags[16]},
+    { cmsSigColorantOrderTag,       { 1, 1, { cmsSigColorantOrderType   }, NULL}, &SupportedTags[17]},
+    { cmsSigColorantTableTag,       { 1, 1, { cmsSigColorantTableType   }, NULL}, &SupportedTags[18]},
+    { cmsSigColorantTableOutTag,    { 1, 1, { cmsSigColorantTableType   }, NULL}, &SupportedTags[19]},
 
-    { cmsSigCopyrightTag,           { 1, 3, { cmsSigTextType,  cmsSigMultiLocalizedUnicodeType, cmsSigTextDescriptionType}, DecideTextType}, (_cmsTagLinkedList*) &SupportedTags[20]},
-    { cmsSigDateTimeTag,            { 1, 1, { cmsSigDateTimeType }, NULL}, (_cmsTagLinkedList*) &SupportedTags[21]},
+    { cmsSigCopyrightTag,           { 1, 3, { cmsSigTextType,  cmsSigMultiLocalizedUnicodeType, cmsSigTextDescriptionType}, DecideTextType}, &SupportedTags[20]},
+    { cmsSigDateTimeTag,            { 1, 1, { cmsSigDateTimeType }, NULL}, &SupportedTags[21]},
 
-    { cmsSigDeviceMfgDescTag,       { 1, 3, { cmsSigTextDescriptionType, cmsSigMultiLocalizedUnicodeType, cmsSigTextType}, DecideTextDescType}, (_cmsTagLinkedList*) &SupportedTags[22]},
-    { cmsSigDeviceModelDescTag,     { 1, 3, { cmsSigTextDescriptionType, cmsSigMultiLocalizedUnicodeType, cmsSigTextType}, DecideTextDescType}, (_cmsTagLinkedList*) &SupportedTags[23]},
+    { cmsSigDeviceMfgDescTag,       { 1, 3, { cmsSigTextDescriptionType, cmsSigMultiLocalizedUnicodeType, cmsSigTextType}, DecideTextDescType}, &SupportedTags[22]},
+    { cmsSigDeviceModelDescTag,     { 1, 3, { cmsSigTextDescriptionType, cmsSigMultiLocalizedUnicodeType, cmsSigTextType}, DecideTextDescType}, &SupportedTags[23]},
 
-    { cmsSigGamutTag,               { 1, 3, { cmsSigLut16Type, cmsSigLutBtoAType, cmsSigLut8Type }, DecideLUTtypeB2A}, (_cmsTagLinkedList*) &SupportedTags[24]},
+    { cmsSigGamutTag,               { 1, 3, { cmsSigLut16Type, cmsSigLutBtoAType, cmsSigLut8Type }, DecideLUTtypeB2A}, &SupportedTags[24]},
 
-    { cmsSigGrayTRCTag,             { 1, 2, { cmsSigCurveType, cmsSigParametricCurveType }, DecideCurveType}, (_cmsTagLinkedList*) &SupportedTags[25]},
-    { cmsSigLuminanceTag,           { 1, 1, { cmsSigXYZType }, NULL}, (_cmsTagLinkedList*) &SupportedTags[26]},
+    { cmsSigGrayTRCTag,             { 1, 2, { cmsSigCurveType, cmsSigParametricCurveType }, DecideCurveType}, &SupportedTags[25]},
+    { cmsSigLuminanceTag,           { 1, 1, { cmsSigXYZType }, NULL}, &SupportedTags[26]},
 
-    { cmsSigMediaBlackPointTag,     { 1, 2, { cmsSigXYZType, cmsCorbisBrokenXYZtype }, NULL}, (_cmsTagLinkedList*) &SupportedTags[27]},
-    { cmsSigMediaWhitePointTag,     { 1, 2, { cmsSigXYZType, cmsCorbisBrokenXYZtype }, NULL}, (_cmsTagLinkedList*) &SupportedTags[28]},
+    { cmsSigMediaBlackPointTag,     { 1, 2, { cmsSigXYZType, cmsCorbisBrokenXYZtype }, NULL}, &SupportedTags[27]},
+    { cmsSigMediaWhitePointTag,     { 1, 2, { cmsSigXYZType, cmsCorbisBrokenXYZtype }, NULL}, &SupportedTags[28]},
 
-    { cmsSigNamedColor2Tag,         { 1, 1, { cmsSigNamedColor2Type }, NULL}, (_cmsTagLinkedList*) &SupportedTags[29]},
+    { cmsSigNamedColor2Tag,         { 1, 1, { cmsSigNamedColor2Type }, NULL}, &SupportedTags[29]},
 
-    { cmsSigPreview0Tag,            { 1, 3,  { cmsSigLut16Type, cmsSigLutBtoAType, cmsSigLut8Type }, DecideLUTtypeB2A}, (_cmsTagLinkedList*) &SupportedTags[30]},
-    { cmsSigPreview1Tag,            { 1, 3,  { cmsSigLut16Type, cmsSigLutBtoAType, cmsSigLut8Type }, DecideLUTtypeB2A}, (_cmsTagLinkedList*) &SupportedTags[31]},
-    { cmsSigPreview2Tag,            { 1, 3,  { cmsSigLut16Type, cmsSigLutBtoAType, cmsSigLut8Type }, DecideLUTtypeB2A}, (_cmsTagLinkedList*) &SupportedTags[32]},
+    { cmsSigPreview0Tag,            { 1, 3,  { cmsSigLut16Type, cmsSigLutBtoAType, cmsSigLut8Type }, DecideLUTtypeB2A}, &SupportedTags[30]},
+    { cmsSigPreview1Tag,            { 1, 3,  { cmsSigLut16Type, cmsSigLutBtoAType, cmsSigLut8Type }, DecideLUTtypeB2A}, &SupportedTags[31]},
+    { cmsSigPreview2Tag,            { 1, 3,  { cmsSigLut16Type, cmsSigLutBtoAType, cmsSigLut8Type }, DecideLUTtypeB2A}, &SupportedTags[32]},
 
-    { cmsSigProfileDescriptionTag,  { 1, 3, { cmsSigTextDescriptionType, cmsSigMultiLocalizedUnicodeType, cmsSigTextType}, DecideTextDescType}, (_cmsTagLinkedList*) &SupportedTags[33]},
-    { cmsSigProfileSequenceDescTag, { 1, 1, { cmsSigProfileSequenceDescType }, NULL},  (_cmsTagLinkedList*) &SupportedTags[34]},
-    { cmsSigTechnologyTag,          { 1, 1, { cmsSigSignatureType }, NULL},  (_cmsTagLinkedList*) &SupportedTags[35]},
+    { cmsSigProfileDescriptionTag,  { 1, 3, { cmsSigTextDescriptionType, cmsSigMultiLocalizedUnicodeType, cmsSigTextType}, DecideTextDescType}, &SupportedTags[33]},
+    { cmsSigProfileSequenceDescTag, { 1, 1, { cmsSigProfileSequenceDescType }, NULL},  &SupportedTags[34]},
+    { cmsSigTechnologyTag,          { 1, 1, { cmsSigSignatureType }, NULL},  &SupportedTags[35]},
 
-    { cmsSigColorimetricIntentImageStateTag,   { 1, 1, { cmsSigSignatureType }, NULL}, (_cmsTagLinkedList*) &SupportedTags[36]},
-    { cmsSigPerceptualRenderingIntentGamutTag, { 1, 1, { cmsSigSignatureType }, NULL}, (_cmsTagLinkedList*) &SupportedTags[37]},
-    { cmsSigSaturationRenderingIntentGamutTag, { 1, 1, { cmsSigSignatureType }, NULL}, (_cmsTagLinkedList*) &SupportedTags[38]},
+    { cmsSigColorimetricIntentImageStateTag,   { 1, 1, { cmsSigSignatureType }, NULL}, &SupportedTags[36]},
+    { cmsSigPerceptualRenderingIntentGamutTag, { 1, 1, { cmsSigSignatureType }, NULL}, &SupportedTags[37]},
+    { cmsSigSaturationRenderingIntentGamutTag, { 1, 1, { cmsSigSignatureType }, NULL}, &SupportedTags[38]},
 
-    { cmsSigMeasurementTag,         { 1, 1, { cmsSigMeasurementType }, NULL}, (_cmsTagLinkedList*) &SupportedTags[39]},
+    { cmsSigMeasurementTag,         { 1, 1, { cmsSigMeasurementType }, NULL}, &SupportedTags[39]},
 
-    { cmsSigPs2CRD0Tag,             { 1, 1, { cmsSigDataType }, NULL}, (_cmsTagLinkedList*) &SupportedTags[40]},
-    { cmsSigPs2CRD1Tag,             { 1, 1, { cmsSigDataType }, NULL}, (_cmsTagLinkedList*) &SupportedTags[41]},
-    { cmsSigPs2CRD2Tag,             { 1, 1, { cmsSigDataType }, NULL}, (_cmsTagLinkedList*) &SupportedTags[42]},
-    { cmsSigPs2CRD3Tag,             { 1, 1, { cmsSigDataType }, NULL}, (_cmsTagLinkedList*) &SupportedTags[43]},
-    { cmsSigPs2CSATag,              { 1, 1, { cmsSigDataType }, NULL}, (_cmsTagLinkedList*) &SupportedTags[44]},
-    { cmsSigPs2RenderingIntentTag,  { 1, 1, { cmsSigDataType }, NULL}, (_cmsTagLinkedList*) &SupportedTags[45]},
+    { cmsSigPs2CRD0Tag,             { 1, 1, { cmsSigDataType }, NULL}, &SupportedTags[40]},
+    { cmsSigPs2CRD1Tag,             { 1, 1, { cmsSigDataType }, NULL}, &SupportedTags[41]},
+    { cmsSigPs2CRD2Tag,             { 1, 1, { cmsSigDataType }, NULL}, &SupportedTags[42]},
+    { cmsSigPs2CRD3Tag,             { 1, 1, { cmsSigDataType }, NULL}, &SupportedTags[43]},
+    { cmsSigPs2CSATag,              { 1, 1, { cmsSigDataType }, NULL}, &SupportedTags[44]},
+    { cmsSigPs2RenderingIntentTag,  { 1, 1, { cmsSigDataType }, NULL}, &SupportedTags[45]},
 
-    { cmsSigViewingCondDescTag,     { 1, 3, { cmsSigTextDescriptionType, cmsSigMultiLocalizedUnicodeType, cmsSigTextType}, DecideTextDescType}, (_cmsTagLinkedList*) &SupportedTags[46]},
+    { cmsSigViewingCondDescTag,     { 1, 3, { cmsSigTextDescriptionType, cmsSigMultiLocalizedUnicodeType, cmsSigTextType}, DecideTextDescType}, &SupportedTags[46]},
 
-    { cmsSigUcrBgTag,               { 1, 1, { cmsSigUcrBgType}, NULL},    (_cmsTagLinkedList*) &SupportedTags[47]},
-    { cmsSigCrdInfoTag,             { 1, 1, { cmsSigCrdInfoType}, NULL},  (_cmsTagLinkedList*) &SupportedTags[48]},
+    { cmsSigUcrBgTag,               { 1, 1, { cmsSigUcrBgType}, NULL},    &SupportedTags[47]},
+    { cmsSigCrdInfoTag,             { 1, 1, { cmsSigCrdInfoType}, NULL},  &SupportedTags[48]},
 
-    { cmsSigDToB0Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, (_cmsTagLinkedList*) &SupportedTags[49]},
-    { cmsSigDToB1Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, (_cmsTagLinkedList*) &SupportedTags[50]},
-    { cmsSigDToB2Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, (_cmsTagLinkedList*) &SupportedTags[51]},
-    { cmsSigDToB3Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, (_cmsTagLinkedList*) &SupportedTags[52]},
-    { cmsSigBToD0Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, (_cmsTagLinkedList*) &SupportedTags[53]},
-    { cmsSigBToD1Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, (_cmsTagLinkedList*) &SupportedTags[54]},
-    { cmsSigBToD2Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, (_cmsTagLinkedList*) &SupportedTags[55]},
-    { cmsSigBToD3Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, (_cmsTagLinkedList*) &SupportedTags[56]},
+    { cmsSigDToB0Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, &SupportedTags[49]},
+    { cmsSigDToB1Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, &SupportedTags[50]},
+    { cmsSigDToB2Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, &SupportedTags[51]},
+    { cmsSigDToB3Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, &SupportedTags[52]},
+    { cmsSigBToD0Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, &SupportedTags[53]},
+    { cmsSigBToD1Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, &SupportedTags[54]},
+    { cmsSigBToD2Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, &SupportedTags[55]},
+    { cmsSigBToD3Tag,               { 1, 1, { cmsSigMultiProcessElementType}, NULL}, &SupportedTags[56]},
 
-    { cmsSigScreeningDescTag,       { 1, 1, { cmsSigTextDescriptionType },    NULL}, (_cmsTagLinkedList*) &SupportedTags[57]},
-    { cmsSigViewingConditionsTag,   { 1, 1, { cmsSigViewingConditionsType },  NULL}, (_cmsTagLinkedList*) &SupportedTags[58]},
+    { cmsSigScreeningDescTag,       { 1, 1, { cmsSigTextDescriptionType },    NULL}, &SupportedTags[57]},
+    { cmsSigViewingConditionsTag,   { 1, 1, { cmsSigViewingConditionsType },  NULL}, &SupportedTags[58]},
 
-    { cmsSigScreeningTag,           { 1, 1, { cmsSigScreeningType},          NULL }, (_cmsTagLinkedList*) &SupportedTags[59]},
-    { cmsSigVcgtTag,                { 1, 1, { cmsSigVcgtType},               NULL }, (_cmsTagLinkedList*) &SupportedTags[60]},
-    { cmsSigMetaTag,                { 1, 1, { cmsSigDictType},               NULL }, (_cmsTagLinkedList*) &SupportedTags[61]},
-    { cmsSigProfileSequenceIdTag,   { 1, 1, { cmsSigProfileSequenceIdType},  NULL }, (_cmsTagLinkedList*) &SupportedTags[62]},
+    { cmsSigScreeningTag,           { 1, 1, { cmsSigScreeningType},          NULL }, &SupportedTags[59]},
+    { cmsSigVcgtTag,                { 1, 1, { cmsSigVcgtType},               NULL }, &SupportedTags[60]},
+    { cmsSigMetaTag,                { 1, 1, { cmsSigDictType},               NULL }, &SupportedTags[61]},
+    { cmsSigProfileSequenceIdTag,   { 1, 1, { cmsSigProfileSequenceIdType},  NULL }, &SupportedTags[62]},
 
-    { cmsSigProfileDescriptionMLTag,{ 1, 1, { cmsSigMultiLocalizedUnicodeType}, NULL}, (_cmsTagLinkedList*) &SupportedTags[63]},
+    { cmsSigProfileDescriptionMLTag,{ 1, 1, { cmsSigMultiLocalizedUnicodeType}, NULL}, &SupportedTags[63]},
     { cmsSigArgyllArtsTag,          { 9, 1, { cmsSigS15Fixed16ArrayType},    NULL}, NULL}
-
 
 };
 
@@ -5622,7 +5621,7 @@ cmsTagDescriptor* _cmsGetTagDescriptor(cmsContext ContextID, cmsTagSignature sig
                 if (sig == pt -> Signature) return &pt ->Descriptor;
     }
 
-    for (pt = (_cmsTagLinkedList*) SupportedTags;
+    for (pt = SupportedTags;
             pt != NULL;
             pt = pt ->Next) {
 

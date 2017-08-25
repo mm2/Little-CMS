@@ -3129,7 +3129,7 @@ static const cmsFormatters16 OutputFormatters16[] = {
 };
 
 
-static cmsFormattersFloat OutputFormattersFloat[] = {
+static const cmsFormattersFloat OutputFormattersFloat[] = {
     //    Type                                          Mask                                 Function
     //  ----------------------------   ---------------------------------------------------  ----------------------------
     {     TYPE_Lab_FLT,                                                ANYPLANAR|ANYEXTRA,   PackLabFloatFromFloat},
@@ -3146,8 +3146,6 @@ static cmsFormattersFloat OutputFormattersFloat[] = {
     {     FLOAT_SH(1)|BYTES_SH(2),                                   
                              ANYFLAVOR|ANYSWAPFIRST|ANYSWAP|ANYEXTRA|ANYCHANNELS|ANYSPACE,   PackHalfFromFloat },
 #endif
-
-
 
 };
 
@@ -3181,7 +3179,7 @@ cmsFormatter _cmsGetStockOutputFormatter(cmsUInt32Number dwInput, cmsUInt32Numbe
     case CMS_PACK_FLAGS_FLOAT: {
 
         for (i=0; i < sizeof(OutputFormattersFloat) / sizeof(cmsFormattersFloat); i++) {
-            cmsFormattersFloat* f = OutputFormattersFloat + i;
+            const cmsFormattersFloat* f = OutputFormattersFloat + i;
 
             if ((dwInput & ~f ->Mask) == f ->Type) {
                 fr.FmtFloat = f ->Frm;
