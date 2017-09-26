@@ -1,5 +1,12 @@
 
 -----------------------
+2.9 Maintenance release
+-----------------------
+Several fixes related with security, and therefore not detailed here.
+C++ compiles now without warnings
+Added OSX and clang in travis
+
+-----------------------
 2.8 Featured release
 -----------------------
 
