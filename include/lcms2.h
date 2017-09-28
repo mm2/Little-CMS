@@ -237,7 +237,7 @@ typedef int                  cmsBool;
 #else  // not Windows
 #  ifdef HAVE_FUNC_ATTRIBUTE_VISIBILITY
 #     define CMSEXPORT
-#     define CMSAPI    __attribute__((visibility("protected")))
+#     define CMSAPI    __attribute__((visibility("default")))
 #  else
 #     define CMSEXPORT
 #     define CMSAPI
