@@ -5,4 +5,4 @@ language: c
 compiler:
   - gcc
   - clang
-script: ./configure && cat config.log && make && make check
+script: autoreconf -V && autoreconf --force && ./configure && cat config.log && make && make check
