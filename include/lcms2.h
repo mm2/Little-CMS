@@ -23,7 +23,7 @@
 //
 //---------------------------------------------------------------------------------
 //
-// Version 2.9rc2
+// Version 2.9b1
 //
 
 #ifndef _lcms2_H
@@ -235,8 +235,13 @@ typedef int                  cmsBool;
 #     define CMSAPI
 #  endif
 #else  // not Windows
+#  ifdef HAVE_FUNC_ATTRIBUTE_VISIBILITY
+#     define CMSEXPORT
+#     define CMSAPI    __attribute__((visibility("default")))
+#  else
 #     define CMSEXPORT
 #     define CMSAPI
+#  endif
 #endif  // CMS_IS_WINDOWS_
 
 #ifdef HasTHREADS
