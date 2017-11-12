@@ -3813,9 +3813,9 @@ void CheckSingleFormatter16(cmsContext id, cmsUInt32Number Type, const char* Tex
                 Values[i] <<= 8;
         }
 
-    b.Fmt16(&info, Values, Buffer, 1);
+    b.Fmt16(&info, Values, Buffer, 2);
     memset(Values, 0, sizeof(Values));
-    f.Fmt16(&info, Values, Buffer, 1);
+    f.Fmt16(&info, Values, Buffer, 2);
 
     for (i=0; i < nChannels; i++) {
         if (bytes == 1)

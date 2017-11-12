@@ -730,7 +730,7 @@ void EvalNamedColor(const cmsFloat32Number In[], cmsFloat32Number Out[], const c
 
 
 // Named color lookup element
-cmsStage* _cmsStageAllocNamedColor(cmsNAMEDCOLORLIST* NamedColorList, cmsBool UsePCS)
+cmsStage* CMSEXPORT _cmsStageAllocNamedColor(cmsNAMEDCOLORLIST* NamedColorList, cmsBool UsePCS)
 {
     return _cmsStageAllocPlaceholder(NamedColorList ->ContextID,
                                    cmsSigNamedColorElemType,
