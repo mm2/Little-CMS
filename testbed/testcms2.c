@@ -448,7 +448,7 @@ cmsHPROFILE Create_CMYK_DeviceLink(void)
 
 
 // Create a fake CMYK profile, without any other requeriment that being coarse CMYK.
-// DONT USE THIS PROFILE FOR ANYTHING, IT IS USELESS BUT FOR TESTING PURPOSES.
+// DON'T USE THIS PROFILE FOR ANYTHING, IT IS USELESS BUT FOR TESTING PURPOSES.
 typedef struct {
 
     cmsHTRANSFORM hLab2sRGB;
@@ -8888,7 +8888,7 @@ int main(int argc, char* argv[])
     PrintSupportedIntents();
     
     Check("Base types", CheckBaseTypes);
-    Check("endianess", CheckEndianess);
+    Check("endianness", CheckEndianess);
     Check("quick floor", CheckQuickFloor);
     Check("quick floor word", CheckQuickFloorWord);
     Check("Fixed point 15.16 representation", CheckFixedPoint15_16);

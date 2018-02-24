@@ -27,7 +27,7 @@
 #include "testcms2.h"
 
 // --------------------------------------------------------------------------------------------------
-// Auxiliar, duplicate a context and mark the block as non-debug because in this case the allocator 
+// Auxiliary, duplicate a context and mark the block as non-debug because in this case the allocator
 // and deallocator have different context owners
 // --------------------------------------------------------------------------------------------------
 
