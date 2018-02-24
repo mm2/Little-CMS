@@ -29,9 +29,9 @@
 // the default range for ITU/T.42 -- See RFC 2301, section 6.2.3 for details
 
 
-//  L*	=	[0, 100]
-//	a*	=	[–85, 85]
-//	b*	=	[–75, 125]
+//  L* = [0, 100]
+//  a* = [-85, 85]
+//  b* = [-75, 125]
 
 
 // These functions does convert the encoding of ITUFAX to floating point
