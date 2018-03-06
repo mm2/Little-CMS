@@ -908,7 +908,7 @@ void* Prelin8dup(cmsContext ContextID, const void* ptr)
 
 // A optimized interpolation for 8-bit input.
 #define DENS(i,j,k) (LutTable[(i)+(j)+(k)+OutChan])
-static
+static CMS_NO_SANITIZE
 void PrelinEval8(register const cmsUInt16Number Input[],
                   register cmsUInt16Number Output[],
                   register const void* D)
