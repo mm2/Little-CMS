@@ -11,7 +11,7 @@ AM_CPPFLAGS =  -I$(top_builddir)/include -I$(top_srcdir)/include \
 
 bin_PROGRAMS = psicc 
 
-psicc_LDADD = $(top_builddir)/src/liblcms2.la 
+psicc_LDADD = $(top_builddir)/src/liblcms2.la @LCMS_LIB_DEPLIBS@
 psicc_LDFLAGS = @LDFLAGS@
 psicc_SOURCES = psicc.c ../common/xgetopt.c ../common/vprf.c ../common/utils.h
 psicc_MANS = psicc.1

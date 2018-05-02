@@ -11,7 +11,7 @@ AM_CPPFLAGS =  -I$(top_builddir)/include -I$(top_srcdir)/include \
 
 bin_PROGRAMS = transicc 
 
-transicc_LDADD = $(top_builddir)/src/liblcms2.la 
+transicc_LDADD = $(top_builddir)/src/liblcms2.la @LCMS_LIB_DEPLIBS@
 transicc_LDFLAGS = @LDFLAGS@
 transicc_SOURCES = transicc.c ../common/xgetopt.c ../common/vprf.c  ../common/utils.h
 transicc_MANS = transicc.1
