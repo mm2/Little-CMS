@@ -448,7 +448,7 @@ cmsHPROFILE Create_CMYK_DeviceLink(void)
 
 
 // Create a fake CMYK profile, without any other requeriment that being coarse CMYK.
-// DONT USE THIS PROFILE FOR ANYTHING, IT IS USELESS BUT FOR TESTING PURPOSES.
+// DON'T USE THIS PROFILE FOR ANYTHING, IT IS USELESS BUT FOR TESTING PURPOSES.
 typedef struct {
 
     cmsHTRANSFORM hLab2sRGB;
@@ -759,7 +759,7 @@ cmsInt32Number CheckBaseTypes(void)
 
 // Are we little or big endian?  From Harbison&Steele.
 static
-cmsInt32Number CheckEndianess(void)
+cmsInt32Number CheckEndianness(void)
 {
     cmsInt32Number BigEndian, IsOk;
     union {
@@ -8888,7 +8888,7 @@ int main(int argc, char* argv[])
     PrintSupportedIntents();
     
     Check("Base types", CheckBaseTypes);
-    Check("endianess", CheckEndianess);
+    Check("endianness", CheckEndianness);
     Check("quick floor", CheckQuickFloor);
     Check("quick floor word", CheckQuickFloorWord);
     Check("Fixed point 15.16 representation", CheckFixedPoint15_16);
