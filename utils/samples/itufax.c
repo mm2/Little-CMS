@@ -59,7 +59,7 @@ void Lab2ITU(LPcmsCIELab Lab, WORD Out[3])
 // once for each node. In[] will contain the Lab PCS value to convert to ITUFAX
 // on InputDirection, or the ITUFAX value to convert to Lab in OutputDirection
 // You can change the number of sample points if desired, the algorithm will
-// remain same. 33 points gives good accurancy, but you can reduce to 22 or less
+// remain same. 33 points gives good accuracy, but you can reduce to 22 or less
 // is space is critical
 
 #define GRID_POINTS 33

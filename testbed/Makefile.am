@@ -12,7 +12,7 @@ check_PROGRAMS = testcms
 # CFLAGS = --pedantic -Wall -std=c99 -O2
 
 # The testsuite binary is statically linked. This is necessary as it uses some
-# of the internal funtions that are not necessarily exported by the shared
+# of the internal functions that are not necessarily exported by the shared
 # library.
 testcms_LDADD = $(top_builddir)/src/liblcms2.la 
 testcms_LDFLAGS = -static @LDFLAGS@

@@ -70,7 +70,7 @@ void Die(const char* Reason, ...)
 // maximum requested as a single block and maximum allocated at a given time. Results are printed at the end
 static cmsUInt32Number SingleHit, MaxAllocated=0, TotalMemory=0;
 
-// I'm hidding the size before the block. This is a well-known technique and probably the blocks coming from
+// I'm hiding the size before the block. This is a well-known technique and probably the blocks coming from
 // malloc are built in a way similar to that, but I do on my own to be portable.
 typedef struct {
     cmsUInt32Number KeepSize;
@@ -9074,7 +9074,7 @@ int main(int argc, char* argv[])
     Check("RGB->Lab->RGB with alpha on FLT", ChecksRGB2LabFLT);
     Check("Parametric curve on Rec709", CheckParametricRec709);
     Check("Floating Point sampled curve with non-zero start", CheckFloatSamples);
-    Check("Floating Point segmented curve with short sampled segement", CheckFloatSegments);
+    Check("Floating Point segmented curve with short sampled segment", CheckFloatSegments);
     Check("Read RAW portions", CheckReadRAW);
     Check("Check MetaTag", CheckMeta);
     Check("Null transform on floats", CheckFloatNULLxform);
