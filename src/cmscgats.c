@@ -1505,6 +1505,16 @@ void AllocateDataSet(cmsIT8* it8)
 
     t-> nSamples   = atoi(cmsIT8GetProperty(it8, "NUMBER_OF_FIELDS"));
     t-> nPatches   = atoi(cmsIT8GetProperty(it8, "NUMBER_OF_SETS"));
+	
+#if (UINT_MAX == 4294967295U)
+    const cmsUInt32Number UInt32Max = UINT_MAX;
+#elif (ULONG_MAX == 4294967295U)
+    const cmsUInt32Number UInt32Max = ULONG_MAX;
+#endif
+    if ((((cmsUInt32Number) t->nPatches + 1) != 0) && ((cmsUInt32Number) t->nSamples + 1) > ((UInt32Max / sizeof(char*)) / ((cmsUInt32Number) t->nPatches + 1))) {
+        SynError(it8, "AllocateDataSet: Unable to allocate data array");
+        return;
+    }
 
     t-> Data = (char**)AllocChunk (it8, ((cmsUInt32Number) t->nSamples + 1) * ((cmsUInt32Number) t->nPatches + 1) *sizeof (char*));
     if (t->Data == NULL) {
