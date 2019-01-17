@@ -72,9 +72,14 @@
 #include <stddef.h>
 
 #ifndef CMS_USE_CPP_API
-#   ifdef __cplusplus
+#  ifdef __cplusplus
+#    define CMSREGISTER
 extern "C" {
-#   endif
+#  else
+#    define CMSREGISTER register
+#  endif
+#else
+#  define CMSREGISTER
 #endif
 
 // Version/release
@@ -1247,13 +1252,13 @@ CMSAPI cmsStageSignature CMSEXPORT cmsStageType(const cmsStage* mpe);
 CMSAPI void*             CMSEXPORT cmsStageData(const cmsStage* mpe);
 
 // Sampling
-typedef cmsInt32Number (* cmsSAMPLER16)   (register const cmsUInt16Number In[],
-                                            register cmsUInt16Number Out[],
-                                            register void * Cargo);
+typedef cmsInt32Number (* cmsSAMPLER16)   (CMSREGISTER const cmsUInt16Number In[],
+                                            CMSREGISTER cmsUInt16Number Out[],
+                                            CMSREGISTER void * Cargo);
 
-typedef cmsInt32Number (* cmsSAMPLERFLOAT)(register const cmsFloat32Number In[],
-                                            register cmsFloat32Number Out[],
-                                            register void * Cargo);
+typedef cmsInt32Number (* cmsSAMPLERFLOAT)(CMSREGISTER const cmsFloat32Number In[],
+                                            CMSREGISTER cmsFloat32Number Out[],
+                                            CMSREGISTER void * Cargo);
 
 // Use this flag to prevent changes being written to destination
 #define SAMPLER_INSPECT     0x01000000
