@@ -75,8 +75,6 @@ cmsInt32Number CheckTransformPlugin(void);
 cmsInt32Number CheckMutexPlugin(void);
 
 
-cmsInt32Number CheckOptimizationPluginLeak(void);
-
 // Zoo
 void CheckProfileZOO(void);
 
