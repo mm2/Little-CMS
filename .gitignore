@@ -45,3 +45,13 @@ packages/
 /testbed/.libs/lt-testcms
 /testbed/.libs/testcms
 /testbed/testcms
+Makefile
+libtool
+Build
+DerivedData
+.libs
+/utils/transicc/transicc
+/utils/tificc/tificc
+/utils/psicc/psicc
+/utils/linkicc/linkicc
+/utils/jpgicc/jpgicc
