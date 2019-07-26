@@ -1474,3 +1474,77 @@ cmsInt32Number CheckMutexPlugin(void)
 
     return 1;
 }
+
+
+cmsInt32Number CheckMethodPackDoublesFromFloat(void)
+{
+
+    cmsContext ctx = WatchDogContext(NULL);
+
+    cmsHTRANSFORM xform; 
+    cmsHTRANSFORM l_pFakeProfileLAB;
+
+    cmsFloat64Number l_D_OutputColorArrayBlack[8];
+    cmsFloat64Number l_D_OutputColorArrayBlue[8];
+
+    cmsCIELab LabInBlack; 
+    cmsCIELab LabInBlue;
+
+    cmsUInt16Number Lab_UI16_Black[3];
+    cmsUInt16Number Lab_UI16_Blue[3];
+
+    cmsToneCurve* Linear;
+    cmsHPROFILE OutputCMYKProfile;
+    int i;
+    cmsUInt32Number l_UI32_OutputFormat;
+
+
+    cmsPluginTHR(ctx, &FullTransformPluginSample);
+
+
+    l_pFakeProfileLAB = cmsCreateLab2ProfileTHR(ctx, NULL);
+
+    if (l_pFakeProfileLAB == NULL)
+        return 0;
+
+    OutputCMYKProfile = cmsOpenProfileFromFileTHR(ctx, "TestCLT.icc", "r");
+
+    if (OutputCMYKProfile == NULL)
+        return 0;
+
+    l_UI32_OutputFormat = 0;
+    l_UI32_OutputFormat |= COLORSPACE_SH(PT_CMYK);
+    l_UI32_OutputFormat |= PLANAR_SH(1);
+    l_UI32_OutputFormat |= CHANNELS_SH(4);
+    l_UI32_OutputFormat |= BYTES_SH(0);
+    l_UI32_OutputFormat |= FLOAT_SH(1);
+
+
+    xform = cmsCreateTransformTHR(ctx, l_pFakeProfileLAB, TYPE_Lab_DBL, OutputCMYKProfile, l_UI32_OutputFormat, INTENT_PERCEPTUAL, 0);
+    cmsCloseProfile(OutputCMYKProfile);
+    cmsCloseProfile(l_pFakeProfileLAB);
+
+    Lab_UI16_Black[0] = 0;
+    Lab_UI16_Black[1] = 32768;
+    Lab_UI16_Black[2] = 32768;
+
+    Lab_UI16_Blue[0] = 0;
+    Lab_UI16_Blue[1] = 8192;
+    Lab_UI16_Blue[2] = 8192;
+
+    cmsLabEncoded2Float(&LabInBlack, Lab_UI16_Black);
+    cmsLabEncoded2Float(&LabInBlue, Lab_UI16_Blue);
+
+    memset(l_D_OutputColorArrayBlack, 0, sizeof(l_D_OutputColorArrayBlack));
+    memset(l_D_OutputColorArrayBlue, 0, sizeof(l_D_OutputColorArrayBlue));
+
+    cmsDoTransform(xform, &LabInBlack, l_D_OutputColorArrayBlack, 1);
+    cmsDoTransform(xform, &LabInBlue, l_D_OutputColorArrayBlue, 1);
+
+
+    cmsDeleteTransform(xform);
+    cmsDeleteContext(ctx);
+    
+    return 1;
+}
+

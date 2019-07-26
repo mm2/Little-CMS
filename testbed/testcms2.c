@@ -8885,6 +8885,8 @@ int main(int argc, char* argv[])
     cmsSetLogErrorHandler(FatalErrorQuit);
     printf("done.\n");
     
+    CheckMethodPackDoublesFromFloat();
+
     PrintSupportedIntents();
     
     Check("Base types", CheckBaseTypes);

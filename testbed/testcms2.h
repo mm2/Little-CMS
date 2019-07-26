@@ -73,6 +73,7 @@ cmsInt32Number CheckOptimizationPlugin(void);
 cmsInt32Number CheckIntentPlugin(void);
 cmsInt32Number CheckTransformPlugin(void);
 cmsInt32Number CheckMutexPlugin(void);
+cmsInt32Number CheckMethodPackDoublesFromFloat(void);
 
 
 // Zoo
