@@ -1572,7 +1572,7 @@ void WriteStr(SAVESTREAM* f, const char *str)
         str = " ";
 
     // Length to write
-    len = (cmsUInt32Number) strlen(str);
+    len = (cmsUInt32Number) strlen(str) + 1;
     f ->Used += len;
 
 
