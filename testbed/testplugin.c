@@ -1493,9 +1493,7 @@ cmsInt32Number CheckMethodPackDoublesFromFloat(void)
     cmsUInt16Number Lab_UI16_Black[3];
     cmsUInt16Number Lab_UI16_Blue[3];
 
-    cmsToneCurve* Linear;
     cmsHPROFILE OutputCMYKProfile;
-    int i;
     cmsUInt32Number l_UI32_OutputFormat;
 
 
