@@ -30,10 +30,12 @@
 #ifdef _MSC_VER
 #    define _CRT_SECURE_NO_WARNINGS 1
 #     include "crtdbg.h"
-#     include <io.h>
 #endif
 
 #include "lcms2_internal.h"
+#ifdef CMS_IS_WINDOWS_
+#     include <io.h>
+#endif
 
 #define cmsmin(a, b) (((a) < (b)) ? (a) : (b))
 
