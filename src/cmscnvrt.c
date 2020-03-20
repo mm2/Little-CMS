@@ -869,7 +869,7 @@ int BlackPreservingSampler(CMSREGISTER const cmsUInt16Number In[], CMSREGISTER c
             Out[i] = _cmsQuickSaturateWord(Outf[i] * 65535.0);
 
     // Maybe K is already ok (mostly on K=0)
-    if ( fabs(Outf[3] - LabK[3]) < (3.0 / 65535.0) ) {
+    if ( fabsf(Outf[3] - LabK[3]) < (3.0 / 65535.0) ) {
         return TRUE;
     }
 
