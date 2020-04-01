@@ -68,6 +68,7 @@ cmsDetectTAC                             =    cmsDetectTAC
 cmsDesaturateLab                         =    cmsDesaturateLab
 cmsDoTransform                           =    cmsDoTransform
 cmsDoTransformStride                     =    cmsDoTransformStride
+cmsDoTransformLineStride                 =    cmsDoTransformLineStride
 _cmsDoubleTo15Fixed16                    =    _cmsDoubleTo15Fixed16
 _cmsDoubleTo8Fixed8                      =    _cmsDoubleTo8Fixed8
 _cmsDupMem                               =    _cmsDupMem
