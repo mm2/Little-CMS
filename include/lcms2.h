@@ -61,7 +61,7 @@
 // Uncomment this for special windows mutex initialization (see lcms2_internal.h)
 // #define CMS_RELY_ON_WINDOWS_STATIC_MUTEX_INIT
 
-// Uncomment this to remove the "CMSREGISTER" storage class
+// Uncomment this to remove the "register" storage class
 // #define CMS_NO_REGISTER_KEYWORD 1
 
 // ********** End of configuration toggles ******************************

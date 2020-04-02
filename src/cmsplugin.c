@@ -770,6 +770,7 @@ cmsContext CMSEXPORT cmsCreateContext(void* Plugin, void* UserData)
         
     // See the comments regarding locking in lcms2_internal.h
     // for an explanation of why we need the following code.
+#ifndef CMS_NO_PTHREADS
 #ifdef CMS_IS_WINDOWS_
 #ifndef CMS_RELY_ON_WINDOWS_STATIC_MUTEX_INIT
     {
@@ -789,6 +790,7 @@ cmsContext CMSEXPORT cmsCreateContext(void* Plugin, void* UserData)
         if (*mutex == NULL || !ReleaseMutex(*mutex))
             return NULL;
     }
+#endif
 #endif
 #endif
 
