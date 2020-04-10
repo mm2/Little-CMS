@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2014 Marti Maria Saguer
+//  Copyright (c) 1998-2020 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -31,7 +31,6 @@
 
 // On Visual Studio, use debug CRT
 #ifdef _MSC_VER
-#    define _CRT_SECURE_NO_WARNINGS 1
 #    include "crtdbg.h"
 #endif
 
