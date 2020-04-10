@@ -27,12 +27,6 @@
 
 #include "testcms2.h"
 
-// On Visual Studio, use debug CRT
-#ifdef _MSC_VER
-#     include "crtdbg.h"
-#     include <io.h>
-#endif
-
 // A single check. Returns 1 if success, 0 if failed
 typedef cmsInt32Number (*TestFn)(void);
 
