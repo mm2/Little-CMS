@@ -14,6 +14,6 @@ bin_PROGRAMS = linkicc
 linkicc_LDADD = $(top_builddir)/src/liblcms2.la 
 linkicc_LDFLAGS = @LDFLAGS@
 linkicc_SOURCES = linkicc.c ../common/xgetopt.c ../common/vprf.c ../common/utils.h
-linkicc_MANS = linkicc.1
+man_MANS = linkicc.1
 
 EXTRA_DIST = $(man_MANS)
