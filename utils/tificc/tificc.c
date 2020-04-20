@@ -104,7 +104,7 @@ void Warning(const char *frm, ...)
 
 // Out of mememory is a fatal error
 static
-void OutOfMem(cmsUInt32Number size)
+void OutOfMem(cmsInt64Number size)
 {
     FatalError("Out of memory on allocating %d bytes.", size);  
 }
