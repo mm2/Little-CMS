@@ -7,7 +7,7 @@ AC_PREREQ(2.60)
 #
 # Set the package name and version
 #
-AC_INIT(lcms2,2.9)
+AC_INIT(lcms2,2.10)
 
 # Specify directory where m4 macros may be found.
 AC_CONFIG_MACRO_DIR([m4])
@@ -34,7 +34,7 @@ AC_CONFIG_MACRO_DIR([m4])
 #     then set age to 0.
 #
 LIBRARY_CURRENT=2
-LIBRARY_REVISION=8
+LIBRARY_REVISION=10
 LIBRARY_AGE=0
 
 AC_SUBST(LIBRARY_CURRENT)dnl
