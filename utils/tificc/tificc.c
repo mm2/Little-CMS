@@ -385,16 +385,20 @@ int TileBasedXform(cmsHTRANSFORM hXForm, TIFF* in, TIFF* out, int nPlanes)
     int PixelCount, j;
 
 
+    // Check for bad tiffs
+    if (BufSizeIn > INT_MAX || BufSizeOut > INT_MAX)
+        FatalError("Probably corrupted TIFF, tile too big.");
+
     TIFFGetFieldDefaulted(in, TIFFTAG_TILEWIDTH,  &tw);
     TIFFGetFieldDefaulted(in, TIFFTAG_TILELENGTH, &tl);
 
     PixelCount = (int) tw * tl;
 
     BufferIn = (unsigned char *) _TIFFmalloc(BufSizeIn * nPlanes);
-    if (!BufferIn) OutOfMem(BufSizeIn * nPlanes);
+    if (!BufferIn) OutOfMem((cmsUInt32Number) BufSizeIn * nPlanes);
 
     BufferOut = (unsigned char *) _TIFFmalloc(BufSizeOut * nPlanes);
-    if (!BufferOut) OutOfMem(BufSizeOut * nPlanes);
+    if (!BufferOut) OutOfMem((cmsUInt32Number) BufSizeOut * nPlanes);
 
 
     for (i = 0; i < TileCount; i++) {
@@ -443,6 +447,10 @@ int StripBasedXform(cmsHTRANSFORM hXForm, TIFF* in, TIFF* out, int nPlanes)
     int j;
     int PixelCount;
 
+    // Check for bad tiffs
+    if (BufSizeIn > INT_MAX || BufSizeOut > INT_MAX)
+        FatalError("Probably corrupted TIFF, strip too big.");
+
     TIFFGetFieldDefaulted(in, TIFFTAG_IMAGEWIDTH,  &sw);
     TIFFGetFieldDefaulted(in, TIFFTAG_ROWSPERSTRIP, &sl);
     TIFFGetFieldDefaulted(in, TIFFTAG_IMAGELENGTH, &iml);
@@ -452,10 +460,10 @@ int StripBasedXform(cmsHTRANSFORM hXForm, TIFF* in, TIFF* out, int nPlanes)
         sl = iml;   // One strip for whole image
 
     BufferIn = (unsigned char *) _TIFFmalloc(BufSizeIn * nPlanes);
-    if (!BufferIn) OutOfMem(BufSizeIn * nPlanes);
+    if (!BufferIn) OutOfMem((cmsUInt32Number) BufSizeIn * nPlanes);
 
     BufferOut = (unsigned char *) _TIFFmalloc(BufSizeOut * nPlanes);
-    if (!BufferOut) OutOfMem(BufSizeOut * nPlanes);
+    if (!BufferOut) OutOfMem((cmsUInt32Number) BufSizeOut * nPlanes);
 
 
     for (i = 0; i < StripCount; i++) {
@@ -667,7 +675,7 @@ void DoEmbedProfile(TIFF* Out, const char* ProfileFile)
     size = cmsfilelength(f);
     if (size < 0) return;
 
-    EmbedBuffer = (cmsUInt8Number*) malloc(size + 1);
+    EmbedBuffer = (cmsUInt8Number*) malloc((size_t) size + 1);
     if (EmbedBuffer == NULL) { 
         OutOfMem(size+1);
         return;
@@ -675,7 +683,7 @@ void DoEmbedProfile(TIFF* Out, const char* ProfileFile)
 
     EmbedLen = (cmsUInt32Number) fread(EmbedBuffer, 1, (size_t) size, f);
 
-    if (EmbedLen != size) 
+    if (EmbedLen != (cmsUInt32Number) size) 
         FatalError("Cannot read %ld bytes to %s", size, ProfileFile);
 
     fclose(f);
