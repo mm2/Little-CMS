@@ -28,6 +28,7 @@
 #include "lcms2_plugin.h"
 #include "tiffio.h"
 #include "utils.h"
+#include <inttypes.h>
 
 
 // Flags
@@ -104,9 +105,9 @@ void Warning(const char *frm, ...)
 
 // Out of mememory is a fatal error
 static
-void OutOfMem(cmsInt64Number size)
+void OutOfMem(ptrdiff_t size)
 {
-    FatalError("Out of memory on allocating %d bytes.", size);  
+    FatalError("Out of memory on allocating " PRIdPTR " bytes.", size);  
 }
 
 
@@ -667,7 +668,7 @@ void DoEmbedProfile(TIFF* Out, const char* ProfileFile)
     size = cmsfilelength(f);
     if (size < 0) return;
 
-    EmbedBuffer = (cmsUInt8Number*) malloc(size + 1);
+    EmbedBuffer = (cmsUInt8Number*) malloc((size_t) size + 1);
     if (EmbedBuffer == NULL) { 
         OutOfMem(size+1);
         return;
