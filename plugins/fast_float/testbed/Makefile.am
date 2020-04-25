@@ -14,7 +14,7 @@ fast_float_testbed_LDADD = $(top_builddir)/src/liblcms2.la $(srcdir)/../src/libl
 fast_float_testbed_LDFLAGS = @LDFLAGS@
 fast_float_testbed_SOURCES = fast_float_testbed.c 
 
-EXTRA_DIST = AdobeRGB1998.icc test1.icc test2.icc test3.icc test5.icc 
+EXTRA_DIST = test0.icc test1.icc test2.icc test3.icc test5.icc 
 
 check:
 	./fast_float_testbed
