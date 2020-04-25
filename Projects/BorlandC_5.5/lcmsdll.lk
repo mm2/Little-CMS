@@ -28,4 +28,4 @@ cmsxform.obj
 ..\..\bin\lcms2.dll
 
 cw32mt.lib import32.lib
-..\..\src\lcms2.def
+lcms2.def

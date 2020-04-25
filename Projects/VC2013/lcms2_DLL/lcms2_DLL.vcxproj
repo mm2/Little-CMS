@@ -116,7 +116,6 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <ModuleDefinitionFile>..\..\..\src\lcms2.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -165,7 +164,6 @@
       <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
-      <ModuleDefinitionFile>..\..\..\src\lcms2.def</ModuleDefinitionFile>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -232,11 +230,6 @@
     <ClCompile Include="..\..\..\src\cmsvirt.c" />
     <ClCompile Include="..\..\..\src\cmswtpnt.c" />
     <ClCompile Include="..\..\..\src\cmsxform.c" />
-  </ItemGroup>
-  <ItemGroup>
-    <CustomBuild Include="..\..\..\src\lcms2.def">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\lcms2_internal.h" />
