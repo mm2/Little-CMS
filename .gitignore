@@ -47,7 +47,6 @@ packages/
 /testbed/.libs/testcms
 /testbed/testcms
 #Xcode
-Makefile
 libtool
 Build
 DerivedData
