@@ -185,11 +185,6 @@ matrix:
 
 
 before_install:
-# avoid issues with outdated Homebrew installation on Mac OSX by updating it
-# before anything else
-# TODO: remove "brew update" line after 2017-11-15, see https://blog.travis-ci.com/2017-10-16-a-new-default-os-x-image-is-coming and
-# https://github.com/travis-ci/travis-ci/issues/8552
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
     - eval "${MATRIX_EVAL}"
 
-script: autoreconf -V && autoreconf --force && ./configure && cat config.log && make && make check
+script: ./configure && cat config.log && make && make check
