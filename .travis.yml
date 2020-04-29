@@ -11,14 +11,17 @@ matrix:
 # OSX and pure GCCs
 # https://docs.travis-ci.com/user/languages/c/#GCC-on-OS-X
     - os: osx
+      osx_image: xcode8
       env:
         - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
 
     - os: osx
+      osx_image: xcode8
       env:
         - MATRIX_EVAL="brew install gcc5 && CC=gcc-5 && CXX=g++-5"
 
     - os: osx
+      osx_image: xcode8
       env:
         - MATRIX_EVAL="brew install gcc6 && CC=gcc-6 && CXX=g++-6"
 
