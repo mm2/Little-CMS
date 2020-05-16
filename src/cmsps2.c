@@ -459,12 +459,28 @@ void EmitLab2XYZ(cmsIOHANDLER* m)
     _cmsIOPrintf(m, "]\n");
 }
 
+static
+void EmitSafeGuardBegin(cmsIOHANDLER* m, char* name)
+{
+    _cmsIOPrintf(m, "%%LCMS2: Save previous definition of %s on the operand stack\n", name);
+    _cmsIOPrintf(m, "currentdict /%s known { /%s load } { null } ifelse\n", name, name);
+}
 
+static
+void EmitSafeGuardEnd(cmsIOHANDLER* m, char* name, int depth)
+{
+    _cmsIOPrintf(m, "%%LCMS2: Restore previous definition of %s\n", name);
+    if (depth > 1) {
+        // cycle topmost items on the stack to bring the previous definition to the front
+        _cmsIOPrintf(m, "%d -1 roll ", depth);
+    }
+    _cmsIOPrintf(m, "dup null eq { pop currentdict /%s undef } { /%s exch def } ifelse\n", name, name);
+}
 
 // Outputs a table of words. It does use 16 bits
 
 static
-void Emit1Gamma(cmsIOHANDLER* m, cmsToneCurve* Table)
+void Emit1Gamma(cmsIOHANDLER* m, cmsToneCurve* Table, char* name)
 {
     cmsUInt32Number i;
     cmsFloat64Number gamma;
@@ -479,28 +495,33 @@ void Emit1Gamma(cmsIOHANDLER* m, cmsToneCurve* Table)
     // Check if is really an exponential. If so, emit "exp"
     gamma = cmsEstimateGamma(Table, 0.001);
      if (gamma > 0) {
-            _cmsIOPrintf(m, "{ %g exp } bind ", gamma);
+            _cmsIOPrintf(m, "/%s { %g exp } bind def\n", name, gamma);
             return;
      }
 
-    _cmsIOPrintf(m, "{ ");
+    EmitSafeGuardBegin(m, "lcms2gammatable");
+    _cmsIOPrintf(m, "/lcms2gammatable [");
+
+    for (i=0; i < Table->nEntries; i++) {
+	if (i % 10 == 0)
+            _cmsIOPrintf(m, "\n  ");
+        _cmsIOPrintf(m, "%d ", Table->Table16[i]);
+    }
+
+    _cmsIOPrintf(m, "] def\n");
+
+
+    // Emit interpolation code
+
+    // PostScript code                      Stack
+    // ===============                      ========================
+                                            	  // v
+    _cmsIOPrintf(m, "/%s {\n  ", name);
 
     // Bounds check
     EmitRangeCheck(m);
 
-    // Emit intepolation code
-
-    // PostScript code                      Stack
-    // ===============                      ========================
-                                            // v
-    _cmsIOPrintf(m, " [");
-
-    for (i=0; i < Table->nEntries; i++) {
-        _cmsIOPrintf(m, "%d ", Table->Table16[i]);
-    }
-
-    _cmsIOPrintf(m, "] ");                        // v tab
-
+    _cmsIOPrintf(m, "\n  //lcms2gammatable ");    // v tab
     _cmsIOPrintf(m, "dup ");                      // v tab tab
     _cmsIOPrintf(m, "length 1 sub ");             // v tab dom
     _cmsIOPrintf(m, "3 -1 roll ");                // tab dom v
@@ -512,7 +533,7 @@ void Emit1Gamma(cmsIOHANDLER* m, cmsToneCurve* Table)
     _cmsIOPrintf(m, "ceiling cvi ");              // tab val2 cell0 cell1
     _cmsIOPrintf(m, "3 index ");                  // tab val2 cell0 cell1 tab
     _cmsIOPrintf(m, "exch ");                     // tab val2 cell0 tab cell1
-    _cmsIOPrintf(m, "get ");                      // tab val2 cell0 y1
+    _cmsIOPrintf(m, "get\n  ");                   // tab val2 cell0 y1
     _cmsIOPrintf(m, "4 -1 roll ");                // val2 cell0 y1 tab
     _cmsIOPrintf(m, "3 -1 roll ");                // val2 y1 tab cell0
     _cmsIOPrintf(m, "get ");                      // val2 y1 y0
@@ -525,9 +546,11 @@ void Emit1Gamma(cmsIOHANDLER* m, cmsToneCurve* Table)
     _cmsIOPrintf(m, "sub ");                      // y0 (y1-y0) rest
     _cmsIOPrintf(m, "mul ");                      // y0 t1
     _cmsIOPrintf(m, "add ");                      // y
-    _cmsIOPrintf(m, "65535 div ");                // result
+    _cmsIOPrintf(m, "65535 div\n");               // result
 
-    _cmsIOPrintf(m, " } bind ");
+    _cmsIOPrintf(m, "} bind def\n");
+
+    EmitSafeGuardEnd(m, "lcms2gammatable", 1);
 }
 
 
@@ -543,9 +566,10 @@ cmsBool GammaTableEquals(cmsUInt16Number* g1, cmsUInt16Number* g2, cmsUInt32Numb
 // Does write a set of gamma curves
 
 static
-void EmitNGamma(cmsIOHANDLER* m, cmsUInt32Number n, cmsToneCurve* g[])
+void EmitNGamma(cmsIOHANDLER* m, cmsUInt32Number n, cmsToneCurve* g[], char* nameprefix)
 {
     cmsUInt32Number i;
+    static char buffer[2048];
 
     for( i=0; i < n; i++ )
     {
@@ -553,10 +577,12 @@ void EmitNGamma(cmsIOHANDLER* m, cmsUInt32Number n, cmsToneCurve* g[])
 
         if (i > 0 && GammaTableEquals(g[i-1]->Table16, g[i]->Table16, g[i]->nEntries)) {
 
-            _cmsIOPrintf(m, "dup ");
+            _cmsIOPrintf(m, "/%s%d /%s%d load def\n", nameprefix, i, nameprefix, i-1);
         }
         else {
-            Emit1Gamma(m, g[i]);
+            snprintf(buffer, sizeof(buffer), "%s%d", nameprefix, i);
+	    buffer[sizeof(buffer)-1] = '\0';
+            Emit1Gamma(m, g[i], buffer);
         }
     }
 
@@ -708,11 +734,11 @@ int EmitCIEBasedA(cmsIOHANDLER* m, cmsToneCurve* Curve, cmsCIEXYZ* BlackPoint)
     _cmsIOPrintf(m, "[ /CIEBasedA\n");
     _cmsIOPrintf(m, "  <<\n");
 
-    _cmsIOPrintf(m, "/DecodeA ");
+    EmitSafeGuardBegin(m, "lcms2gammaproc");
+    Emit1Gamma(m, Curve, "lcms2gammaproc");
 
-    Emit1Gamma(m, Curve);
-
-    _cmsIOPrintf(m, " \n");
+    _cmsIOPrintf(m, "/DecodeA /lcms2gammaproc load\n");
+    EmitSafeGuardEnd(m, "lcms2gammaproc", 3);
 
     _cmsIOPrintf(m, "/MatrixA [ 0.9642 1.0000 0.8249 ]\n");
     _cmsIOPrintf(m, "/RangeLMN [ 0.0 0.9642 0.0 1.0000 0.0 0.8249 ]\n");
@@ -736,11 +762,19 @@ int EmitCIEBasedABC(cmsIOHANDLER* m, cmsFloat64Number* Matrix, cmsToneCurve** Cu
 
     _cmsIOPrintf(m, "[ /CIEBasedABC\n");
     _cmsIOPrintf(m, "<<\n");
-    _cmsIOPrintf(m, "/DecodeABC [ ");
 
-    EmitNGamma(m, 3, CurveSet);
-
+    EmitSafeGuardBegin(m, "lcms2gammaproc0");
+    EmitSafeGuardBegin(m, "lcms2gammaproc1");
+    EmitSafeGuardBegin(m, "lcms2gammaproc2");
+    EmitNGamma(m, 3, CurveSet, "lcms2gammaproc");
+    _cmsIOPrintf(m, "/DecodeABC [\n");
+    _cmsIOPrintf(m, "   /lcms2gammaproc0 load\n");
+    _cmsIOPrintf(m, "   /lcms2gammaproc1 load\n");
+    _cmsIOPrintf(m, "   /lcms2gammaproc2 load\n");
     _cmsIOPrintf(m, "]\n");
+    EmitSafeGuardEnd(m, "lcms2gammaproc2", 3);
+    EmitSafeGuardEnd(m, "lcms2gammaproc1", 3);
+    EmitSafeGuardEnd(m, "lcms2gammaproc0", 3);
 
     _cmsIOPrintf(m, "/MatrixABC [ " );
 
@@ -774,6 +808,8 @@ int EmitCIEBasedDEF(cmsIOHANDLER* m, cmsPipeline* Pipeline, cmsUInt32Number Inte
     const char* PostMaj;
     const char* PreMin, *PostMin;
     cmsStage* mpe;
+    int i, numchans;
+    static char buffer[2048];
 
     mpe = Pipeline ->Elements;
 
@@ -801,9 +837,25 @@ int EmitCIEBasedDEF(cmsIOHANDLER* m, cmsPipeline* Pipeline, cmsUInt32Number Inte
 
     if (cmsStageType(mpe) == cmsSigCurveSetElemType) {
 
-        _cmsIOPrintf(m, "/DecodeDEF [ ");
-        EmitNGamma(m, cmsStageOutputChannels(mpe), _cmsStageGetPtrToCurveSet(mpe));
+        numchans = cmsStageOutputChannels(mpe);
+        for (i=0; i < numchans; ++i) {
+            snprintf(buffer, sizeof(buffer), "lcms2gammaproc%d", i);
+	    buffer[sizeof(buffer)-1] = '\0';
+            EmitSafeGuardBegin(m, buffer);
+	}
+        EmitNGamma(m, cmsStageOutputChannels(mpe), _cmsStageGetPtrToCurveSet(mpe), "lcms2gammaproc");
+        _cmsIOPrintf(m, "/DecodeDEF [\n");
+        for (i=0; i < numchans; ++i) {
+            snprintf(buffer, sizeof(buffer), "  /lcms2gammaproc%d load\n", i);
+	    buffer[sizeof(buffer)-1] = '\0';
+            _cmsIOPrintf(m, buffer);
+	}
         _cmsIOPrintf(m, "]\n");
+        for (i=numchans-1; i >= 0; --i) {
+            snprintf(buffer, sizeof(buffer), "lcms2gammaproc%d", i);
+	    buffer[sizeof(buffer)-1] = '\0';
+            EmitSafeGuardEnd(m, buffer, 3);
+	}
 
         mpe = mpe ->Next;
     }
