@@ -544,7 +544,7 @@ void CheckAccuracy16Bits(void)
 static
 cmsBool ValidFloat(cmsFloat32Number a, cmsFloat32Number b)
 {
-       return fabs(a-b) < EPSILON_FLOAT_TESTS;
+       return fabsf(a-b) < EPSILON_FLOAT_TESTS;
 }
 
 // Do an in-depth test by checking all RGB cube of 8 bits, going from profilein to profileout. 
@@ -783,6 +783,41 @@ void TryAllValuesFloatVs16(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileO
        cmsDeleteTransform(xformPlugin);
 }
 
+
+// Check change format feature
+static
+void CheckChangeFormat(void)
+{
+    cmsHPROFILE hsRGB, hLab;
+    cmsHTRANSFORM xform;
+    cmsUInt8Number rgb8[3]  = { 10, 120, 40 };
+    cmsUInt16Number rgb16[3] = { 10* 257, 120*257, 40*257 };
+    cmsUInt16Number lab16_1[3], lab16_2[3];
+
+    printf("Checking change format feature...");
+
+    hsRGB = cmsCreate_sRGBProfile();
+    hLab = cmsCreateLab4Profile(NULL);
+
+
+    xform = cmsCreateTransform(hsRGB, TYPE_RGB_16, hLab, TYPE_Lab_16, INTENT_PERCEPTUAL, 0);
+
+    cmsCloseProfile(hsRGB);
+    cmsCloseProfile(hLab);
+
+    cmsDoTransform(xform, rgb16, lab16_1, 1);
+
+    cmsChangeBuffersFormat(xform, TYPE_RGB_8, TYPE_Lab_16);
+
+    cmsDoTransform(xform, rgb8, lab16_2, 1);
+    cmsDeleteTransform(xform);
+
+    if (memcmp(lab16_1, lab16_2, sizeof(lab16_1)) != 0)
+        Fail("Change format failed!");
+
+    printf("Ok\n");
+
+}
 
 // Convert some known values
 static
@@ -1666,6 +1701,9 @@ int main()
        // 16 bits functionality
        CheckAccuracy16Bits();
 
+       // Change format
+       CheckChangeFormat();
+
        // Floating point functionality
        CheckConversionFloat();  
        printf("All floating point tests passed OK\n");
@@ -1681,7 +1719,7 @@ int main()
 
        // Test gray performance
        printf("\n\n");
-       printf("FLOAT GRAY conversions performance.\n");
+       printf("F L O A T   G R A Y   conversions performance.\n");
        printf("====================================================================\n");
        TestGrayTransformPerformance();
        TestGrayTransformPerformance1();

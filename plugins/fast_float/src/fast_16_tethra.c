@@ -71,7 +71,7 @@ void Performance16free(cmsContext ContextID, void* ptr)
 
 #define TO_OUTPUT(d,v) do { if (out16) TO_OUTPUT_16(d,v); else TO_OUTPUT_8(d,v); } while(0)
 
-#define FROM_INPUT(v) in16 ? (*((const cmsUInt16Number*)v)) : *((const cmsUInt8Number*)v);
+#define FROM_INPUT(v) (in16 ? (*((const cmsUInt16Number*)(v))) : FROM_8_TO_16(*((const cmsUInt8Number*)(v))))
 
 static
 void PerformanceEval16(struct _cmstransform_struct *CMMcargo,
@@ -367,7 +367,7 @@ cmsBool Optimize16BitRGBTransform(_cmsTransformFn* TransformFn,
     *FreeDataFn = Performance16free;
     *InputFormat  |= 0x02000000;
     *OutputFormat |= 0x02000000;
-    *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
+    *dwFlags |= cmsFLAGS_CAN_CHANGE_FORMATTER;
 
     return TRUE;
 }
