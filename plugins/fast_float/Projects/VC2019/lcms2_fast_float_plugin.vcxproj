@@ -43,6 +43,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\COPYING.GPL3" />
+    <None Include="..\..\doc\LittleCMS fast float extensions 1.0.pdf" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{AD9FF79B-CF6E-4971-A7CF-DAA47D636676}</ProjectGuid>
