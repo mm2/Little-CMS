@@ -295,21 +295,7 @@ cmsUInt8Number Word2Byte(cmsUInt16Number w)
 }
 
 
-// Convert to byte (using ICC2 notation)
-/*
-static
-cmsUInt8Number L2Byte(cmsUInt16Number w)
-{
-    int ww = w + 0x0080;
-
-    if (ww > 0xFFFF) return 0xFF;
-
-    return (cmsUInt8Number) ((cmsUInt16Number) (ww >> 8) & 0xFF);
-}
-*/
-
 // Write a cooked byte
-
 static
 void WriteByte(cmsIOHANDLER* m, cmsUInt8Number b)
 {
@@ -326,7 +312,8 @@ void WriteByte(cmsIOHANDLER* m, cmsUInt8Number b)
 // ----------------------------------------------------------------- PostScript generation
 
 
-// Removes offending Carriage returns
+// Removes offending carriage returns
+
 static
 char* RemoveCR(const char* txt)
 {
@@ -424,21 +411,6 @@ void EmitIntent(cmsIOHANDLER* m, cmsUInt32Number RenderingIntent)
 //        = Yn*( L* / 116) / 7.787      if (L*) < 6 / 29
 //
 
-/*
-static
-void EmitL2Y(cmsIOHANDLER* m)
-{
-    _cmsIOPrintf(m,
-            "{ "
-                "100 mul 16 add 116 div "               // (L * 100 + 16) / 116
-                 "dup 6 29 div ge "                     // >= 6 / 29 ?
-                 "{ dup dup mul mul } "                 // yes, ^3 and done
-                 "{ 4 29 div sub 108 841 div mul } "    // no, slope limiting
-            "ifelse } bind ");
-}
-*/
-
-
 // Lab -> XYZ, see the discussion above
 
 static
@@ -513,8 +485,8 @@ void Emit1Gamma(cmsIOHANDLER* m, cmsToneCurve* Table, char* name)
 
     // Emit interpolation code
 
-    // PostScript code                      Stack
-    // ===============                      ========================
+    // PostScript code                            Stack
+    // ===============                            ========================
                                             	  // v
     _cmsIOPrintf(m, "/%s {\n  ", name);
 
@@ -587,9 +559,6 @@ void EmitNGamma(cmsIOHANDLER* m, cmsUInt32Number n, cmsToneCurve* g[], char* nam
     }
 
 }
-
-
-
 
 
 // Following code dumps a LUT onto memory stream
@@ -688,11 +657,11 @@ int OutputValueSampler(CMSREGISTER const cmsUInt16Number In[], CMSREGISTER cmsUI
 
 static
 void WriteCLUT(cmsIOHANDLER* m, cmsStage* mpe, const char* PreMaj,
-                                             const char* PostMaj,
-                                             const char* PreMin,
-                                             const char* PostMin,
-                                             int FixWhite,
-                                             cmsColorSpaceSignature ColorSpace)
+                                               const char* PostMaj,
+                                               const char* PreMin,
+                                               const char* PostMin,
+                                               int FixWhite,
+                                               cmsColorSpaceSignature ColorSpace)
 {
     cmsUInt32Number i;
     cmsPsSamplerCargo sc;
@@ -806,30 +775,31 @@ int EmitCIEBasedDEF(cmsIOHANDLER* m, cmsPipeline* Pipeline, cmsUInt32Number Inte
 {
     const char* PreMaj;
     const char* PostMaj;
-    const char* PreMin, *PostMin;
+    const char* PreMin, * PostMin;
     cmsStage* mpe;
     int i, numchans;
     static char buffer[2048];
 
-    mpe = Pipeline ->Elements;
+    mpe = Pipeline->Elements;
 
     switch (cmsStageInputChannels(mpe)) {
     case 3:
+        _cmsIOPrintf(m, "[ /CIEBasedDEF\n");
+        PreMaj = "<";
+        PostMaj = ">\n";
+        PreMin = PostMin = "";
+        break;
 
-            _cmsIOPrintf(m, "[ /CIEBasedDEF\n");
-            PreMaj ="<";
-            PostMaj= ">\n";
-            PreMin = PostMin = "";
-            break;
     case 4:
-            _cmsIOPrintf(m, "[ /CIEBasedDEFG\n");
-            PreMaj = "[";
-            PostMaj = "]\n";
-            PreMin = "<";
-            PostMin = ">\n";
-            break;
+        _cmsIOPrintf(m, "[ /CIEBasedDEFG\n");
+        PreMaj = "[";
+        PostMaj = "]\n";
+        PreMin = "<";
+        PostMin = ">\n";
+        break;
+
     default:
-            return 0;
+        return 0;
 
     }
 
@@ -838,33 +808,33 @@ int EmitCIEBasedDEF(cmsIOHANDLER* m, cmsPipeline* Pipeline, cmsUInt32Number Inte
     if (cmsStageType(mpe) == cmsSigCurveSetElemType) {
 
         numchans = cmsStageOutputChannels(mpe);
-        for (i=0; i < numchans; ++i) {
+        for (i = 0; i < numchans; ++i) {
             snprintf(buffer, sizeof(buffer), "lcms2gammaproc%d", i);
-	    buffer[sizeof(buffer)-1] = '\0';
+            buffer[sizeof(buffer) - 1] = '\0';
             EmitSafeGuardBegin(m, buffer);
-	}
+        }
         EmitNGamma(m, cmsStageOutputChannels(mpe), _cmsStageGetPtrToCurveSet(mpe), "lcms2gammaproc");
         _cmsIOPrintf(m, "/DecodeDEF [\n");
-        for (i=0; i < numchans; ++i) {
+        for (i = 0; i < numchans; ++i) {
             snprintf(buffer, sizeof(buffer), "  /lcms2gammaproc%d load\n", i);
-	    buffer[sizeof(buffer)-1] = '\0';
+            buffer[sizeof(buffer) - 1] = '\0';
             _cmsIOPrintf(m, buffer);
-	}
+        }
         _cmsIOPrintf(m, "]\n");
-        for (i=numchans-1; i >= 0; --i) {
+        for (i = numchans - 1; i >= 0; --i) {
             snprintf(buffer, sizeof(buffer), "lcms2gammaproc%d", i);
-	    buffer[sizeof(buffer)-1] = '\0';
+            buffer[sizeof(buffer) - 1] = '\0';
             EmitSafeGuardEnd(m, buffer, 3);
-	}
+        }
 
-        mpe = mpe ->Next;
+        mpe = mpe->Next;
     }
 
     if (cmsStageType(mpe) == cmsSigCLutElemType) {
 
-            _cmsIOPrintf(m, "/Table ");
-            WriteCLUT(m, mpe, PreMaj, PostMaj, PreMin, PostMin, FALSE, (cmsColorSpaceSignature) 0);
-            _cmsIOPrintf(m, "]\n");
+        _cmsIOPrintf(m, "/Table ");
+        WriteCLUT(m, mpe, PreMaj, PostMaj, PreMin, PostMin, FALSE, (cmsColorSpaceSignature)0);
+        _cmsIOPrintf(m, "]\n");
     }
 
     EmitLab2XYZ(m);
@@ -975,7 +945,7 @@ int WriteInputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, cmsUInt32Number Intent,
 
     default:
 
-        cmsSignalError(m ->ContextID, cmsERROR_COLORSPACE_CHECK, "Only 3, 4 channels supported for CSA. This profile has %d channels.", nChannels);
+        cmsSignalError(m ->ContextID, cmsERROR_COLORSPACE_CHECK, "Only 3, 4 channels are supported for CSA. This profile has %d channels.", nChannels);
         return 0;
     }
 
@@ -1291,8 +1261,6 @@ void EmitPQRStage(cmsIOHANDLER* m, cmsHPROFILE hProfile, int DoBPC, int lIsAbsol
                     "exch pop exch pop exch pop exch pop } bind\n]\n");
 
         }
-
-
 }
 
 
