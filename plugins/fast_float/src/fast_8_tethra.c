@@ -481,6 +481,7 @@ cmsBool Optimize8BitRGBTransform(_cmsTransformFn* TransformFn,
     // And return the obtained LUT
     cmsPipelineFree(OriginalLut);
 
+    *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
     *Lut = OptimizedLUT;
     *TransformFn = (_cmsTransformFn) PerformanceEval8;
     *UserData   = p8;

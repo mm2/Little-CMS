@@ -367,7 +367,7 @@ cmsBool Optimize16BitRGBTransform(_cmsTransformFn* TransformFn,
     *FreeDataFn = Performance16free;
     *InputFormat  |= 0x02000000;
     *OutputFormat |= 0x02000000;
-
+    *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
 
     return TRUE;
 }

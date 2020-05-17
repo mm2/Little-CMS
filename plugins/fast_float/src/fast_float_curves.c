@@ -363,6 +363,7 @@ cmsBool OptimizeFloatByJoiningCurves(_cmsTransformFn* TransformFn,
     Data = ComputeCompositeCurves(nChans, Src);
     
     *dwFlags |= cmsFLAGS_NOCACHE;
+    *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
     *UserData = Data;
     *FreeUserData = free_aligned;
 

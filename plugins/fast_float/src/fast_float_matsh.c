@@ -317,6 +317,7 @@ cmsBool OptimizeFloatMatrixShaper(_cmsTransformFn* TransformFn,
         *TransformFn = (_cmsTransformFn) MatShaperFloat;         
     }
 
+    *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
     cmsPipelineFree(Src);
     *Lut = Dest;
     return TRUE;

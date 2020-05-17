@@ -53,6 +53,8 @@
 #define FIXED_TO_INT(x)         ((x)>>16)
 #define FIXED_REST_TO_INT(x)    ((x)&0xFFFFU)
 
+#define cmsFLAGS_CAN_CHANGE_FORMATTER     0x02000000   // Allow change buffer format
+
 // Utility macros to convert from to 0...1.0 in 15.16 fixed domain to 0..0xffff as integer 
 cmsINLINE cmsS15Fixed16Number _cmsToFixedDomain(int a)                   { return a + ((a + 0x7fff) / 0xffff); }
 cmsINLINE int                 _cmsFromFixedDomain(cmsS15Fixed16Number a) { return a - ((a + 0x7fff) >> 16); }   

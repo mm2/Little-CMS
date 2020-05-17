@@ -370,7 +370,7 @@ cmsBool OptimizeCLUTCMYKTransform(_cmsTransformFn* TransformFn,
     *TransformFn = (_cmsTransformFn) FloatCMYKCLUTEval;
     *UserData   = p8;
     *FreeDataFn = _cmsFree;
-
+    *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
     return TRUE;
 
 Error:

@@ -346,6 +346,7 @@ cmsBool OptimizeMatrixShaper15(_cmsTransformFn* TransformFn,
        
 
        cmsPipelineFree(Src);
+       *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
        *Lut = Dest;
        return TRUE;
 }

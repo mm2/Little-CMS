@@ -283,7 +283,7 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransformFn* TransformFn,
     *TransformFn = (_cmsTransformFn) FloatCLUTEval;
     *UserData   = p8;
     *FreeDataFn = _cmsFree;
-
+    *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
     return TRUE;
 
 Error:

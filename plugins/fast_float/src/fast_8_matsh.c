@@ -387,6 +387,7 @@ cmsBool Optimize8MatrixShaper(_cmsTransformFn* TransformFn,
         // In this particular optimization, caché does not help as it takes more time to deal with 
         // the caché that with the pixel handling
         *dwFlags |= cmsFLAGS_NOCACHE;
+  
 
         // Setup the optimizarion routines
         *UserData = SetMatShaper(ContextID, mpeC1 ->TheCurves, &res, (cmsVEC3*) Data2 ->Offset, mpeC2->TheCurves);
@@ -395,6 +396,7 @@ cmsBool Optimize8MatrixShaper(_cmsTransformFn* TransformFn,
         *TransformFn = (_cmsTransformFn) MatShaperXform8;         
     }
 
+    *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
     cmsPipelineFree(Src);
     *Lut = Dest;
     return TRUE;
