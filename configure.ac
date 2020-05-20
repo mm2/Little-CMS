@@ -273,8 +273,8 @@ AC_SUBST(LIB_JPEG)
 # Check for ZLIB
 #
 have_zlib='no'
-dnl PNG requires zlib so enable zlib check if PNG is requested
-if test ! "$with_zlib" = 'no' || test ! "$with_png" = 'no'
+dnl TIFF may require zlib so enable zlib check if TIFF is requested
+if test ! "$with_zlib" = 'no' || test ! "$with_tiff" = 'no'
 then
   LIB_ZLIB=''
   AC_MSG_CHECKING(for ZLIB support )
