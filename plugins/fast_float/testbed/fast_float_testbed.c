@@ -819,6 +819,84 @@ void CheckChangeFormat(void)
 
 }
 
+static
+cmsBool ValidInt(cmsUInt16Number a, cmsUInt16Number b)
+{
+    return abs(a - b) <= 32;
+}
+
+static
+void CheckLab2Roundtrip(void)
+{
+    cmsHPROFILE hsRGB, hLab;
+    cmsHTRANSFORM xform, xform2;
+    cmsInt8Number* lab;
+    cmsInt32Number Mb, j;
+    cmsInt32Number r, g, b;
+    Scanline_rgb8bits* In;
+    Scanline_rgb8bits* Out;
+
+    printf("Checking lab2 roundtrip...");
+
+    hsRGB = cmsCreate_sRGBProfile();
+    hLab = cmsCreateLab2Profile(NULL);
+
+
+    xform = cmsCreateTransform(hsRGB, TYPE_RGB_8, hLab, TYPE_Lab_8, INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_NOOPTIMIZE|cmsFLAGS_BLACKPOINTCOMPENSATION);
+    xform2 = cmsCreateTransform(hLab, TYPE_Lab_8, hsRGB, TYPE_RGB_8, INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_NOOPTIMIZE | cmsFLAGS_BLACKPOINTCOMPENSATION);
+
+    cmsCloseProfile(hsRGB);
+    cmsCloseProfile(hLab);
+
+
+    Mb = 256 * 256 * 256 * sizeof(Scanline_rgb8bits);
+    In = (Scanline_rgb8bits*)malloc(Mb);
+    Out = (Scanline_rgb8bits*)malloc(Mb);
+    lab = (cmsInt8Number*)malloc(256 * 256 * 256 * 3 * sizeof(cmsInt8Number));
+
+    j = 0;
+    for (r = 0; r < 256; r++)
+        for (g = 0; g < 256; g++)
+            for (b = 0; b < 256; b++)
+            {
+
+                In[j].r = (cmsUInt8Number)r;
+                In[j].g = (cmsUInt8Number)g;
+                In[j].b = (cmsUInt8Number)b;
+                j++;
+            }
+
+
+    cmsDoTransform(xform, In, lab, 256 * 256 * 256);
+    cmsDoTransform(xform2, lab, Out, 256 * 256 * 256);
+
+    cmsDeleteTransform(xform);
+    cmsDeleteTransform(xform2);
+
+
+    j = 0;
+    for (r = 0; r < 256; r++)
+        for (g = 0; g < 256; g++)
+            for (b = 0; b < 256; b++) {
+
+                // Check for same values
+                if (!ValidInt(In[j].r, Out[j].r) ||
+                    !ValidInt(In[j].g, Out[j].g) ||
+                    !ValidInt(In[j].b, Out[j].b))
+                    Fail("Conversion failed at (%d %d %d) != (%d %d %d)", In[j].r, In[j].g, In[j].b,
+                        Out[j].r, Out[j].g, Out[j].b);
+
+                j++;
+            }
+
+
+    free(In);
+    free(Out);
+    free(lab);
+    printf("Ok\n");
+
+}
+
 // Convert some known values
 static
 void CheckConversionFloat(void)
@@ -1682,8 +1760,7 @@ int main()
 {
        printf("FastFloating point extensions testbed - 1.2\n");
        printf("Copyright (c) 1998-2020 Marti Maria Saguer, all rights reserved\n");
-
-
+       
        printf("\nInstalling error logger ... ");
        cmsSetLogErrorHandler(FatalErrorQuit);
        printf("done.\n");
@@ -1691,6 +1768,8 @@ int main()
        printf("Installing plug-in ... ");
        cmsPlugin(cmsFastFloatExtensions());
        printf("done.\n\n");
+
+       CheckLab2Roundtrip();
 
        CheckComputeIncrements();
 
