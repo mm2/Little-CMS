@@ -47,7 +47,7 @@ FloatCLUTData* FloatCLUTAlloc(cmsContext ContextID, const cmsInterpParams* p)
 // Sampler implemented by another LUT. This is a clean way to precalculate the devicelink 3D CLUT for 
 // almost any transform. We use floating point precision and then convert from floating point to 16 bits.
 static
-int XFormSampler(register const cmsFloat32Number In[], register cmsFloat32Number Out[], register void* Cargo)
+int XFormSampler(CMSREGISTER const cmsFloat32Number In[], CMSREGISTER cmsFloat32Number Out[], CMSREGISTER void* Cargo)
 {
     // Evaluate in 16 bits
     cmsPipelineEvalFloat(In, Out, (cmsPipeline*) Cargo);

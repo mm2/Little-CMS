@@ -99,7 +99,7 @@ void Performance8free(cmsContext ContextID, void* ptr)
 // Sampler implemented by another LUT. This is a clean way to precalculate the devicelink 3D CLUT for 
 // almost any transform. We use floating point precision and then convert from floating point to 16 bits.
 static
-int XFormSampler16(register const cmsUInt16Number In[], register cmsUInt16Number Out[], register void* Cargo)
+int XFormSampler16(CMSREGISTER const cmsUInt16Number In[], CMSREGISTER cmsUInt16Number Out[], CMSREGISTER void* Cargo)
 {
     // Evaluate in 16 bits
     cmsPipelineEval16(In, Out, (cmsPipeline*) Cargo);

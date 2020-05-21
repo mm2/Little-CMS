@@ -56,10 +56,10 @@ cmsINLINE cmsUInt16Number From15To16(cmsUInt16Number x15)
 
 // Specialized 1-channel formatters
 static
-cmsUInt8Number* Unroll15bitsGray(register struct _cmstransform_struct* CMMcargo,
-                                   register cmsUInt16Number Values[],
-                                   register cmsUInt8Number*  Buffer,
-                                   register cmsUInt32Number  Stride)
+cmsUInt8Number* Unroll15bitsGray(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                                 CMSREGISTER cmsUInt16Number Values[],
+                                 CMSREGISTER cmsUInt8Number*  Buffer,
+                                 CMSREGISTER cmsUInt32Number  Stride)
 {
        UNUSED_PARAMETER(CMMcargo);
        UNUSED_PARAMETER(Stride);
@@ -71,10 +71,10 @@ cmsUInt8Number* Unroll15bitsGray(register struct _cmstransform_struct* CMMcargo,
 
 
 static
-cmsUInt8Number* Pack15bitsGray(register struct _cmstransform_struct* CMMcargo,
-                               register cmsUInt16Number Values[],
-                               register cmsUInt8Number*  Buffer,
-                               register cmsUInt32Number  Stride)
+cmsUInt8Number* Pack15bitsGray(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                               CMSREGISTER cmsUInt16Number Values[],
+                               CMSREGISTER cmsUInt8Number*  Buffer,
+                               CMSREGISTER cmsUInt32Number  Stride)
 {
        UNUSED_PARAMETER(CMMcargo);
        UNUSED_PARAMETER(Stride);
@@ -85,10 +85,10 @@ cmsUInt8Number* Pack15bitsGray(register struct _cmstransform_struct* CMMcargo,
 
 // Specialized 3-channels formatters
 static
-cmsUInt8Number* Unroll15bitsRGB(register struct _cmstransform_struct* CMMcargo,
-                                   register cmsUInt16Number Values[],
-                                   register cmsUInt8Number*  Buffer,
-                                   register cmsUInt32Number  Stride)
+cmsUInt8Number* Unroll15bitsRGB(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                                   CMSREGISTER cmsUInt16Number Values[],
+                                   CMSREGISTER cmsUInt8Number*  Buffer,
+                                   CMSREGISTER cmsUInt32Number  Stride)
 {
        UNUSED_PARAMETER(CMMcargo);
        UNUSED_PARAMETER(Stride);
@@ -104,10 +104,10 @@ cmsUInt8Number* Unroll15bitsRGB(register struct _cmstransform_struct* CMMcargo,
 
 
 static
-cmsUInt8Number* Pack15bitsRGB(register struct _cmstransform_struct* CMMcargo,
-                               register cmsUInt16Number Values[],
-                               register cmsUInt8Number*  Buffer,
-                               register cmsUInt32Number  Stride)
+cmsUInt8Number* Pack15bitsRGB(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                               CMSREGISTER cmsUInt16Number Values[],
+                               CMSREGISTER cmsUInt8Number*  Buffer,
+                               CMSREGISTER cmsUInt32Number  Stride)
 {
        UNUSED_PARAMETER(CMMcargo);
        UNUSED_PARAMETER(Stride);
@@ -123,10 +123,10 @@ cmsUInt8Number* Pack15bitsRGB(register struct _cmstransform_struct* CMMcargo,
 
 
 static
-cmsUInt8Number* Unroll15bitsRGBA(register struct _cmstransform_struct* CMMcargo,
-                                   register cmsUInt16Number Values[],
-                                   register cmsUInt8Number*  Buffer,
-                                   register cmsUInt32Number  Stride)
+cmsUInt8Number* Unroll15bitsRGBA(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                                   CMSREGISTER cmsUInt16Number Values[],
+                                   CMSREGISTER cmsUInt8Number*  Buffer,
+                                   CMSREGISTER cmsUInt32Number  Stride)
 {
        UNUSED_PARAMETER(CMMcargo);
        UNUSED_PARAMETER(Stride);
@@ -142,10 +142,10 @@ cmsUInt8Number* Unroll15bitsRGBA(register struct _cmstransform_struct* CMMcargo,
 
 
 static
-cmsUInt8Number* Pack15bitsRGBA(register struct _cmstransform_struct* CMMcargo,
-                               register cmsUInt16Number Values[],
-                               register cmsUInt8Number*  Buffer,
-                               register cmsUInt32Number  Stride)
+cmsUInt8Number* Pack15bitsRGBA(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                               CMSREGISTER cmsUInt16Number Values[],
+                               CMSREGISTER cmsUInt8Number*  Buffer,
+                               CMSREGISTER cmsUInt32Number  Stride)
 {
        UNUSED_PARAMETER(CMMcargo);
        UNUSED_PARAMETER(Stride);
@@ -162,10 +162,10 @@ cmsUInt8Number* Pack15bitsRGBA(register struct _cmstransform_struct* CMMcargo,
 
 // Specialized 3 channels reversed formatters
 static
-cmsUInt8Number* Unroll15bitsBGR(register struct _cmstransform_struct* CMMcargo,
-                                   register cmsUInt16Number Values[],
-                                   register cmsUInt8Number*  Buffer,
-                                   register cmsUInt32Number  Stride)
+cmsUInt8Number* Unroll15bitsBGR(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                                   CMSREGISTER cmsUInt16Number Values[],
+                                   CMSREGISTER cmsUInt8Number*  Buffer,
+                                   CMSREGISTER cmsUInt32Number  Stride)
 {
        UNUSED_PARAMETER(CMMcargo);
        UNUSED_PARAMETER(Stride);
@@ -181,10 +181,10 @@ cmsUInt8Number* Unroll15bitsBGR(register struct _cmstransform_struct* CMMcargo,
 
 
 static
-cmsUInt8Number* Pack15bitsBGR(register struct _cmstransform_struct* CMMcargo,
-                                   register cmsUInt16Number Values[],
-                                   register cmsUInt8Number*  Buffer,
-                                   register cmsUInt32Number  Stride)
+cmsUInt8Number* Pack15bitsBGR(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                                   CMSREGISTER cmsUInt16Number Values[],
+                                   CMSREGISTER cmsUInt8Number*  Buffer,
+                                   CMSREGISTER cmsUInt32Number  Stride)
 {
        UNUSED_PARAMETER(CMMcargo);
        UNUSED_PARAMETER(Stride);
@@ -200,10 +200,10 @@ cmsUInt8Number* Pack15bitsBGR(register struct _cmstransform_struct* CMMcargo,
 
 // Specialized 4 channels CMYK formatters. Note Photoshop stores CMYK reversed
 static
-cmsUInt8Number* Unroll15bitsCMYK(register struct _cmstransform_struct* CMMcargo,
-                                   register cmsUInt16Number Values[],
-                                   register cmsUInt8Number*  Buffer,
-                                   register cmsUInt32Number  Stride)
+cmsUInt8Number* Unroll15bitsCMYK(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                                   CMSREGISTER cmsUInt16Number Values[],
+                                   CMSREGISTER cmsUInt8Number*  Buffer,
+                                   CMSREGISTER cmsUInt32Number  Stride)
 {
        UNUSED_PARAMETER(CMMcargo);
        UNUSED_PARAMETER(Stride);
@@ -220,10 +220,10 @@ cmsUInt8Number* Unroll15bitsCMYK(register struct _cmstransform_struct* CMMcargo,
 }
 
 static
-cmsUInt8Number* Pack15bitsCMYK(register struct _cmstransform_struct* CMMcargo,
-                               register cmsUInt16Number Values[],
-                               register cmsUInt8Number*  Buffer,
-                               register cmsUInt32Number  Stride)
+cmsUInt8Number* Pack15bitsCMYK(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                               CMSREGISTER cmsUInt16Number Values[],
+                               CMSREGISTER cmsUInt8Number*  Buffer,
+                               CMSREGISTER cmsUInt32Number  Stride)
 {
        UNUSED_PARAMETER(CMMcargo);
        UNUSED_PARAMETER(Stride);
@@ -267,10 +267,10 @@ cmsINLINE cmsUInt16Number PackOne(cmsUInt16Number x, cmsBool Reverse, cmsBool Sw
 
 // Generic planar support
 static
-cmsUInt8Number* Unroll15bitsPlanar(register struct _cmstransform_struct* CMMcargo,
-                                   register cmsUInt16Number wIn[],
-                                   register cmsUInt8Number* accum,
-                                   register cmsUInt32Number Stride)
+cmsUInt8Number* Unroll15bitsPlanar(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                                   CMSREGISTER cmsUInt16Number wIn[],
+                                   CMSREGISTER cmsUInt8Number* accum,
+                                   CMSREGISTER cmsUInt32Number Stride)
 {
        _xform_head* head = (_xform_head*) CMMcargo;
        int nChan      = T_CHANNELS(head->InputFormat);
@@ -300,17 +300,17 @@ cmsUInt8Number* Unroll15bitsPlanar(register struct _cmstransform_struct* CMMcarg
 
 
 static
-cmsUInt8Number* Pack15bitsPlanar(register struct _cmstransform_struct* CMMcargo,
-                                 register cmsUInt16Number wOut[],
-                                 register cmsUInt8Number* output,
-                                 register cmsUInt32Number Stride)
+cmsUInt8Number* Pack15bitsPlanar(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                                 CMSREGISTER cmsUInt16Number wOut[],
+                                 CMSREGISTER cmsUInt8Number* output,
+                                 CMSREGISTER cmsUInt32Number Stride)
 {
        _xform_head* head = (_xform_head*)CMMcargo;
        int nChan = T_CHANNELS(head->OutputFormat);
        int DoSwap = T_DOSWAP(head->OutputFormat);
        int Reverse = T_FLAVOR(head->OutputFormat);
        int SwapEndian = T_ENDIAN16(head->OutputFormat);
-       register int i;
+       CMSREGISTER int i;
        cmsUInt8Number* Init = output;
 
 
@@ -333,10 +333,10 @@ cmsUInt8Number* Pack15bitsPlanar(register struct _cmstransform_struct* CMMcargo,
 
 // Generic falltrough
 static
-cmsUInt8Number* Unroll15bitsChunky(register struct _cmstransform_struct* CMMcargo,
-                                   register cmsUInt16Number Values[],
-                                   register cmsUInt8Number*  Buffer,
-                                   register cmsUInt32Number  Stride)
+cmsUInt8Number* Unroll15bitsChunky(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                                   CMSREGISTER cmsUInt16Number Values[],
+                                   CMSREGISTER cmsUInt8Number*  Buffer,
+                                   CMSREGISTER cmsUInt32Number  Stride)
 {
        _xform_head* head = (_xform_head*) CMMcargo;
 
@@ -345,7 +345,7 @@ cmsUInt8Number* Unroll15bitsChunky(register struct _cmstransform_struct* CMMcarg
        int Reverse = T_FLAVOR(head->InputFormat);
        int SwapEndian = T_ENDIAN16(head->InputFormat);
 
-	register int i;
+	CMSREGISTER int i;
 
        UNUSED_PARAMETER(Stride);
 
@@ -368,10 +368,10 @@ cmsUInt8Number* Unroll15bitsChunky(register struct _cmstransform_struct* CMMcarg
 
 
 static
-cmsUInt8Number* Pack15bitsChunky(register struct _cmstransform_struct* CMMcargo,
-                           register cmsUInt16Number Values[],
-                           register cmsUInt8Number*  Buffer,
-                           register cmsUInt32Number  Stride)
+cmsUInt8Number* Pack15bitsChunky(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                           CMSREGISTER cmsUInt16Number Values[],
+                           CMSREGISTER cmsUInt8Number*  Buffer,
+                           CMSREGISTER cmsUInt32Number  Stride)
 {
        _xform_head* head = (_xform_head*)CMMcargo;
 
@@ -380,7 +380,7 @@ cmsUInt8Number* Pack15bitsChunky(register struct _cmstransform_struct* CMMcargo,
        int Reverse = T_FLAVOR(head->OutputFormat);
        int SwapEndian = T_ENDIAN16(head->OutputFormat);
 
-       register int i;
+       CMSREGISTER int i;
 
        UNUSED_PARAMETER(Stride);
 
@@ -406,15 +406,15 @@ cmsUInt8Number* Pack15bitsChunky(register struct _cmstransform_struct* CMMcargo,
 static int err[cmsMAXCHANNELS];
 
 static
-cmsUInt8Number*  PackNBytesDither(register struct _cmstransform_struct* CMMcargo,
-                                   register cmsUInt16Number Values[],
-                                   register cmsUInt8Number*  Buffer,
-                                   register cmsUInt32Number  Stride)
+cmsUInt8Number*  PackNBytesDither(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                                   CMSREGISTER cmsUInt16Number Values[],
+                                   CMSREGISTER cmsUInt8Number*  Buffer,
+                                   CMSREGISTER cmsUInt32Number  Stride)
 {
        _xform_head* info = (_xform_head*)CMMcargo;
 
        int nChan = T_CHANNELS(info->OutputFormat);
-       register int i;
+       CMSREGISTER int i;
        unsigned int n, pe, pf;
 
        UNUSED_PARAMETER(Stride);
@@ -436,15 +436,15 @@ cmsUInt8Number*  PackNBytesDither(register struct _cmstransform_struct* CMMcargo
 
 
 static
-cmsUInt8Number*  PackNBytesSwapDither(register struct _cmstransform_struct* CMMcargo,
-                                          register cmsUInt16Number Values[],
-                                          register cmsUInt8Number*  Buffer,
-                                          register cmsUInt32Number  Stride)
+cmsUInt8Number*  PackNBytesSwapDither(CMSREGISTER struct _cmstransform_struct* CMMcargo,
+                                          CMSREGISTER cmsUInt16Number Values[],
+                                          CMSREGISTER cmsUInt8Number*  Buffer,
+                                          CMSREGISTER cmsUInt32Number  Stride)
 {
        _xform_head* info = (_xform_head*)CMMcargo;
 
        int nChan = T_CHANNELS(info->OutputFormat);
-       register int i;
+       CMSREGISTER int i;
        unsigned int n, pe, pf;
 
        UNUSED_PARAMETER(Stride);
