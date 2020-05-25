@@ -40,6 +40,9 @@ cmsBool Floating_Point_Transforms_Dispatcher(_cmsTransformFn* TransformFn,
        // Try to optimize by joining curves
        if (Optimize8ByJoiningCurves(TransformFn, UserData, FreeUserData, Lut, InputFormat, OutputFormat, dwFlags)) return TRUE;
 
+       // Try to use SSE2 to optimize as a set of curves plus a matrix plus a set of curves
+       if (Optimize8MatrixShaperSSE(TransformFn, UserData, FreeUserData, Lut, InputFormat, OutputFormat, dwFlags)) return TRUE;
+
        // Try to optimize as a set of curves plus a matrix plus a set of curves
        if (Optimize8MatrixShaper(TransformFn, UserData, FreeUserData, Lut, InputFormat, OutputFormat, dwFlags)) return TRUE;
 

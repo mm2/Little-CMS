@@ -19,28 +19,34 @@
 //
 //---------------------------------------------------------------------------------
 
-// Optimization for matrix-shaper in 8 bits. Numbers are operated in n.14 signed, tables are stored in 1.14 fixed 
+// Optimization for matrix-shaper in 8 bits using SSE2 intrinsics
 
 #include "fast_float_internal.h"
 
-typedef cmsInt32Number cmsS1Fixed14Number;   // Note that this may hold more than 16 bits!
 
-#define DOUBLE_TO_1FIXED14(x) ((cmsS1Fixed14Number) floor((x) * 16384.0 + 0.5))
+#ifdef _MSC_VER
+#include <intrin.h>
+#else
+#include <x86intrin.h>
+#endif
+
+#include <emmintrin.h>
+
 
 // This is the private data container used by this optimization
 typedef struct {
 
-    // Alignment makes it faster
+    // This is for SSE, MUST be aligned at 16 bit boundary
     
-    cmsS1Fixed14Number Mat[4][4];     // n.14 to n.14 (needs a saturation after that)
+    cmsFloat32Number Mat[4][4];     // n.14 to n.14 (needs a saturation after that)
 
     void * real_ptr;
     
     cmsContext ContextID;
 
-    cmsS1Fixed14Number Shaper1R[256];  // from 0..255 to 1.14  (0.0...1.0)
-    cmsS1Fixed14Number Shaper1G[256];
-    cmsS1Fixed14Number Shaper1B[256];
+    cmsFloat32Number Shaper1R[256];  // from 0..255 to 1.14  (0.0...1.0)
+    cmsFloat32Number Shaper1G[256];
+    cmsFloat32Number Shaper1B[256];
     
     cmsUInt8Number Shaper2R[0x4001];    // 1.14 to 0..255 
     cmsUInt8Number Shaper2G[0x4001];
@@ -69,7 +75,7 @@ void free_aligned(XMatShaper8Data* a)
 
 // Free the private data container
 static
-void  FreeMatShaper(cmsContext ContextID, void* Data)
+void FreeMatShaper(cmsContext ContextID, void* Data)
 {
     UNUSED_PARAMETER(ContextID);
 
@@ -79,17 +85,15 @@ void  FreeMatShaper(cmsContext ContextID, void* Data)
 
 // This table converts from 8 bits to 1.14 after applying the curve
 static
-void FillFirstShaper(cmsS1Fixed14Number* Table, cmsToneCurve* Curve)
+void FillFirstShaper(cmsFloat32Number* Table, cmsToneCurve* Curve)
 {
-    int i;
-    cmsFloat32Number R, y;
+    cmsInt32Number i;
+    cmsFloat32Number R;
 
-    for (i=0; i < 256; i++) {
-        
-        R   = (cmsFloat32Number) (i / 255.0);
-        y   = cmsEvalToneCurveFloat(Curve, R);        
+    for (i = 0; i < 256; i++) {
 
-        Table[i] = DOUBLE_TO_1FIXED14(y);
+        R = (cmsFloat32Number)(i / 255.0);
+        Table[i] = cmsEvalToneCurveFloat(Curve, R);
     }
 }
 
@@ -138,21 +142,22 @@ XMatShaper8Data* SetMatShaper(cmsContext ContextID, cmsToneCurve* Curve1[3], cms
     FillSecondShaper(p ->Shaper2B, Curve2[2]);
  
         
-    // Convert matrix to nFixed14. Note that those values may take more than 16 bits as
+    // Convert matrix to float
     for (i=0; i < 3; i++) {
         for (j=0; j < 3; j++) {         
-            p ->Mat[j][i] = DOUBLE_TO_1FIXED14(Mat->v[i].n[j]);            
+            p ->Mat[j][i] = (cmsFloat32Number) Mat->v[i].n[j];
         }        
     }
       
+    // Roundoff
     for (i=0; i < 3; i++) {
 
         if (Off == NULL) {   
             
-            p->Mat[3][i] = DOUBLE_TO_1FIXED14(0.5);
+            p->Mat[3][i] = 0.0f;
         }
         else {                              
-            p->Mat[3][i] = DOUBLE_TO_1FIXED14(Off->n[i] + 0.5);
+            p->Mat[3][i] = (cmsFloat32Number)Off->n[i];
         }
     }
 
@@ -160,12 +165,9 @@ XMatShaper8Data* SetMatShaper(cmsContext ContextID, cmsToneCurve* Curve1[3], cms
     return p;
 }
 
-// A fast matrix-shaper evaluator for 8 bits. This is a bit ticky since I'm using 1.14 signed fixed point 
-// to accomplish some performance. Actually it takes 256x3 16 bits tables and 16385 x 3 tables of 8 bits, 
-// in total about 50K, and the performance boost is huge!
-
+// A fast matrix-shaper evaluator for 8 bits. 
 static
-void MatShaperXform8(struct _cmstransform_struct *CMMcargo,
+void MatShaperXform8SSE(struct _cmstransform_struct *CMMcargo,
                      const void* Input,
                      void* Output,
                      cmsUInt32Number PixelsPerLine,
@@ -174,9 +176,6 @@ void MatShaperXform8(struct _cmstransform_struct *CMMcargo,
 {    
     XMatShaper8Data* p = (XMatShaper8Data*) _cmsGetTransformUserData(CMMcargo);
 
-    register cmsS1Fixed14Number l1, l2, l3;
-    cmsS1Fixed14Number r, g, b;
-    cmsUInt32Number ri, gi, bi;
     cmsUInt32Number i, ii;
 
     cmsUInt32Number SourceStartingOrder[cmsMAXCHANNELS];
@@ -196,6 +195,19 @@ void MatShaperXform8(struct _cmstransform_struct *CMMcargo,
 
     cmsUInt32Number nalpha, strideIn, strideOut;
  
+    __m128 mat0 = _mm_load_ps(p->Mat[0]);
+    __m128 mat1 = _mm_load_ps(p->Mat[1]);
+    __m128 mat2 = _mm_load_ps(p->Mat[2]);
+    __m128 mat3 = _mm_load_ps(p->Mat[3]);
+
+    __m128 zero = _mm_setzero_ps();
+    __m128 one = _mm_set1_ps(1.0f);
+    __m128 scale = _mm_set1_ps((cmsFloat32Number)0x4000);
+
+    cmsUInt8Number buffer[32];
+    cmsUInt32Number* output_index = (cmsUInt32Number*)(((uintptr_t)buffer + 16) & ~0xf);
+
+
     _cmsComputeComponentIncrements(cmsGetTransformInputFormat((cmsHTRANSFORM)CMMcargo), Stride->BytesPerPlaneIn, NULL, &nalpha, SourceStartingOrder, SourceIncrements);
     _cmsComputeComponentIncrements(cmsGetTransformOutputFormat((cmsHTRANSFORM)CMMcargo), Stride->BytesPerPlaneOut, NULL, &nalpha, DestStartingOrder, DestIncrements);
 
@@ -213,46 +225,62 @@ void MatShaperXform8(struct _cmstransform_struct *CMMcargo,
            gout = (cmsUInt8Number*)Output + DestStartingOrder[1] + strideOut;
            bout = (cmsUInt8Number*)Output + DestStartingOrder[2] + strideOut;
            if (nalpha)
-                  aout = (cmsUInt8Number*)Output + DestStartingOrder[3] + strideOut;          
+                  aout = (cmsUInt8Number*)Output + DestStartingOrder[3] + strideOut;
+           
+           /**
+           * Prefectch
+           */
+           __m128 rvector = _mm_set1_ps(p->Shaper1R[*rin]);
+           __m128 gvector = _mm_set1_ps(p->Shaper1G[*gin]);
+           __m128 bvector = _mm_set1_ps(p->Shaper1B[*bin]);
 
            for (ii = 0; ii < PixelsPerLine; ii++) {
-                            
-                  // Across first shaper, which also converts to 1.14 fixed point. 16 bits guaranteed.
-                  r = p->Shaper1R[*rin];
-                  g = p->Shaper1G[*gin];
-                  b = p->Shaper1B[*bin];
+                                        
+               __m128 el1 = _mm_mul_ps(rvector, mat0);
+               __m128 el2 = _mm_mul_ps(gvector, mat1);
+               __m128 el3 = _mm_mul_ps(bvector, mat2);
+               
+               __m128 sum = _mm_add_ps(el1, _mm_add_ps(el2, _mm_add_ps(el3, mat3)));
 
-                  // Evaluate the matrix in 1.14 fixed point
-                  l1 = (p->Mat[0][0] * r + p->Mat[1][0] * g + p->Mat[2][0] * b + p->Mat[3][0]) >> 14;
-                  l2 = (p->Mat[0][1] * r + p->Mat[1][1] * g + p->Mat[2][1] * b + p->Mat[3][1]) >> 14;
-                  l3 = (p->Mat[0][2] * r + p->Mat[1][2] * g + p->Mat[2][2] * b + p->Mat[3][2]) >> 14;
+               __m128 out = _mm_min_ps(_mm_max_ps(sum, zero), one);
 
+               out = _mm_mul_ps(out, scale);
 
-                  // Now we have to clip to 0..1.0 range 
-                  ri = (l1 < 0) ? 0 : ((l1 > 0x4000) ? 0x4000 : l1);
-                  gi = (l2 < 0) ? 0 : ((l2 > 0x4000) ? 0x4000 : l2);
-                  bi = (l3 < 0) ? 0 : ((l3 > 0x4000) ? 0x4000 : l3);
+               /**
+               * Rounding and converting to index. 
+               * Actually this is a costly instruction that may be blocking performance
+               */
+               _mm_store_si128((__m128i*)output_index, _mm_cvtps_epi32(out));
 
+           
+               // Handle alpha
+               if (ain) {
+                   *aout = *ain;
+               }
 
-                  // And across second shaper, 
-                  *rout = p->Shaper2R[ri];
-                  *gout = p->Shaper2G[gi];
-                  *bout = p->Shaper2B[bi];
+               rin += SourceIncrements[0];
+               gin += SourceIncrements[1];
+               bin += SourceIncrements[2];
+               if (ain) ain += SourceIncrements[3];
 
-                  // Handle alpha
-                  if (ain) {
-                         *aout = *ain;
-                  }
+               /**
+               * Take next value whilst store is being performed
+               */
+               if (i < PixelsPerLine - 1)
+               {
+                   rvector = _mm_set1_ps(p->Shaper1R[*rin]);
+                   gvector = _mm_set1_ps(p->Shaper1G[*gin]);
+                   bvector = _mm_set1_ps(p->Shaper1B[*bin]);
+               }
 
-                  rin += SourceIncrements[0];
-                  gin += SourceIncrements[1];
-                  bin += SourceIncrements[2];
-                  if (ain) ain += SourceIncrements[3];
+               *rout = p->Shaper2R[output_index[0]];
+               *gout = p->Shaper2G[output_index[1]];
+               *bout = p->Shaper2B[output_index[2]];
 
-                  rout += DestIncrements[0];
-                  gout += DestIncrements[1];
-                  bout += DestIncrements[2];
-                  if (aout) aout += DestIncrements[3];
+               rout += DestIncrements[0];
+               gout += DestIncrements[1];
+               bout += DestIncrements[2];
+               if (aout) aout += DestIncrements[3];
            }
 
            strideIn += Stride->BytesPerLineIn;
@@ -261,8 +289,9 @@ void MatShaperXform8(struct _cmstransform_struct *CMMcargo,
 }
 
 
+
 //  8 bits on input allows matrix-shaper boost up a little bit
-cmsBool Optimize8MatrixShaper(_cmsTransformFn* TransformFn,                                  
+cmsBool Optimize8MatrixShaperSSE(_cmsTransformFn* TransformFn,                                  
                                   void** UserData,
                                   _cmsFreeUserDataFn* FreeUserData,
                                   cmsPipeline** Lut, 
@@ -280,9 +309,13 @@ cmsBool Optimize8MatrixShaper(_cmsTransformFn* TransformFn,
     cmsContext ContextID;
     cmsUInt32Number nChans;
     cmsFloat64Number factor = 1.0;
+    int cpuinfo[4];
+
+    // Check for SSE2 support
+    __cpuid(cpuinfo, 1);
+    if (!(cpuinfo[3] & (1 << 26))) return FALSE;
 
     // Only works on RGB to RGB and gray to gray 
-
     if ( !( (T_CHANNELS(*InputFormat) == 3 && T_CHANNELS(*OutputFormat) == 3) ||
             (T_CHANNELS(*InputFormat) == 1 && T_CHANNELS(*OutputFormat) == 1) )) return FALSE;
                    
@@ -368,7 +401,7 @@ cmsBool Optimize8MatrixShaper(_cmsTransformFn* TransformFn,
         *UserData = SetMatShaper(ContextID, mpeC1 ->TheCurves, &res, (cmsVEC3*) Data2 ->Offset, mpeC2->TheCurves);
         *FreeUserData = FreeMatShaper; 
 
-        *TransformFn = (_cmsTransformFn) MatShaperXform8;         
+        *TransformFn = (_cmsTransformFn) MatShaperXform8SSE;         
     }
 
     *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;

@@ -1809,7 +1809,7 @@ int main()
        printf("Installing plug-in ... ");
        cmsPlugin(cmsFastFloatExtensions());
        printf("done.\n\n");
-       
+              
 
        CheckComputeIncrements();
 

@@ -26,6 +26,7 @@
     <ClCompile Include="..\..\src\fast_16_tethra.c" />
     <ClCompile Include="..\..\src\fast_8_curves.c" />
     <ClCompile Include="..\..\src\fast_8_matsh.c" />
+    <ClCompile Include="..\..\src\fast_8_matsh_sse.c" />
     <ClCompile Include="..\..\src\fast_8_tethra.c" />
     <ClCompile Include="..\..\src\fast_float_15bits.c" />
     <ClCompile Include="..\..\src\fast_float_15mats.c" />
