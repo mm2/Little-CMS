@@ -106,7 +106,7 @@
 
 /// Properly define some macros to accommodate
 /// older MSVC versions.
-# if _MSC_VER <= 1700
+# if defined(_MSC_VER) && _MSC_VER <= 1700
         #include <float.h>
         #define isnan _isnan
         #define isinf(x) (!_finite((x)))
