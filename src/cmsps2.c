@@ -432,14 +432,14 @@ void EmitLab2XYZ(cmsIOHANDLER* m)
 }
 
 static
-void EmitSafeGuardBegin(cmsIOHANDLER* m, char* name)
+void EmitSafeGuardBegin(cmsIOHANDLER* m, const char* name)
 {
     _cmsIOPrintf(m, "%%LCMS2: Save previous definition of %s on the operand stack\n", name);
     _cmsIOPrintf(m, "currentdict /%s known { /%s load } { null } ifelse\n", name, name);
 }
 
 static
-void EmitSafeGuardEnd(cmsIOHANDLER* m, char* name, int depth)
+void EmitSafeGuardEnd(cmsIOHANDLER* m, const char* name, int depth)
 {
     _cmsIOPrintf(m, "%%LCMS2: Restore previous definition of %s\n", name);
     if (depth > 1) {
@@ -452,7 +452,7 @@ void EmitSafeGuardEnd(cmsIOHANDLER* m, char* name, int depth)
 // Outputs a table of words. It does use 16 bits
 
 static
-void Emit1Gamma(cmsIOHANDLER* m, cmsToneCurve* Table, char* name)
+void Emit1Gamma(cmsIOHANDLER* m, cmsToneCurve* Table, const char* name)
 {
     cmsUInt32Number i;
     cmsFloat64Number gamma;
@@ -538,7 +538,7 @@ cmsBool GammaTableEquals(cmsUInt16Number* g1, cmsUInt16Number* g2, cmsUInt32Numb
 // Does write a set of gamma curves
 
 static
-void EmitNGamma(cmsIOHANDLER* m, cmsUInt32Number n, cmsToneCurve* g[], char* nameprefix)
+void EmitNGamma(cmsIOHANDLER* m, cmsUInt32Number n, cmsToneCurve* g[], const char* nameprefix)
 {
     cmsUInt32Number i;
     static char buffer[2048];

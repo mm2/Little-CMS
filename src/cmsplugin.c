@@ -187,6 +187,8 @@ cmsBool CMSEXPORT  _cmsReadFloat32Number(cmsIOHANDLER* io, cmsFloat32Number* n)
            return TRUE;
         #elif defined (__BORLANDC__)
            return TRUE;
+        #elif !defined(_MSC_VER) && (defined(__STDC_VERSION__) && __STDC_VERSION__ < 199901L)
+           return TRUE;
         #else
 
            // fpclassify() required by C99 (only provided by MSVC >= 1800, VS2013 onwards)
