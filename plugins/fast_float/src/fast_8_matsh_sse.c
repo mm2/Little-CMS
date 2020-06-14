@@ -298,6 +298,7 @@ cmsBool IsSSE2Available(void)
 
     __cpuid(cpuinfo, 1);
     if (!(cpuinfo[3] & (1 << 26))) return FALSE;
+    return TRUE;
 
 #else
   unsigned int level = 1u;
@@ -331,9 +332,7 @@ cmsBool Optimize8MatrixShaperSSE(_cmsTransformFn* TransformFn,
     cmsPipeline* Dest, *Src;
     cmsContext ContextID;
     cmsUInt32Number nChans;
-    cmsFloat64Number factor = 1.0;
-
-
+    
     // Check for SSE2 support
     if (!(IsSSE2Available())) return FALSE;
 
