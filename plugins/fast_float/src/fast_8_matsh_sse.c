@@ -28,6 +28,7 @@
 #include <intrin.h>
 #else
 #include <x86intrin.h>
+#include <cpuid.h>
 #endif
 
 #include <emmintrin.h>
@@ -289,6 +290,28 @@ void MatShaperXform8SSE(struct _cmstransform_struct *CMMcargo,
 }
 
 
+static
+cmsBool IsSSE2Available(void)
+{
+#ifdef _MSC_VER
+    int cpuinfo[4];
+
+    __cpuid(cpuinfo, 1);
+    if (!(cpuinfo[3] & (1 << 26))) return FALSE;
+
+#else
+  unsigned int level = 1u;
+  unsigned int eax, ebx, ecx, edx;
+  unsigned int bits = (1u << 26);
+  unsigned int max = __get_cpuid_max(0, NULL);
+  if (level > max) {
+    return FALSE;
+  }
+  __cpuid_count(level, 0, eax, ebx, ecx, edx);
+  return (edx & bits) == bits;
+#endif
+}
+
 
 //  8 bits on input allows matrix-shaper boost up a little bit
 cmsBool Optimize8MatrixShaperSSE(_cmsTransformFn* TransformFn,                                  
@@ -309,15 +332,13 @@ cmsBool Optimize8MatrixShaperSSE(_cmsTransformFn* TransformFn,
     cmsContext ContextID;
     cmsUInt32Number nChans;
     cmsFloat64Number factor = 1.0;
-    int cpuinfo[4];
+
 
     // Check for SSE2 support
-    __cpuid(cpuinfo, 1);
-    if (!(cpuinfo[3] & (1 << 26))) return FALSE;
+    if (!(IsSSE2Available())) return FALSE;
 
     // Only works on RGB to RGB and gray to gray 
-    if ( !( (T_CHANNELS(*InputFormat) == 3 && T_CHANNELS(*OutputFormat) == 3) ||
-            (T_CHANNELS(*InputFormat) == 1 && T_CHANNELS(*OutputFormat) == 1) )) return FALSE;
+    if ( !( (T_CHANNELS(*InputFormat) == 3 && T_CHANNELS(*OutputFormat) == 3) ) ) return FALSE;
                    
     // Only works on 8 bit input
     if (T_BYTES(*InputFormat) != 1 || T_BYTES(*OutputFormat) != 1) return FALSE;
@@ -338,32 +359,20 @@ cmsBool Optimize8MatrixShaperSSE(_cmsTransformFn* TransformFn,
     Data2 = (_cmsStageMatrixData*) cmsStageData(Matrix2);
 
     // Input offset should be zero
-    if (Data1 ->Offset != NULL) return FALSE;
+    if (Data1->Offset != NULL) return FALSE;
 
-    if (cmsStageInputChannels(Matrix1) == 1 && cmsStageOutputChannels(Matrix2) == 1)
-    {
-        // This is a gray to gray. Just multiply    
-         factor = Data1->Double[0]*Data2->Double[0] + 
-                  Data1->Double[1]*Data2->Double[1] + 
-                  Data1->Double[2]*Data2->Double[2];
+    // Multiply both matrices to get the result
+    _cmsMAT3per(&res, (cmsMAT3*)Data2->Double, (cmsMAT3*)Data1->Double);
 
-        if (fabs(1 - factor) < (1.0 / 65535.0)) IdentityMat = TRUE;
-    }
-    else
-    {            
-        // Multiply both matrices to get the result
-        _cmsMAT3per(&res, (cmsMAT3*) Data2 ->Double, (cmsMAT3*) Data1 ->Double);
+    // Now the result is in res + Data2 -> Offset. Maybe is a plain identity?
+    IdentityMat = FALSE;
+    if (_cmsMAT3isIdentity(&res) && Data2->Offset == NULL) {
 
-        // Now the result is in res + Data2 -> Offset. Maybe is a plain identity?
-        IdentityMat = FALSE;
-        if (_cmsMAT3isIdentity(&res) && Data2 ->Offset == NULL) {
-
-            // We can get rid of full matrix
-            IdentityMat = TRUE;
-        }
+        // We can get rid of full matrix
+        IdentityMat = TRUE;
     }
 
-      // Allocate an empty LUT 
+    // Allocate an empty LUT 
     Dest =  cmsPipelineAlloc(ContextID, nChans, nChans);
     if (!Dest) return FALSE;
 
@@ -372,11 +381,7 @@ cmsBool Optimize8MatrixShaperSSE(_cmsTransformFn* TransformFn,
     
     if (!IdentityMat) {
 
-        if (nChans == 1)
-             cmsPipelineInsertStage(Dest, cmsAT_END, 
-                    cmsStageAllocMatrix(ContextID, 1, 1, (const cmsFloat64Number*) &factor, Data2->Offset));
-        else
-            cmsPipelineInsertStage(Dest, cmsAT_END, 
+        cmsPipelineInsertStage(Dest, cmsAT_END,
                     cmsStageAllocMatrix(ContextID, 3, 3, (const cmsFloat64Number*) &res, Data2 ->Offset));
     } 
 
