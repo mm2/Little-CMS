@@ -1432,3 +1432,14 @@ cmsFloat64Number CMSEXPORT cmsEstimateGamma(const cmsToneCurve* t, cmsFloat64Num
 
     return (sum / n);   // The mean
 }
+
+
+// Retrieve parameters on one-segment tone curves
+
+cmsFloat64Number* CMSEXPORT cmsGetToneCurveParams(const cmsToneCurve* t)
+{
+    _cmsAssert(t != NULL);
+
+    if (t->nSegments != 1) return NULL;
+    return t->Segments[0].Params;
+}
