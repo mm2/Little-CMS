@@ -389,7 +389,7 @@ static cmsFormatterAlphaFn FormattersAlpha[6][6] = {
         int in_n  = FormatterPos(in);
         int out_n = FormatterPos(out);
 
-        if (in_n < 0 || out_n < 0 || in_n > 4 || out_n > 4) {
+        if (in_n < 0 || out_n < 0 || in_n > 5 || out_n > 5) {
 
                cmsSignalError(id, cmsERROR_UNKNOWN_EXTENSION, "Unrecognized alpha channel width");
                return NULL;
