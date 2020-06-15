@@ -7,7 +7,7 @@ AC_PREREQ(2.60)
 #
 # Set the package name and version
 #
-AC_INIT(lcms2,2.10)
+AC_INIT(lcms2,2.11)
 
 # Specify directory where m4 macros may be found.
 AC_CONFIG_MACRO_DIR([m4])
