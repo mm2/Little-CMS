@@ -56,3 +56,4 @@ DerivedData
 /utils/psicc/psicc
 /utils/linkicc/linkicc
 /utils/jpgicc/jpgicc
+*.tlog
