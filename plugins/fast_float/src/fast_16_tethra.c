@@ -334,6 +334,9 @@ cmsBool Optimize16BitRGBTransform(_cmsTransformFn* TransformFn,
     // Only real 16 bits
     if (T_BIT15(*InputFormat) != 0 || T_BIT15(*OutputFormat) != 0) return FALSE;
 
+	// Swap endian is not supported
+    if (T_ENDIAN16(*InputFormat) != 0 || T_ENDIAN16(*OutputFormat) != 0) return FALSE;
+
     // Only on input RGB
     if (T_COLORSPACE(*InputFormat)  != PT_RGB) return FALSE;
     

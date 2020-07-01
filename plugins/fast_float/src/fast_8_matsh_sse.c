@@ -24,6 +24,8 @@
 #include "fast_float_internal.h"
 
 
+#ifndef CMS_DONT_USE_SSE2
+
 #ifdef _MSC_VER
 #include <intrin.h>
 #else
@@ -229,7 +231,7 @@ void MatShaperXform8SSE(struct _cmstransform_struct *CMMcargo,
                   aout = (cmsUInt8Number*)Output + DestStartingOrder[3] + strideOut;
            
            /**
-           * Prefectch
+           * Prefetch
            */
            __m128 rvector = _mm_set1_ps(p->Shaper1R[*rin]);
            __m128 gvector = _mm_set1_ps(p->Shaper1G[*gin]);
@@ -336,7 +338,7 @@ cmsBool Optimize8MatrixShaperSSE(_cmsTransformFn* TransformFn,
     // Check for SSE2 support
     if (!(IsSSE2Available())) return FALSE;
 
-    // Only works on RGB to RGB and gray to gray 
+    // Only works on 3 to 3, probably RGB 
     if ( !( (T_CHANNELS(*InputFormat) == 3 && T_CHANNELS(*OutputFormat) == 3) ) ) return FALSE;
                    
     // Only works on 8 bit input
@@ -396,8 +398,8 @@ cmsBool Optimize8MatrixShaperSSE(_cmsTransformFn* TransformFn,
         _cmsStageToneCurvesData* mpeC1 = (_cmsStageToneCurvesData*) cmsStageData(Curve1);
         _cmsStageToneCurvesData* mpeC2 = (_cmsStageToneCurvesData*) cmsStageData(Curve2);
                 
-        // In this particular optimization, caché does not help as it takes more time to deal with 
-        // the caché that with the pixel handling
+        // In this particular optimization, cache does not help as it takes more time to deal with 
+        // the cache that with the pixel handling
         *dwFlags |= cmsFLAGS_NOCACHE;
   
 
@@ -414,4 +416,5 @@ cmsBool Optimize8MatrixShaperSSE(_cmsTransformFn* TransformFn,
     return TRUE;
 }
 
+#endif
 

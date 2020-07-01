@@ -32,6 +32,12 @@ extern "C" {
 
 #define LCMS2_FAST_FLOAT_VERSION   1200
 
+// Configuration toggles
+
+// Uncomment this if yout target platform can deal with SSE2
+// #define CMS_DONT_USE_SSE2 1
+
+
 // The one and only plug-in entry point. To install this plugin in your code
 // you need to place this in some initialization place:
 //
