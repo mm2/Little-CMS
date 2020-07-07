@@ -8181,6 +8181,7 @@ int CheckEmptyMLUC(void)
 
     // Cleanup
     cmsCloseProfile(profile);
+    DebugMemDontCheckThis(context);
     cmsDeleteContext(context);
 
     return 1;
