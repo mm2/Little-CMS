@@ -2406,9 +2406,9 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 #  6. If any interfaces have been removed since the last public release,
 #     then set age to 0.
 #
-LIBRARY_CURRENT=2
-LIBRARY_REVISION=10
-LIBRARY_AGE=0
+LIBRARY_CURRENT=3
+LIBRARY_REVISION=0
+LIBRARY_AGE=1
 
 
 # Obtain system type by running config.guess

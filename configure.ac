@@ -33,9 +33,9 @@ AC_CONFIG_MACRO_DIR([m4])
 #  6. If any interfaces have been removed since the last public release,
 #     then set age to 0.
 #
-LIBRARY_CURRENT=2
-LIBRARY_REVISION=10
-LIBRARY_AGE=0
+LIBRARY_CURRENT=3
+LIBRARY_REVISION=0
+LIBRARY_AGE=1
 
 AC_SUBST(LIBRARY_CURRENT)dnl
 AC_SUBST(LIBRARY_REVISION)dnl
