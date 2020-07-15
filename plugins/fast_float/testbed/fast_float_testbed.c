@@ -165,7 +165,7 @@ void CheckFormatters15(void)
        C(TYPE_ABGR_15_SE);
        C(TYPE_BGRA_15);
        C(TYPE_BGRA_15_SE);
-       C(TYPE_YMC_15),
+       C(TYPE_YMC_15);
        C(TYPE_CMY_15);
        C(TYPE_CMY_15_PLANAR);
        C(TYPE_CMY_15_SE);

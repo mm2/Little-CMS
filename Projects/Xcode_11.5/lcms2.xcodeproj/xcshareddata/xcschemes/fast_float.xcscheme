@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "418B070724BF267A00310FC0"
-               BuildableName = "liblcms2.a"
-               BlueprintName = "lcms2"
+               BlueprintIdentifier = "41D9DD5024BF2862005D81C5"
+               BuildableName = "libfast_float.a"
+               BlueprintName = "fast_float"
                ReferencedContainer = "container:lcms2.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
@@ -50,9 +50,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "418B070724BF267A00310FC0"
-            BuildableName = "liblcms2.a"
-            BlueprintName = "lcms2"
+            BlueprintIdentifier = "41D9DD5024BF2862005D81C5"
+            BuildableName = "libfast_float.a"
+            BlueprintName = "fast_float"
             ReferencedContainer = "container:lcms2.xcodeproj">
          </BuildableReference>
       </MacroExpansion>

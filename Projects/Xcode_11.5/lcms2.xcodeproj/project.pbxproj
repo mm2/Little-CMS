@@ -7,6 +7,13 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		416397AD24BF4DCA008AF7E5 /* tifdiff.c in Sources */ = {isa = PBXBuildFile; fileRef = 416397AC24BF4DCA008AF7E5 /* tifdiff.c */; };
+		416397B124BF4DFD008AF7E5 /* vprf.c in Sources */ = {isa = PBXBuildFile; fileRef = 416397AF24BF4DFD008AF7E5 /* vprf.c */; };
+		416397B224BF4DFD008AF7E5 /* xgetopt.c in Sources */ = {isa = PBXBuildFile; fileRef = 416397B024BF4DFD008AF7E5 /* xgetopt.c */; };
+		416397BF24BF4EA9008AF7E5 /* fast_float_testbed.c in Sources */ = {isa = PBXBuildFile; fileRef = 416397BE24BF4EA9008AF7E5 /* fast_float_testbed.c */; };
+		416397C024BF4EC7008AF7E5 /* liblcms2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 418B070824BF267A00310FC0 /* liblcms2.a */; };
+		416397C124BF4EF0008AF7E5 /* liblcms2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 418B070824BF267A00310FC0 /* liblcms2.a */; };
+		416397C224BF4EF4008AF7E5 /* libfast_float.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 41D9DD5124BF2862005D81C5 /* libfast_float.a */; };
 		41D9DD2A24BF272D005D81C5 /* cmsxform.c in Sources */ = {isa = PBXBuildFile; fileRef = 41D9DD1024BF272B005D81C5 /* cmsxform.c */; };
 		41D9DD2B24BF272D005D81C5 /* cmstypes.c in Sources */ = {isa = PBXBuildFile; fileRef = 41D9DD1124BF272B005D81C5 /* cmstypes.c */; };
 		41D9DD2C24BF272D005D81C5 /* cmscnvrt.c in Sources */ = {isa = PBXBuildFile; fileRef = 41D9DD1224BF272B005D81C5 /* cmscnvrt.c */; };
@@ -70,11 +77,88 @@
 		41D9DDDB24BF2ED9005D81C5 /* testcms2.c in Sources */ = {isa = PBXBuildFile; fileRef = 41D9DDD824BF2ED9005D81C5 /* testcms2.c */; };
 		41D9DDDC24BF2ED9005D81C5 /* zoo_icc.c in Sources */ = {isa = PBXBuildFile; fileRef = 41D9DDD924BF2ED9005D81C5 /* zoo_icc.c */; };
 		41D9DDDE24BF2F4B005D81C5 /* liblcms2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 418B070824BF267A00310FC0 /* liblcms2.a */; };
-		41D9DDDF24BF2F76005D81C5 /* tifficc in CopyFiles */ = {isa = PBXBuildFile; fileRef = 41D9DDB424BF2DA9005D81C5 /* tifficc */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		41D9DDDF24BF2F76005D81C5 /* tificc in CopyFiles */ = {isa = PBXBuildFile; fileRef = 41D9DDB424BF2DA9005D81C5 /* tificc */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
 		41D9DDE024BF2FB6005D81C5 /* testbed in CopyFiles */ = {isa = PBXBuildFile; fileRef = 41D9DDCF24BF2EA4005D81C5 /* testbed */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		416397C324BF4EFE008AF7E5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 418B070024BF267A00310FC0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 41D9DD5024BF2862005D81C5;
+			remoteInfo = fast_float;
+		};
+		416397C524BF4F0D008AF7E5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 418B070024BF267A00310FC0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 418B070724BF267A00310FC0;
+			remoteInfo = lcms2;
+		};
+		416397C724BF4F20008AF7E5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 418B070024BF267A00310FC0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 418B070724BF267A00310FC0;
+			remoteInfo = lcms2;
+		};
+		416397C924BF4F25008AF7E5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 418B070024BF267A00310FC0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 418B070724BF267A00310FC0;
+			remoteInfo = lcms2;
+		};
+		416397CB24BF4F2C008AF7E5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 418B070024BF267A00310FC0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 418B070724BF267A00310FC0;
+			remoteInfo = lcms2;
+		};
+		416397CD24BF4F32008AF7E5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 418B070024BF267A00310FC0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 418B070724BF267A00310FC0;
+			remoteInfo = lcms2;
+		};
+		416397CF24BF4F38008AF7E5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 418B070024BF267A00310FC0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 418B070724BF267A00310FC0;
+			remoteInfo = lcms2;
+		};
+		416397D124BF4F3D008AF7E5 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 418B070024BF267A00310FC0 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 418B070724BF267A00310FC0;
+			remoteInfo = lcms2;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXCopyFilesBuildPhase section */
+		416397A324BF4D81008AF7E5 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+		416397B524BF4E6B008AF7E5 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
 		41D9DD7E24BF2AC4005D81C5 /* CopyFiles */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -101,7 +185,7 @@
 			dstPath = usr/local/bin;
 			dstSubfolderSpec = 16;
 			files = (
-				41D9DDDF24BF2F76005D81C5 /* tifficc in CopyFiles */,
+				41D9DDDF24BF2F76005D81C5 /* tificc in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 		};
@@ -118,6 +202,13 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		416397A524BF4D81008AF7E5 /* tifdiff */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = tifdiff; sourceTree = BUILT_PRODUCTS_DIR; };
+		416397AC24BF4DCA008AF7E5 /* tifdiff.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tifdiff.c; path = ../../../utils/tificc/tifdiff.c; sourceTree = "<group>"; };
+		416397AE24BF4DFD008AF7E5 /* utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = utils.h; path = ../../../utils/common/utils.h; sourceTree = "<group>"; };
+		416397AF24BF4DFD008AF7E5 /* vprf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vprf.c; path = ../../../utils/common/vprf.c; sourceTree = "<group>"; };
+		416397B024BF4DFD008AF7E5 /* xgetopt.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = xgetopt.c; path = ../../../utils/common/xgetopt.c; sourceTree = "<group>"; };
+		416397B724BF4E6B008AF7E5 /* fast_float_testbed */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = fast_float_testbed; sourceTree = BUILT_PRODUCTS_DIR; };
+		416397BE24BF4EA9008AF7E5 /* fast_float_testbed.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = fast_float_testbed.c; path = ../../../plugins/fast_float/testbed/fast_float_testbed.c; sourceTree = "<group>"; };
 		418B070824BF267A00310FC0 /* liblcms2.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = liblcms2.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		41D9DD1024BF272B005D81C5 /* cmsxform.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = cmsxform.c; path = ../../src/cmsxform.c; sourceTree = "<group>"; };
 		41D9DD1124BF272B005D81C5 /* cmstypes.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = cmstypes.c; path = ../../src/cmstypes.c; sourceTree = "<group>"; };
@@ -173,7 +264,7 @@
 		41D9DDAB24BF2D76005D81C5 /* iccjpeg.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = iccjpeg.c; path = ../../../utils/jpgicc/iccjpeg.c; sourceTree = "<group>"; };
 		41D9DDAC24BF2D76005D81C5 /* iccjpeg.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = iccjpeg.h; path = ../../../utils/jpgicc/iccjpeg.h; sourceTree = "<group>"; };
 		41D9DDAD24BF2D76005D81C5 /* jpgicc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = jpgicc.c; path = ../../../utils/jpgicc/jpgicc.c; sourceTree = "<group>"; };
-		41D9DDB424BF2DA9005D81C5 /* tifficc */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = tifficc; sourceTree = BUILT_PRODUCTS_DIR; };
+		41D9DDB424BF2DA9005D81C5 /* tificc */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = tificc; sourceTree = BUILT_PRODUCTS_DIR; };
 		41D9DDBD24BF2E0D005D81C5 /* tificc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tificc.c; path = ../../../utils/tificc/tificc.c; sourceTree = "<group>"; };
 		41D9DDBF24BF2E46005D81C5 /* utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = utils.h; path = ../../../utils/common/utils.h; sourceTree = "<group>"; };
 		41D9DDC024BF2E46005D81C5 /* vprf.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = vprf.c; path = ../../../utils/common/vprf.c; sourceTree = "<group>"; };
@@ -189,6 +280,23 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
+		416397A224BF4D81008AF7E5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				416397C024BF4EC7008AF7E5 /* liblcms2.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		416397B424BF4E6B008AF7E5 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				416397C224BF4EF4008AF7E5 /* libfast_float.a in Frameworks */,
+				416397C124BF4EF0008AF7E5 /* liblcms2.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		418B070624BF267A00310FC0 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -238,6 +346,25 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		416397A624BF4D81008AF7E5 /* tifdiff */ = {
+			isa = PBXGroup;
+			children = (
+				416397AE24BF4DFD008AF7E5 /* utils.h */,
+				416397AF24BF4DFD008AF7E5 /* vprf.c */,
+				416397B024BF4DFD008AF7E5 /* xgetopt.c */,
+				416397AC24BF4DCA008AF7E5 /* tifdiff.c */,
+			);
+			path = tifdiff;
+			sourceTree = "<group>";
+		};
+		416397B824BF4E6B008AF7E5 /* fast_float_testbed */ = {
+			isa = PBXGroup;
+			children = (
+				416397BE24BF4EA9008AF7E5 /* fast_float_testbed.c */,
+			);
+			path = fast_float_testbed;
+			sourceTree = "<group>";
+		};
 		418B06FF24BF267A00310FC0 = {
 			isa = PBXGroup;
 			children = (
@@ -246,8 +373,10 @@
 				41D9DD4B24BF2764005D81C5 /* src */,
 				41D9DD8124BF2AC4005D81C5 /* transicc */,
 				41D9DD9724BF2BD6005D81C5 /* jpegicc */,
-				41D9DDB524BF2DA9005D81C5 /* tifficc */,
+				41D9DDB524BF2DA9005D81C5 /* tificc */,
 				41D9DDD024BF2EA4005D81C5 /* testbed */,
+				416397A624BF4D81008AF7E5 /* tifdiff */,
+				416397B824BF4E6B008AF7E5 /* fast_float_testbed */,
 				418B070924BF267A00310FC0 /* Products */,
 				41D9DD8F24BF2B60005D81C5 /* Frameworks */,
 			);
@@ -260,8 +389,10 @@
 				41D9DD5124BF2862005D81C5 /* libfast_float.a */,
 				41D9DD8024BF2AC4005D81C5 /* transicc */,
 				41D9DD9624BF2BD6005D81C5 /* jpegicc */,
-				41D9DDB424BF2DA9005D81C5 /* tifficc */,
+				41D9DDB424BF2DA9005D81C5 /* tificc */,
 				41D9DDCF24BF2EA4005D81C5 /* testbed */,
+				416397A524BF4D81008AF7E5 /* tifdiff */,
+				416397B724BF4E6B008AF7E5 /* fast_float_testbed */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -378,7 +509,7 @@
 			path = jpegicc;
 			sourceTree = "<group>";
 		};
-		41D9DDB524BF2DA9005D81C5 /* tifficc */ = {
+		41D9DDB524BF2DA9005D81C5 /* tificc */ = {
 			isa = PBXGroup;
 			children = (
 				41D9DDC524BF2E54005D81C5 /* utils.h */,
@@ -386,7 +517,7 @@
 				41D9DDC624BF2E54005D81C5 /* xgetopt.c */,
 				41D9DDBD24BF2E0D005D81C5 /* tificc.c */,
 			);
-			path = tifficc;
+			path = tificc;
 			sourceTree = "<group>";
 		};
 		41D9DDD024BF2EA4005D81C5 /* testbed */ = {
@@ -424,6 +555,43 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXNativeTarget section */
+		416397A424BF4D81008AF7E5 /* tifdiff */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 416397A924BF4D81008AF7E5 /* Build configuration list for PBXNativeTarget "tifdiff" */;
+			buildPhases = (
+				416397A124BF4D81008AF7E5 /* Sources */,
+				416397A224BF4D81008AF7E5 /* Frameworks */,
+				416397A324BF4D81008AF7E5 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				416397D224BF4F3D008AF7E5 /* PBXTargetDependency */,
+			);
+			name = tifdiff;
+			productName = tiffdiff;
+			productReference = 416397A524BF4D81008AF7E5 /* tifdiff */;
+			productType = "com.apple.product-type.tool";
+		};
+		416397B624BF4E6B008AF7E5 /* fast_float_testbed */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 416397BB24BF4E6B008AF7E5 /* Build configuration list for PBXNativeTarget "fast_float_testbed" */;
+			buildPhases = (
+				416397B324BF4E6B008AF7E5 /* Sources */,
+				416397B424BF4E6B008AF7E5 /* Frameworks */,
+				416397B524BF4E6B008AF7E5 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				416397C624BF4F0D008AF7E5 /* PBXTargetDependency */,
+				416397C424BF4EFE008AF7E5 /* PBXTargetDependency */,
+			);
+			name = fast_float_testbed;
+			productName = fast_float_testbed;
+			productReference = 416397B724BF4E6B008AF7E5 /* fast_float_testbed */;
+			productType = "com.apple.product-type.tool";
+		};
 		418B070724BF267A00310FC0 /* lcms2 */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 418B070C24BF267A00310FC0 /* Build configuration list for PBXNativeTarget "lcms2" */;
@@ -452,6 +620,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				416397C824BF4F20008AF7E5 /* PBXTargetDependency */,
 			);
 			name = fast_float;
 			productName = fast_float;
@@ -469,6 +638,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				416397CA24BF4F25008AF7E5 /* PBXTargetDependency */,
 			);
 			name = transicc;
 			productName = transicc;
@@ -486,15 +656,16 @@
 			buildRules = (
 			);
 			dependencies = (
+				416397CC24BF4F2C008AF7E5 /* PBXTargetDependency */,
 			);
 			name = jpegicc;
 			productName = jpegicc;
 			productReference = 41D9DD9624BF2BD6005D81C5 /* jpegicc */;
 			productType = "com.apple.product-type.tool";
 		};
-		41D9DDB324BF2DA9005D81C5 /* tifficc */ = {
+		41D9DDB324BF2DA9005D81C5 /* tificc */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 41D9DDB824BF2DA9005D81C5 /* Build configuration list for PBXNativeTarget "tifficc" */;
+			buildConfigurationList = 41D9DDB824BF2DA9005D81C5 /* Build configuration list for PBXNativeTarget "tificc" */;
 			buildPhases = (
 				41D9DDB024BF2DA9005D81C5 /* Sources */,
 				41D9DDB124BF2DA9005D81C5 /* Frameworks */,
@@ -503,10 +674,11 @@
 			buildRules = (
 			);
 			dependencies = (
+				416397CE24BF4F32008AF7E5 /* PBXTargetDependency */,
 			);
-			name = tifficc;
+			name = tificc;
 			productName = tifficc;
-			productReference = 41D9DDB424BF2DA9005D81C5 /* tifficc */;
+			productReference = 41D9DDB424BF2DA9005D81C5 /* tificc */;
 			productType = "com.apple.product-type.tool";
 		};
 		41D9DDCE24BF2EA4005D81C5 /* testbed */ = {
@@ -520,6 +692,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				416397D024BF4F38008AF7E5 /* PBXTargetDependency */,
 			);
 			name = testbed;
 			productName = testbed;
@@ -535,6 +708,12 @@
 				LastUpgradeCheck = 1150;
 				ORGANIZATIONNAME = littlecms;
 				TargetAttributes = {
+					416397A424BF4D81008AF7E5 = {
+						CreatedOnToolsVersion = 11.5;
+					};
+					416397B624BF4E6B008AF7E5 = {
+						CreatedOnToolsVersion = 11.5;
+					};
 					418B070724BF267A00310FC0 = {
 						CreatedOnToolsVersion = 11.5;
 					};
@@ -572,13 +751,33 @@
 				41D9DD5024BF2862005D81C5 /* fast_float */,
 				41D9DD7F24BF2AC4005D81C5 /* transicc */,
 				41D9DD9524BF2BD6005D81C5 /* jpegicc */,
-				41D9DDB324BF2DA9005D81C5 /* tifficc */,
+				41D9DDB324BF2DA9005D81C5 /* tificc */,
 				41D9DDCE24BF2EA4005D81C5 /* testbed */,
+				416397A424BF4D81008AF7E5 /* tifdiff */,
+				416397B624BF4E6B008AF7E5 /* fast_float_testbed */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXSourcesBuildPhase section */
+		416397A124BF4D81008AF7E5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				416397AD24BF4DCA008AF7E5 /* tifdiff.c in Sources */,
+				416397B124BF4DFD008AF7E5 /* vprf.c in Sources */,
+				416397B224BF4DFD008AF7E5 /* xgetopt.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		416397B324BF4E6B008AF7E5 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				416397BF24BF4EA9008AF7E5 /* fast_float_testbed.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		418B070524BF267A00310FC0 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -676,7 +875,82 @@
 		};
 /* End PBXSourcesBuildPhase section */
 
+/* Begin PBXTargetDependency section */
+		416397C424BF4EFE008AF7E5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 41D9DD5024BF2862005D81C5 /* fast_float */;
+			targetProxy = 416397C324BF4EFE008AF7E5 /* PBXContainerItemProxy */;
+		};
+		416397C624BF4F0D008AF7E5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 418B070724BF267A00310FC0 /* lcms2 */;
+			targetProxy = 416397C524BF4F0D008AF7E5 /* PBXContainerItemProxy */;
+		};
+		416397C824BF4F20008AF7E5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 418B070724BF267A00310FC0 /* lcms2 */;
+			targetProxy = 416397C724BF4F20008AF7E5 /* PBXContainerItemProxy */;
+		};
+		416397CA24BF4F25008AF7E5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 418B070724BF267A00310FC0 /* lcms2 */;
+			targetProxy = 416397C924BF4F25008AF7E5 /* PBXContainerItemProxy */;
+		};
+		416397CC24BF4F2C008AF7E5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 418B070724BF267A00310FC0 /* lcms2 */;
+			targetProxy = 416397CB24BF4F2C008AF7E5 /* PBXContainerItemProxy */;
+		};
+		416397CE24BF4F32008AF7E5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 418B070724BF267A00310FC0 /* lcms2 */;
+			targetProxy = 416397CD24BF4F32008AF7E5 /* PBXContainerItemProxy */;
+		};
+		416397D024BF4F38008AF7E5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 418B070724BF267A00310FC0 /* lcms2 */;
+			targetProxy = 416397CF24BF4F38008AF7E5 /* PBXContainerItemProxy */;
+		};
+		416397D224BF4F3D008AF7E5 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 418B070724BF267A00310FC0 /* lcms2 */;
+			targetProxy = 416397D124BF4F3D008AF7E5 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
 /* Begin XCBuildConfiguration section */
+		416397AA24BF4D81008AF7E5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		416397AB24BF4D81008AF7E5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		416397BC24BF4E6B008AF7E5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		416397BD24BF4E6B008AF7E5 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
 		418B070A24BF267A00310FC0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -846,6 +1120,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				HEADER_SEARCH_PATHS = /usr/local/include;
+				OTHER_LDFLAGS = (
+					"-L",
+					/usr/local/lib,
+					"-ljpeg",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -854,6 +1134,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				HEADER_SEARCH_PATHS = /usr/local/include;
+				OTHER_LDFLAGS = (
+					"-L",
+					/usr/local/lib,
+					"-ljpeg",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -862,6 +1148,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				HEADER_SEARCH_PATHS = /usr/local/include;
+				OTHER_LDFLAGS = (
+					"-L",
+					/usr/local/lib,
+					"-ltiff",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -870,6 +1162,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				CODE_SIGN_STYLE = Automatic;
+				HEADER_SEARCH_PATHS = /usr/local/include;
+				OTHER_LDFLAGS = (
+					"-L",
+					/usr/local/lib,
+					"-ltiff",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
@@ -893,6 +1191,24 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
+		416397A924BF4D81008AF7E5 /* Build configuration list for PBXNativeTarget "tifdiff" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				416397AA24BF4D81008AF7E5 /* Debug */,
+				416397AB24BF4D81008AF7E5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		416397BB24BF4E6B008AF7E5 /* Build configuration list for PBXNativeTarget "fast_float_testbed" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				416397BC24BF4E6B008AF7E5 /* Debug */,
+				416397BD24BF4E6B008AF7E5 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		418B070324BF267A00310FC0 /* Build configuration list for PBXProject "lcms2" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -938,7 +1254,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		41D9DDB824BF2DA9005D81C5 /* Build configuration list for PBXNativeTarget "tifficc" */ = {
+		41D9DDB824BF2DA9005D81C5 /* Build configuration list for PBXNativeTarget "tificc" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				41D9DDB924BF2DA9005D81C5 /* Debug */,
