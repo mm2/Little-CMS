@@ -380,6 +380,10 @@ Prelin16Data* PrelinOpt16alloc(cmsContext ContextID,
 
     p16 -> EvalCurveOut16 = (_cmsInterpFn16*) _cmsCalloc(ContextID, nOutputs, sizeof(_cmsInterpFn16));
     p16 -> ParamsCurveOut16 = (cmsInterpParams**) _cmsCalloc(ContextID, nOutputs, sizeof(cmsInterpParams* ));
+    if (!p16 -> EvalCurveOut16 && !p16 -> ParamsCurveOut16) {
+        PrelinOpt16free(ContextID, p16);
+        return NULL;
+    }
 
     for (i=0; i < nOutputs; i++) {
 
