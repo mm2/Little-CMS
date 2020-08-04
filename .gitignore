@@ -57,3 +57,5 @@ DerivedData
 /utils/linkicc/linkicc
 /utils/jpgicc/jpgicc
 *.tlog
+*.ipdb
+*.iobj
