@@ -340,6 +340,17 @@ cmsBool Optimize16BitRGBTransform(_cmsTransformFn* TransformFn,
     // Only on input RGB
     if (T_COLORSPACE(*InputFormat)  != PT_RGB) return FALSE;
     
+
+    // If this is a matrix-shaper, the default does already a good job
+    if (cmsPipelineCheckAndRetreiveStages(*Lut, 4,
+        cmsSigCurveSetElemType, cmsSigMatrixElemType, cmsSigMatrixElemType, cmsSigCurveSetElemType,
+        NULL, NULL, NULL, NULL)) return FALSE;
+
+    if (cmsPipelineCheckAndRetreiveStages(*Lut, 2,
+        cmsSigCurveSetElemType, cmsSigCurveSetElemType,
+        NULL, NULL)) return FALSE;
+
+
    // Named color pipelines cannot be optimized either
    for (mpe = cmsPipelineGetPtrToFirstStage(*Lut);
          mpe != NULL;

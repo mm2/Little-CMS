@@ -286,7 +286,7 @@ typedef union {
 #define CMS_LERP_FLAGS_TRILINEAR          0x0100        // Hint only
 
 
-#define MAX_INPUT_DIMENSIONS 8
+#define MAX_INPUT_DIMENSIONS 15
 
 typedef struct _cms_interp_struc {  // Used on all interpolations. Supplied by lcms2 when calling the interpolation function
 
