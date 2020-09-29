@@ -9,6 +9,9 @@ AC_PREREQ(2.60)
 #
 AC_INIT(lcms2,2.11)
 
+# Require libtool
+LT_INIT
+
 # Specify directory where m4 macros may be found.
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -379,4 +382,7 @@ AC_CONFIG_FILES([utils/linkicc/Makefile])
 AC_CONFIG_FILES([utils/jpgicc/Makefile])
 AC_CONFIG_FILES([utils/psicc/Makefile])
 AC_CONFIG_FILES([testbed/Makefile])
+AC_CONFIG_FILES([plugins/Makefile])
+AC_CONFIG_FILES([plugins/fast_float/Makefile])
+AC_CONFIG_FILES([plugins/fast_float/src/Makefile])
 AC_OUTPUT
