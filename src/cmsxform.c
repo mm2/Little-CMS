@@ -447,7 +447,7 @@ void TransformOnePixelWithGamutCheck(_cmsTRANSFORM* p,
     p ->GamutCheck ->Eval16Fn(wIn, &wOutOfGamut, p ->GamutCheck ->Data);
     if (wOutOfGamut >= 1) {
 
-        cmsUInt16Number i;
+        cmsUInt32Number i;
         _cmsAlarmCodesChunkType* ContextAlarmCodes = (_cmsAlarmCodesChunkType*) _cmsContextGetClientChunk(p->ContextID, AlarmCodesContext);        
 
         for (i=0; i < p ->Lut->OutputChannels; i++) {
