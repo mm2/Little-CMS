@@ -1777,7 +1777,7 @@ void TestGrayTransformPerformance()
 
        pixels = 256 * 256 * 256;
        Mb = pixels* 2*sizeof(float);
-       In = malloc(Mb);
+       In = (float*) malloc(Mb);
 
        for (j = 0; j < pixels*2; j++)
               In[j] = (j % 256) / 255.0f;
@@ -1827,7 +1827,7 @@ void TestGrayTransformPerformance1()
 
        pixels = 256 * 256 * 256;
        Mb = pixels* sizeof(float);
-       In = malloc(Mb);
+       In = (float*) malloc(Mb);
 
        for (j = 0; j < pixels; j++)
               In[j] = (j % 256) / 255.0f;

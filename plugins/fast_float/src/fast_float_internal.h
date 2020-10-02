@@ -141,9 +141,8 @@ cmsINLINE cmsFloat32Number flerp(const cmsFloat32Number LutTable[], cmsFloat32Nu
 
 
 
-
 // Some secret sauce from lcms
-int  _cmsReasonableGridpointsByColorspace(cmsColorSpaceSignature Colorspace, cmsUInt32Number dwFlags);
+cmsUInt32Number  _cmsReasonableGridpointsByColorspace(cmsColorSpaceSignature Colorspace, cmsUInt32Number dwFlags);
 
 
 
