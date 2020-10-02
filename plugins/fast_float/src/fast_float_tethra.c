@@ -62,13 +62,17 @@ int XFormSampler(CMSREGISTER const cmsFloat32Number In[], CMSREGISTER cmsFloat32
 #define DENS(i,j,k) (LutTable[(i)+(j)+(k)+OutChan])
 
 static
-void FloatCLUTEval(struct _cmstransform_struct *CMMcargo,
-                      const cmsFloat32Number* Input,
-                      cmsFloat32Number* Output,
-                      cmsUInt32Number len,
-                      cmsUInt32Number Stride)
+void FloatCLUTEval(struct _cmstransform_struct* CMMcargo,
+                        const void* Input,
+                        void* Output,
+                        cmsUInt32Number PixelsPerLine,
+                        cmsUInt32Number LineCount,
+                        const cmsStride* Stride)
+
 {
-    
+
+    FloatCLUTData* p8 = (FloatCLUTData*)_cmsGetTransformUserData(CMMcargo);
+
     cmsFloat32Number        r, g, b;
     cmsFloat32Number        px, py, pz;
     int                     x0, y0, z0;
@@ -77,15 +81,16 @@ void FloatCLUTEval(struct _cmstransform_struct *CMMcargo,
     cmsFloat32Number        c0, c1 = 0, c2 = 0, c3 = 0;
 
     cmsUInt32Number         OutChan;
-    FloatCLUTData*          p8 = (FloatCLUTData*) _cmsGetTransformUserData(CMMcargo);
 
-    const cmsInterpParams*  p = p8 ->p;
-    cmsUInt32Number        TotalOut = p -> nOutputs;
+    const cmsInterpParams* p = p8->p;
+    cmsUInt32Number        TotalOut = p->nOutputs;
+    cmsUInt32Number        TotalPlusAlpha;
     const cmsFloat32Number* LutTable = (const cmsFloat32Number*)p->Table;
-    cmsUInt32Number        ii;
-    const cmsUInt8Number*  rin;
-    const cmsUInt8Number*  gin;
-    const cmsUInt8Number*  bin;
+    cmsUInt32Number        i, ii;
+    const cmsUInt8Number* rin;
+    const cmsUInt8Number* gin;
+    const cmsUInt8Number* bin;
+    const cmsUInt8Number* ain = NULL;
 
     cmsUInt8Number* out[cmsMAXCHANNELS];
     cmsUInt32Number SourceStartingOrder[cmsMAXCHANNELS];
@@ -93,116 +98,130 @@ void FloatCLUTEval(struct _cmstransform_struct *CMMcargo,
     cmsUInt32Number DestStartingOrder[cmsMAXCHANNELS];
     cmsUInt32Number DestIncrements[cmsMAXCHANNELS];
 
-    cmsUInt32Number InputFormat  = cmsGetTransformInputFormat((cmsHTRANSFORM) CMMcargo);
-    cmsUInt32Number OutputFormat = cmsGetTransformOutputFormat((cmsHTRANSFORM) CMMcargo);
+    cmsUInt32Number InputFormat = cmsGetTransformInputFormat((cmsHTRANSFORM)CMMcargo);
+    cmsUInt32Number OutputFormat = cmsGetTransformOutputFormat((cmsHTRANSFORM)CMMcargo);
 
     cmsUInt32Number nchans, nalpha;
+    cmsUInt32Number strideIn, strideOut;
+                                                        
+    _cmsComputeComponentIncrements(InputFormat, Stride->BytesPerPlaneIn, &nchans, &nalpha, SourceStartingOrder, SourceIncrements);
+    _cmsComputeComponentIncrements(OutputFormat, Stride->BytesPerPlaneOut, &nchans, &nalpha, DestStartingOrder, DestIncrements);
 
-    _cmsComputeComponentIncrements(InputFormat, Stride, &nchans, &nalpha, SourceStartingOrder, SourceIncrements);
-    _cmsComputeComponentIncrements(OutputFormat, Stride, &nchans, &nalpha, DestStartingOrder, DestIncrements);
+    if (!(_cmsGetTransformFlags((cmsHTRANSFORM)CMMcargo) & cmsFLAGS_COPY_ALPHA))
+        nalpha = 0;
 
-    // SeparateRGB(InputFormat, Stride,  SourceStartingOrder, SourceIncrements);
-    // SeparateRGB(OutputFormat, Stride, DestStartingOrder, DestIncrements);
+    strideIn = strideOut = 0;
+    for (i = 0; i < LineCount; i++) {
 
-    rin = (const cmsUInt8Number*)Input + SourceStartingOrder[0];
-    gin = (const cmsUInt8Number*)Input + SourceStartingOrder[1];
-    bin = (const cmsUInt8Number*)Input + SourceStartingOrder[2];
+        rin = (const cmsUInt8Number*)Input + SourceStartingOrder[0] + strideIn;
+        gin = (const cmsUInt8Number*)Input + SourceStartingOrder[1] + strideIn;
+        bin = (const cmsUInt8Number*)Input + SourceStartingOrder[2] + strideIn;
+        if (nalpha)
+            ain = (const cmsUInt8Number*)Input + SourceStartingOrder[3] + strideIn;
 
-    for (ii=0; ii < TotalOut; ii++) 
-           out[ii] = (cmsUInt8Number*) Output + DestStartingOrder[ii];
+        TotalPlusAlpha = TotalOut;
+        if (ain) TotalPlusAlpha++;
 
-    for (ii=0; ii < len; ii++) {
-            
-           r = fclamp(*(cmsFloat32Number*)rin);
-           g = fclamp(*(cmsFloat32Number*)gin);
-           b = fclamp(*(cmsFloat32Number*)bin);
+        for (ii = 0; ii < TotalPlusAlpha; ii++)
+            out[ii] = (cmsUInt8Number*)Output + DestStartingOrder[ii] + strideOut;
 
-        rin += SourceIncrements[0];
-        gin += SourceIncrements[1];
-        bin += SourceIncrements[2];
-       
-        px = r * p->Domain[0];
-        py = g * p->Domain[1];
-        pz = b * p->Domain[2];
+        for (ii = 0; ii < PixelsPerLine; ii++) {
 
-        
-        x0 = (int)_cmsQuickFloor(px); rx = (px - (cmsFloat32Number)x0);
-        y0 = (int)_cmsQuickFloor(py); ry = (py - (cmsFloat32Number)y0);
-        z0 = (int)_cmsQuickFloor(pz); rz = (pz - (cmsFloat32Number)z0);
-   
-        X0 = p->opta[2] * x0;
-        X1 = X0 + (r >= 1.0 ? 0 : p->opta[2]);
+            r = fclamp(*(cmsFloat32Number*)rin);
+            g = fclamp(*(cmsFloat32Number*)gin);
+            b = fclamp(*(cmsFloat32Number*)bin);
 
-        Y0 = p->opta[1] * y0;
-        Y1 = Y0 + (g >= 1.0 ? 0 : p->opta[1]);
+            rin += SourceIncrements[0];
+            gin += SourceIncrements[1];
+            bin += SourceIncrements[2];
 
-        Z0 = p->opta[0] * z0;
-        Z1 = Z0 + (b >= 1.0 ? 0 : p->opta[0]);
-      
-        for (OutChan = 0; OutChan < TotalOut; OutChan++) {
+            px = r * p->Domain[0];
+            py = g * p->Domain[1];
+            pz = b * p->Domain[2];
 
-               // These are the 6 Tetrahedral
 
-               c0 = DENS(X0, Y0, Z0);
+            x0 = (int)_cmsQuickFloor(px); rx = (px - (cmsFloat32Number)x0);
+            y0 = (int)_cmsQuickFloor(py); ry = (py - (cmsFloat32Number)y0);
+            z0 = (int)_cmsQuickFloor(pz); rz = (pz - (cmsFloat32Number)z0);
 
-               if (rx >= ry && ry >= rz) {
+            X0 = p->opta[2] * x0;
+            X1 = X0 + (r >= 1.0 ? 0 : p->opta[2]);
 
-                      c1 = DENS(X1, Y0, Z0) - c0;
-                      c2 = DENS(X1, Y1, Z0) - DENS(X1, Y0, Z0);
-                      c3 = DENS(X1, Y1, Z1) - DENS(X1, Y1, Z0);
+            Y0 = p->opta[1] * y0;
+            Y1 = Y0 + (g >= 1.0 ? 0 : p->opta[1]);
 
-               }
-               else
-                      if (rx >= rz && rz >= ry) {
+            Z0 = p->opta[0] * z0;
+            Z1 = Z0 + (b >= 1.0 ? 0 : p->opta[0]);
 
-                             c1 = DENS(X1, Y0, Z0) - c0;
-                             c2 = DENS(X1, Y1, Z1) - DENS(X1, Y0, Z1);
-                             c3 = DENS(X1, Y0, Z1) - DENS(X1, Y0, Z0);
+            for (OutChan = 0; OutChan < TotalOut; OutChan++) {
 
-                      }
-                      else
-                             if (rz >= rx && rx >= ry) {
+                // These are the 6 Tetrahedral
 
-                                    c1 = DENS(X1, Y0, Z1) - DENS(X0, Y0, Z1);
-                                    c2 = DENS(X1, Y1, Z1) - DENS(X1, Y0, Z1);
-                                    c3 = DENS(X0, Y0, Z1) - c0;
+                c0 = DENS(X0, Y0, Z0);
 
-                             }
-                             else
-                                    if (ry >= rx && rx >= rz) {
+                if (rx >= ry && ry >= rz) {
 
-                                           c1 = DENS(X1, Y1, Z0) - DENS(X0, Y1, Z0);
-                                           c2 = DENS(X0, Y1, Z0) - c0;
-                                           c3 = DENS(X1, Y1, Z1) - DENS(X1, Y1, Z0);
+                    c1 = DENS(X1, Y0, Z0) - c0;
+                    c2 = DENS(X1, Y1, Z0) - DENS(X1, Y0, Z0);
+                    c3 = DENS(X1, Y1, Z1) - DENS(X1, Y1, Z0);
+
+                }
+                else
+                    if (rx >= rz && rz >= ry) {
+
+                        c1 = DENS(X1, Y0, Z0) - c0;
+                        c2 = DENS(X1, Y1, Z1) - DENS(X1, Y0, Z1);
+                        c3 = DENS(X1, Y0, Z1) - DENS(X1, Y0, Z0);
+
+                    }
+                    else
+                        if (rz >= rx && rx >= ry) {
+
+                            c1 = DENS(X1, Y0, Z1) - DENS(X0, Y0, Z1);
+                            c2 = DENS(X1, Y1, Z1) - DENS(X1, Y0, Z1);
+                            c3 = DENS(X0, Y0, Z1) - c0;
+
+                        }
+                        else
+                            if (ry >= rx && rx >= rz) {
+
+                                c1 = DENS(X1, Y1, Z0) - DENS(X0, Y1, Z0);
+                                c2 = DENS(X0, Y1, Z0) - c0;
+                                c3 = DENS(X1, Y1, Z1) - DENS(X1, Y1, Z0);
+
+                            }
+                            else
+                                if (ry >= rz && rz >= rx) {
+
+                                    c1 = DENS(X1, Y1, Z1) - DENS(X0, Y1, Z1);
+                                    c2 = DENS(X0, Y1, Z0) - c0;
+                                    c3 = DENS(X0, Y1, Z1) - DENS(X0, Y1, Z0);
+
+                                }
+                                else
+                                    if (rz >= ry && ry >= rx) {
+
+                                        c1 = DENS(X1, Y1, Z1) - DENS(X0, Y1, Z1);
+                                        c2 = DENS(X0, Y1, Z1) - DENS(X0, Y0, Z1);
+                                        c3 = DENS(X0, Y0, Z1) - c0;
 
                                     }
-                                    else
-                                           if (ry >= rz && rz >= rx) {
+                                    else {
+                                        c1 = c2 = c3 = 0;
+                                    }
 
-                                                  c1 = DENS(X1, Y1, Z1) - DENS(X0, Y1, Z1);
-                                                  c2 = DENS(X0, Y1, Z0) - c0;
-                                                  c3 = DENS(X0, Y1, Z1) - DENS(X0, Y1, Z0);
+                *(cmsFloat32Number*)(out[OutChan]) = c0 + c1 * rx + c2 * ry + c3 * rz;
 
-                                           }
-                                           else
-                                                  if (rz >= ry && ry >= rx) {
+                out[OutChan] += DestIncrements[OutChan];
+            }
 
-                                                         c1 = DENS(X1, Y1, Z1) - DENS(X0, Y1, Z1);
-                                                         c2 = DENS(X0, Y1, Z1) - DENS(X0, Y0, Z1);
-                                                         c3 = DENS(X0, Y0, Z1) - c0;
-
-                                                  }
-                                                  else  {
-                                                         c1 = c2 = c3 = 0;
-                                                  }
-
-                                                  *(cmsFloat32Number*) (out[OutChan]) = c0 + c1 * rx + c2 * ry + c3 * rz;
-                                                 
-                                                  out[OutChan] += DestIncrements[OutChan];
-
+            if (ain)
+                *out[TotalOut] = *ain;
         }
 
 
+        strideIn += Stride->BytesPerLineIn;
+        strideOut += Stride->BytesPerLineOut;
     }
 }
 
@@ -212,7 +231,7 @@ void FloatCLUTEval(struct _cmstransform_struct *CMMcargo,
 
 // --------------------------------------------------------------------------------------------------------------
 
-cmsBool OptimizeCLUTRGBTransform(_cmsTransformFn* TransformFn,
+cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
                                   void** UserData,
                                   _cmsFreeUserDataFn* FreeDataFn,
                                   cmsPipeline** Lut, 
@@ -280,7 +299,7 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransformFn* TransformFn,
     cmsPipelineFree(OriginalLut);
 
     *Lut = OptimizedLUT;
-    *TransformFn = (_cmsTransformFn) FloatCLUTEval;
+    *TransformFn = FloatCLUTEval;
     *UserData   = p8;
     *FreeDataFn = _cmsFree;
     *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;

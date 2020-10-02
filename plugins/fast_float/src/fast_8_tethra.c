@@ -148,9 +148,11 @@ void PerformanceEval8(struct _cmstransform_struct *CMMcargo,
 
        cmsUInt32Number nalpha, strideIn, strideOut;
 
-
        _cmsComputeComponentIncrements(cmsGetTransformInputFormat((cmsHTRANSFORM)CMMcargo), Stride->BytesPerPlaneIn, NULL, &nalpha, SourceStartingOrder, SourceIncrements);
        _cmsComputeComponentIncrements(cmsGetTransformOutputFormat((cmsHTRANSFORM)CMMcargo), Stride->BytesPerPlaneOut, NULL, &nalpha, DestStartingOrder, DestIncrements);
+
+       if (!(_cmsGetTransformFlags((cmsHTRANSFORM)CMMcargo) & cmsFLAGS_COPY_ALPHA))
+           nalpha = 0;
 
        strideIn = strideOut = 0;
        for (i = 0; i < LineCount; i++) {
@@ -326,7 +328,7 @@ void SlopeLimiting(cmsUInt16Number* Table16, int nEntries)
 
 // --------------------------------------------------------------------------------------------------------------
 
-cmsBool Optimize8BitRGBTransform(_cmsTransformFn* TransformFn,
+cmsBool Optimize8BitRGBTransform(_cmsTransform2Fn* TransformFn,
                                   void** UserData,
                                   _cmsFreeUserDataFn* FreeDataFn,
                                   cmsPipeline** Lut, 
@@ -483,7 +485,7 @@ cmsBool Optimize8BitRGBTransform(_cmsTransformFn* TransformFn,
 
     *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
     *Lut = OptimizedLUT;
-    *TransformFn = (_cmsTransformFn) PerformanceEval8;
+    *TransformFn = PerformanceEval8;
     *UserData   = p8;
     *FreeDataFn = Performance8free;
 

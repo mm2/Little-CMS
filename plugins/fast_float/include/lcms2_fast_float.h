@@ -30,7 +30,7 @@ extern "C" {
 #   endif
 #endif
 
-#define LCMS2_FAST_FLOAT_VERSION   1200
+#define LCMS2_FAST_FLOAT_VERSION   1300
 
 // Configuration toggles
 

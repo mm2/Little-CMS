@@ -116,12 +116,15 @@ void PerformanceEval16(struct _cmstransform_struct *CMMcargo,
           
        cmsUInt32Number dwInFormat = cmsGetTransformInputFormat((cmsHTRANSFORM)CMMcargo);
        cmsUInt32Number dwOutFormat = cmsGetTransformOutputFormat((cmsHTRANSFORM)CMMcargo);
-
+       
        _cmsComputeComponentIncrements(dwInFormat, Stride->BytesPerPlaneIn, NULL, &nalpha, SourceStartingOrder, SourceIncrements);
        _cmsComputeComponentIncrements(dwOutFormat, Stride->BytesPerPlaneOut, NULL, &nalpha, DestStartingOrder, DestIncrements);
 
        in16  = (T_BYTES(dwInFormat) == 2);
        out16 = (T_BYTES(dwOutFormat) == 2);
+
+       if (!(_cmsGetTransformFlags((cmsHTRANSFORM)CMMcargo) & cmsFLAGS_COPY_ALPHA))
+           nalpha = 0;
 
        strideIn = strideOut = 0;
        for (i = 0; i < LineCount; i++) {
@@ -306,7 +309,7 @@ void PerformanceEval16(struct _cmstransform_struct *CMMcargo,
 
 // --------------------------------------------------------------------------------------------------------------
 
-cmsBool Optimize16BitRGBTransform(_cmsTransformFn* TransformFn,
+cmsBool Optimize16BitRGBTransform(_cmsTransform2Fn* TransformFn,
                                   void** UserData,
                                   _cmsFreeUserDataFn* FreeDataFn,
                                   cmsPipeline** Lut, 
@@ -376,7 +379,7 @@ cmsBool Optimize16BitRGBTransform(_cmsTransformFn* TransformFn,
     p16 = Performance16alloc(ContextID, data->Params);
     if (p16 == NULL) return FALSE;
 
-    *TransformFn = (_cmsTransformFn) PerformanceEval16;
+    *TransformFn = PerformanceEval16;
     *UserData   = p16;
     *FreeDataFn = Performance16free;
     *InputFormat  |= 0x02000000;

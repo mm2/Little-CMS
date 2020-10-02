@@ -25,7 +25,7 @@
 
 // This is the main dispatcher
 static
-cmsBool Floating_Point_Transforms_Dispatcher(_cmsTransformFn* TransformFn,
+cmsBool Floating_Point_Transforms_Dispatcher(_cmsTransform2Fn* TransformFn,
                                   void** UserData,
                                   _cmsFreeUserDataFn* FreeUserData,
                                   cmsPipeline** Lut, 
@@ -81,7 +81,10 @@ static cmsPluginTransform PluginList = {
 
               { cmsPluginMagicNumber, REQUIRED_LCMS_VERSION, cmsPluginTransformSig, (cmsPluginBase *) &PluginFastFloat },
 
-              Floating_Point_Transforms_Dispatcher
+              // When initializing a union, the initializer list must have only one member, which initializes the first member of 
+              // the union unless a designated initializer is used (C99)
+
+              (_cmsTransformFactory) Floating_Point_Transforms_Dispatcher
 };
 
 // This is the main plug-in installer. 

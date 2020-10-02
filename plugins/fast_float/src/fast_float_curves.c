@@ -58,12 +58,13 @@ static void free_aligned(cmsContext ContextID, void* Data)
 // Evaluator for float curves. This are just 1D tables
 
 static void FastEvaluateFloatRGBCurves(struct _cmstransform_struct *CMMcargo,
-                            const cmsFloat32Number* Input,
-                            cmsFloat32Number* Output,
-                            cmsUInt32Number len,
-                            cmsUInt32Number Stride)
+                                        const void* Input,
+                                        void* Output,
+                                        cmsUInt32Number PixelsPerLine,
+                                        cmsUInt32Number LineCount,
+                                        const cmsStride* Stride)
 {   
-    cmsUInt32Number ii;
+    cmsUInt32Number i, ii;
 	cmsUInt32Number SourceStartingOrder[cmsMAXCHANNELS];
 	cmsUInt32Number SourceIncrements[cmsMAXCHANNELS];
 	cmsUInt32Number DestStartingOrder[cmsMAXCHANNELS];
@@ -72,10 +73,12 @@ static void FastEvaluateFloatRGBCurves(struct _cmstransform_struct *CMMcargo,
     const cmsUInt8Number* rin;
     const cmsUInt8Number* gin;
     const cmsUInt8Number* bin;
-        
+    const cmsUInt8Number* ain = NULL;
+
     cmsUInt8Number* rout;
     cmsUInt8Number* gout;
     cmsUInt8Number* bout;
+    cmsUInt8Number* aout = NULL;
 
     cmsUInt32Number InputFormat  = cmsGetTransformInputFormat((cmsHTRANSFORM) CMMcargo);
     cmsUInt32Number OutputFormat = cmsGetTransformOutputFormat((cmsHTRANSFORM) CMMcargo);
@@ -83,45 +86,69 @@ static void FastEvaluateFloatRGBCurves(struct _cmstransform_struct *CMMcargo,
     CurvesFloatData* Data = (CurvesFloatData*)  _cmsGetTransformUserData(CMMcargo);
 
     cmsUInt32Number nchans, nalpha;
+    cmsUInt32Number strideIn, strideOut;
 
-    _cmsComputeComponentIncrements(InputFormat, Stride, &nchans, &nalpha, SourceStartingOrder, SourceIncrements);
-    _cmsComputeComponentIncrements(OutputFormat, Stride, &nchans, &nalpha, DestStartingOrder, DestIncrements);
+    _cmsComputeComponentIncrements(InputFormat,  Stride->BytesPerPlaneIn, &nchans, &nalpha, SourceStartingOrder, SourceIncrements);
+    _cmsComputeComponentIncrements(OutputFormat, Stride->BytesPerPlaneOut, &nchans, &nalpha, DestStartingOrder, DestIncrements);
 
-    // SeparateRGB(InputFormat, Stride,  SourceStartingOrder, SourceIncrements);
-    // SeparateRGB(OutputFormat, Stride, DestStartingOrder, DestIncrements);
+    if (!(_cmsGetTransformFlags((cmsHTRANSFORM)CMMcargo) & cmsFLAGS_COPY_ALPHA))
+        nalpha = 0;
 
-    rin = (const cmsUInt8Number*)Input + SourceStartingOrder[0];
-    gin = (const cmsUInt8Number*)Input + SourceStartingOrder[1];
-    bin = (const cmsUInt8Number*)Input + SourceStartingOrder[2];
 
-    rout = (cmsUInt8Number*)Output + DestStartingOrder[0];
-    gout = (cmsUInt8Number*)Output + DestStartingOrder[1];
-    bout = (cmsUInt8Number*)Output + DestStartingOrder[2];
+    strideIn = strideOut = 0;
+    for (i = 0; i < LineCount; i++) {
 
-    for (ii = 0; ii < len; ii++) {
+        rin = (const cmsUInt8Number*)Input + SourceStartingOrder[0] + strideIn;
+        gin = (const cmsUInt8Number*)Input + SourceStartingOrder[1] + strideIn;
+        bin = (const cmsUInt8Number*)Input + SourceStartingOrder[2] + strideIn;
 
-           *(cmsFloat32Number*)rout = flerp(Data->CurveR, *(cmsFloat32Number*)rin);
-           *(cmsFloat32Number*)gout = flerp(Data->CurveG, *(cmsFloat32Number*)gin);
-           *(cmsFloat32Number*)bout = flerp(Data->CurveB, *(cmsFloat32Number*)bin);
+        if (nalpha)
+            ain = (const cmsUInt8Number*)Input + SourceStartingOrder[3] + strideIn;
 
-           rin += SourceIncrements[0];
-           gin += SourceIncrements[1];
-           bin += SourceIncrements[2];
+        rout = (cmsUInt8Number*)Output + DestStartingOrder[0] + strideOut;
+        gout = (cmsUInt8Number*)Output + DestStartingOrder[1] + strideOut;
+        bout = (cmsUInt8Number*)Output + DestStartingOrder[2] + strideOut;
 
-           rout += DestIncrements[0];
-           gout += DestIncrements[1];
-           bout += DestIncrements[2];
+        if (nalpha)
+            aout = (cmsUInt8Number*)Output + DestStartingOrder[3] + strideOut;
+
+
+        for (ii = 0; ii < PixelsPerLine; ii++) {
+
+            *(cmsFloat32Number*)rout = flerp(Data->CurveR, *(cmsFloat32Number*)rin);
+            *(cmsFloat32Number*)gout = flerp(Data->CurveG, *(cmsFloat32Number*)gin);
+            *(cmsFloat32Number*)bout = flerp(Data->CurveB, *(cmsFloat32Number*)bin);
+
+            rin += SourceIncrements[0];
+            gin += SourceIncrements[1];
+            bin += SourceIncrements[2];
+
+            rout += DestIncrements[0];
+            gout += DestIncrements[1];
+            bout += DestIncrements[2];
+
+            if (ain)
+            {
+                *(cmsFloat32Number*)aout = *(cmsFloat32Number*)ain;
+                ain += SourceIncrements[3];
+                aout += DestIncrements[3];
+            }
+        }
+
+        strideIn += Stride->BytesPerLineIn;
+        strideOut += Stride->BytesPerLineOut;
     }
 }
 
 // Do nothing but arrange the RGB format.
 static void FastFloatRGBIdentity(struct _cmstransform_struct *CMMcargo,
-                                const cmsFloat32Number* Input,
-                                cmsFloat32Number* Output,
-                                cmsUInt32Number len,
-                                cmsUInt32Number Stride)
+                                        const void* Input,
+                                        void* Output,
+                                        cmsUInt32Number PixelsPerLine,
+                                        cmsUInt32Number LineCount,
+                                        const cmsStride* Stride)
 {   
-    cmsUInt32Number ii;
+    cmsUInt32Number i, ii;
 	cmsUInt32Number SourceStartingOrder[cmsMAXCHANNELS];
 	cmsUInt32Number SourceIncrements[cmsMAXCHANNELS];
     cmsUInt32Number DestStartingOrder[cmsMAXCHANNELS];
@@ -129,37 +156,49 @@ static void FastFloatRGBIdentity(struct _cmstransform_struct *CMMcargo,
     const cmsUInt8Number* rin;
     const cmsUInt8Number* gin;
     const cmsUInt8Number* bin;
+    const cmsUInt8Number* ain = NULL;
     cmsUInt8Number* rout;
     cmsUInt8Number* gout;
     cmsUInt8Number* bout;
-
+    cmsUInt8Number* aout = NULL;
 
     cmsUInt32Number InputFormat  = cmsGetTransformInputFormat((cmsHTRANSFORM) CMMcargo);
     cmsUInt32Number OutputFormat = cmsGetTransformOutputFormat((cmsHTRANSFORM) CMMcargo);
   
-
     cmsUInt32Number nchans, nalpha;
+    cmsUInt32Number strideIn, strideOut;
 
-    _cmsComputeComponentIncrements(InputFormat, Stride, &nchans, &nalpha, SourceStartingOrder, SourceIncrements);
-    _cmsComputeComponentIncrements(OutputFormat, Stride, &nchans, &nalpha, DestStartingOrder, DestIncrements);
+    _cmsComputeComponentIncrements(InputFormat,  Stride->BytesPerPlaneIn,  &nchans, &nalpha, SourceStartingOrder, SourceIncrements);
+    _cmsComputeComponentIncrements(OutputFormat, Stride->BytesPerPlaneOut, &nchans, &nalpha, DestStartingOrder, DestIncrements);
 
-    // SeparateRGB(InputFormat, Stride,  SourceStartingOrder, SourceIncrements);
-    // SeparateRGB(OutputFormat, Stride, DestStartingOrder, DestIncrements);
+    if (!(_cmsGetTransformFlags((cmsHTRANSFORM)CMMcargo) & cmsFLAGS_COPY_ALPHA))
+        nalpha = 0;
 
-    rin = (const cmsUInt8Number*)Input + SourceStartingOrder[0];
-    gin = (const cmsUInt8Number*)Input + SourceStartingOrder[1];
-    bin = (const cmsUInt8Number*)Input + SourceStartingOrder[2];
+    strideIn = strideOut = 0;
+    for (i = 0; i < LineCount; i++) {
 
-    rout = (cmsUInt8Number*)Output + DestStartingOrder[0];
-    gout = (cmsUInt8Number*)Output + DestStartingOrder[1];
-    bout = (cmsUInt8Number*)Output + DestStartingOrder[2];
+    rin = (const cmsUInt8Number*)Input + SourceStartingOrder[0] + strideIn;
+    gin = (const cmsUInt8Number*)Input + SourceStartingOrder[1] + strideIn;
+    bin = (const cmsUInt8Number*)Input + SourceStartingOrder[2] + strideIn;
 
-    for (ii=0; ii < len; ii++) {
+    if (nalpha)
+        ain = (const cmsUInt8Number*)Input + SourceStartingOrder[3] + strideIn;
 
-        memmove(rout, rin, 4); 
-        memmove(gout, gin, 4); 
-        memmove(bout, bin, 4); 
 
+    rout = (cmsUInt8Number*)Output + DestStartingOrder[0] + strideOut;
+    gout = (cmsUInt8Number*)Output + DestStartingOrder[1] + strideOut;
+    bout = (cmsUInt8Number*)Output + DestStartingOrder[2] + strideOut;
+
+    if (nalpha)
+        aout = (cmsUInt8Number*)Output + DestStartingOrder[3] + strideOut;
+
+
+    for (ii=0; ii < PixelsPerLine; ii++) {
+
+        *(cmsFloat32Number*)rout = *(cmsFloat32Number*)rin;
+        *(cmsFloat32Number*)gout = *(cmsFloat32Number*)gin;
+        *(cmsFloat32Number*)bout = *(cmsFloat32Number*)bin;
+        
         rin += SourceIncrements[0];
         gin += SourceIncrements[1];
         bin += SourceIncrements[2];
@@ -167,84 +206,146 @@ static void FastFloatRGBIdentity(struct _cmstransform_struct *CMMcargo,
         rout += DestIncrements[0];
         gout += DestIncrements[1];
         bout += DestIncrements[2];
+
+
+        if (ain)
+        {
+            *(cmsFloat32Number*)aout = *(cmsFloat32Number*)ain;
+            ain += SourceIncrements[3];
+            aout += DestIncrements[3];
+        }
+    }
+
+    strideIn += Stride->BytesPerLineIn;
+    strideOut += Stride->BytesPerLineOut;
     }
 }
 
 // Evaluate 1 channel only
-static void FastEvaluateFloatGrayCurves(struct _cmstransform_struct *CMMcargo,
-                                    const cmsFloat32Number* Input,
-                                    cmsFloat32Number* Output,
-                                    cmsUInt32Number len,
-                                    cmsUInt32Number Stride)
-{   
-    cmsUInt32Number ii;
+static void FastEvaluateFloatGrayCurves(struct _cmstransform_struct* CMMcargo,
+                                        const void* Input,
+                                        void* Output,
+                                        cmsUInt32Number PixelsPerLine,
+                                        cmsUInt32Number LineCount,
+                                        const cmsStride* Stride)
+{
+    cmsUInt32Number i, ii;
     cmsUInt32Number SourceStartingOrder[cmsMAXCHANNELS];
     cmsUInt32Number SourceIncrements[cmsMAXCHANNELS];
     cmsUInt32Number DestStartingOrder[cmsMAXCHANNELS];
     cmsUInt32Number DestIncrements[cmsMAXCHANNELS];
     const cmsUInt8Number* kin;
+    const cmsUInt8Number* ain = NULL;
     cmsUInt8Number* kout;
-    
-    cmsUInt32Number InputFormat  = cmsGetTransformInputFormat((cmsHTRANSFORM) CMMcargo);
-    cmsUInt32Number OutputFormat = cmsGetTransformOutputFormat((cmsHTRANSFORM) CMMcargo);
+    cmsUInt8Number* aout = NULL;
 
-    CurvesFloatData* Data = (CurvesFloatData*)  _cmsGetTransformUserData(CMMcargo);
+    cmsUInt32Number InputFormat = cmsGetTransformInputFormat((cmsHTRANSFORM)CMMcargo);
+    cmsUInt32Number OutputFormat = cmsGetTransformOutputFormat((cmsHTRANSFORM)CMMcargo);
+
+    CurvesFloatData* Data = (CurvesFloatData*)_cmsGetTransformUserData(CMMcargo);
 
     cmsUInt32Number nchans, nalpha;
+    cmsUInt32Number strideIn, strideOut;
 
-    _cmsComputeComponentIncrements(InputFormat, Stride, &nchans, &nalpha, SourceStartingOrder, SourceIncrements);
-    _cmsComputeComponentIncrements(OutputFormat, Stride, &nchans, &nalpha, DestStartingOrder, DestIncrements);
+    _cmsComputeComponentIncrements(InputFormat, Stride->BytesPerPlaneIn, &nchans, &nalpha, SourceStartingOrder, SourceIncrements);
+    _cmsComputeComponentIncrements(OutputFormat, Stride->BytesPerPlaneIn, &nchans, &nalpha, DestStartingOrder, DestIncrements);
 
-    // SeparateGray(InputFormat, Stride,  &SourceStartingOrder, &SourceIncrement);
-    // SeparateGray(OutputFormat, Stride, &DestStartingOrder,   &DestIncrement);
+    if (!(_cmsGetTransformFlags((cmsHTRANSFORM)CMMcargo) & cmsFLAGS_COPY_ALPHA))
+        nalpha = 0;
 
-    kin = (const cmsUInt8Number*)Input + SourceStartingOrder[0];
-    kout = (cmsUInt8Number*)Output + DestStartingOrder[0];
-    
-    for (ii = 0; ii < len; ii++) {
+    strideIn = strideOut = 0;
+    for (i = 0; i < LineCount; i++) {
 
-           *(cmsFloat32Number*)kout = flerp(Data->CurveR, *(cmsFloat32Number*)kin);
+        kin = (const cmsUInt8Number*)Input + SourceStartingOrder[0] + strideIn;
+        kout = (cmsUInt8Number*)Output + DestStartingOrder[0] + strideOut;
 
-           kin += SourceIncrements[0];
-           kout += DestIncrements[0];
+        if (nalpha)
+        {
+            ain = (const cmsUInt8Number*)Input + SourceStartingOrder[1];
+            aout = (cmsUInt8Number*)Output + DestStartingOrder[1];
+        }
+
+        for (ii = 0; ii < PixelsPerLine; ii++) {
+
+            *(cmsFloat32Number*)kout = flerp(Data->CurveR, *(cmsFloat32Number*)kin);
+
+            kin += SourceIncrements[0];
+            kout += DestIncrements[0];
+
+            if (ain)
+            {
+                *(cmsFloat32Number*)aout = *(cmsFloat32Number*)ain;
+                ain += SourceIncrements[1];
+                aout += DestIncrements[1];
+            }
+        }
+
+        strideIn += Stride->BytesPerLineIn;
+        strideOut += Stride->BytesPerLineOut;
     }
 }
 
 
-static void FastFloatGrayIdentity(struct _cmstransform_struct *CMMcargo,
-                                const cmsFloat32Number* Input,
-                                cmsFloat32Number* Output,
-                                cmsUInt32Number len,
-                                cmsUInt32Number Stride)
+static void FastFloatGrayIdentity(struct _cmstransform_struct* CMMcargo,
+                                        const void* Input,
+                                        void* Output,
+                                        cmsUInt32Number PixelsPerLine,
+                                        cmsUInt32Number LineCount,
+                                        const cmsStride* Stride)
 {   
-    cmsUInt32Number ii;
+    cmsUInt32Number i, ii;
     cmsUInt32Number SourceStartingOrder[cmsMAXCHANNELS];
     cmsUInt32Number SourceIncrements[cmsMAXCHANNELS];
     cmsUInt32Number DestStartingOrder[cmsMAXCHANNELS];
     cmsUInt32Number DestIncrements[cmsMAXCHANNELS];
+
     const cmsUInt8Number* kin;
+    const cmsUInt8Number* ain = NULL;
     cmsUInt8Number* kout;
-    
-    cmsUInt32Number InputFormat  = cmsGetTransformInputFormat((cmsHTRANSFORM) CMMcargo);
-    cmsUInt32Number OutputFormat = cmsGetTransformOutputFormat((cmsHTRANSFORM) CMMcargo);
-  
+    cmsUInt8Number* aout = NULL;
+
+    cmsUInt32Number InputFormat = cmsGetTransformInputFormat((cmsHTRANSFORM)CMMcargo);
+    cmsUInt32Number OutputFormat = cmsGetTransformOutputFormat((cmsHTRANSFORM)CMMcargo);
+
     cmsUInt32Number nchans, nalpha;
+    cmsUInt32Number strideIn, strideOut;
 
-    _cmsComputeComponentIncrements(InputFormat, Stride, &nchans, &nalpha, SourceStartingOrder, SourceIncrements);
-    _cmsComputeComponentIncrements(OutputFormat, Stride, &nchans, &nalpha, DestStartingOrder, DestIncrements);
+    _cmsComputeComponentIncrements(InputFormat, Stride->BytesPerPlaneIn, &nchans, &nalpha, SourceStartingOrder, SourceIncrements);
+    _cmsComputeComponentIncrements(OutputFormat, Stride->BytesPerPlaneOut, &nchans, &nalpha, DestStartingOrder, DestIncrements);
 
-    // SeparateGray(InputFormat, Stride,  &SourceStartingOrder, &SourceIncrement);
-    // SeparateGray(OutputFormat, Stride, &DestStartingOrder, &DestIncrement);
+    if (!(_cmsGetTransformFlags((cmsHTRANSFORM)CMMcargo) & cmsFLAGS_COPY_ALPHA))
+        nalpha = 0;
 
-    kin = (const cmsUInt8Number*) Input + SourceStartingOrder[0];
-    kout = (cmsUInt8Number*)Output + DestStartingOrder[0];
-    
-    for (ii=0; ii < len; ii++) {
+    strideIn = strideOut = 0;
+    for (i = 0; i < LineCount; i++) {
 
-        memmove(kout, kin, 4);
-        
-        kin += SourceIncrements[0];
-        kout += DestIncrements[0];        
+
+        kin = (const cmsUInt8Number*)Input + SourceStartingOrder[0] + strideIn;
+        kout = (cmsUInt8Number*)Output + DestStartingOrder[0] + strideOut;
+
+        if (nalpha)
+        {
+            ain = (const cmsUInt8Number*)Input + SourceStartingOrder[1];
+            aout = (cmsUInt8Number*)Output + DestStartingOrder[1];
+        }
+
+
+        for (ii = 0; ii < PixelsPerLine; ii++) {
+
+            *(cmsFloat32Number*)kout = *(cmsFloat32Number*)kin;
+
+            kin += SourceIncrements[0];
+            kout += DestIncrements[0];
+
+            if (ain)
+            {
+                *(cmsFloat32Number*)aout = *(cmsFloat32Number*)ain;
+                ain += SourceIncrements[1];
+                aout += DestIncrements[1];
+            }
+        }
+        strideIn += Stride->BytesPerLineIn;
+        strideOut += Stride->BytesPerLineOut;
     }
 }
 
@@ -325,7 +426,7 @@ CurvesFloatData* ComputeCompositeCurves(cmsUInt32Number nChan,  cmsPipeline* Src
 
 // If the target LUT holds only curves, the optimization procedure is to join all those
 // curves together. That only works on curves and does not work on matrices. 
-cmsBool OptimizeFloatByJoiningCurves(_cmsTransformFn* TransformFn,                                  
+cmsBool OptimizeFloatByJoiningCurves(_cmsTransform2Fn* TransformFn,                                  
                                   void** UserData,
                                   _cmsFreeUserDataFn* FreeUserData,
                                   cmsPipeline** Lut, 
@@ -369,9 +470,9 @@ cmsBool OptimizeFloatByJoiningCurves(_cmsTransformFn* TransformFn,
 
     // Maybe the curves are linear at the end
     if (nChans == 1)
-        *TransformFn = (_cmsTransformFn) (KCurveIsLinear(Data) ? FastFloatGrayIdentity : FastEvaluateFloatGrayCurves);
+        *TransformFn = (KCurveIsLinear(Data) ? FastFloatGrayIdentity : FastEvaluateFloatGrayCurves);
     else
-        *TransformFn = (_cmsTransformFn) (AllRGBCurvesAreLinear(Data) ? FastFloatRGBIdentity : FastEvaluateFloatRGBCurves);
+        *TransformFn = (AllRGBCurvesAreLinear(Data) ? FastFloatRGBIdentity : FastEvaluateFloatRGBCurves);
 
     return TRUE;
 
