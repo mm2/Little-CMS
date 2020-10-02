@@ -214,6 +214,9 @@ void MatShaperXform8SSE(struct _cmstransform_struct *CMMcargo,
     _cmsComputeComponentIncrements(cmsGetTransformInputFormat((cmsHTRANSFORM)CMMcargo), Stride->BytesPerPlaneIn, NULL, &nalpha, SourceStartingOrder, SourceIncrements);
     _cmsComputeComponentIncrements(cmsGetTransformOutputFormat((cmsHTRANSFORM)CMMcargo), Stride->BytesPerPlaneOut, NULL, &nalpha, DestStartingOrder, DestIncrements);
 
+    if (!(_cmsGetTransformFlags((cmsHTRANSFORM)CMMcargo) & cmsFLAGS_COPY_ALPHA))
+        nalpha = 0;
+
     strideIn = strideOut = 0;
     for (i = 0; i < LineCount; i++) {
 
@@ -317,7 +320,7 @@ cmsBool IsSSE2Available(void)
 
 
 //  8 bits on input allows matrix-shaper boost up a little bit
-cmsBool Optimize8MatrixShaperSSE(_cmsTransformFn* TransformFn,                                  
+cmsBool Optimize8MatrixShaperSSE(_cmsTransform2Fn* TransformFn,                                  
                                   void** UserData,
                                   _cmsFreeUserDataFn* FreeUserData,
                                   cmsPipeline** Lut, 
@@ -407,7 +410,7 @@ cmsBool Optimize8MatrixShaperSSE(_cmsTransformFn* TransformFn,
         *UserData = SetMatShaper(ContextID, mpeC1 ->TheCurves, &res, (cmsVEC3*) Data2 ->Offset, mpeC2->TheCurves);
         *FreeUserData = FreeMatShaper; 
 
-        *TransformFn = (_cmsTransformFn) MatShaperXform8SSE;         
+        *TransformFn = MatShaperXform8SSE;         
     }
 
     *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;

@@ -162,7 +162,7 @@ cmsFormatter Formatter_15Bit_Factory(cmsUInt32Number Type,
 // Optimizers
 
 //  8 bits on input allows matrix-shaper boost up a little bit
-cmsBool Optimize8MatrixShaper(_cmsTransformFn* TransformFn,
+cmsBool Optimize8MatrixShaper(_cmsTransform2Fn* TransformFn,
                               void** UserData,
                               _cmsFreeUserDataFn* FreeUserData,
                               cmsPipeline** Lut,
@@ -171,7 +171,7 @@ cmsBool Optimize8MatrixShaper(_cmsTransformFn* TransformFn,
                               cmsUInt32Number* dwFlags);
 
 //  8 bits using SSE
-cmsBool Optimize8MatrixShaperSSE(_cmsTransformFn* TransformFn,
+cmsBool Optimize8MatrixShaperSSE(_cmsTransform2Fn* TransformFn,
                               void** UserData,
                               _cmsFreeUserDataFn* FreeUserData,
                               cmsPipeline** Lut,
@@ -179,7 +179,7 @@ cmsBool Optimize8MatrixShaperSSE(_cmsTransformFn* TransformFn,
                               cmsUInt32Number* OutputFormat,
                               cmsUInt32Number* dwFlags);
 
-cmsBool OptimizeMatrixShaper15(_cmsTransformFn* TransformFn,
+cmsBool OptimizeMatrixShaper15(_cmsTransform2Fn* TransformFn,
                                void** UserData,
                                _cmsFreeUserDataFn* FreeUserData,
                                cmsPipeline** Lut,
@@ -188,7 +188,7 @@ cmsBool OptimizeMatrixShaper15(_cmsTransformFn* TransformFn,
                                cmsUInt32Number* dwFlags);
 
 
-cmsBool Optimize8ByJoiningCurves(_cmsTransformFn* TransformFn,
+cmsBool Optimize8ByJoiningCurves(_cmsTransform2Fn* TransformFn,
                                  void** UserData,
                                  _cmsFreeUserDataFn* FreeUserData,
                                  cmsPipeline** Lut,
@@ -196,7 +196,7 @@ cmsBool Optimize8ByJoiningCurves(_cmsTransformFn* TransformFn,
                                  cmsUInt32Number* OutputFormat,
                                  cmsUInt32Number* dwFlags);
 
-cmsBool OptimizeFloatByJoiningCurves(_cmsTransformFn* TransformFn,                                  
+cmsBool OptimizeFloatByJoiningCurves(_cmsTransform2Fn* TransformFn,                                  
                                 void** UserData,
                                 _cmsFreeUserDataFn* FreeUserData,
                                 cmsPipeline** Lut, 
@@ -204,7 +204,7 @@ cmsBool OptimizeFloatByJoiningCurves(_cmsTransformFn* TransformFn,
                                 cmsUInt32Number* OutputFormat, 
                                 cmsUInt32Number* dwFlags);    
 
-cmsBool OptimizeFloatMatrixShaper(_cmsTransformFn* TransformFn,                                  
+cmsBool OptimizeFloatMatrixShaper(_cmsTransform2Fn* TransformFn,                                  
                              void** UserData,
                              _cmsFreeUserDataFn* FreeUserData,
                              cmsPipeline** Lut, 
@@ -212,7 +212,7 @@ cmsBool OptimizeFloatMatrixShaper(_cmsTransformFn* TransformFn,
                              cmsUInt32Number* OutputFormat, 
                              cmsUInt32Number* dwFlags);
 
-cmsBool Optimize8BitRGBTransform(_cmsTransformFn* TransformFn,
+cmsBool Optimize8BitRGBTransform(_cmsTransform2Fn* TransformFn,
                                    void** UserData,
                                    _cmsFreeUserDataFn* FreeDataFn,
                                    cmsPipeline** Lut,
@@ -220,7 +220,7 @@ cmsBool Optimize8BitRGBTransform(_cmsTransformFn* TransformFn,
                                    cmsUInt32Number* OutputFormat,
                                    cmsUInt32Number* dwFlags);
 
-cmsBool Optimize16BitRGBTransform(_cmsTransformFn* TransformFn,
+cmsBool Optimize16BitRGBTransform(_cmsTransform2Fn* TransformFn,
                                    void** UserData,
                                    _cmsFreeUserDataFn* FreeDataFn,
                                    cmsPipeline** Lut,
@@ -228,7 +228,7 @@ cmsBool Optimize16BitRGBTransform(_cmsTransformFn* TransformFn,
                                    cmsUInt32Number* OutputFormat,
                                    cmsUInt32Number* dwFlags);
 
-cmsBool OptimizeCLUTRGBTransform(_cmsTransformFn* TransformFn,
+cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
                                   void** UserData,
                                   _cmsFreeUserDataFn* FreeDataFn,
                                   cmsPipeline** Lut, 
@@ -236,7 +236,7 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransformFn* TransformFn,
                                   cmsUInt32Number* OutputFormat, 
                                   cmsUInt32Number* dwFlags);      
 
-cmsBool OptimizeCLUTCMYKTransform(_cmsTransformFn* TransformFn,
+cmsBool OptimizeCLUTCMYKTransform(_cmsTransform2Fn* TransformFn,
 					void** UserData,
 					_cmsFreeUserDataFn* FreeDataFn,
 					cmsPipeline** Lut,

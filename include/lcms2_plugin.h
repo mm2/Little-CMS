@@ -626,6 +626,9 @@ CMSAPI void * CMSEXPORT _cmsGetTransformUserData(struct _cmstransform_struct *CM
 CMSAPI void   CMSEXPORT _cmsGetTransformFormatters16   (struct _cmstransform_struct *CMMcargo, cmsFormatter16* FromInput, cmsFormatter16* ToOutput);
 CMSAPI void   CMSEXPORT _cmsGetTransformFormattersFloat(struct _cmstransform_struct *CMMcargo, cmsFormatterFloat* FromInput, cmsFormatterFloat* ToOutput);
 
+// Retrieve original flags
+CMSAPI cmsUInt32Number CMSEXPORT _cmsGetTransformFlags(struct _cmstransform_struct* CMMcargo);
+
 typedef struct {
       cmsPluginBase     base;
 

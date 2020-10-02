@@ -136,16 +136,17 @@ VXMatShaperFloatData* SetMatShaper(cmsContext ContextID, cmsToneCurve* Curve1[3]
 
 // A fast matrix-shaper evaluator for floating point 
 static
-void MatShaperFloat(struct _cmstransform_struct *CMMcargo,
-                      const cmsFloat32Number* Input,
-                      cmsFloat32Number* Output,
-                      cmsUInt32Number len,
-                      cmsUInt32Number Stride)
+void MatShaperFloat(struct _cmstransform_struct* CMMcargo,
+                        const void* Input,
+                        void* Output,
+                        cmsUInt32Number PixelsPerLine,
+                        cmsUInt32Number LineCount,
+                        const cmsStride* Stride)
 {    
     VXMatShaperFloatData* p = (VXMatShaperFloatData*) _cmsGetTransformUserData(CMMcargo);
     cmsFloat32Number l1, l2, l3;
     cmsFloat32Number r, g, b;
-    cmsUInt32Number ii;
+    cmsUInt32Number i, ii;
     cmsUInt32Number SourceStartingOrder[cmsMAXCHANNELS];
     cmsUInt32Number SourceIncrements[cmsMAXCHANNELS];
     cmsUInt32Number DestStartingOrder[cmsMAXCHANNELS];
@@ -154,59 +155,84 @@ void MatShaperFloat(struct _cmstransform_struct *CMMcargo,
     const cmsUInt8Number* rin;
     const cmsUInt8Number* gin;
     const cmsUInt8Number* bin;
+    const cmsUInt8Number* ain = NULL;
 
     cmsUInt8Number* rout;
     cmsUInt8Number* gout;
     cmsUInt8Number* bout;
+    cmsUInt8Number* aout = NULL;
     
     cmsUInt32Number nchans, nalpha;
+    cmsUInt32Number strideIn, strideOut;
 
-    _cmsComputeComponentIncrements(cmsGetTransformInputFormat((cmsHTRANSFORM)CMMcargo), Stride, &nchans, &nalpha, SourceStartingOrder, SourceIncrements);
-    _cmsComputeComponentIncrements(cmsGetTransformOutputFormat((cmsHTRANSFORM)CMMcargo), Stride, &nchans, &nalpha, DestStartingOrder, DestIncrements);
+    _cmsComputeComponentIncrements(cmsGetTransformInputFormat((cmsHTRANSFORM)CMMcargo), Stride->BytesPerPlaneIn, &nchans, &nalpha, SourceStartingOrder, SourceIncrements);
+    _cmsComputeComponentIncrements(cmsGetTransformOutputFormat((cmsHTRANSFORM)CMMcargo), Stride->BytesPerPlaneOut, &nchans, &nalpha, DestStartingOrder, DestIncrements);
 
-    rin = (const cmsUInt8Number*)Input + SourceStartingOrder[0];
-    gin = (const cmsUInt8Number*)Input + SourceStartingOrder[1];
-    bin = (const cmsUInt8Number*)Input + SourceStartingOrder[2];
+    if (!(_cmsGetTransformFlags((cmsHTRANSFORM)CMMcargo) & cmsFLAGS_COPY_ALPHA))
+        nalpha = 0;
 
-    rout = (cmsUInt8Number*)Output + DestStartingOrder[0];
-    gout = (cmsUInt8Number*)Output + DestStartingOrder[1];
-    bout = (cmsUInt8Number*)Output + DestStartingOrder[2];
-   
-    for (ii=0; ii < len; ii++) {
+    strideIn = strideOut = 0;
+    for (i = 0; i < LineCount; i++) {
 
-           r = flerp(p->Shaper1R, *(cmsFloat32Number*)rin);
-           g = flerp(p->Shaper1G, *(cmsFloat32Number*)gin);
-           b = flerp(p->Shaper1B, *(cmsFloat32Number*)bin);
+        rin = (const cmsUInt8Number*)Input + SourceStartingOrder[0] + strideIn;
+        gin = (const cmsUInt8Number*)Input + SourceStartingOrder[1] + strideIn;
+        bin = (const cmsUInt8Number*)Input + SourceStartingOrder[2] + strideIn;
 
-           l1 = p->Mat[0][0] * r + p->Mat[0][1] * g + p->Mat[0][2] * b ;
-           l2 = p->Mat[1][0] * r + p->Mat[1][1] * g + p->Mat[1][2] * b ;
-           l3 = p->Mat[2][0] * r + p->Mat[2][1] * g + p->Mat[2][2] * b ;
+        if (nalpha)
+            ain = (const cmsUInt8Number*)Input + SourceStartingOrder[3] + strideIn;
 
-           if (p->UseOff) {
+        rout = (cmsUInt8Number*)Output + DestStartingOrder[0] + strideOut;
+        gout = (cmsUInt8Number*)Output + DestStartingOrder[1] + strideOut;
+        bout = (cmsUInt8Number*)Output + DestStartingOrder[2] + strideOut;
 
-                  l1 += p->Off[0];
-                  l2 += p->Off[1];
-                  l3 += p->Off[2];
-           }
+        if (nalpha)
+            aout = (cmsUInt8Number*)Output + DestStartingOrder[3] + strideOut;
 
-           *(cmsFloat32Number*)rout = flerp(p->Shaper2R, l1);
-           *(cmsFloat32Number*)gout = flerp(p->Shaper2G, l2);
-           *(cmsFloat32Number*)bout = flerp(p->Shaper2B, l3);
+        for (ii = 0; ii < PixelsPerLine; ii++) {
 
-           rin += SourceIncrements[0];
-           gin += SourceIncrements[1];
-           bin += SourceIncrements[2];
+            r = flerp(p->Shaper1R, *(cmsFloat32Number*)rin);
+            g = flerp(p->Shaper1G, *(cmsFloat32Number*)gin);
+            b = flerp(p->Shaper1B, *(cmsFloat32Number*)bin);
 
-           rout += DestIncrements[0];
-           gout += DestIncrements[1];
-           bout += DestIncrements[2];
+            l1 = p->Mat[0][0] * r + p->Mat[0][1] * g + p->Mat[0][2] * b;
+            l2 = p->Mat[1][0] * r + p->Mat[1][1] * g + p->Mat[1][2] * b;
+            l3 = p->Mat[2][0] * r + p->Mat[2][1] * g + p->Mat[2][2] * b;
+
+            if (p->UseOff) {
+
+                l1 += p->Off[0];
+                l2 += p->Off[1];
+                l3 += p->Off[2];
+            }
+
+            *(cmsFloat32Number*)rout = flerp(p->Shaper2R, l1);
+            *(cmsFloat32Number*)gout = flerp(p->Shaper2G, l2);
+            *(cmsFloat32Number*)bout = flerp(p->Shaper2B, l3);
+
+            rin += SourceIncrements[0];
+            gin += SourceIncrements[1];
+            bin += SourceIncrements[2];
+
+            rout += DestIncrements[0];
+            gout += DestIncrements[1];
+            bout += DestIncrements[2];
+
+            if (ain)
+            {
+                *(cmsFloat32Number*)aout = *(cmsFloat32Number*)ain;
+                ain += SourceIncrements[3];
+                aout += DestIncrements[3];
+            }
+        }
+
+        strideIn += Stride->BytesPerLineIn;
+        strideOut += Stride->BytesPerLineOut;
     }
-
 }
 
 
 
-cmsBool OptimizeFloatMatrixShaper(_cmsTransformFn* TransformFn,                                  
+cmsBool OptimizeFloatMatrixShaper(_cmsTransform2Fn* TransformFn,                                  
                                   void** UserData,
                                   _cmsFreeUserDataFn* FreeUserData,
                                   cmsPipeline** Lut, 
@@ -314,7 +340,7 @@ cmsBool OptimizeFloatMatrixShaper(_cmsTransformFn* TransformFn,
         *UserData = SetMatShaper(ContextID, mpeC1 ->TheCurves, &res, (cmsVEC3*) Data2 ->Offset, mpeC2->TheCurves);
         *FreeUserData = FreeMatShaper; 
 
-        *TransformFn = (_cmsTransformFn) MatShaperFloat;         
+        *TransformFn = MatShaperFloat;         
     }
 
     *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;

@@ -624,7 +624,7 @@ void TryAllValuesFloat(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut, 
 }
 
 static
-void TryAllValuesFloatAlpha(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut, cmsInt32Number Intent)
+void TryAllValuesFloatAlpha(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut, cmsInt32Number Intent, cmsBool copyAlpha)
 {
        cmsContext Raw     = cmsCreateContext(NULL, NULL);
        cmsContext Plugin  = cmsCreateContext(cmsFastFloatExtensions(), NULL);
@@ -637,8 +637,10 @@ void TryAllValuesFloatAlpha(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfile
        int j;
        cmsUInt32Number npixels = 256 * 256 * 256;
 
-       cmsHTRANSFORM xformRaw = cmsCreateTransformTHR(Raw, hlcmsProfileIn, TYPE_RGBA_FLT, hlcmsProfileOut, TYPE_RGBA_FLT, Intent, cmsFLAGS_NOCACHE);
-       cmsHTRANSFORM xformPlugin = cmsCreateTransformTHR(Plugin, hlcmsProfileIn, TYPE_RGBA_FLT, hlcmsProfileOut, TYPE_RGBA_FLT, Intent, cmsFLAGS_NOCACHE);
+       cmsUInt32Number flags = cmsFLAGS_NOCACHE | ( copyAlpha? cmsFLAGS_COPY_ALPHA : 0);
+
+       cmsHTRANSFORM xformRaw = cmsCreateTransformTHR(Raw, hlcmsProfileIn, TYPE_RGBA_FLT, hlcmsProfileOut, TYPE_RGBA_FLT, Intent, flags);
+       cmsHTRANSFORM xformPlugin = cmsCreateTransformTHR(Plugin, hlcmsProfileIn, TYPE_RGBA_FLT, hlcmsProfileOut, TYPE_RGBA_FLT, Intent, flags);
 
        cmsCloseProfile(hlcmsProfileIn);
        cmsCloseProfile(hlcmsProfileOut);
@@ -652,6 +654,9 @@ void TryAllValuesFloatAlpha(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfile
        bufferIn = (Scanline_rgbaFloat*)malloc(npixels * sizeof(Scanline_rgbaFloat));
        bufferRawOut = (Scanline_rgbaFloat*)malloc(npixels * sizeof(Scanline_rgbaFloat));
        bufferPluginOut = (Scanline_rgbaFloat*)malloc(npixels * sizeof(Scanline_rgbaFloat));
+
+       memset(bufferRawOut, 0, npixels * sizeof(Scanline_rgbaFloat));
+       memset(bufferPluginOut, 0, npixels * sizeof(Scanline_rgbaFloat));
 
        // Same input to both transforms
        j = 0;
@@ -671,7 +676,6 @@ void TryAllValuesFloatAlpha(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfile
        cmsDoTransform(xformRaw,    bufferIn, bufferRawOut, npixels);
        cmsDoTransform(xformPlugin, bufferIn, bufferPluginOut, npixels);
 
-#if 1
        // Lets compare results
        j = 0;
        for (r = 0; r < 256; r++)
@@ -687,7 +691,6 @@ void TryAllValuesFloatAlpha(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfile
 
               j++;
               }
-#endif
 
        free(bufferIn); free(bufferRawOut);
        free(bufferPluginOut);
@@ -902,12 +905,17 @@ void CheckLab2Roundtrip(void)
 static
 void CheckConversionFloat(void)
 {
-       printf("Crash test...");
-       TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
+       printf("Crash test.");
+       TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, FALSE);
+       printf("..");
+       TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
        printf("Ok\n");
 
-       printf("Crash (II) test...");
-       TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
+
+       printf("Crash (II) test.");
+       TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, FALSE);
+       printf("..");
+       TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
        printf("Ok\n");
 
        // Matrix-shaper should be accurate 
@@ -1857,8 +1865,7 @@ int main()
        printf("Installing plug-in ... ");
        cmsPlugin(cmsFastFloatExtensions());
        printf("done.\n\n");
-              
-
+            
        CheckComputeIncrements();
 
        // 15 bit functionality
