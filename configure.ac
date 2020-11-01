@@ -72,6 +72,8 @@ AC_LIBTOOL_SETUP
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
+LIB_PLUGINS = ''
+
 # Add configure option --enable-maintainer-mode which enables dependency
 # checking and generation useful to package maintainers.  This is made an
 # option to avoid confusing end users.
@@ -137,6 +139,17 @@ AC_ARG_WITH(zlib,
 	      [  --without-zlib          disable ZLIB support],
 	      [with_zlib=$withval],
 	      [with_zlib='yes'])
+
+#fast_float plugin:
+AC_ARG_WITH(fastfloat,
+            [  --with-fastfloat  build and install fast_float plugin, use only if GPL 3.0 is acceptable],
+            [
+                with_fastfloat='yes'
+                LIB_PLUGINS="$LIB_PLUGINS -llcms2_fast_float"
+            ],
+            [
+                with_fastfloat='no'
+            ])
 
 #
 # Determine POSIX threads settings
@@ -354,6 +367,9 @@ LCMS_LIB_DEPLIBS="$LIB_MATH $LIB_THREAD"
 LCMS_LIB_DEPLIBS=`echo $LCMS_LIB_DEPLIBS | sed -e 's/  */ /g'`
 AC_SUBST(LCMS_LIB_DEPLIBS)
 
+echo "LIB_PLUGINS: $LIB_PLUGINS"
+AC_SUBST(LIB_PLUGINS)
+
 # Libraries that the jpegicc program depends on
 JPEGICC_DEPLIBS="$LIB_JPEG $LIB_MATH $LIB_THREAD"
 JPEGICC_DEPLIBS=`echo $JPEGICC_DEPLIBS | sed -e 's/  */ /g'`
@@ -379,4 +395,10 @@ AC_CONFIG_FILES([utils/linkicc/Makefile])
 AC_CONFIG_FILES([utils/jpgicc/Makefile])
 AC_CONFIG_FILES([utils/psicc/Makefile])
 AC_CONFIG_FILES([testbed/Makefile])
+if [ test "x$with_fastfloat" = "xyes" ]; then
+	AC_CONFIG_FILES([plugins/Makefile])
+	AC_CONFIG_FILES([plugins/fast_float/Makefile])
+	AC_CONFIG_FILES([plugins/fast_float/src/Makefile])
+	AC_CONFIG_FILES([plugins/fast_float/include/Makefile])
+fi
 AC_OUTPUT
