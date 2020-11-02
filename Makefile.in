@@ -196,7 +196,8 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
-DIST_SUBDIRS = $(SUBDIRS)
+DIST_SUBDIRS = src include utils/tificc utils/transicc utils/linkicc \
+	utils/jpgicc utils/psicc testbed plugins
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/lcms2.pc.in AUTHORS \
 	COPYING ChangeLog INSTALL compile config.guess config.sub \
 	depcomp install-sh ltmain.sh missing
@@ -386,9 +387,10 @@ top_srcdir = @top_srcdir@
 # Don't require all the GNU mandated files
 AUTOMAKE_OPTIONS = 1.7.2 dist-zip foreign
 ACLOCAL_AMFLAGS = -I m4
+@COND_FASTFLOAT_TRUE@USER_PLUGINS = plugins
 
 # Directories containing Makefiles to 'make'
-SUBDIRS = src include utils/tificc utils/transicc utils/linkicc utils/jpgicc utils/psicc testbed
+SUBDIRS = src include utils/tificc utils/transicc utils/linkicc utils/jpgicc utils/psicc testbed $(USER_PLUGINS)
 
 # Additional files to distribute
 EXTRA_DIST = AUTHORS COPYING ChangeLog doc Projects include bin Lib INSTALL README.1ST autogen.sh lcms2.pc.in plugins
@@ -897,6 +899,7 @@ uninstall-am: uninstall-pkgconfigDATA
 
 # Make sure get rid of VC stuff...
 clean-local:
+	rm -rf autom4te.cache
 	find Projects -name "*.user" | xargs rm -rf
 	find Projects -name "Release" | xargs rm -rf
 	find Projects -name "Debug" | xargs rm -rf
@@ -905,7 +908,6 @@ clean-local:
 	find Projects -name "*.log" | xargs rm -rf
 	find Projects -name "*.sdf" | xargs rm -rf
 	find Projects -name "*.opensdf" | xargs rm -rf
-	find Projects -name "*.log" | xargs rm -rf
 	find Projects -name "ipch" | xargs rm -rf
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

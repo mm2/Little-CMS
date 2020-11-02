@@ -632,6 +632,8 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
+COND_FASTFLOAT_FALSE
+COND_FASTFLOAT_TRUE
 TIFFICC_DEPLIBS
 JPEGICC_DEPLIBS
 LIB_PLUGINS
@@ -17744,18 +17746,24 @@ ac_config_files="$ac_config_files utils/psicc/Makefile"
 
 ac_config_files="$ac_config_files testbed/Makefile"
 
-if  test "x$with_fastfloat" = "xyes" ; then
-	ac_config_files="$ac_config_files plugins/Makefile"
-
-	ac_config_files="$ac_config_files plugins/fast_float/Makefile"
-
-	ac_config_files="$ac_config_files plugins/fast_float/src/Makefile"
-
-	ac_config_files="$ac_config_files plugins/fast_float/include/Makefile"
-
-        ac_config_files="$ac_config_files plugins/fast_float/testbed/Makefile"
-
+ if test "x$with_fastfloat" = "xyes" ; then
+  COND_FASTFLOAT_TRUE=
+  COND_FASTFLOAT_FALSE='#'
+else
+  COND_FASTFLOAT_TRUE='#'
+  COND_FASTFLOAT_FALSE=
 fi
+
+ac_config_files="$ac_config_files plugins/Makefile"
+
+ac_config_files="$ac_config_files plugins/fast_float/Makefile"
+
+ac_config_files="$ac_config_files plugins/fast_float/src/Makefile"
+
+ac_config_files="$ac_config_files plugins/fast_float/include/Makefile"
+
+ac_config_files="$ac_config_files plugins/fast_float/testbed/Makefile"
+
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -17944,6 +17952,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${HasTIFF_TRUE}" && test -z "${HasTIFF_FALSE}"; then
   as_fn_error $? "conditional \"HasTIFF\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_FASTFLOAT_TRUE}" && test -z "${COND_FASTFLOAT_FALSE}"; then
+  as_fn_error $? "conditional \"COND_FASTFLOAT\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

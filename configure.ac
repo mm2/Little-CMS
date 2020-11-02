@@ -378,11 +378,10 @@ AC_CONFIG_FILES([utils/linkicc/Makefile])
 AC_CONFIG_FILES([utils/jpgicc/Makefile])
 AC_CONFIG_FILES([utils/psicc/Makefile])
 AC_CONFIG_FILES([testbed/Makefile])
-if [ test "x$with_fastfloat" = "xyes" ]; then
-	AC_CONFIG_FILES([plugins/Makefile])
-	AC_CONFIG_FILES([plugins/fast_float/Makefile])
-	AC_CONFIG_FILES([plugins/fast_float/src/Makefile])
-	AC_CONFIG_FILES([plugins/fast_float/include/Makefile])
-        AC_CONFIG_FILES([plugins/fast_float/testbed/Makefile])
-fi
+AM_CONDITIONAL([COND_FASTFLOAT], [test "x$with_fastfloat" = "xyes" ])
+AC_CONFIG_FILES([plugins/Makefile])
+AC_CONFIG_FILES([plugins/fast_float/Makefile])
+AC_CONFIG_FILES([plugins/fast_float/src/Makefile])
+AC_CONFIG_FILES([plugins/fast_float/include/Makefile])
+AC_CONFIG_FILES([plugins/fast_float/testbed/Makefile])
 AC_OUTPUT
