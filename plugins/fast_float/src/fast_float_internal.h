@@ -25,10 +25,13 @@
 #include "lcms2_fast_float.h"
 #include <stdint.h>
 
-#define REQUIRED_LCMS_VERSION 2100
+#define REQUIRED_LCMS_VERSION 2120
 
 // Unused parameter warning supression
 #define UNUSED_PARAMETER(x) ((void)x) 
+
+// For testbed
+#define CMSCHECKPOINT CMSAPI
 
 // The specification for "inline" is section 6.7.4 of the C99 standard (ISO/IEC 9899:1999).
 // unfortunately VisualC++ does not conform that
@@ -142,22 +145,22 @@ cmsINLINE cmsFloat32Number flerp(const cmsFloat32Number LutTable[], cmsFloat32Nu
 
 
 // Some secret sauce from lcms
-cmsUInt32Number  _cmsReasonableGridpointsByColorspace(cmsColorSpaceSignature Colorspace, cmsUInt32Number dwFlags);
+CMSAPI cmsUInt32Number  CMSEXPORT _cmsReasonableGridpointsByColorspace(cmsColorSpaceSignature Colorspace, cmsUInt32Number dwFlags);
 
 
 
 // Compute the increments to be used by the transform functions
-void  _cmsComputeComponentIncrements(cmsUInt32Number Format,                                                
-                                     cmsUInt32Number BytesPerPlane,
-                                     cmsUInt32Number* nChannels,
-                                     cmsUInt32Number* nAlpha,
-                                     cmsUInt32Number ComponentStartingOrder[], 
-                                     cmsUInt32Number ComponentPointerIncrements[]);
+CMSCHECKPOINT void CMSEXPORT _cmsComputeComponentIncrements(cmsUInt32Number Format,
+                                                            cmsUInt32Number BytesPerPlane,
+                                                            cmsUInt32Number* nChannels,
+                                                            cmsUInt32Number* nAlpha,
+                                                            cmsUInt32Number ComponentStartingOrder[],
+                                                            cmsUInt32Number ComponentPointerIncrements[]);
 
 // 15 bits formatters
-cmsFormatter Formatter_15Bit_Factory(cmsUInt32Number Type,
-                                     cmsFormatterDirection Dir,
-                                     cmsUInt32Number dwFlags);
+CMSCHECKPOINT cmsFormatter CMSEXPORT Formatter_15Bit_Factory(cmsUInt32Number Type,
+                                                             cmsFormatterDirection Dir,
+                                                             cmsUInt32Number dwFlags);
 
 // Optimizers
 

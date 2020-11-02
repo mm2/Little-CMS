@@ -89,7 +89,7 @@ static cmsPluginTransform PluginList = {
 
 // This is the main plug-in installer. 
 // Using a function to retrieve the plug-in entry point allows us to execute initialization data. 
-void* cmsFastFloatExtensions(void)
+void* CMSEXPORT cmsFastFloatExtensions(void)
 {
        return (void*)&PluginList;
 }

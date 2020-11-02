@@ -179,7 +179,7 @@ void ComputeIncrementsForPlanar(cmsUInt32Number Format,
 
 
 // Dispatcher por chunky and planar RGB
-void  _cmsComputeComponentIncrements(cmsUInt32Number Format,
+CMSCHECKPOINT void  CMSEXPORT _cmsComputeComponentIncrements(cmsUInt32Number Format,
                                      cmsUInt32Number BytesPerPlane,
                                      cmsUInt32Number* nChannels,
                                      cmsUInt32Number* nAlpha,

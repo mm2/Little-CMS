@@ -22,7 +22,7 @@
 #include "fast_float_internal.h"
 
 // lcms internal
-cmsBool  _cmsOptimizePipeline(cmsContext ContextID,
+CMSAPI cmsBool  CMSEXPORT _cmsOptimizePipeline(cmsContext ContextID,
                               cmsPipeline** Lut,
                               cmsUInt32Number  Intent,
                               cmsUInt32Number* InputFormat,

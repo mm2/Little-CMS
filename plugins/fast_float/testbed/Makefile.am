@@ -5,12 +5,12 @@
 # Don't require all the GNU mandated files
 AUTOMAKE_OPTIONS = 1.7 foreign
 
-INCLUDES	=  -I$(builddir)/../include -I$(srcdir)/../include -I$(srcdir)/../src \
+AM_CPPFLAGS	=  -I$(builddir)/../include -I$(srcdir)/../include -I$(srcdir)/../src \
                    -I$(top_builddir)/include 
 
 check_PROGRAMS = fast_float_testbed
 
-fast_float_testbed_LDADD = $(top_builddir)/src/liblcms2.la $(srcdir)/../src/liblcms2_fast_float.la
+fast_float_testbed_LDADD =  $(srcdir)/../src/liblcms2_fast_float.la
 fast_float_testbed_LDFLAGS = @LDFLAGS@
 fast_float_testbed_SOURCES = fast_float_testbed.c 
 

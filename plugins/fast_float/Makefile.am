@@ -1,1 +1,1 @@
-SUBDIRS = src include
+SUBDIRS = testbed src include

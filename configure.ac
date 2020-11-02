@@ -7,34 +7,16 @@ AC_PREREQ(2.60)
 #
 # Set the package name and version
 #
-AC_INIT(lcms2,2.11)
+AC_INIT(lcms2,2.12)
 
 # Specify directory where m4 macros may be found.
 AC_CONFIG_MACRO_DIR([m4])
 
 #
 # Libtool library revision control info
-# See the libtool documentation under the heading "Libtool's versioning
-# system" in order to understand the meaning of these fields
-#
-# Here are a set of rules to help you update your library version
-# information:
-#
-#  1. Start with version information of `0:0:0' for each libtool library.
-#  2. Update the version information only immediately before a public
-#     release of your software. More frequent updates are unnecessary, and
-#     only guarantee that the current interface number gets larger faster.
-#  3. If the library source code has changed at all since the last update,
-#     then increment revision (`c:r:a' becomes `c:r+1:a').
-#  4. If any interfaces have been added, removed, or changed since the last
-#     update, increment current, and set revision to 0.
-#  5. If any interfaces have been added since the last public release, then
-#     increment age.
-#  6. If any interfaces have been removed since the last public release,
-#     then set age to 0.
 #
 LIBRARY_CURRENT=2
-LIBRARY_REVISION=10
+LIBRARY_REVISION=12
 LIBRARY_AGE=0
 
 AC_SUBST(LIBRARY_CURRENT)dnl
@@ -100,7 +82,7 @@ AC_C_BIGENDIAN
 
 # Point to JPEG installed in DIR or disable JPEG with --without-jpeg.
 AC_ARG_WITH(jpeg,
-            [  --with-jpeg=DIR         use jpeg installed in DIR],
+            AS_HELP_STRING([--with-jpeg=DIR],[use jpeg installed in DIR]),
             [
             if [ test "x$withval" = "xno" ]; then
               [with_jpeg='no']
@@ -118,7 +100,7 @@ AC_ARG_WITH(jpeg,
 
 # Point to TIFF installed in DIR or disable TIFF with --without-tiff.
 AC_ARG_WITH(tiff,
-            [  --with-tiff=DIR         use tiff installed in DIR],
+            AS_HELP_STRING([--with-tiff=DIR], [use tiff installed in DIR]),
             [
             if [ test "x$withval" = "xno" ]; then
               [with_tiff='no']
@@ -142,7 +124,8 @@ AC_ARG_WITH(zlib,
 
 #fast_float plugin:
 AC_ARG_WITH(fastfloat,
-            [  --with-fastfloat  build and install fast_float plugin, use only if GPL 3.0 is acceptable],
+            AS_HELP_STRING([--with-fastfloat],
+                           [build and install fast_float plugin, use only if GPL 3.0 is acceptable]),
             [
                 with_fastfloat='yes'
                 LIB_PLUGINS="$LIB_PLUGINS -llcms2_fast_float"
@@ -400,5 +383,6 @@ if [ test "x$with_fastfloat" = "xyes" ]; then
 	AC_CONFIG_FILES([plugins/fast_float/Makefile])
 	AC_CONFIG_FILES([plugins/fast_float/src/Makefile])
 	AC_CONFIG_FILES([plugins/fast_float/include/Makefile])
+        AC_CONFIG_FILES([plugins/fast_float/testbed/Makefile])
 fi
 AC_OUTPUT

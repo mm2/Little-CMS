@@ -30,12 +30,12 @@ extern "C" {
 #   endif
 #endif
 
-#define LCMS2_FAST_FLOAT_VERSION   1300
+#define LCMS2_FAST_FLOAT_VERSION   1400
 
 // Configuration toggles
 
 // Uncomment this if yout target platform can deal with SSE2
-// #define CMS_DONT_USE_SSE2 1
+#define CMS_DONT_USE_SSE2 1
 
 
 // The one and only plug-in entry point. To install this plugin in your code
@@ -44,7 +44,7 @@ extern "C" {
 //  cmsPlugin(cmsFastFloatExtensions());
 // 
 
-void* cmsFastFloatExtensions(void);
+CMSAPI void* CMSEXPORT cmsFastFloatExtensions(void);
 
 
 // New encodings that the plug-in implements

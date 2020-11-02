@@ -469,9 +469,9 @@ cmsUInt8Number*  PackNBytesSwapDither(CMSREGISTER struct _cmstransform_struct* C
 // The factory for 15 bits. This function returns a pointer to specialized function
 // that would deal with the asked format. It return a pointer to NULL if the format
 // is not supported. This is tha basis of formatter plug-in for 15 bit formats.
-cmsFormatter Formatter_15Bit_Factory(cmsUInt32Number Type,
-                                     cmsFormatterDirection Dir,
-                                     cmsUInt32Number dwFlags)
+CMSCHECKPOINT cmsFormatter CMSEXPORT Formatter_15Bit_Factory(cmsUInt32Number Type,
+                                                             cmsFormatterDirection Dir,
+                                                             cmsUInt32Number dwFlags)
 {
        cmsFormatter Result = { NULL };
 
