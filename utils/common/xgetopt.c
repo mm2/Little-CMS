@@ -32,13 +32,16 @@ int xgetopt(int argc, char *argv[], char *optionS)
         SW = '/';
     }
 
+        
     if (argc > xoptind) {
+        
         if (letP == NULL) {
             if ((letP = argv[xoptind]) == NULL ||
                 *(letP++) != SW)  goto gopEOF;
-            if (*letP == SW) {
-                xoptind++;  goto gopEOF;
-            }
+            
+            //if (*letP == SW) {
+            //    xoptind++;  goto gopEOF;
+            //}
         }
         if (0 == (ch = *(letP++))) {
             xoptind++;  goto gopEOF;

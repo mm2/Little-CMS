@@ -145,10 +145,22 @@ void HandleSwitches(int argc, char *argv[])
     int s;
 
     while ((s = xgetopt(argc, argv,
-        "bBC:c:d:D:eEgGI:i:L:l:m:M:nNO:o:p:P:QqSsT:t:V:v:WwxX!:")) != EOF) {
+        "bBC:c:d:D:eEgGI:i:L:l:m:M:nNO:o:p:P:QqSsT:t:V:v:WwxX!:-:")) != EOF) {
 
     switch (s){
 
+        case '-':
+            if (strcmp(xoptarg, "help") == 0)
+            {
+                Help();
+                exit(0);
+            }
+            else
+            {
+                FatalError("Unknown option - run without args to see valid ones.\n");
+            }
+            break;
+            
         case '!': 
             IncludePart = xoptarg;
             break;
@@ -858,7 +870,7 @@ cmsFloat64Number GetIT8Val(const char* Name, cmsFloat64Number Max)
 // Read input values from CGATS file.
 
 static
-    void TakeCGATSValues(int nPatch, cmsFloat64Number Float[])
+void TakeCGATSValues(int nPatch, cmsFloat64Number Float[])
 {
 
     // At first take the name if SAMPLE_ID is present
