@@ -1156,6 +1156,7 @@ cmsBool  CMSEXPORT cmsSmoothToneCurve(cmsToneCurve* Tab, cmsFloat64Number lambda
     cmsBool SuccessStatus = TRUE;
     cmsFloat32Number *w, *y, *z;
     cmsUInt32Number i, nItems, Zeros, Poles;
+    cmsBool notCheck = FALSE;
 
     if (Tab != NULL && Tab->InterpParams != NULL)
     {
@@ -1183,6 +1184,12 @@ cmsBool  CMSEXPORT cmsSmoothToneCurve(cmsToneCurve* Tab, cmsFloat64Number lambda
                         w[i + 1] = 1.0;
                     }
 
+                    if (lambda < 0)
+                    {
+                        notCheck = TRUE;
+                        lambda = -lambda;
+                    }
+
                     if (smooth2(ContextID, w, y, z, (cmsFloat32Number)lambda, (int)nItems))
                     {
                         // Do some reality - checking...
@@ -1195,7 +1202,7 @@ cmsBool  CMSEXPORT cmsSmoothToneCurve(cmsToneCurve* Tab, cmsFloat64Number lambda
                             if (z[i] < z[i - 1])
                             {
                                 cmsSignalError(ContextID, cmsERROR_RANGE, "cmsSmoothToneCurve: Non-Monotonic.");
-                                SuccessStatus = FALSE;
+                                SuccessStatus = notCheck;
                                 break;
                             }
                         }
@@ -1203,13 +1210,13 @@ cmsBool  CMSEXPORT cmsSmoothToneCurve(cmsToneCurve* Tab, cmsFloat64Number lambda
                         if (SuccessStatus && Zeros > (nItems / 3))
                         {
                             cmsSignalError(ContextID, cmsERROR_RANGE, "cmsSmoothToneCurve: Degenerated, mostly zeros.");
-                            SuccessStatus = FALSE;
+                            SuccessStatus = notCheck;
                         }
 
                         if (SuccessStatus && Poles > (nItems / 3))
                         {
                             cmsSignalError(ContextID, cmsERROR_RANGE, "cmsSmoothToneCurve: Degenerated, mostly poles.");
-                            SuccessStatus = FALSE;
+                            SuccessStatus = notCheck;
                         }
 
                         if (SuccessStatus) // Seems ok
