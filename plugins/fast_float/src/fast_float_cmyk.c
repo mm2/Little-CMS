@@ -88,9 +88,9 @@ void FloatCMYKCLUTEval(struct _cmstransform_struct *CMMcargo,
     cmsFloat32Number        c0, c1 = 0, c2 = 0, c3 = 0;
 
     cmsUInt32Number         OutChan;
-    FloatCMYKData*          p8 = (FloatCMYKData*) _cmsGetTransformUserData(CMMcargo);
+    FloatCMYKData*          pcmyk = (FloatCMYKData*) _cmsGetTransformUserData(CMMcargo);
 
-    const cmsInterpParams*  p = p8 ->p;
+    const cmsInterpParams*  p = pcmyk ->p;
     cmsUInt32Number        TotalOut = p -> nOutputs;
     cmsUInt32Number        TotalPlusAlpha;
     const cmsFloat32Number* LutTable = (const cmsFloat32Number*)p->Table;
@@ -333,7 +333,7 @@ cmsBool OptimizeCLUTCMYKTransform(_cmsTransform2Fn* TransformFn,
     cmsStage* OptimizedCLUTmpe;
     cmsColorSpaceSignature OutputColorSpace;    
     cmsStage* mpe;
-    FloatCMYKData* p8;
+    FloatCMYKData* pcmyk;
     cmsContext ContextID;
     _cmsStageCLutData* data;
 
@@ -379,15 +379,15 @@ cmsBool OptimizeCLUTCMYKTransform(_cmsTransform2Fn* TransformFn,
     // Set the evaluator, copy parameters   
     data = (_cmsStageCLutData*) cmsStageData(OptimizedCLUTmpe);
 
-    p8 = FloatCMYKAlloc(ContextID, data ->Params);
-    if (p8 == NULL) return FALSE;   
+    pcmyk = FloatCMYKAlloc(ContextID, data ->Params);
+    if (pcmyk == NULL) return FALSE;   
 
     // And return the obtained LUT
     cmsPipelineFree(OriginalLut);
 
     *Lut = OptimizedLUT;
     *TransformFn = FloatCMYKCLUTEval;
-    *UserData   = p8;
+    *UserData   = pcmyk;
     *FreeDataFn = _cmsFree;
     *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
     return TRUE;

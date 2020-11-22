@@ -27,6 +27,8 @@ typedef struct {
     cmsContext ContextID;
     const cmsInterpParams* p;   // Tetrahedrical interpolation parameters. This is a not-owned pointer.
 
+    cmsBool isLab;
+
 } FloatCLUTData;
 
 // Precomputes tables for 8-bit on input devicelink. 
@@ -40,6 +42,8 @@ FloatCLUTData* FloatCLUTAlloc(cmsContext ContextID, const cmsInterpParams* p)
     
     fd ->ContextID = ContextID;
     fd ->p = p;
+    fd->isLab = FALSE;
+
     return fd;
 }
 
@@ -56,9 +60,7 @@ int XFormSampler(CMSREGISTER const cmsFloat32Number In[], CMSREGISTER cmsFloat32
     return TRUE;
 }
 
-
-
-// A optimized interpolation for 8-bit input.
+// A optimized interpolation for input.
 #define DENS(i,j,k) (LutTable[(i)+(j)+(k)+OutChan])
 
 static
@@ -71,7 +73,7 @@ void FloatCLUTEval(struct _cmstransform_struct* CMMcargo,
 
 {
 
-    FloatCLUTData* p8 = (FloatCLUTData*)_cmsGetTransformUserData(CMMcargo);
+    FloatCLUTData* pfloat = (FloatCLUTData*)_cmsGetTransformUserData(CMMcargo);
 
     cmsFloat32Number        r, g, b;
     cmsFloat32Number        px, py, pz;
@@ -79,14 +81,14 @@ void FloatCLUTEval(struct _cmstransform_struct* CMMcargo,
     int                     X0, Y0, Z0, X1, Y1, Z1;
     cmsFloat32Number        rx, ry, rz;
     cmsFloat32Number        c0, c1 = 0, c2 = 0, c3 = 0;
-
     cmsUInt32Number         OutChan;
 
-    const cmsInterpParams* p = p8->p;
+    const cmsInterpParams* p = pfloat->p;
     cmsUInt32Number        TotalOut = p->nOutputs;
     cmsUInt32Number        TotalPlusAlpha;
     const cmsFloat32Number* LutTable = (const cmsFloat32Number*)p->Table;
-    cmsUInt32Number        i, ii;
+
+    cmsUInt32Number       i, ii;
     const cmsUInt8Number* rin;
     const cmsUInt8Number* gin;
     const cmsUInt8Number* bin;
@@ -127,9 +129,21 @@ void FloatCLUTEval(struct _cmstransform_struct* CMMcargo,
 
         for (ii = 0; ii < PixelsPerLine; ii++) {
 
-            r = fclamp(*(cmsFloat32Number*)rin);
-            g = fclamp(*(cmsFloat32Number*)gin);
-            b = fclamp(*(cmsFloat32Number*)bin);
+#if 0
+            if (pfloat->isLab)
+            {
+                r = fclamp(*(cmsFloat32Number*)rin / 100.0f);                
+                g = fclamp((*(cmsFloat32Number*)gin + 128.0f) / 255.0f);
+                b = fclamp((*(cmsFloat32Number*)bin + 128.0f) / 255.0f);
+            }
+            else
+#endif
+
+            {
+                r = fclamp(*(cmsFloat32Number*)rin);
+                g = fclamp(*(cmsFloat32Number*)gin);
+                b = fclamp(*(cmsFloat32Number*)bin);
+            }
 
             rin += SourceIncrements[0];
             gin += SourceIncrements[1];
@@ -138,11 +152,11 @@ void FloatCLUTEval(struct _cmstransform_struct* CMMcargo,
             px = r * p->Domain[0];
             py = g * p->Domain[1];
             pz = b * p->Domain[2];
-
-
+            
             x0 = (int)_cmsQuickFloor(px); rx = (px - (cmsFloat32Number)x0);
             y0 = (int)_cmsQuickFloor(py); ry = (py - (cmsFloat32Number)y0);
             z0 = (int)_cmsQuickFloor(pz); rz = (pz - (cmsFloat32Number)z0);
+            
 
             X0 = p->opta[2] * x0;
             X1 = X0 + (r >= 1.0 ? 0 : p->opta[2]);
@@ -219,8 +233,7 @@ void FloatCLUTEval(struct _cmstransform_struct* CMMcargo,
                 *out[TotalOut] = *ain;
         }
 
-
-        strideIn += Stride->BytesPerLineIn;
+        strideIn  += Stride->BytesPerLineIn;
         strideOut += Stride->BytesPerLineOut;
     }
 }
@@ -245,23 +258,28 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
     cmsStage* OptimizedCLUTmpe;
     cmsColorSpaceSignature OutputColorSpace;    
     cmsStage* mpe;
-    FloatCLUTData* p8;
+    FloatCLUTData* pfloat;
     cmsContext ContextID;
     _cmsStageCLutData* data;
 
     // For empty transforms, do nothing
     if (*Lut == NULL) return FALSE;
 
-    // This is a loosy optimization! does not apply in floating-point cases
+    // Check for floating point only
     if (!T_FLOAT(*InputFormat) || !T_FLOAT(*OutputFormat)) return FALSE;
 
-    // Only on 8-bit
-    if (T_BYTES(*InputFormat) != 4 || T_BYTES(*OutputFormat) != 4) return FALSE;
+    // Only on floats
+    if (T_BYTES(*InputFormat) != sizeof(cmsFloat32Number) || 
+        T_BYTES(*OutputFormat) != sizeof(cmsFloat32Number)) return FALSE;
 
-    // Only on RGB
-    if (T_COLORSPACE(*InputFormat)  != PT_RGB) return FALSE;
-    if (T_COLORSPACE(*OutputFormat) != PT_RGB) return FALSE;
-  
+#if 0
+    if (T_COLORSPACE(*InputFormat)  != PT_RGB && 
+        T_COLORSPACE(*InputFormat)  != PT_Lab) return FALSE;
+#else
+    // Input has to be RGB, Output may be any
+    if (T_COLORSPACE(*InputFormat) != PT_RGB) return FALSE;
+#endif
+
     OriginalLut = *Lut;
 
    // Named color pipelines cannot be optimized either
@@ -271,14 +289,13 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
             if (cmsStageType(mpe) == cmsSigNamedColorElemType) return FALSE;
     }
 
-    ContextID = cmsGetPipelineContextID(OriginalLut);
+    ContextID        = cmsGetPipelineContextID(OriginalLut);
     OutputColorSpace = _cmsICCcolorSpace(T_COLORSPACE(*OutputFormat));
     nGridPoints      = _cmsReasonableGridpointsByColorspace(cmsSigRgbData, *dwFlags);
              
     // Create the result LUT
     OptimizedLUT = cmsPipelineAlloc(cmsGetPipelineContextID(OriginalLut), 3, cmsPipelineOutputChannels(OriginalLut));
     if (OptimizedLUT == NULL) goto Error;
-
     
     // Allocate the CLUT for result
     OptimizedCLUTmpe = cmsStageAllocCLutFloat(ContextID, nGridPoints, 3, cmsPipelineOutputChannels(OriginalLut), NULL);
@@ -292,15 +309,23 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
     // Set the evaluator, copy parameters   
     data = (_cmsStageCLutData*) cmsStageData(OptimizedCLUTmpe);
 
-    p8 = FloatCLUTAlloc(ContextID, data ->Params);
-    if (p8 == NULL) return FALSE;   
+    pfloat = FloatCLUTAlloc(ContextID, data ->Params);
+    if (pfloat == NULL) return FALSE;   
+
+#if 0
+    // For Lab
+    if (T_COLORSPACE(*InputFormat) == PT_Lab)
+    {
+        pfloat->isLab = TRUE;
+    }
+#endif
 
     // And return the obtained LUT
     cmsPipelineFree(OriginalLut);
 
     *Lut = OptimizedLUT;
     *TransformFn = FloatCLUTEval;
-    *UserData   = p8;
+    *UserData   = pfloat;
     *FreeDataFn = _cmsFree;
     *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
     return TRUE;
