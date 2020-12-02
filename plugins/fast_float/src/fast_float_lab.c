@@ -21,43 +21,134 @@
 
 #include "fast_float_internal.h"
 
-// Optimization for floating point tetrahedral interpolation
+
+#define SIGMOID_POINTS 1024
+
+// Optimization for floating point tetrahedral interpolation  using Lab as indexing space
 typedef struct {
 
     cmsContext ContextID;
     const cmsInterpParams* p;   // Tetrahedrical interpolation parameters. This is a not-owned pointer.
 
-} FloatCLUTData;
+    cmsFloat32Number sigmoidIn[SIGMOID_POINTS];   // to apply to a*/b* axis on indexing
+    cmsFloat32Number sigmoidOut[SIGMOID_POINTS];  // the curve above, inverted.
 
-// Allocates container
-static
-FloatCLUTData* FloatCLUTAlloc(cmsContext ContextID, const cmsInterpParams* p)
+} LabCLUTdata;
+
+
+typedef struct {
+
+    LabCLUTdata* data;
+    cmsPipeline* original;
+
+} ResamplingContainer;
+
+/**
+* Predefined tone curve
+*/
+#define TYPE_SIGMOID  109
+
+
+// Floating-point version of 1D interpolation
+cmsINLINE cmsFloat32Number LinLerp1D(cmsFloat32Number Value, const cmsFloat32Number* LutTable)
 {
-    FloatCLUTData* fd;
+    if (Value >= 1.0f)
+    {
+        return LutTable[SIGMOID_POINTS - 1];
+    }
+    else
+        if (Value <= 0)
+        {
+            return LutTable[0];
+        }
+        else
+        {
+            cmsFloat32Number y1, y0;
+            cmsFloat32Number rest;
+            int cell0, cell1;
 
-    fd = (FloatCLUTData*) _cmsMallocZero(ContextID, sizeof(FloatCLUTData));
+            Value *= (SIGMOID_POINTS - 1);
+
+            cell0 = _cmsQuickFloor(Value);
+            cell1 = cell0 + 1;
+
+            rest = Value - cell0;
+
+            y0 = LutTable[cell0];
+            y1 = LutTable[cell1];
+
+            return y0 + (y1 - y0) * rest;
+        }
+}
+
+static
+void tabulateSigmoid(cmsContext ContextID, cmsInt32Number type, cmsFloat32Number table[], cmsInt32Number tablePoints)
+{
+    const cmsFloat64Number sigmoidal_slope = 2.5;
+    cmsToneCurve* original;
+    cmsInt32Number i;
+    
+    memset(table, 0, sizeof(cmsFloat32Number) * tablePoints);
+    original = cmsBuildParametricToneCurve(ContextID, type, &sigmoidal_slope);
+    if (original != NULL)
+    {
+        for (i = 0; i < tablePoints; i++)
+        {
+            cmsFloat32Number v = (cmsFloat32Number)i / (cmsFloat32Number)(tablePoints - 1);
+
+            table[i] = fclamp(cmsEvalToneCurveFloat(original, v));
+        }
+     
+        cmsFreeToneCurve(original);
+    }
+}
+
+
+// Allocates container and curves
+static
+LabCLUTdata* LabCLUTAlloc(cmsContext ContextID, const cmsInterpParams* p)
+{
+    LabCLUTdata* fd;
+    
+    fd = (LabCLUTdata*) _cmsMallocZero(ContextID, sizeof(LabCLUTdata));
     if (fd == NULL) return NULL;
     
     fd ->ContextID = ContextID;
     fd ->p = p;
     
+    tabulateSigmoid(ContextID, +TYPE_SIGMOID, fd->sigmoidIn, SIGMOID_POINTS);     
+    tabulateSigmoid(ContextID, -TYPE_SIGMOID, fd->sigmoidOut, SIGMOID_POINTS);    
+
     return fd;
 }
 
+static
+void LabCLUTFree(cmsContext ContextID, void* v)
+{    
+    _cmsFree(ContextID, v);
+}
 
 // Sampler implemented by another LUT. 
 static
 int XFormSampler(CMSREGISTER const cmsFloat32Number In[], CMSREGISTER cmsFloat32Number Out[], CMSREGISTER void* Cargo)
-{    
-    cmsPipelineEvalFloat(In, Out, (cmsPipeline*) Cargo);
+{
+    ResamplingContainer* container = (ResamplingContainer*)Cargo;
+    cmsFloat32Number linearized[3];
+
+    // Apply inverse sigmoid
+    linearized[0] = In[0];
+    linearized[1] = LinLerp1D(In[1], container->data->sigmoidOut);
+    linearized[2] = LinLerp1D(In[2], container->data->sigmoidOut);
+
+    cmsPipelineEvalFloat(linearized, Out, container->original);    
     return TRUE;
 }
 
-// A optimized interpolation for input.
+// A optimized interpolation for Lab.
 #define DENS(i,j,k) (LutTable[(i)+(j)+(k)+OutChan])
 
 static
-void FloatCLUTEval(struct _cmstransform_struct* CMMcargo,
+void LabCLUTEval(struct _cmstransform_struct* CMMcargo,
                         const void* Input,
                         void* Output,
                         cmsUInt32Number PixelsPerLine,
@@ -66,9 +157,9 @@ void FloatCLUTEval(struct _cmstransform_struct* CMMcargo,
 
 {
 
-    FloatCLUTData* pfloat = (FloatCLUTData*)_cmsGetTransformUserData(CMMcargo);
+    LabCLUTdata* pfloat = (LabCLUTdata*)_cmsGetTransformUserData(CMMcargo);
 
-    cmsFloat32Number        r, g, b;
+    cmsFloat32Number        l, a, b;
     cmsFloat32Number        px, py, pz;
     int                     x0, y0, z0;
     int                     X0, Y0, Z0, X1, Y1, Z1;
@@ -82,10 +173,10 @@ void FloatCLUTEval(struct _cmstransform_struct* CMMcargo,
     const cmsFloat32Number* LutTable = (const cmsFloat32Number*)p->Table;
 
     cmsUInt32Number       i, ii;
-    const cmsUInt8Number* rin;
-    const cmsUInt8Number* gin;
+    const cmsUInt8Number* lin;
+    const cmsUInt8Number* ain;
     const cmsUInt8Number* bin;
-    const cmsUInt8Number* ain = NULL;
+    const cmsUInt8Number* xin = NULL;
 
     cmsUInt8Number* out[cmsMAXCHANNELS];
     cmsUInt32Number SourceStartingOrder[cmsMAXCHANNELS];
@@ -108,45 +199,46 @@ void FloatCLUTEval(struct _cmstransform_struct* CMMcargo,
     strideIn = strideOut = 0;
     for (i = 0; i < LineCount; i++) {
 
-        rin = (const cmsUInt8Number*)Input + SourceStartingOrder[0] + strideIn;
-        gin = (const cmsUInt8Number*)Input + SourceStartingOrder[1] + strideIn;
+        lin = (const cmsUInt8Number*)Input + SourceStartingOrder[0] + strideIn;
+        ain = (const cmsUInt8Number*)Input + SourceStartingOrder[1] + strideIn;
         bin = (const cmsUInt8Number*)Input + SourceStartingOrder[2] + strideIn;
+
         if (nalpha)
-            ain = (const cmsUInt8Number*)Input + SourceStartingOrder[3] + strideIn;
+            xin = (const cmsUInt8Number*)Input + SourceStartingOrder[3] + strideIn;
 
         TotalPlusAlpha = TotalOut;
-        if (ain) TotalPlusAlpha++;
+        if (xin) TotalPlusAlpha++;
 
         for (ii = 0; ii < TotalPlusAlpha; ii++)
             out[ii] = (cmsUInt8Number*)Output + DestStartingOrder[ii] + strideOut;
 
         for (ii = 0; ii < PixelsPerLine; ii++) {
 
-            r = fclamp(*(cmsFloat32Number*)rin);
-            g = fclamp(*(cmsFloat32Number*)gin);
-            b = fclamp(*(cmsFloat32Number*)bin);
+            // Decode Lab and go across sigmoids on a*/b*
+            l = fclamp((*(cmsFloat32Number*)lin) / 100.0f);
+            a = LinLerp1D(((*(cmsFloat32Number*)ain) + 128.0f) / 255.0f, pfloat->sigmoidIn);
+            b = LinLerp1D(((*(cmsFloat32Number*)bin) + 128.0f) / 255.0f, pfloat->sigmoidIn);
 
-            rin += SourceIncrements[0];
-            gin += SourceIncrements[1];
+            lin += SourceIncrements[0];
+            ain += SourceIncrements[1];
             bin += SourceIncrements[2];
 
-            px = r * p->Domain[0];
-            py = g * p->Domain[1];
+            px = l * p->Domain[0];
+            py = a * p->Domain[1];
             pz = b * p->Domain[2];
             
             x0 = _cmsQuickFloor(px); rx = (px - (cmsFloat32Number)x0);
             y0 = _cmsQuickFloor(py); ry = (py - (cmsFloat32Number)y0);
             z0 = _cmsQuickFloor(pz); rz = (pz - (cmsFloat32Number)z0);
             
-
             X0 = p->opta[2] * x0;
-            X1 = X0 + (r >= 1.0 ? 0 : p->opta[2]);
+            X1 = X0 + (l >= 1.0f ? 0 : p->opta[2]);
 
             Y0 = p->opta[1] * y0;
-            Y1 = Y0 + (g >= 1.0 ? 0 : p->opta[1]);
+            Y1 = Y0 + (a >= 1.0f ? 0 : p->opta[1]);
 
             Z0 = p->opta[0] * z0;
-            Z1 = Z0 + (b >= 1.0 ? 0 : p->opta[0]);
+            Z1 = Z0 + (b >= 1.0f ? 0 : p->opta[0]);
 
             for (OutChan = 0; OutChan < TotalOut; OutChan++) {
 
@@ -210,8 +302,8 @@ void FloatCLUTEval(struct _cmstransform_struct* CMMcargo,
                 out[OutChan] += DestIncrements[OutChan];
             }
 
-            if (ain)
-                *out[TotalOut] = *ain;
+            if (xin)
+                *out[TotalOut] = *xin;
         }
 
         strideIn  += Stride->BytesPerLineIn;
@@ -222,10 +314,34 @@ void FloatCLUTEval(struct _cmstransform_struct* CMMcargo,
 #undef DENS
 
 
+/**
+* Get from flags
+*/
+static
+int GetGridpoints(cmsUInt32Number dwFlags)
+{
+    // Already specified?
+    if (dwFlags & 0x00FF0000) {
+        return (dwFlags >> 16) & 0xFF;
+    }
+
+    // HighResPrecalc is maximum resolution
+    if (dwFlags & cmsFLAGS_HIGHRESPRECALC) {
+        return 66;
+    }
+    else
+        // LowResPrecal is lower resolution
+        if (dwFlags & cmsFLAGS_LOWRESPRECALC) {
+            return 33;
+        }
+        else 
+            return 51;
+
+}
 
 // --------------------------------------------------------------------------------------------------------------
 
-cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
+cmsBool OptimizeCLUTLabTransform(_cmsTransform2Fn* TransformFn,
                                   void** UserData,
                                   _cmsFreeUserDataFn* FreeDataFn,
                                   cmsPipeline** Lut, 
@@ -239,9 +355,11 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
     cmsStage* OptimizedCLUTmpe;
     cmsColorSpaceSignature OutputColorSpace;    
     cmsStage* mpe;
-    FloatCLUTData* pfloat;
+    LabCLUTdata* pfloat;
     cmsContext ContextID;
     _cmsStageCLutData* data;
+    ResamplingContainer container;
+
 
     // For empty transforms, do nothing
     if (*Lut == NULL) return FALSE;
@@ -250,24 +368,23 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
     if (!T_FLOAT(*InputFormat) || !T_FLOAT(*OutputFormat)) return FALSE;
 
     // Only on floats
-    if (T_BYTES(*InputFormat) != sizeof(cmsFloat32Number) || 
+    if (T_BYTES(*InputFormat) != sizeof(cmsFloat32Number) ||
         T_BYTES(*OutputFormat) != sizeof(cmsFloat32Number)) return FALSE;
 
-    // Input has to be RGB, Output may be any
-    if (T_COLORSPACE(*InputFormat) != PT_RGB) return FALSE;
+    if (T_COLORSPACE(*InputFormat) != PT_Lab) return FALSE;
 
     OriginalLut = *Lut;
 
-   // Named color pipelines cannot be optimized either
-   for (mpe = cmsPipelineGetPtrToFirstStage(OriginalLut);
-         mpe != NULL;
-         mpe = cmsStageNext(mpe)) {
-            if (cmsStageType(mpe) == cmsSigNamedColorElemType) return FALSE;
+    // Named color pipelines cannot be optimized either
+    for (mpe = cmsPipelineGetPtrToFirstStage(OriginalLut);
+        mpe != NULL;
+        mpe = cmsStageNext(mpe)) {
+        if (cmsStageType(mpe) == cmsSigNamedColorElemType) return FALSE;
     }
 
-    ContextID        = cmsGetPipelineContextID(OriginalLut);
+    ContextID = cmsGetPipelineContextID(OriginalLut);
     OutputColorSpace = _cmsICCcolorSpace(T_COLORSPACE(*OutputFormat));
-    nGridPoints      = _cmsReasonableGridpointsByColorspace(cmsSigRgbData, *dwFlags);
+    nGridPoints = GetGridpoints(*dwFlags);
              
     // Create the result LUT
     OptimizedLUT = cmsPipelineAlloc(cmsGetPipelineContextID(OriginalLut), 3, cmsPipelineOutputChannels(OriginalLut));
@@ -278,23 +395,27 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
 
     // Add the CLUT to the destination LUT
     cmsPipelineInsertStage(OptimizedLUT, cmsAT_BEGIN, OptimizedCLUTmpe);
-
-    // Resample the LUT
-    if (!cmsStageSampleCLutFloat(OptimizedCLUTmpe, XFormSampler, (void*)OriginalLut, 0)) goto Error;
-
+    
     // Set the evaluator, copy parameters   
     data = (_cmsStageCLutData*) cmsStageData(OptimizedCLUTmpe);
 
-    pfloat = FloatCLUTAlloc(ContextID, data ->Params);
+    // Allocate data
+    pfloat = LabCLUTAlloc(ContextID, data ->Params);
     if (pfloat == NULL) return FALSE;   
+
+    container.data = pfloat;
+    container.original = OriginalLut;
+
+    // Resample the LUT
+    if (!cmsStageSampleCLutFloat(OptimizedCLUTmpe, XFormSampler, (void*)&container, 0)) goto Error;
 
     // And return the obtained LUT
     cmsPipelineFree(OriginalLut);
 
     *Lut = OptimizedLUT;
-    *TransformFn = FloatCLUTEval;
+    *TransformFn = LabCLUTEval;
     *UserData   = pfloat;
-    *FreeDataFn = _cmsFree;
+    *FreeDataFn = LabCLUTFree;
     *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
     return TRUE;
 

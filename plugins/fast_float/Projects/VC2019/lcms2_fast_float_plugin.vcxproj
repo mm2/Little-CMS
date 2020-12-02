@@ -32,6 +32,7 @@
     <ClCompile Include="..\..\src\fast_float_15mats.c" />
     <ClCompile Include="..\..\src\fast_float_cmyk.c" />
     <ClCompile Include="..\..\src\fast_float_curves.c" />
+    <ClCompile Include="..\..\src\fast_float_lab.c" />
     <ClCompile Include="..\..\src\fast_float_matsh.c" />
     <ClCompile Include="..\..\src\fast_float_separate.c" />
     <ClCompile Include="..\..\src\fast_float_sup.c" />

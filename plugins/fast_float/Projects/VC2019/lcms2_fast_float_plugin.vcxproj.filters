@@ -60,6 +60,9 @@
     <ClCompile Include="..\..\src\fast_8_matsh.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\fast_float_lab.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\COPYING.GPL3">

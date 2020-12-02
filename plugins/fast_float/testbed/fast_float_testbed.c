@@ -933,49 +933,84 @@ void CheckConversionFloat(void)
        printf("Ok\n");
 }
 
-#if 0
+
+static
+cmsBool ValidFloat2(cmsFloat32Number a, cmsFloat32Number b)
+{
+    return fabsf(a - b) < 0.007;
+}
+
+
+static
+cmsFloat32Number distance(cmsFloat32Number rgb1[], cmsFloat32Number rgb2[])
+{
+    cmsFloat32Number dr = rgb2[0] - rgb1[0];
+    cmsFloat32Number dg = rgb2[1] - rgb1[1];
+    cmsFloat32Number db = rgb2[2] - rgb1[2];
+
+    return dr * dr + dg * dg + db * db;
+}
+
 static
 void CheckLab2RGB(void)
 {
     cmsHPROFILE hLab = cmsCreateLab4Profile(NULL);
-    cmsHPROFILE hXYZ = cmsOpenProfileFromFile("test3.icc", "r");
+    cmsHPROFILE hRGB = cmsOpenProfileFromFile("test3.icc", "r");
     cmsContext noPlugin = cmsCreateContext(0, 0);
 
-    cmsHTRANSFORM hXformNoPlugin = cmsCreateTransformTHR(noPlugin, hLab, TYPE_Lab_FLT, hXYZ, TYPE_RGB_FLT, INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_NOCACHE| cmsFLAGS_FORCE_CLUT| cmsFLAGS_GRIDPOINTS(63));
-    cmsHTRANSFORM hXformPlugin = cmsCreateTransformTHR(0, hLab, TYPE_Lab_FLT, hXYZ, TYPE_RGB_FLT, INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_NOCACHE | cmsFLAGS_FORCE_CLUT | cmsFLAGS_GRIDPOINTS(63));
+    cmsHTRANSFORM hXformNoPlugin = cmsCreateTransformTHR(noPlugin, hLab, TYPE_Lab_FLT, hRGB, TYPE_RGB_FLT, INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_NOCACHE);
+    cmsHTRANSFORM hXformPlugin = cmsCreateTransformTHR(0, hLab, TYPE_Lab_FLT, hRGB, TYPE_RGB_FLT, INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_NOCACHE);
 
-    cmsFloat32Number Lab[3], XYZ[3], XYZ2[3];
+    cmsFloat32Number Lab[3], RGB[3], RGB2[3];
 
-    cmsFloat32Number L, a, b;
+    cmsFloat32Number maxInside = 0, maxOutside = 0, L, a, b;
 
     printf("Checking Lab -> RGB...");
-    for (L = 0; L <= 100; L++)
+    for (L = 4; L <= 100; L++)
     {
-        for (a = -127; a < 128; a++)
-            for (b = -127; b < 128; b++)
+        for (a = -30; a < +30; a++)
+            for (b = -30; b < +30; b++)
             {
+                cmsFloat32Number d;
+
                 Lab[0] = L; Lab[1] = a; Lab[2] = b;
-                cmsDoTransform(hXformNoPlugin, Lab, XYZ, 1);
-                cmsDoTransform(hXformPlugin, Lab, XYZ2, 1);
+                cmsDoTransform(hXformNoPlugin, Lab, RGB, 1);
+                cmsDoTransform(hXformPlugin, Lab, RGB2, 1);
 
-                if (!ValidFloatLab(XYZ[0], XYZ2[0]) ||
-                    !ValidFloatLab(XYZ[1], XYZ2[1]) ||
-                    !ValidFloatLab(XYZ[2], XYZ2[2]))
-                {
-                    Fail("Lab to RGB Error!");
-                }
+                d = distance(RGB, RGB2);
+                if (d > maxInside)
+                    maxInside = d;                   
+            }
+    }
 
+
+    for (L = 1; L <= 100; L += 5)
+    {
+        for (a = -100; a < +100; a += 5)
+            for (b = -100; b < +100; b += 5)
+            {
+                cmsFloat32Number d;
+
+                Lab[0] = L; Lab[1] = a; Lab[2] = b;
+                cmsDoTransform(hXformNoPlugin, Lab, RGB, 1);
+                cmsDoTransform(hXformPlugin, Lab, RGB2, 1);
+
+                d = distance(RGB, RGB2);
+                if (d > maxOutside)
+                    maxOutside = d;
             }
 
     }
 
+
+    printf("Max distance: Inside gamut %f, Outside gamut %f\n", sqrtf(maxInside), sqrtf(maxOutside));
+
     cmsDeleteTransform(hXformNoPlugin);
     cmsDeleteTransform(hXformPlugin);
 
-    cmsDeleteContext(noPlugin);
-    printf("Ok\n");
+    cmsDeleteContext(noPlugin);    
 }
-#endif
+
 
 
 
@@ -1639,11 +1674,83 @@ cmsFloat64Number SpeedTestFloatCMYK(cmsContext ct, cmsHPROFILE hlcmsProfileIn, c
 
 
 static
+cmsFloat64Number SpeedTestFloatLab(cmsContext ct, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut)
+{
+    cmsInt32Number j;
+    clock_t atime;
+    cmsFloat64Number diff;
+    cmsHTRANSFORM hlcmsxform;
+    void* In;
+    cmsUInt32Number size, Mb;
+    cmsUInt32Number  outFormatter = 0;
+    cmsFloat64Number seconds;
+    cmsFloat32Number L, a, b;
+    Scanline_LabFloat* fill;
+
+
+    if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
+        Fail("Unable to open profiles");
+
+
+    if (cmsGetColorSpace(hlcmsProfileIn) != cmsSigLabData)
+    {
+        Fail("Invalid colorspace");
+    }
+
+    switch (cmsGetColorSpace(hlcmsProfileOut))
+    {
+    case cmsSigRgbData:  outFormatter = TYPE_RGB_FLT; break;
+    case cmsSigLabData:  outFormatter = TYPE_Lab_FLT; break;
+    case cmsSigXYZData:  outFormatter = TYPE_XYZ_FLT; break;
+
+    default:
+        Fail("Invalid colorspace");
+    }
+
+    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_Lab_FLT, hlcmsProfileOut, outFormatter, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
+    cmsCloseProfile(hlcmsProfileIn);
+    cmsCloseProfile(hlcmsProfileOut);
+
+    j = 0;
+
+    size = 100 * 256 * 256;
+    Mb = size * sizeof(Scanline_LabFloat);
+    In = malloc(Mb);
+    fill = (Scanline_LabFloat*)In;
+
+    for (L = 0; L < 100; L++)
+        for (a = -127.0; a < 127.0; a++)
+            for (b = -127.0; b < +127.0; b++) {
+
+                fill[j].L = L;
+                fill[j].a = a;
+                fill[j].b = b;
+
+                j++;
+            }
+    
+
+    atime = clock();
+
+    cmsDoTransform(hlcmsxform, In, In, size);
+
+    diff = clock() - atime;
+    free(In);
+
+    cmsDeleteTransform(hlcmsxform);
+
+    seconds = (cmsFloat64Number)diff / (cmsFloat64Number)CLOCKS_PER_SEC;
+    return ((cmsFloat64Number)size) / (1024.0 * 1024.0 * seconds);
+}
+
+
+
+static
 void SpeedTestFloat(void)
 {
        cmsContext noPlugin = cmsCreateContext(0, 0);
        
-       cmsFloat64Number t[10];
+       cmsFloat64Number t[10] = { 0 };
 
        printf("\n\n");
        printf("P E R F O R M A N C E   T E S T S   F L O A T  (D E F A U L T)\n");
@@ -1658,7 +1765,8 @@ void SpeedTestFloat(void)
        t[4] = Performance("Floating point on RGB->Lab       ", SpeedTestFloatRGB, noPlugin, "test5.icc", "*lab",      sizeof(Scanline_rgbFloat), 0);
        t[5] = Performance("Floating point on RGB->XYZ       ", SpeedTestFloatRGB, noPlugin, "test3.icc", "*xyz",      sizeof(Scanline_rgbFloat), 0);
        t[6] = Performance("Floating point on CMYK->CMYK     ", SpeedTestFloatCMYK, noPlugin, "test1.icc", "test2.icc",sizeof(Scanline_cmykFloat), 0);
-   
+       t[7] = Performance("Floating point on Lab->RGB       ", SpeedTestFloatLab,  noPlugin, "*lab",     "test3.icc", sizeof(Scanline_LabFloat), 0);
+
 
        // Note that context 0 has the plug-in installed
 
@@ -1675,7 +1783,8 @@ void SpeedTestFloat(void)
        Performance("Floating point on RGB->Lab       ", SpeedTestFloatRGB, 0, "test5.icc", "*lab",      sizeof(Scanline_rgbFloat), t[4]);
        Performance("Floating point on RGB->XYZ       ", SpeedTestFloatRGB, 0, "test3.icc", "*xyz",      sizeof(Scanline_rgbFloat), t[5]);
        Performance("Floating point on CMYK->CMYK     ", SpeedTestFloatCMYK, 0, "test1.icc", "test2.icc", sizeof(Scanline_cmykFloat), t[6]);
-      
+       Performance("Floating point on Lab->RGB       ", SpeedTestFloatLab,  0, "*lab",      "test3.icc", sizeof(Scanline_LabFloat), t[7]);
+
        cmsDeleteContext(noPlugin);
 }
 
@@ -2030,6 +2139,7 @@ int main()
        cmsPlugin(cmsFastFloatExtensions());
        printf("done.\n\n");
        
+       
        CheckComputeIncrements();
 
        // 15 bit functionality
@@ -2038,6 +2148,9 @@ int main()
  
        // 16 bits functionality
        CheckAccuracy16Bits();
+
+       // Lab to whatever
+       CheckLab2RGB();
 
        // Change format
        CheckChangeFormat();
