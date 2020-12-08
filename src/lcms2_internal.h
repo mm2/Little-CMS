@@ -924,7 +924,7 @@ struct _cmsPipeline_struct {
     // Data & evaluators
     void *Data;
 
-   _cmsOPTeval16Fn         Eval16Fn;
+    _cmsInterpFn16         Eval16Fn;
    _cmsPipelineEvalFloatFn EvalFloatFn;
    _cmsFreeUserDataFn      FreeDataFn;
    _cmsDupUserDataFn       DupDataFn;

@@ -778,7 +778,7 @@ Error:
 
     if (DataSetIn == NULL && DataSetOut == NULL) {
 
-        _cmsPipelineSetOptimizationParameters(Dest, (_cmsOPTeval16Fn) DataCLUT->Params->Interpolation.Lerp16, DataCLUT->Params, NULL, NULL);
+        _cmsPipelineSetOptimizationParameters(Dest, DataCLUT->Params->Interpolation.Lerp16, DataCLUT->Params, NULL, NULL);
     }
     else {
 
