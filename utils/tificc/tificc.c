@@ -928,82 +928,65 @@ int TransformImage(TIFF* in, TIFF* out, const char *cDefInpProf)
 static
 void Help(int level)
 {
-    fprintf(stderr, "little cms ICC profile applier for TIFF - v6.2 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
-    fflush(stderr);
+    UTILS_UNUSED_PARAMETER(level);
 
-    switch(level) {
+    fprintf(stderr, "usage: tificc [flags] input.tif output.tif\n");
 
-     default:
-     case 0:
+    fprintf(stderr, "\nflags:\n\n");
+    fprintf(stderr, "-v - Verbose\n");
+    fprintf(stderr, "-i<profile> - Input profile (defaults to sRGB)\n");
+    fprintf(stderr, "-o<profile> - Output profile (defaults to sRGB)\n");
+    fprintf(stderr, "-l<profile> - Transform by device-link profile\n");
 
-         fprintf(stderr, "usage: tificc [flags] input.tif output.tif\n");
+    PrintBuiltins();
 
-         fprintf(stderr, "\nflags:\n\n");
-         fprintf(stderr, "%cv - Verbose\n", SW);
-         fprintf(stderr, "%ci<profile> - Input profile (defaults to sRGB)\n", SW);
-         fprintf(stderr, "%co<profile> - Output profile (defaults to sRGB)\n", SW);   
-         fprintf(stderr, "%cl<profile> - Transform by device-link profile\n", SW); 
+    PrintRenderingIntents();
 
-         PrintRenderingIntents();
+    fprintf(stderr, "-b - Black point compensation\n");
+    fprintf(stderr, "-d<0..1> - Observer adaptation state (abs.col. only)\n");
 
-         fprintf(stderr, "%cb - Black point compensation\n", SW);
-         fprintf(stderr, "%cd<0..1> - Observer adaptation state (abs.col. only)\n", SW);
+    fprintf(stderr, "-c<0,1,2,3> - Precalculates transform (0=Off, 1=Normal, 2=Hi-res, 3=LoRes)\n");
+    fprintf(stderr, "\n");
 
-         fprintf(stderr, "%cc<0,1,2,3> - Precalculates transform (0=Off, 1=Normal, 2=Hi-res, 3=LoRes)\n", SW);     
-         fprintf(stderr, "\n");
+    fprintf(stderr, "-w<8,16,32> - Output depth. Use 32 for floating-point\n\n");
+    fprintf(stderr, "-a - Handle channels > 4 as alpha\n");
 
-         fprintf(stderr, "%cw<8,16,32> - Output depth. Use 32 for floating-point\n\n", SW);
-         fprintf(stderr, "%ca - Handle channels > 4 as alpha\n", SW);
-
-         fprintf(stderr, "%cn - Ignore embedded profile on input\n", SW);
-         fprintf(stderr, "%ce - Embed destination profile\n", SW);
-         fprintf(stderr, "%cs<new profile> - Save embedded profile as <new profile>\n", SW);
-         fprintf(stderr, "\n");
+    fprintf(stderr, "-n - Ignore embedded profile on input\n");
+    fprintf(stderr, "-e - Embed destination profile\n");
+    fprintf(stderr, "-s<new profile> - Save embedded profile as <new profile>\n");
+    fprintf(stderr, "\n");
 
 
-         fprintf(stderr, "%cp<profile> - Soft proof profile\n", SW);
-         fprintf(stderr, "%cm<n> - Soft proof intent\n", SW);
-         fprintf(stderr, "%cg - Marks out-of-gamut colors on softproof\n", SW);
+    fprintf(stderr, "-p<profile> - Soft proof profile\n");
+    fprintf(stderr, "-m<n> - Soft proof intent\n");
+    fprintf(stderr, "-g - Marks out-of-gamut colors on softproof\n");
 
-         fprintf(stderr, "\n"); 
-   
-         fprintf(stderr, "%ck<0..400> - Ink-limiting in %% (CMYK only)\n", SW);       
-         fprintf(stderr, "\n");
-         fprintf(stderr, "%ch<0,1,2,3> - More help\n", SW);
-         break;
+    fprintf(stderr, "\n");
 
-     case 1:
+    fprintf(stderr, "-k<0..400> - Ink-limiting in %% (CMYK only)\n");
+    fprintf(stderr, "\n");
+    
 
-         fprintf(stderr, "Examples:\n\n"
-             "To color correct from scanner to sRGB:\n"
-             "\ttificc %ciscanner.icm in.tif out.tif\n"
-             "To convert from monitor1 to monitor2:\n"
-             "\ttificc %cimon1.icm %comon2.icm in.tif out.tif\n"
-             "To make a CMYK separation:\n"
-             "\ttificc %coprinter.icm inrgb.tif outcmyk.tif\n"
-             "To recover sRGB from a CMYK separation:\n"
-             "\ttificc %ciprinter.icm incmyk.tif outrgb.tif\n"
-             "To convert from CIELab TIFF to sRGB\n"
-             "\ttificc %ci*Lab in.tif out.tif\n\n", 
-             SW, SW, SW, SW, SW, SW);
-         break;
+    fprintf(stderr, "Examples:\n\n"
+        "To color correct from scanner to sRGB:\n"
+        "\ttificc -iscanner.icm in.tif out.tif\n"
+        "To convert from monitor1 to monitor2:\n"
+        "\ttificc -imon1.icm -omon2.icm in.tif out.tif\n"
+        "To make a CMYK separation:\n"
+        "\ttificc -oprinter.icm inrgb.tif outcmyk.tif\n"
+        "To recover sRGB from a CMYK separation:\n"
+        "\ttificc -iprinter.icm incmyk.tif outrgb.tif\n"
+        "To convert from CIELab TIFF to sRGB\n"
+        "\ttificc -i*Lab in.tif out.tif\n\n");
 
-     case 2:
-         PrintBuiltins();
-         break;
 
-     case 3:
+    fprintf(stderr, "This program is intended to be a demo of the Little CMS\n"
+        "color engine. Both lcms and this program are open source.\n"
+        "You can obtain both in source code at https://www.littlecms.com\n"
+        "For suggestions, comments, bug reports etc. send mail to\n"
+        "info@littlecms.com\n\n");
 
-         fprintf(stderr, "This program is intended to be a demo of the little cms\n"
-             "engine. Both lcms and this program are freeware. You can\n"
-             "obtain both in source code at http://www.littlecms.com\n"
-             "For suggestions, comments, bug reports etc. send mail to\n"
-             "info@littlecms.com\n\n");
 
-         break;
-    }
-
-    fflush(stderr);
     exit(0);
 }
 
@@ -1015,9 +998,21 @@ void HandleSwitches(int argc, char *argv[])
 {
     int s;
 
-    while ((s=xgetopt(argc,argv,"aAeEbBw:W:nNvVGgh:H:i:I:o:O:P:p:t:T:c:C:l:L:M:m:K:k:S:s:D:d:")) != EOF) {
+    while ((s=xgetopt(argc,argv,"aAeEbBw:W:nNvVGgh:H:i:I:o:O:P:p:t:T:c:C:l:L:M:m:K:k:S:s:D:d:-:")) != EOF) {
 
         switch (s) {
+
+
+        case '-':
+            if (strcmp(xoptarg, "help") == 0)
+            {
+                Help(0);
+            }
+            else
+            {
+                FatalError("Unknown option - run without args to see valid ones.\n");
+            }
+            break;
 
         case 'a':
         case 'A':
@@ -1144,6 +1139,11 @@ int main(int argc, char* argv[])
 {
     TIFF *in, *out;
    
+
+    fprintf(stderr, "Little CMS ICC profile applier for TIFF - v6.3 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
+    fprintf(stderr, "Copyright (c) 1998-2020 Marti Maria Saguer. See COPYING file for details.\n");
+    fflush(stderr);
+
     cmsPlugin(&TiffLabPlugin);
 
     InitUtils("tificc");

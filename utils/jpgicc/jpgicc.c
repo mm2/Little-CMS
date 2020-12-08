@@ -1026,82 +1026,63 @@ int TransformImage(char *cDefInpProf, char *cOutputProf)
 }
 
 
-// Simply print help
-
 static
 void Help(int level)
 {
-     fprintf(stderr, "little cms ICC profile applier for JPEG - v3.2 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
 
-     switch(level) {
+    UTILS_UNUSED_PARAMETER(level);
 
-     default:
-     case 0:
+    fprintf(stderr, "usage: jpgicc [flags] input.jpg output.jpg\n");
 
-     fprintf(stderr, "usage: jpgicc [flags] input.jpg output.jpg\n");
+    fprintf(stderr, "\nflags:\n\n");
+    fprintf(stderr, "-v - Verbose\n");
+    fprintf(stderr, "-i<profile> - Input profile (defaults to sRGB)\n");
+    fprintf(stderr, "-o<profile> - Output profile (defaults to sRGB)\n");
 
-     fprintf(stderr, "\nflags:\n\n");
-     fprintf(stderr, "%cv - Verbose\n", SW);
-     fprintf(stderr, "%ci<profile> - Input profile (defaults to sRGB)\n", SW);
-     fprintf(stderr, "%co<profile> - Output profile (defaults to sRGB)\n", SW);
+    PrintBuiltins();
 
-     PrintRenderingIntents();
+    PrintRenderingIntents();
 
 
-     fprintf(stderr, "%cb - Black point compensation\n", SW);
-     fprintf(stderr, "%cd<0..1> - Observer adaptation state (abs.col. only)\n", SW);
-     fprintf(stderr, "%cn - Ignore embedded profile\n", SW);
-     fprintf(stderr, "%ce - Embed destination profile\n", SW);
-     fprintf(stderr, "%cs<new profile> - Save embedded profile as <new profile>\n", SW);
+    fprintf(stderr, "-b - Black point compensation\n");
+    fprintf(stderr, "-d<0..1> - Observer adaptation state (abs.col. only)\n");
+    fprintf(stderr, "-n - Ignore embedded profile\n");
+    fprintf(stderr, "-e - Embed destination profile\n");
+    fprintf(stderr, "-s<new profile> - Save embedded profile as <new profile>\n");
 
-     fprintf(stderr, "\n");
+    fprintf(stderr, "\n");
 
-     fprintf(stderr, "%cc<0,1,2,3> - Precalculates transform (0=Off, 1=Normal, 2=Hi-res, 3=LoRes) [defaults to 1]\n", SW);
-     fprintf(stderr, "\n");
+    fprintf(stderr, "-c<0,1,2,3> - Precalculates transform (0=Off, 1=Normal, 2=Hi-res, 3=LoRes) [defaults to 1]\n");
+    fprintf(stderr, "\n");
 
-     fprintf(stderr, "%cp<profile> - Soft proof profile\n", SW);
-     fprintf(stderr, "%cm<0,1,2,3> - SoftProof intent\n", SW);
-     fprintf(stderr, "%cg - Marks out-of-gamut colors on softproof\n", SW);
-     fprintf(stderr, "%c!<r>,<g>,<b> - Out-of-gamut marker channel values\n", SW);
+    fprintf(stderr, "-p<profile> - Soft proof profile\n");
+    fprintf(stderr, "-m<0,1,2,3> - SoftProof intent\n");
+    fprintf(stderr, "-g - Marks out-of-gamut colors on softproof\n");
+    fprintf(stderr, "-!<r>,<g>,<b> - Out-of-gamut marker channel values\n");
 
-     fprintf(stderr, "\n");
-     fprintf(stderr, "%cq<0..100> - Output JPEG quality\n", SW);
+    fprintf(stderr, "\n");
+    fprintf(stderr, "-q<0..100> - Output JPEG quality\n");
 
-     fprintf(stderr, "\n");
-     fprintf(stderr, "%ch<0,1,2,3> - More help\n", SW);
-     break;
+    fprintf(stderr, "Examples:\n\n"
+        "To color correct from scanner to sRGB:\n"
+        "\tjpgicc -iscanner.icm in.jpg out.jpg\n"
+        "To convert from monitor1 to monitor2:\n"
+        "\tjpgicc -imon1.icm -omon2.icm in.jpg out.jpg\n"
+        "To make a CMYK separation:\n"
+        "\tjpgicc -oprinter.icm inrgb.jpg outcmyk.jpg\n"
+        "To recover sRGB from a CMYK separation:\n"
+        "\tjpgicc -iprinter.icm incmyk.jpg outrgb.jpg\n"
+        "To convert from CIELab ITU/Fax JPEG to sRGB\n"
+        "\tjpgicc in.jpg out.jpg\n\n");
 
-     case 1:
 
-     fprintf(stderr, "Examples:\n\n"
-                     "To color correct from scanner to sRGB:\n"
-                     "\tjpgicc %ciscanner.icm in.jpg out.jpg\n"
-                     "To convert from monitor1 to monitor2:\n"
-                     "\tjpgicc %cimon1.icm %comon2.icm in.jpg out.jpg\n"
-                     "To make a CMYK separation:\n"
-                     "\tjpgicc %coprinter.icm inrgb.jpg outcmyk.jpg\n"
-                     "To recover sRGB from a CMYK separation:\n"
-                     "\tjpgicc %ciprinter.icm incmyk.jpg outrgb.jpg\n"
-                     "To convert from CIELab ITU/Fax JPEG to sRGB\n"
-                     "\tjpgicc in.jpg out.jpg\n\n",
-                     SW, SW, SW, SW, SW);
-     break;
+    fprintf(stderr, "This program is intended to be a demo of the Little CMS\n"
+        "color engine. Both lcms and this program are open source.\n"
+        "You can obtain both in source code at https://www.littlecms.com\n"
+        "For suggestions, comments, bug reports etc. send mail to\n"
+        "info@littlecms.com\n\n");
 
-     case 2:
-         PrintBuiltins();
-         break;
-
-     case 3:
-
-     fprintf(stderr, "This program is intended to be a demo of the little cms\n"
-                     "engine. Both lcms and this program are freeware. You can\n"
-                     "obtain both in source code at http://www.littlecms.com\n"
-                     "For suggestions, comments, bug reports etc. send mail to\n"
-                     "marti@littlecms.com\n\n");
-     break;
-     }
-
-     exit(0);
+    exit(0);
 }
 
 
@@ -1112,10 +1093,21 @@ void HandleSwitches(int argc, char *argv[])
 {
     int s;
 
-    while ((s=xgetopt(argc,argv,"bBnNvVGgh:H:i:I:o:O:P:p:t:T:c:C:Q:q:M:m:L:l:eEs:S:!:D:d:")) != EOF) {
+    while ((s=xgetopt(argc,argv,"bBnNvVGgh:H:i:I:o:O:P:p:t:T:c:C:Q:q:M:m:L:l:eEs:S:!:D:d:-:")) != EOF) {
 
         switch (s)
         {
+
+        case '-':
+            if (strcmp(xoptarg, "help") == 0)
+            {
+                Help(0);
+            }
+            else
+            {
+                FatalError("Unknown option - run without args to see valid ones.\n");
+            }
+            break;
 
         case 'b':
         case 'B':
@@ -1236,6 +1228,11 @@ void HandleSwitches(int argc, char *argv[])
 
 int main(int argc, char* argv[])
 {
+
+    fprintf(stderr, "Little CMS ICC profile applier for JPEG - v3.3 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
+    fprintf(stderr, "Copyright (c) 1998-2020 Marti Maria Saguer. See COPYING file for details.\n");
+    fflush(stderr);
+
     InitUtils("jpgicc");
 
     HandleSwitches(argc, argv);
