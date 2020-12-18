@@ -421,7 +421,7 @@ Prelin16Data* PrelinOpt16alloc(cmsContext ContextID,
 static
 cmsInt32Number XFormSampler16(CMSREGISTER const cmsUInt16Number In[], 
                               CMSREGISTER cmsUInt16Number Out[], 
-                              CMSREGISTER const void* Cargo)
+                              CMSREGISTER void* Cargo)
 {
     cmsPipeline* Lut = (cmsPipeline*) Cargo;
     cmsFloat32Number InFloat[cmsMAXCHANNELS], OutFloat[cmsMAXCHANNELS];
