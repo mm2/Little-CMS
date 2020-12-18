@@ -8,6 +8,8 @@ Addes support for multichannel input up to 15 channels
 Fix LUT8 write matrix
 Fix version mess on 10/11
 Fix tools & samples xgetopt
+Fix warnings on different function pointers
+Fix matlab MEX compilation
 plugin: cleanup and better SSE detection
 plugin: add lab to any on float
 plugin: it can now be compiled as C++
