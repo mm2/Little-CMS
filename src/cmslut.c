@@ -1311,7 +1311,7 @@ cmsBool BlessLUT(cmsPipeline* lut)
 
 // Default to evaluate the LUT on 16 bit-basis. Precision is retained.
 static
-void _LUTeval16(CMSREGISTER const cmsUInt16Number In[], CMSREGISTER cmsUInt16Number Out[],  CMSREGISTER const void* D)
+void _LUTeval16(CMSREGISTER const cmsUInt16Number In[], CMSREGISTER cmsUInt16Number Out[],  CMSREGISTER const struct _cms_interp_struc* D)
 {
     cmsPipeline* lut = (cmsPipeline*) D;
     cmsStage *mpe;
@@ -1337,7 +1337,7 @@ void _LUTeval16(CMSREGISTER const cmsUInt16Number In[], CMSREGISTER cmsUInt16Num
 
 // Does evaluate the LUT on cmsFloat32Number-basis.
 static
-void _LUTevalFloat(CMSREGISTER const cmsFloat32Number In[], CMSREGISTER cmsFloat32Number Out[], const void* D)
+void _LUTevalFloat(const cmsFloat32Number In[], cmsFloat32Number Out[], const void* D)
 {
     cmsPipeline* lut = (cmsPipeline*) D;
     cmsStage *mpe;
