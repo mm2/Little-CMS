@@ -300,7 +300,7 @@ void Eval16nop1D(CMSREGISTER const cmsUInt16Number Input[],
 static
 void PrelinEval16(CMSREGISTER const cmsUInt16Number Input[],
                   CMSREGISTER cmsUInt16Number Output[],
-                  CMSREGISTER const void* D)
+                  CMSREGISTER const struct _cms_interp_struc* D)
 {
     Prelin16Data* p16 = (Prelin16Data*) D;
     cmsUInt16Number  StageABC[MAX_INPUT_DIMENSIONS];
@@ -419,7 +419,9 @@ Prelin16Data* PrelinOpt16alloc(cmsContext ContextID,
 // Sampler implemented by another LUT. This is a clean way to precalculate the devicelink 3D CLUT for
 // almost any transform. We use floating point precision and then convert from floating point to 16 bits.
 static
-cmsInt32Number XFormSampler16(CMSREGISTER const cmsUInt16Number In[], CMSREGISTER cmsUInt16Number Out[], CMSREGISTER void* Cargo)
+cmsInt32Number XFormSampler16(CMSREGISTER const cmsUInt16Number In[], 
+                              CMSREGISTER cmsUInt16Number Out[], 
+                              CMSREGISTER const struct _cms_interp_struc* Cargo)
 {
     cmsPipeline* Lut = (cmsPipeline*) Cargo;
     cmsFloat32Number InFloat[cmsMAXCHANNELS], OutFloat[cmsMAXCHANNELS];
@@ -923,8 +925,8 @@ void* Prelin8dup(cmsContext ContextID, const void* ptr)
 #define DENS(i,j,k) (LutTable[(i)+(j)+(k)+OutChan])
 static CMS_NO_SANITIZE
 void PrelinEval8(CMSREGISTER const cmsUInt16Number Input[],
-                  CMSREGISTER cmsUInt16Number Output[],
-                  CMSREGISTER const void* D)
+                 CMSREGISTER cmsUInt16Number Output[],
+                 CMSREGISTER const struct _cms_interp_struc* D)
 {
 
     cmsUInt8Number         r, g, b;
@@ -1345,8 +1347,8 @@ Curves16Data* CurvesAlloc(cmsContext ContextID, cmsUInt32Number nCurves, cmsUInt
 
 static
 void FastEvaluateCurves8(CMSREGISTER const cmsUInt16Number In[],
-                          CMSREGISTER cmsUInt16Number Out[],
-                          CMSREGISTER const void* D)
+                         CMSREGISTER cmsUInt16Number Out[],
+                         CMSREGISTER const struct _cms_interp_struc* D)
 {
     Curves16Data* Data = (Curves16Data*) D;
     int x;
@@ -1363,7 +1365,7 @@ void FastEvaluateCurves8(CMSREGISTER const cmsUInt16Number In[],
 static
 void FastEvaluateCurves16(CMSREGISTER const cmsUInt16Number In[],
                           CMSREGISTER cmsUInt16Number Out[],
-                          CMSREGISTER const void* D)
+                          CMSREGISTER const struct _cms_interp_struc* D)
 {
     Curves16Data* Data = (Curves16Data*) D;
     cmsUInt32Number i;
@@ -1377,7 +1379,7 @@ void FastEvaluateCurves16(CMSREGISTER const cmsUInt16Number In[],
 static
 void FastIdentity16(CMSREGISTER const cmsUInt16Number In[],
                     CMSREGISTER cmsUInt16Number Out[],
-                    CMSREGISTER const void* D)
+                    CMSREGISTER const struct _cms_interp_struc* D)
 {
     cmsPipeline* Lut = (cmsPipeline*) D;
     cmsUInt32Number i;
@@ -1537,7 +1539,7 @@ void* DupMatShaper(cmsContext ContextID, const void* Data)
 static
 void MatShaperEval16(CMSREGISTER const cmsUInt16Number In[],
                      CMSREGISTER cmsUInt16Number Out[],
-                     CMSREGISTER const void* D)
+                     CMSREGISTER const struct _cms_interp_struc* D)
 {
     MatShaper8Data* p = (MatShaper8Data*) D;
     cmsS1Fixed14Number l1, l2, l3, r, g, b;
