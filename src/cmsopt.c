@@ -300,7 +300,7 @@ void Eval16nop1D(CMSREGISTER const cmsUInt16Number Input[],
 static
 void PrelinEval16(CMSREGISTER const cmsUInt16Number Input[],
                   CMSREGISTER cmsUInt16Number Output[],
-                  CMSREGISTER const struct _cms_interp_struc* D)
+                  CMSREGISTER const void* D)
 {
     Prelin16Data* p16 = (Prelin16Data*) D;
     cmsUInt16Number  StageABC[MAX_INPUT_DIMENSIONS];
@@ -780,7 +780,7 @@ Error:
 
     if (DataSetIn == NULL && DataSetOut == NULL) {
 
-        _cmsPipelineSetOptimizationParameters(Dest, DataCLUT->Params->Interpolation.Lerp16, DataCLUT->Params, NULL, NULL);
+        _cmsPipelineSetOptimizationParameters(Dest, (_cmsPipelineEval16Fn) DataCLUT->Params->Interpolation.Lerp16, DataCLUT->Params, NULL, NULL);
     }
     else {
 
@@ -926,7 +926,7 @@ void* Prelin8dup(cmsContext ContextID, const void* ptr)
 static CMS_NO_SANITIZE
 void PrelinEval8(CMSREGISTER const cmsUInt16Number Input[],
                  CMSREGISTER cmsUInt16Number Output[],
-                 CMSREGISTER const struct _cms_interp_struc* D)
+                 CMSREGISTER const void* D)
 {
 
     cmsUInt8Number         r, g, b;
@@ -1348,7 +1348,7 @@ Curves16Data* CurvesAlloc(cmsContext ContextID, cmsUInt32Number nCurves, cmsUInt
 static
 void FastEvaluateCurves8(CMSREGISTER const cmsUInt16Number In[],
                          CMSREGISTER cmsUInt16Number Out[],
-                         CMSREGISTER const struct _cms_interp_struc* D)
+                         CMSREGISTER const void* D)
 {
     Curves16Data* Data = (Curves16Data*) D;
     int x;
@@ -1365,7 +1365,7 @@ void FastEvaluateCurves8(CMSREGISTER const cmsUInt16Number In[],
 static
 void FastEvaluateCurves16(CMSREGISTER const cmsUInt16Number In[],
                           CMSREGISTER cmsUInt16Number Out[],
-                          CMSREGISTER const struct _cms_interp_struc* D)
+                          CMSREGISTER const void* D)
 {
     Curves16Data* Data = (Curves16Data*) D;
     cmsUInt32Number i;
@@ -1379,7 +1379,7 @@ void FastEvaluateCurves16(CMSREGISTER const cmsUInt16Number In[],
 static
 void FastIdentity16(CMSREGISTER const cmsUInt16Number In[],
                     CMSREGISTER cmsUInt16Number Out[],
-                    CMSREGISTER const struct _cms_interp_struc* D)
+                    CMSREGISTER const void* D)
 {
     cmsPipeline* Lut = (cmsPipeline*) D;
     cmsUInt32Number i;
@@ -1539,7 +1539,7 @@ void* DupMatShaper(cmsContext ContextID, const void* Data)
 static
 void MatShaperEval16(CMSREGISTER const cmsUInt16Number In[],
                      CMSREGISTER cmsUInt16Number Out[],
-                     CMSREGISTER const struct _cms_interp_struc* D)
+                     CMSREGISTER const void* D)
 {
     MatShaper8Data* p = (MatShaper8Data*) D;
     cmsS1Fixed14Number l1, l2, l3, r, g, b;

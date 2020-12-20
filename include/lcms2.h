@@ -1270,7 +1270,7 @@ typedef cmsInt32Number (* cmsSAMPLERFLOAT)(CMSREGISTER const cmsFloat32Number In
 #define SAMPLER_INSPECT     0x01000000
 
 // For CLUT only
-CMSAPI cmsBool           CMSEXPORT cmsStageSampleCLut16bit(cmsStage* mpe,    cmsSAMPLER16 Sampler, void* Cargo, cmsUInt32Number dwFlags);
+CMSAPI cmsBool           CMSEXPORT cmsStageSampleCLut16bit(cmsStage* mpe, cmsSAMPLER16 Sampler, void* Cargo, cmsUInt32Number dwFlags);
 CMSAPI cmsBool           CMSEXPORT cmsStageSampleCLutFloat(cmsStage* mpe, cmsSAMPLERFLOAT Sampler, void* Cargo, cmsUInt32Number dwFlags);
 
 // Slicers

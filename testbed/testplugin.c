@@ -1115,7 +1115,7 @@ Error:
 static
 void FastEvaluateCurves(CMSREGISTER const cmsUInt16Number In[],
                         CMSREGISTER cmsUInt16Number Out[],
-                        CMSREGISTER const struct _cms_interp_struc* Data)
+                        CMSREGISTER const void* Data)
 {
     Out[0] = In[0];
 }

@@ -1311,7 +1311,7 @@ cmsBool BlessLUT(cmsPipeline* lut)
 
 // Default to evaluate the LUT on 16 bit-basis. Precision is retained.
 static
-void _LUTeval16(CMSREGISTER const cmsUInt16Number In[], CMSREGISTER cmsUInt16Number Out[],  CMSREGISTER const struct _cms_interp_struc* D)
+void _LUTeval16(CMSREGISTER const cmsUInt16Number In[], CMSREGISTER cmsUInt16Number Out[],  CMSREGISTER const void* D)
 {
     cmsPipeline* lut = (cmsPipeline*) D;
     cmsStage *mpe;
@@ -1658,7 +1658,7 @@ cmsUInt32Number CMSEXPORT cmsPipelineStageCount(const cmsPipeline* lut)
 // This function may be used to set the optional evaluator and a block of private data. If private data is being used, an optional
 // duplicator and free functions should also be specified in order to duplicate the LUT construct. Use NULL to inhibit such functionality.
 void CMSEXPORT _cmsPipelineSetOptimizationParameters(cmsPipeline* Lut,
-                                        _cmsInterpFn16 Eval16,
+                                        _cmsPipelineEval16Fn Eval16,
                                         void* PrivateData,
                                         _cmsFreeUserDataFn FreePrivateDataFn,
                                         _cmsDupUserDataFn  DupPrivateDataFn)
