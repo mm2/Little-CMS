@@ -14,6 +14,7 @@ plugin: cleanup and better SSE detection
 plugin: add lab to any on float
 plugin: it can now be compiled as C++
 recover PDF documentation, but try to keep it under a resonable size.
+Prevent a rare but possible out-of-bounds read in postscript generator
 
 -----------------------
 2.11 Maintenance release
