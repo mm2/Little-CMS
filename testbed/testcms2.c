@@ -3759,6 +3759,73 @@ Error:
 
 
 
+// For educational purposes ONLY. No error checking is performed!
+static
+cmsInt32Number CreateNamedColorProfile(void)
+{     
+    // Color list database
+    cmsNAMEDCOLORLIST* colors = cmsAllocNamedColorList(0, 10, 4, "PANTONE", "TCX");
+
+    // Containers for names
+    cmsMLU* DescriptionMLU, *CopyrightMLU;
+
+    // Create n empty profile
+    cmsHPROFILE hProfile = cmsOpenProfileFromFile("named.icc", "w");
+    
+    // Values
+    cmsCIELab Lab;
+    cmsUInt16Number PCS[3], Colorant[4];
+
+    // Set profile class
+    cmsSetProfileVersion(hProfile, 4.3);
+    cmsSetDeviceClass(hProfile, cmsSigNamedColorClass);
+    cmsSetColorSpace(hProfile, cmsSigCmykData);
+    cmsSetPCS(hProfile, cmsSigLabData);
+    cmsSetHeaderRenderingIntent(hProfile, INTENT_PERCEPTUAL);
+        
+    // Add description and copyright only in english/US
+    DescriptionMLU = cmsMLUalloc(0, 1);
+    CopyrightMLU   = cmsMLUalloc(0, 1);
+
+    cmsMLUsetWide(DescriptionMLU, "en", "US", L"Profile description");
+    cmsMLUsetWide(CopyrightMLU,   "en", "US", L"Profile copyright");
+
+    cmsWriteTag(hProfile, cmsSigProfileDescriptionTag, DescriptionMLU);
+    cmsWriteTag(hProfile, cmsSigCopyrightTag, CopyrightMLU);
+
+    // Set the media white point
+    cmsWriteTag(hProfile, cmsSigMediaWhitePointTag, cmsD50_XYZ());
+
+
+    // Populate one value, Colorant = CMYK values in 16 bits, PCS[] = Encoded Lab values (in V2 format!!)
+    Lab.L = 50; Lab.a = 10; Lab.b = -10;
+    cmsFloat2LabEncodedV2(PCS, &Lab); 
+    Colorant[0] = 10 * 257; Colorant[1] = 20 * 257; Colorant[2] = 30 * 257; Colorant[3] = 40 * 257;
+    cmsAppendNamedColor(colors, "Hazelnut 14-1315", PCS, Colorant);
+
+    // Another one. Consider to write a routine for that
+    Lab.L = 40; Lab.a = -5; Lab.b = 8;
+    cmsFloat2LabEncodedV2(PCS, &Lab);
+    Colorant[0] = 10 * 257; Colorant[1] = 20 * 257; Colorant[2] = 30 * 257; Colorant[3] = 40 * 257;
+    cmsAppendNamedColor(colors, "Kale 18-0107", PCS, Colorant);
+
+    // Write the colors database
+    cmsWriteTag(hProfile, cmsSigNamedColor2Tag, colors);
+
+    // That will create the file
+    cmsCloseProfile(hProfile);
+
+    // Free resources
+    cmsFreeNamedColorList(colors);
+    cmsMLUfree(DescriptionMLU);
+    cmsMLUfree(CopyrightMLU);
+
+    remove("named.icc");
+
+    return 1;
+}
+
+
 // ----------------------------------------------------------------------------------------------------------
 
 // Formatters
@@ -9049,6 +9116,8 @@ int main(int argc, char* argv[])
 
     // Named color
     Check("Named color lists", CheckNamedColorList);
+    Check("Create named color profile", CreateNamedColorProfile);
+
 
     // Profile I/O (this one is huge!)
     Check("Profile creation", CheckProfileCreation);
