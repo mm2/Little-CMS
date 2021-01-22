@@ -808,7 +808,7 @@ int EmitCIEBasedDEF(cmsIOHANDLER* m, cmsPipeline* Pipeline, cmsUInt32Number Inte
 
     if (cmsStageType(mpe) == cmsSigCurveSetElemType) {
 
-        numchans = cmsStageOutputChannels(mpe);
+        numchans = (int) cmsStageOutputChannels(mpe);
         for (i = 0; i < numchans; ++i) {
             snprintf(buffer, sizeof(buffer), "lcms2gammaproc%d", i);
             buffer[sizeof(buffer) - 1] = '\0';
