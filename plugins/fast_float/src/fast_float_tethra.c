@@ -237,7 +237,6 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
     int nGridPoints;    
     cmsPipeline* OptimizedLUT = NULL;    
     cmsStage* OptimizedCLUTmpe;
-    cmsColorSpaceSignature OutputColorSpace;    
     cmsStage* mpe;
     FloatCLUTData* pfloat;
     cmsContext ContextID;
@@ -266,7 +265,6 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
     }
 
     ContextID        = cmsGetPipelineContextID(OriginalLut);
-    OutputColorSpace = _cmsICCcolorSpace(T_COLORSPACE(*OutputFormat));
     nGridPoints      = _cmsReasonableGridpointsByColorspace(cmsSigRgbData, *dwFlags);
              
     // Create the result LUT

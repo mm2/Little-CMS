@@ -341,10 +341,9 @@ cmsBool Optimize8BitRGBTransform(_cmsTransform2Fn* TransformFn,
     cmsToneCurve *Trans[cmsMAXCHANNELS], *TransReverse[cmsMAXCHANNELS];
     cmsUInt32Number t, i, j;  
     cmsFloat32Number v, In[cmsMAXCHANNELS], Out[cmsMAXCHANNELS];
-    cmsBool lIsSuitable, lIsLinear;
+    cmsBool lIsSuitable;
     cmsPipeline* OptimizedLUT = NULL, *LutPlusCurves = NULL;    
     cmsStage* OptimizedCLUTmpe;
-    cmsColorSpaceSignature OutputColorSpace;
     cmsStage* OptimizedPrelinMpe;
     cmsStage* mpe;
     Performance8Data* p8;
@@ -374,7 +373,6 @@ cmsBool Optimize8BitRGBTransform(_cmsTransform2Fn* TransformFn,
     }
 
     ContextID = cmsGetPipelineContextID(OriginalLut);
-    OutputColorSpace = _cmsICCcolorSpace(T_COLORSPACE(*OutputFormat));
     nGridPoints      = _cmsReasonableGridpointsByColorspace(cmsSigRgbData, *dwFlags);
 
     // Empty gamma containers
@@ -417,12 +415,7 @@ cmsBool Optimize8BitRGBTransform(_cmsTransform2Fn* TransformFn,
 
     // Check for validity
     lIsSuitable = TRUE;
-    lIsLinear   = TRUE;
     for (t=0; (lIsSuitable && (t < 3)); t++) {
-
-        // Exclude if already linear
-        if (!cmsIsToneCurveLinear(Trans[t]))
-            lIsLinear = FALSE;
 
         // Exclude if non-monotonic
         if (!cmsIsToneCurveMonotonic(Trans[t]))
