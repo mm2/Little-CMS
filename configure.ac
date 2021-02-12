@@ -330,7 +330,7 @@ then
 	AC_MSG_RESULT(no -- some components failed test)
 	have_tiff='no (failed tests)'
     else
-	LIB_TIFF='-ltiff'
+	PKG_CHECK_MODULES(PC_TIFF,libtiff-4,LIB_TIFF=$PC_TIFF_LIBS,LIB_TIFF='-ltiff')
 	LIBS="$LIB_TIFF $LIBS"
 	AC_DEFINE(HasTIFF,1,Define if you have TIFF library)
 	AC_MSG_RESULT(yes)
