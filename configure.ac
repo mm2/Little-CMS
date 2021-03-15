@@ -127,12 +127,15 @@ AC_ARG_WITH(fastfloat,
             AS_HELP_STRING([--with-fastfloat],
                            [build and install fast_float plugin, use only if GPL 3.0 is acceptable]),
             [
-                with_fastfloat='yes'
-                LIB_PLUGINS="$LIB_PLUGINS -llcms2_fast_float"
+                with_fastfloat=$withval
             ],
             [
                 with_fastfloat='no'
             ])
+if test "$with_fastfloat" == "yes"
+then
+            LIB_PLUGINS="$LIB_PLUGINS -llcms2_fast_float"
+fi
 
 #
 # Determine POSIX threads settings
