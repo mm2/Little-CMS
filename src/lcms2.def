@@ -229,6 +229,7 @@ cmsStageSampleCLut16bit                  =    cmsStageSampleCLut16bit
 cmsStageSampleCLutFloat                  =    cmsStageSampleCLutFloat
 cmsStageType                             =    cmsStageType
 cmsStageData                             =    cmsStageData
+cmsGetStageContextID                     =    cmsGetStageContextID
 cmsNamedColorCount                       =    cmsNamedColorCount
 cmsNamedColorIndex                       =    cmsNamedColorIndex
 cmsNamedColorInfo                        =    cmsNamedColorInfo
