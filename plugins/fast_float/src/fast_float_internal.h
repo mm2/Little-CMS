@@ -41,6 +41,21 @@
 #   define cmsINLINE static inline
 #endif
 
+/// Properly define some macros to accommodate
+/// older MSVC versions.
+# if defined(_MSC_VER) && _MSC_VER <= 1700
+#include <float.h>
+#define isnan _isnan
+#define isinf(x) (!_finite((x)))
+# endif
+
+#if !defined(_MSC_VER) && (defined(__STDC_VERSION__) && __STDC_VERSION__ < 199901L)
+#if !defined(isinf)
+#define isinf(x) (!finite((x)))
+#endif
+#endif
+
+
 // A fast way to convert from/to 16 <-> 8 bits
 #define FROM_8_TO_16(rgb) (cmsUInt16Number) ((((cmsUInt16Number) (rgb)) << 8)|(rgb)) 
 #define FROM_16_TO_8(rgb) (cmsUInt8Number) ((((rgb) * 65281 + 8388608) >> 24) & 0xFF)
@@ -72,11 +87,10 @@ typedef struct {
 
 #define MAX_NODES_IN_CURVE 0x8001  
 
-
 // To prevent out of bounds indexing
 cmsINLINE cmsFloat32Number fclamp(cmsFloat32Number v)
 {
-       return v < 0.0f ? 0.0f : (v > 1.0f ? 1.0f : v);
+    return ((v < 1.0e-9f) || isnan(v)) ? 0.0f : (v > 1.0f ? 1.0f : v);
 }
 
 // Fast floor conversion logic. 
@@ -120,7 +134,7 @@ cmsINLINE cmsFloat32Number flerp(const cmsFloat32Number LutTable[], cmsFloat32Nu
        cmsFloat32Number rest;
        int cell0, cell1;
       
-       if (v <= 0.0) {
+       if ((v < 1.0e-9f) || isnan(v)) {
               return LutTable[0];
        }
        else
