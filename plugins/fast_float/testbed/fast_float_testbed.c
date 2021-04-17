@@ -535,6 +535,81 @@ void CheckAccuracy16Bits(void)
     printf("All 16 bits tests passed OK\n\n");
 }
 
+
+// Try values that are denormalized, not-a-number and out of range
+static
+void CheckUncommonValues(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut, cmsInt32Number Intent)
+{   
+    union
+    {
+        cmsFloat32Number subnormal;
+        cmsUInt32Number Int;
+
+    } sub_pos, sub_neg;
+
+    Scanline_rgbFloat* bufferIn;
+    Scanline_rgbFloat* bufferPluginOut;
+
+    cmsUInt32Number i, npixels = 100;
+
+    cmsContext Plugin = cmsCreateContext(cmsFastFloatExtensions(), NULL);
+
+    cmsHTRANSFORM xformPlugin = cmsCreateTransformTHR(Plugin, hlcmsProfileIn, TYPE_RGB_FLT, hlcmsProfileOut, TYPE_RGB_FLT, Intent, 0);
+
+  
+    sub_pos.Int = 0x00000002;
+    sub_neg.Int = 0x80000002;
+
+    cmsCloseProfile(hlcmsProfileIn);
+    cmsCloseProfile(hlcmsProfileOut);
+
+    if (xformPlugin == NULL) {
+
+        Fail("NULL transform on check unccomon values");
+    }
+
+
+    bufferIn = (Scanline_rgbFloat*)malloc(npixels * sizeof(Scanline_rgbFloat));
+    bufferPluginOut = (Scanline_rgbFloat*)malloc(npixels * sizeof(Scanline_rgbFloat));
+
+    for (i = 0; i < npixels; i++)
+    {
+        bufferIn[i].r = i / 40.0 - 0.5;
+        bufferIn[i].g = i / 20.0 - 0.5;
+        bufferIn[i].b = i / 60.0 - 0.5;
+    }
+
+    cmsDoTransform(xformPlugin, bufferIn, bufferPluginOut, npixels);
+
+    bufferIn[0].r = NAN;
+    bufferIn[0].g = NAN;
+    bufferIn[0].b = NAN;
+
+    bufferIn[1].r = INFINITY;
+    bufferIn[1].g = INFINITY;
+    bufferIn[1].b = INFINITY;
+
+    bufferIn[2].r = sub_pos.subnormal;
+    bufferIn[2].g = sub_pos.subnormal;
+    bufferIn[2].b = sub_pos.subnormal;
+
+    bufferIn[3].r = sub_neg.subnormal;
+    bufferIn[3].g = sub_neg.subnormal;
+    bufferIn[3].b = sub_neg.subnormal;
+
+    cmsDoTransform(xformPlugin, bufferIn, bufferPluginOut, 4);
+
+    free(bufferIn); 
+    free(bufferPluginOut);
+
+    cmsDeleteTransform(xformPlugin);
+
+    cmsDeleteContext(Plugin);
+    
+    return TRUE;
+}
+
+
 // --------------------------------------------------------------------------------------------------
 // A C C U R A C Y   C H E C K S
 // --------------------------------------------------------------------------------------------------
@@ -909,12 +984,19 @@ void CheckConversionFloat(void)
        TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
        printf("Ok\n");
 
-
        printf("Crash (II) test.");
        TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, FALSE);
        printf("..");
        TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
        printf("Ok\n");
+
+
+       printf("Crash (III) test.");
+       CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
+       printf("..");
+       CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
+       printf("Ok\n");
+
 
        // Matrix-shaper should be accurate 
        printf("Checking accuracy on Matrix-shaper...");
