@@ -988,16 +988,12 @@ void CheckConversionFloat(void)
        TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
        printf("Ok\n");
 
-
-       /*
-       * FIXME!!
-       *       
        printf("Crash (III) test.");
        CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
        printf("..");
        CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
        printf("Ok\n");
-       */
+       
 
        // Matrix-shaper should be accurate 
        printf("Checking accuracy on Matrix-shaper...");

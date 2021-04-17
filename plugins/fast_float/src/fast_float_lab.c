@@ -144,6 +144,18 @@ int XFormSampler(CMSREGISTER const cmsFloat32Number In[], CMSREGISTER cmsFloat32
     return TRUE;
 }
 
+
+// To prevent out of bounds indexing
+cmsINLINE cmsFloat32Number fclamp128(cmsFloat32Number v)
+{
+    return ((v < -128) || isnan(v)) ? -128.0f : (v > 128.0f ? 128.0f : v);
+}
+
+cmsINLINE cmsFloat32Number fclamp100(cmsFloat32Number v)
+{
+    return ((v < 1.0e-9f) || isnan(v)) ? 0.0f : (v > 100.0f ? 100.0f : v);
+}
+
 // A optimized interpolation for Lab.
 #define DENS(i,j,k) (LutTable[(i)+(j)+(k)+OutChan])
 
@@ -215,9 +227,10 @@ void LabCLUTEval(struct _cmstransform_struct* CMMcargo,
         for (ii = 0; ii < PixelsPerLine; ii++) {
 
             // Decode Lab and go across sigmoids on a*/b*
-            l = fclamp((*(cmsFloat32Number*)lin) / 100.0f);
-            a = LinLerp1D(((*(cmsFloat32Number*)ain) + 128.0f) / 255.0f, pfloat->sigmoidIn);
-            b = LinLerp1D(((*(cmsFloat32Number*)bin) + 128.0f) / 255.0f, pfloat->sigmoidIn);
+            l = fclamp100( *(cmsFloat32Number*)lin ) / 100.0f;
+
+            a = LinLerp1D((( fclamp128( *(cmsFloat32Number*)ain)) + 128.0f) / 255.0f, pfloat->sigmoidIn);
+            b = LinLerp1D((( fclamp128( *(cmsFloat32Number*)bin)) + 128.0f) / 255.0f, pfloat->sigmoidIn);
 
             lin += SourceIncrements[0];
             ain += SourceIncrements[1];
