@@ -8254,6 +8254,70 @@ int CheckEmptyMLUC(void)
     return 1;
 }
 
+static
+double distance(const cmsUInt16Number* a, const cmsUInt16Number* b)
+{
+    double d1 = a[0] - b[0];
+    double d2 = a[1] - b[1];
+    double d3 = a[2] - b[2];
+
+    return sqrt(d1 * d1 + d2 * d2 + d3 * d3);
+}
+
+/**
+* In 2.12, a report suggest that the built-in sRGB has roundtrip errors that makes color to move
+* when rountripping again and again
+*/
+static
+int Check_sRGB_Rountrips(void)
+{
+    cmsUInt16Number rgb[3], seed[3];
+    cmsCIELab Lab;
+    int i, r, g, b;
+    double err, maxErr;
+    cmsHPROFILE hsRGB = cmsCreate_sRGBProfile();
+    cmsHPROFILE hLab = cmsCreateLab4Profile(NULL);
+
+    cmsHTRANSFORM hBack = cmsCreateTransform(hLab, TYPE_Lab_DBL, hsRGB, TYPE_RGB_16, INTENT_RELATIVE_COLORIMETRIC, 0);
+    cmsHTRANSFORM hForth = cmsCreateTransform(hsRGB, TYPE_RGB_16, hLab, TYPE_Lab_DBL, INTENT_RELATIVE_COLORIMETRIC, 0);
+
+    cmsCloseProfile(hLab);
+    cmsCloseProfile(hsRGB);
+
+    maxErr = 0.0;
+    for (r = 0; r <= 255; r += 16)
+        for (g = 0; g <= 255; g += 16)
+            for (b = 0; b <= 255; b += 16)
+            {
+                seed[0] = rgb[0] = ((r << 8) | r);
+                seed[1] = rgb[1] = ((g << 8) | g);
+                seed[2] = rgb[2] = ((b << 8) | b);
+
+                for (i = 0; i < 50; i++)
+                {
+                    cmsDoTransform(hForth, rgb, &Lab, 1);
+                    cmsDoTransform(hBack, &Lab, rgb, 1);
+                }
+
+                err = distance(seed, rgb);
+
+                if (err > maxErr)
+                    maxErr = err;
+            }
+
+
+    cmsDeleteTransform(hBack);
+    cmsDeleteTransform(hForth);
+
+    if (maxErr > 20.0)
+    {
+        printf("Maximum sRGB roundtrip error %f!\n", maxErr);
+        return 0;
+    }
+    
+    return 1;
+}
+
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
 // --------------------------------------------------------------------------------------------------
@@ -9189,6 +9253,7 @@ int main(int argc, char* argv[])
     Check("Forged MPE profile", CheckForgedMPE);
     Check("Proofing intersection", CheckProofingIntersection);
     Check("Empty MLUC", CheckEmptyMLUC);
+    Check("sRGB round-trips", Check_sRGB_Rountrips);
     }
 
     if (DoPluginTests)
