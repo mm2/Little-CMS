@@ -48,18 +48,6 @@ typedef struct { cmsFloat32Number L, a, b; }     Scanline_LabFloat;
 // Floating point acuracy for tests 
 #define EPSILON_FLOAT_TESTS 0.005
 
-// A flushed printf
-static 
-void trace(const char* frm, ...)
-{
-	va_list args;
-
-	va_start(args, frm);
-	vfprintf(stderr, frm, args);
-	fflush(stderr);
-	va_end(args);
-}
-
 
 // The callback function used by cmsSetLogErrorHandler()
 static
@@ -68,7 +56,7 @@ void FatalErrorQuit(cmsContext ContextID, cmsUInt32Number ErrorCode, const char 
        UNUSED_PARAMETER(ContextID);
        UNUSED_PARAMETER(ErrorCode);
 
-       trace("** Fatal error: %s\n", Text);
+       printf("** Fatal error: %s\n", Text);
        exit(1);
 }
 
@@ -241,7 +229,7 @@ Error:
        return rc;
 }
 
-#define CHECK(frm, plane, chans, alpha, ...) if (!checkSingleComputeIncrements(frm, plane, chans, alpha, __VA_ARGS__)) { trace("Format failed!\n"); return 0; }
+#define CHECK(frm, plane, chans, alpha, ...) if (!checkSingleComputeIncrements(frm, plane, chans, alpha, __VA_ARGS__)) { printf("Format failed!\n"); return 0; }
 
 
 
@@ -355,7 +343,7 @@ void Check15bitMacros(void)
 {
        int i;
 
-       trace("Checking 15 bit <=> 8 bit macros...");
+       printf("Checking 15 bit <=> 8 bit macros...");
 
        for (i = 0; i < 256; i++)
        {
@@ -365,7 +353,7 @@ void Check15bitMacros(void)
               if (m != i)
                      Fail("Failed on %d (->%d->%d)", i, n, m);
        }
-       trace("ok\n");
+       printf("ok\n");
 }
 
 // Do an in-depth test by checking all RGB cube of 8 bits, going from profilein to profileout. 
@@ -445,19 +433,19 @@ void Check15bitsConversions(void)
 {
        Check15bitMacros();
 
-       trace("Checking accuracy of 15 bits on CLUT...");
+       printf("Checking accuracy of 15 bits on CLUT...");
        TryAllValues15(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
-       trace("Ok\n");
+       printf("Ok\n");
 
-       trace("Checking accuracy of 15 bits on same profile ...");
+       printf("Checking accuracy of 15 bits on same profile ...");
        TryAllValues15(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
-       trace("Ok\n");
+       printf("Ok\n");
 
-       trace("Checking accuracy of 15 bits on Matrix...");
+       printf("Checking accuracy of 15 bits on Matrix...");
        TryAllValues15(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
-       trace("Ok\n");
+       printf("Ok\n");
 
-       trace("All 15 bits tests passed OK\n\n");
+       printf("All 15 bits tests passed OK\n\n");
 }
 
 // Next test checks results of optimized 16 bits versus raw 16 bits. 
@@ -542,9 +530,9 @@ static
 void CheckAccuracy16Bits(void)
 {
     // CLUT should be as 16 bits or better
-    trace("Checking accuracy of 16 bits CLUT...");
+    printf("Checking accuracy of 16 bits CLUT...");
     TryAllValues16bits(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
-    trace("All 16 bits tests passed OK\n\n");
+    printf("All 16 bits tests passed OK\n\n");
 }
 
 
@@ -591,11 +579,7 @@ void CheckUncommonValues(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut
         bufferIn[i].b = i / 60.0 - 0.5;
     }
 
-    trace("Now for overrange\n");
-
     cmsDoTransform(xformPlugin, bufferIn, bufferPluginOut, npixels);
-
-    trace("Now for nan...\n");
 
     bufferIn[0].r = NAN;
     bufferIn[0].g = NAN;
@@ -621,7 +605,6 @@ void CheckUncommonValues(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut
     cmsDeleteTransform(xformPlugin);
 
     cmsDeleteContext(Plugin);    
-    trace("done\n");
 }
 
 
@@ -887,7 +870,7 @@ void CheckChangeFormat(void)
     cmsUInt16Number rgb16[3] = { 10* 257, 120*257, 40*257 };
     cmsUInt16Number lab16_1[3], lab16_2[3];
 
-    trace("Checking change format feature...");
+    printf("Checking change format feature...");
 
     hsRGB = cmsCreate_sRGBProfile();
     hLab = cmsCreateLab4Profile(NULL);
@@ -907,7 +890,7 @@ void CheckChangeFormat(void)
     if (memcmp(lab16_1, lab16_2, sizeof(lab16_1)) != 0)
         Fail("Change format failed!");
 
-    trace("Ok\n");
+    printf("Ok\n");
 
 }
 
@@ -928,7 +911,7 @@ void CheckLab2Roundtrip(void)
     Scanline_rgb8bits* In;
     Scanline_rgb8bits* Out;
 
-    trace("Checking lab2 roundtrip...");
+    printf("Checking lab2 roundtrip...");
 
     hsRGB = cmsCreate_sRGBProfile();
     hLab = cmsCreateLab2Profile(NULL);
@@ -985,7 +968,7 @@ void CheckLab2Roundtrip(void)
     free(In);
     free(Out);
     free(lab);
-    trace("Ok\n");
+    printf("Ok\n");
 
 }
 
@@ -993,44 +976,44 @@ void CheckLab2Roundtrip(void)
 static
 void CheckConversionFloat(void)
 {
-       trace("Crash test.");
+       printf("Crash test.");
        TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, FALSE);
-       trace("..");
+       printf("..");
        TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
-       trace("Ok\n");
+       printf("Ok\n");
 
-       trace("Crash (II) test.");
+       printf("Crash (II) test.");
        TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, FALSE);
-       trace("..");
+       printf("..");
        TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
-       trace("Ok\n");
+       printf("Ok\n");
 
 
        /*
        * FIXME!!
-       */       
-       trace("Crash (III) test.");
+       *       
+       printf("Crash (III) test.");
        CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
-       trace("..");
+       printf("..");
        CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
-       trace("Ok\n");
-       
+       printf("Ok\n");
+       */
 
        // Matrix-shaper should be accurate 
-       trace("Checking accuracy on Matrix-shaper...");
+       printf("Checking accuracy on Matrix-shaper...");
        TryAllValuesFloat(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
-       trace("Ok\n");
+       printf("Ok\n");
 
        // CLUT should be as 16 bits or better
-       trace("Checking accuracy of CLUT...");
+       printf("Checking accuracy of CLUT...");
        TryAllValuesFloatVs16(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
-       trace("Ok\n");
+       printf("Ok\n");
 
        // Same profile should give same values (we test both methods)
-       trace("Checking accuracy on same profile ...");
+       printf("Checking accuracy on same profile ...");
        TryAllValuesFloatVs16(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
        TryAllValuesFloat(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
-       trace("Ok\n");
+       printf("Ok\n");
 }
 
 
@@ -1065,7 +1048,7 @@ void CheckLab2RGB(void)
 
     cmsFloat32Number maxInside = 0, maxOutside = 0, L, a, b;
 
-    trace("Checking Lab -> RGB...");
+    printf("Checking Lab -> RGB...");
     for (L = 4; L <= 100; L++)
     {
         for (a = -30; a < +30; a++)
@@ -1103,7 +1086,7 @@ void CheckLab2RGB(void)
     }
 
 
-    trace("Max distance: Inside gamut %f, Outside gamut %f\n", sqrtf(maxInside), sqrtf(maxOutside));
+    printf("Max distance: Inside gamut %f, Outside gamut %f\n", sqrtf(maxInside), sqrtf(maxOutside));
 
     cmsDeleteTransform(hXformNoPlugin);
     cmsDeleteTransform(hXformPlugin);
@@ -1132,7 +1115,7 @@ typedef cmsFloat64Number(*perf_fn)(cmsContext ct, cmsHPROFILE hlcmsProfileIn, cm
 static
 void PerformanceHeader(void)
 {
-       trace("                                  MPixel/sec.   MByte/sec.\n");
+       printf("                                  MPixel/sec.   MByte/sec.\n");
 }
 
 
@@ -1172,17 +1155,17 @@ cmsFloat64Number Performance(const char* Title, perf_fn fn, cmsContext ct, const
                  
        cmsFloat64Number n = fn(ct, hlcmsProfileIn, hlcmsProfileOut);
 
-       trace("%-30s: ", Title); fflush(stdout);
-       trace("%-12.2f %-12.2f", n, n * sz);
+       printf("%-30s: ", Title); fflush(stdout);
+       printf("%-12.2f %-12.2f", n, n * sz);
 
        if (prev > 0.0) {
 
               cmsFloat64Number imp = n / prev;
               if (imp > 1)
-                   trace(" (x %-2.1f)",  imp);
+                   printf(" (x %-2.1f)",  imp);
        }
 
-       trace("\n"); fflush(stdout);
+       printf("\n"); fflush(stdout);
        return n;
 }
 
@@ -1219,8 +1202,8 @@ void ComparativeCt(cmsContext ct1, cmsContext ct2, const char* Title, perf_fn fn
        cmsFloat64Number n2 = fn2(ct2, hlcmsProfileIn, hlcmsProfileOut);
 
 
-       trace("%-30s: ", Title); fflush(stdout);
-       trace("%-12.2f %-12.2f\n", n1, n2);
+       printf("%-30s: ", Title); fflush(stdout);
+       printf("%-12.2f %-12.2f\n", n1, n2);
 }
 
 static
@@ -1554,9 +1537,9 @@ void SpeedTest8(void)
 
     cmsFloat64Number t[10];
 
-    trace("\n\n");
-    trace("P E R F O R M A N C E   T E S T S   8 B I T S  (D E F A U L T)\n");
-    trace("==============================================================\n\n");
+    printf("\n\n");
+    printf("P E R F O R M A N C E   T E S T S   8 B I T S  (D E F A U L T)\n");
+    printf("==============================================================\n\n");
     fflush(stdout);
 
     PerformanceHeader();
@@ -1567,9 +1550,9 @@ void SpeedTest8(void)
 
     // Note that context 0 has the plug-in installed
 
-    trace("\n\n");
-    trace("P E R F O R M A N C E   T E S T S  8 B I T S  (P L U G I N)\n");
-    trace("===========================================================\n\n");
+    printf("\n\n");
+    printf("P E R F O R M A N C E   T E S T S  8 B I T S  (P L U G I N)\n");
+    printf("===========================================================\n\n");
     fflush(stdout);
 
     PerformanceHeader();
@@ -1584,8 +1567,8 @@ void SpeedTest8(void)
 static
 void SpeedTest15(void)
 {
-       trace("\n\nP E R F O R M A N C E   T E S T S   1 5  B I T S  (P L U G I N)\n");
-       trace(    "===============================================================\n\n");
+       printf("\n\nP E R F O R M A N C E   T E S T S   1 5  B I T S  (P L U G I N)\n");
+       printf(    "===============================================================\n\n");
        
        PerformanceHeader();
        Performance("15 bits on CLUT profiles         ", SpeedTest15bitsRGB, 0, "test5.icc", "test3.icc",  sizeof(Scanline_rgb15bits), 0);
@@ -1601,9 +1584,9 @@ void SpeedTest16(void)
     cmsContext noPlugin = cmsCreateContext(0, 0);
 
 
-    trace("\n\n");
-    trace("P E R F O R M A N C E   T E S T S   1 6  B I T S  (D E F A U L T)\n");
-    trace("=================================================================\n\n");
+    printf("\n\n");
+    printf("P E R F O R M A N C E   T E S T S   1 6  B I T S  (D E F A U L T)\n");
+    printf("=================================================================\n\n");
     
     PerformanceHeader();
     Performance("16 bits on CLUT profiles         ", SpeedTest16bitsRGB,  noPlugin, "test5.icc", "test3.icc",  sizeof(Scanline_rgb16bits), 0);
@@ -1612,9 +1595,9 @@ void SpeedTest16(void)
     Performance("16 bits on curves                ", SpeedTest16bitsRGB,  noPlugin, "*curves",   "*curves",    sizeof(Scanline_rgb16bits), 0);
     Performance("16 bits on CMYK CLUT profiles    ", SpeedTest16bitsCMYK, noPlugin, "test1.icc", "test2.icc",  sizeof(Scanline_cmyk16bits), 0);
     
-    trace("\n\n");
-    trace("P E R F O R M A N C E   T E S T S   1 6  B I T S  (P L U G I N)\n");
-    trace("===============================================================\n\n");
+    printf("\n\n");
+    printf("P E R F O R M A N C E   T E S T S   1 6  B I T S  (P L U G I N)\n");
+    printf("===============================================================\n\n");
 
     PerformanceHeader();
     Performance("16 bits on CLUT profiles         ", SpeedTest16bitsRGB,  0, "test5.icc", "test3.icc", sizeof(Scanline_rgb16bits), 0);
@@ -1852,9 +1835,9 @@ void SpeedTestFloat(void)
        
        cmsFloat64Number t[10] = { 0 };
 
-       trace("\n\n");
-       trace("P E R F O R M A N C E   T E S T S   F L O A T  (D E F A U L T)\n");
-       trace("==============================================================\n\n");
+       printf("\n\n");
+       printf("P E R F O R M A N C E   T E S T S   F L O A T  (D E F A U L T)\n");
+       printf("==============================================================\n\n");
        fflush(stdout);
 
        PerformanceHeader();
@@ -1870,9 +1853,9 @@ void SpeedTestFloat(void)
 
        // Note that context 0 has the plug-in installed
 
-       trace("\n\n");
-       trace("P E R F O R M A N C E   T E S T S  F L O A T  (P L U G I N)\n");
-       trace("===========================================================\n\n");
+       printf("\n\n");
+       printf("P E R F O R M A N C E   T E S T S  F L O A T  (P L U G I N)\n");
+       printf("===========================================================\n\n");
        fflush(stdout);
 
        PerformanceHeader();                   
@@ -1967,11 +1950,11 @@ cmsFloat64Number SpeedTestFloatByUsing16BitsRGB(cmsContext ct, cmsHPROFILE hlcms
 static
 void ComparativeFloatVs16bits(void)
 {
-       trace("\n\n");
-       trace("C O M P A R A T I V E  converting to 16 bit vs. using float plug-in.\n");
-       trace("                              values given in MegaPixels per second.\n");
-       trace("====================================================================\n");       
-       trace("                                  16 bits tmp.  Float plugin\n");
+       printf("\n\n");
+       printf("C O M P A R A T I V E  converting to 16 bit vs. using float plug-in.\n");
+       printf("                              values given in MegaPixels per second.\n");
+       printf("====================================================================\n");       
+       printf("                                  16 bits tmp.  Float plugin\n");
        fflush(stdout);
 
        Comparative("Floating point on CLUT profiles  ", SpeedTestFloatByUsing16BitsRGB, SpeedTestFloatRGB,  "test5.icc", "test3.icc");
@@ -2102,10 +2085,10 @@ void ComparativeLineStride8bits(void)
 {
        cmsContext NoPlugin, Plugin;
 
-       trace("\n\n");
-       trace("C O M P A R A T I V E cmsDoTransform() vs. cmsDoTransformLineStride()\n");
-       trace("                              values given in MegaPixels per second.\n");
-       trace("====================================================================\n");
+       printf("\n\n");
+       printf("C O M P A R A T I V E cmsDoTransform() vs. cmsDoTransformLineStride()\n");
+       printf("                              values given in MegaPixels per second.\n");
+       printf("====================================================================\n");
 
        fflush(stdout);
 
@@ -2171,7 +2154,7 @@ void TestGrayTransformPerformance()
        free(In);
 
        cmsDeleteTransform(hlcmsxform);
-       trace("Gray conversion using two gray profiles\t %-12.2f MPixels/Sec.\n", MPixSec(diff));
+       printf("Gray conversion using two gray profiles\t %-12.2f MPixels/Sec.\n", MPixSec(diff));
 }
 
 static
@@ -2221,23 +2204,23 @@ void TestGrayTransformPerformance1()
        free(In);
 
        cmsDeleteTransform(hlcmsxform);
-       trace("Gray conversion using two devicelinks\t %-12.2f MPixels/Sec.\n", MPixSec(diff));
+       printf("Gray conversion using two devicelinks\t %-12.2f MPixels/Sec.\n", MPixSec(diff));
 }
 
 
 // The harness test
 int main()
 {
-       trace("FastFloating point extensions testbed - 1.3\n");
-       trace("Copyright (c) 1998-2020 Marti Maria Saguer, all rights reserved\n");
+       printf("FastFloating point extensions testbed - 1.3\n");
+       printf("Copyright (c) 1998-2020 Marti Maria Saguer, all rights reserved\n");
        
-       trace("\nInstalling error logger ... ");
+       printf("\nInstalling error logger ... ");
        cmsSetLogErrorHandler(FatalErrorQuit);
-       trace("done.\n");
+       printf("done.\n");
 
-       trace("Installing plug-in ... ");
+       printf("Installing plug-in ... ");
        cmsPlugin(cmsFastFloatExtensions());
-       trace("done.\n\n");
+       printf("done.\n\n");
        
        
        CheckComputeIncrements();
@@ -2257,7 +2240,7 @@ int main()
 
        // Floating point functionality
        CheckConversionFloat();  
-       trace("All floating point tests passed OK\n");
+       printf("All floating point tests passed OK\n");
                  
        SpeedTest8();
        SpeedTest16();
@@ -2268,13 +2251,13 @@ int main()
        ComparativeLineStride8bits();
 
        // Test gray performance
-       trace("\n\n");
-       trace("F L O A T   G R A Y   conversions performance.\n");
-       trace("====================================================================\n");
+       printf("\n\n");
+       printf("F L O A T   G R A Y   conversions performance.\n");
+       printf("====================================================================\n");
        TestGrayTransformPerformance();
        TestGrayTransformPerformance1();
        
-       trace("\nAll tests passed OK\n");
+       printf("\nAll tests passed OK\n");
 
 
        return 0;
