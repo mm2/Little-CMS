@@ -29,6 +29,14 @@
 #include "tiffio.h"
 #include "utils.h"
 
+// Fix broken libtiff 4.3.0, thanks to Bob Friesenhahn for uncovering this
+
+#if defined(HAVE_STDINT_H) && (TIFFLIB_VERSION >= 20201219)
+#  undef uint16
+#  define uint16 uint16_t
+#  undef uint32
+#  define uint32 uint32_t
+#endif /* TIFFLIB_VERSION */
 
 // Flags
 
@@ -304,6 +312,8 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
 
     case PHOTOMETRIC_RGB:                                   
         pt = PT_RGB;
+        if (ColorChannels < 3)
+            FatalError("Sorry, RGB needs at least 3 samples per pixel");
         break;
 
 
@@ -312,7 +322,6 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
          break;
 
      case PHOTOMETRIC_SEPARATED: 
-
          pt = PixelTypeFromChanCount(ColorChannels);
          break;
 
@@ -409,6 +418,9 @@ int TileBasedXform(cmsHTRANSFORM hXForm, TIFF* in, TIFF* out, int nPlanes)
                 BufferIn + (j*BufSizeIn), BufSizeIn) < 0)   goto cleanup;
         }
 
+        if (PixelCount < 0)
+            FatalError("TIFF is corrupted");
+
         cmsDoTransform(hXForm, BufferIn, BufferOut, PixelCount);
 
         for (j=0; j < nPlanes; j++) {
@@ -476,6 +488,9 @@ int StripBasedXform(cmsHTRANSFORM hXForm, TIFF* in, TIFF* out, int nPlanes)
 
         PixelCount = (int) sw * (iml < sl ? iml : sl);
         iml -= sl;
+
+        if (PixelCount < 0)
+            FatalError("TIFF is corrupted");
 
         cmsDoTransform(hXForm, BufferIn, BufferOut, PixelCount);
 
