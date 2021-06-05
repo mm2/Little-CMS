@@ -249,11 +249,12 @@ void PerformanceEval8(struct _cmstransform_struct *CMMcargo,
                                                                *out[OutChan] = FROM_16_TO_8(res16);
                                                                out[OutChan] += DestIncrements[OutChan];
 
-                                                               if (ain)
-                                                                      *out[TotalOut] = *ain;
-
                      }
 
+                     if (ain) {
+                         *out[TotalOut] = *ain;
+                         out[TotalOut] += DestIncrements[TotalOut];
+                     }
 
               }
 

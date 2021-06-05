@@ -210,8 +210,10 @@ void FloatCLUTEval(struct _cmstransform_struct* CMMcargo,
                 out[OutChan] += DestIncrements[OutChan];
             }
 
-            if (ain)
-                *out[TotalOut] = *ain;
+            if (ain) {
+                *(cmsFloat32Number*)(out[TotalOut]) = *ain;
+                out[TotalOut] += DestIncrements[TotalOut];
+            }
         }
 
         strideIn  += Stride->BytesPerLineIn;

@@ -316,7 +316,10 @@ void LabCLUTEval(struct _cmstransform_struct* CMMcargo,
             }
 
             if (xin)
-                *out[TotalOut] = *xin;
+            {
+                *(cmsFloat32Number*) (out[TotalOut]) = *xin;
+                out[TotalOut] += DestIncrements[TotalOut];
+            }
         }
 
         strideIn  += Stride->BytesPerLineIn;
