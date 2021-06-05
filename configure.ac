@@ -80,6 +80,9 @@ AX_APPEND_COMPILE_FLAGS(["-fvisibility=hidden"])
 # Motorola and SPARC CPUs), define `WORDS_BIGENDIAN'.
 AC_C_BIGENDIAN
 
+# Check for functions that some compilers lack (or name differently)
+AC_CHECK_FUNCS([gmtime_r _gmtime64_s])
+
 # Point to JPEG installed in DIR or disable JPEG with --without-jpeg.
 AC_ARG_WITH(jpeg,
             AS_HELP_STRING([--with-jpeg=DIR],[use jpeg installed in DIR]),
