@@ -485,6 +485,11 @@ cmsIOHANDLER* CMSEXPORT cmsGetProfileIOhandler(cmsHPROFILE hProfile)
 	return Icc->IOhandler;
 }
 
+#if !defined(HAVE_GMTIME_R) && !defined(HAVE__GMTIME64_S)
+// A global mutex used to serialize calls to gmtime.
+static _cmsMutex _cmsTimeMutex = CMS_MUTEX_INITIALIZER;
+#endif
+
 // Creates an empty structure holding all required parameters
 cmsHPROFILE CMSEXPORT cmsCreateProfilePlaceholder(cmsContext ContextID)
 {
@@ -509,7 +514,9 @@ cmsHPROFILE CMSEXPORT cmsCreateProfilePlaceholder(cmsContext ContextID)
 #elif defined(HAVE__GMTIME64_S)
     t = _gmtime64_s(&tm, &now) == 0 ? &tm : NULL;
 #else
+    _cmsEnterCriticalSectionPrimitive(&_cmsTimeMutex);
     t = gmtime(&now);
+    _cmsLeaveCriticalSectionPrimitive(&_cmsTimeMutex);
 #endif
     if (t == NULL) goto Error;
 
