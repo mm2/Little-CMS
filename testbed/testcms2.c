@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2020 Marti Maria Saguer
+//  Copyright (c) 1998-2021 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -8318,6 +8318,113 @@ int Check_sRGB_Rountrips(void)
     return 1;
 }
 
+static
+cmsHPROFILE createRgbGamma(cmsFloat64Number g)
+{
+    cmsCIExyY       D65 = { 0.3127, 0.3290, 1.0 };
+    cmsCIExyYTRIPLE Rec709Primaries = {
+                                {0.6400, 0.3300, 1.0},
+                                {0.3000, 0.6000, 1.0},
+                                {0.1500, 0.0600, 1.0}
+    };
+    cmsToneCurve* Gamma[3];
+    cmsHPROFILE  hRGB;
+    
+    Gamma[0] = Gamma[1] = Gamma[2] = cmsBuildGamma(0, g);
+    if (Gamma[0] == NULL) return NULL;
+
+    hRGB = cmsCreateRGBProfile(&D65, &Rec709Primaries, Gamma);
+    cmsFreeToneCurve(Gamma[0]);    
+    return hRGB;
+}
+
+
+static
+int CheckGammaSpaceDetection(void)
+{
+    cmsFloat64Number i;
+
+    for (i = 0.5; i < 3; i += 0.1)
+    {                
+        cmsHPROFILE hProfile = createRgbGamma(i);
+
+        cmsFloat64Number gamma = cmsDetectRGBProfileGamma(hProfile, 0.01);
+
+        cmsCloseProfile(hProfile);
+
+        if (fabs(gamma - i) > 0.1)
+        {
+            Fail("Failed profile gamma detection of %f (got %f)", i, gamma);
+            return 0;
+        }
+    }
+
+    return 1;
+}
+
+
+#if 0
+
+// You need to download folowing profilies to execute this test: sRGB-elle-V4-srgbtrc.icc, sRGB-elle-V4-g10.icc
+// The include this line in the checks list:  Check("KInear spaces detection", CheckLinearSpacesOptimization);
+static
+void uint16toFloat(cmsUInt16Number* src, cmsFloat32Number* dst)
+{
+    for (int i = 0; i < 3; i++) {
+        dst[i] = src[i] / 65535.f;
+    }
+}
+
+static
+int CheckLinearSpacesOptimization(void)
+{
+    cmsHPROFILE lcms_sRGB = cmsCreate_sRGBProfile();
+    cmsHPROFILE elle_sRGB = cmsOpenProfileFromFile("sRGB-elle-V4-srgbtrc.icc", "r");
+    cmsHPROFILE elle_linear = cmsOpenProfileFromFile("sRGB-elle-V4-g10.icc", "r");
+    cmsHTRANSFORM transform1 = cmsCreateTransform(elle_sRGB, TYPE_RGB_16, elle_linear, TYPE_RGB_16, INTENT_RELATIVE_COLORIMETRIC, 0);
+    cmsHTRANSFORM transform2 = cmsCreateTransform(elle_linear, TYPE_RGB_16, lcms_sRGB, TYPE_RGB_16, INTENT_RELATIVE_COLORIMETRIC, 0);
+    cmsHTRANSFORM transform2a = cmsCreateTransform(elle_linear, TYPE_RGB_FLT, lcms_sRGB, TYPE_RGB_16, INTENT_RELATIVE_COLORIMETRIC, 0);
+
+    cmsUInt16Number sourceCol[3] = { 43 * 257, 27 * 257, 6 * 257 };
+    cmsUInt16Number linearCol[3] = { 0 };
+    float linearColF[3] = { 0 };
+    cmsUInt16Number finalCol[3] = { 0 };
+    int difR, difG, difB;
+    int difR2, difG2, difB2;
+
+    cmsDoTransform(transform1, sourceCol, linearCol, 1);
+    cmsDoTransform(transform2, linearCol, finalCol, 1);
+
+    cmsCloseProfile(lcms_sRGB); cmsCloseProfile(elle_sRGB); cmsCloseProfile(elle_linear);
+
+
+    difR = (int)sourceCol[0] - finalCol[0];
+    difG = (int)sourceCol[1] - finalCol[1];
+    difB = (int)sourceCol[2] - finalCol[2];
+
+
+    uint16toFloat(linearCol, linearColF);
+    cmsDoTransform(transform2a, linearColF, finalCol, 1);
+
+    difR2 = (int)sourceCol[0] - finalCol[0];
+    difG2 = (int)sourceCol[1] - finalCol[1];
+    difB2 = (int)sourceCol[2] - finalCol[2];
+
+    cmsDeleteTransform(transform1);
+    cmsDeleteTransform(transform2);
+    cmsDeleteTransform(transform2a);
+
+    if (abs(difR2 - difR) > 5 || abs(difG2 - difG) > 5 || abs(difB2 - difB) > 5)
+    {
+        Fail("Linear detection failed");
+        return 0;
+    }
+
+    return 1;
+}
+#endif
+
+
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
 // --------------------------------------------------------------------------------------------------
@@ -9049,7 +9156,7 @@ int main(int argc, char* argv[])
     printf("Installing error logger ... ");
     cmsSetLogErrorHandler(FatalErrorQuit);
     printf("done.\n");
-        
+       
     PrintSupportedIntents();
     
     Check("Base types", CheckBaseTypes);
@@ -9254,6 +9361,7 @@ int main(int argc, char* argv[])
     Check("Proofing intersection", CheckProofingIntersection);
     Check("Empty MLUC", CheckEmptyMLUC);
     Check("sRGB round-trips", Check_sRGB_Rountrips);
+    Check("Gamma space detection", CheckGammaSpaceDetection);
     }
 
     if (DoPluginTests)

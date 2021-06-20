@@ -369,7 +369,6 @@ cmsBool OptimizeCLUTLabTransform(_cmsTransform2Fn* TransformFn,
     int nGridPoints;    
     cmsPipeline* OptimizedLUT = NULL;    
     cmsStage* OptimizedCLUTmpe;
-    cmsStage* mpe;
     LabCLUTdata* pfloat;
     cmsContext ContextID;
     _cmsStageCLutData* data;
@@ -389,14 +388,7 @@ cmsBool OptimizeCLUTLabTransform(_cmsTransform2Fn* TransformFn,
     if (T_COLORSPACE(*InputFormat) != PT_Lab) return FALSE;
 
     OriginalLut = *Lut;
-
-    // Named color pipelines cannot be optimized either
-    for (mpe = cmsPipelineGetPtrToFirstStage(OriginalLut);
-        mpe != NULL;
-        mpe = cmsStageNext(mpe)) {
-        if (cmsStageType(mpe) == cmsSigNamedColorElemType) return FALSE;
-    }
-
+    
     ContextID = cmsGetPipelineContextID(OriginalLut);
     nGridPoints = GetGridpoints(*dwFlags);
              
