@@ -272,7 +272,7 @@ cmsHPROFILE CreatePCS2ITU_ICC(void)
 #define PS_FIXED_TO_FLOAT(h, l) ((float) (h) + ((float) (l)/(1<<16)))
 
 static
-cmsBool ProcessPhotoshopAPP13(JOCTET FAR *data, int datalen)
+cmsBool ProcessPhotoshopAPP13(JOCTET *data, int datalen)
 {
     int i;
 
@@ -296,6 +296,8 @@ cmsBool ProcessPhotoshopAPP13(JOCTET FAR *data, int datalen)
 
         len = ((((GETJOCTET(data[i]<<8) + GETJOCTET(data[i+1]))<<8) +
                          GETJOCTET(data[i+2]))<<8) + GETJOCTET(data[i+3]);
+
+        if (len < 0) return FALSE; // Keep bug hunters away
 
         i += 4; // Size
 
@@ -328,7 +330,7 @@ cmsBool HandlePhotoshopAPP13(jpeg_saved_marker_ptr ptr)
 
         if (ptr -> marker == (JPEG_APP0 + 13) && ptr -> data_length > 9)
         {
-            JOCTET FAR* data = ptr -> data;
+            JOCTET* data = ptr -> data;
 
             if(GETJOCTET(data[0]) == 0x50 &&
                GETJOCTET(data[1]) == 0x68 &&
@@ -361,45 +363,62 @@ typedef unsigned int uint32_t;
 #define YRESOLUTION 0x011b
 #define RESOLUTION_UNIT 0x128
 
+// Abort if crafted file
+static
+void craftedFile(void)
+{
+    FatalError("Corrupted EXIF data");
+}
+
 // Read a 16-bit word
 static
-uint16_t read16(uint8_t* arr, int pos,  int swapBytes)
+uint16_t read16(uint8_t* arr, size_t pos,  int swapBytes, size_t max)
 {
-    uint8_t b1 = arr[pos];
-    uint8_t b2 = arr[pos+1];
+    if (pos + 2 >= max)
+    {
+        craftedFile();
+        return 0;
+    }
+    else
+    {
+        uint8_t b1 = arr[pos];
+        uint8_t b2 = arr[pos + 1];
 
-    return (swapBytes) ?  ((b2 << 8) | b1) : ((b1 << 8) | b2);
+        return (swapBytes) ? ((b2 << 8) | b1) : ((b1 << 8) | b2);
+    }
 }
 
 
 // Read a 32-bit word
 static
-uint32_t read32(uint8_t* arr, int pos,  int swapBytes)
+uint32_t read32(uint8_t* arr, size_t pos, int swapBytes, size_t max)
 {
 
-    if(!swapBytes) {
-
-        return (arr[pos]   << 24) |
-               (arr[pos+1] << 16) |
-               (arr[pos+2] << 8) |
-                arr[pos+3];
+    if (pos + 4 >= max)
+    {
+        craftedFile();
+        return 0;
     }
+    else
+    {
+        if (!swapBytes) {
 
-    return arr[pos] |
-           (arr[pos+1] << 8) |
-           (arr[pos+2] << 16) |
-           (arr[pos+3] << 24);
+            return (arr[pos] << 24) | (arr[pos + 1] << 16) | (arr[pos + 2] << 8) | arr[pos + 3];
+        }
+
+        return arr[pos] | (arr[pos + 1] << 8) | (arr[pos + 2] << 16) | (arr[pos + 3] << 24); 
+    }
 }
 
 
 
 static
-int read_tag(uint8_t* arr, int pos,  int swapBytes, void* dest)
+int read_tag(uint8_t* arr, int pos,  int swapBytes, void* dest, size_t max)
 {
         // Format should be 5 over here (rational)
-    uint32_t format = read16(arr, pos + 2, swapBytes);
+    uint32_t format = read16(arr, pos + 2, swapBytes, max);
     // Components should be 1
-    uint32_t components = read32(arr, pos + 4, swapBytes);
+    uint32_t components = read32(arr, pos + 4, swapBytes, max);
     // Points to the value
     uint32_t offset;
 
@@ -409,20 +428,20 @@ int read_tag(uint8_t* arr, int pos,  int swapBytes, void* dest)
     if (format == 3)
         offset = pos + 8;
     else
-        offset =  read32(arr, pos + 8, swapBytes);
+        offset =  read32(arr, pos + 8, swapBytes, max);
 
     switch (format) {
 
     case 5: // Rational
           {
-          double num = read32(arr, offset, swapBytes);
-          double den = read32(arr, offset + 4, swapBytes);
+          double num = read32(arr, offset, swapBytes, max);
+          double den = read32(arr, offset + 4, swapBytes, max);
           *(double *) dest = num / den;
           }
           break;
 
     case 3: // uint 16
-        *(int*) dest = read16(arr, offset, swapBytes);
+        *(int*) dest = read16(arr, offset, swapBytes, max);
         break;
 
     default:  return 0;
@@ -435,7 +454,7 @@ int read_tag(uint8_t* arr, int pos,  int swapBytes, void* dest)
 
 // Handler for EXIF data
 static
-    cmsBool HandleEXIF(struct jpeg_decompress_struct* cinfo)
+cmsBool HandleEXIF(struct jpeg_decompress_struct* cinfo)
 {
     jpeg_saved_marker_ptr ptr;
     uint32_t ifd_ofs;
@@ -443,12 +462,14 @@ static
     uint32_t i, numEntries;
     double XRes = -1, YRes = -1;
     int Unit = 2; // Inches
-
+    
 
     for (ptr = cinfo ->marker_list; ptr; ptr = ptr ->next) {
 
         if ((ptr ->marker == JPEG_APP0+1) && ptr ->data_length > 6) {
-            JOCTET FAR* data = ptr -> data;
+
+            JOCTET* data = ptr -> data;
+            size_t max = ptr->data_length;
 
             if (memcmp(data, "Exif\0\0", 6) == 0) {
 
@@ -457,7 +478,7 @@ static
                 // 8 byte TIFF header
                 // first two determine byte order
                 pos = 0;
-                if (read16(data, pos, 0) == INTEL_BYTE_ORDER) {
+                if (read16(data, pos, 0, max) == INTEL_BYTE_ORDER) {
                     swapBytes = 1;
                 }
 
@@ -467,28 +488,28 @@ static
                 pos += 2;
 
                 // offset to Image File Directory (includes the previous 8 bytes)
-                ifd_ofs = read32(data, pos, swapBytes);
+                ifd_ofs = read32(data, pos, swapBytes, max);
 
                 // Search the directory for resolution tags
-                numEntries = read16(data, ifd_ofs, swapBytes);
+                numEntries = read16(data, ifd_ofs, swapBytes, max);
 
                 for (i=0; i < numEntries; i++) {
 
                     uint32_t entryOffset = ifd_ofs + 2 + (12 * i);
-                    uint32_t tag = read16(data, entryOffset, swapBytes);
+                    uint32_t tag = read16(data, entryOffset, swapBytes, max);
 
                     switch (tag) {
 
                     case RESOLUTION_UNIT:
-                        if (!read_tag(data, entryOffset, swapBytes, &Unit)) return FALSE;
+                        if (!read_tag(data, entryOffset, swapBytes, &Unit, max)) return FALSE;
                         break;
 
                     case XRESOLUTION:
-                        if (!read_tag(data, entryOffset, swapBytes, &XRes)) return FALSE;
+                        if (!read_tag(data, entryOffset, swapBytes, &XRes, max)) return FALSE;
                         break;
 
                     case YRESOLUTION:
-                        if (!read_tag(data, entryOffset, swapBytes, &YRes)) return FALSE;
+                        if (!read_tag(data, entryOffset, swapBytes, &YRes, max)) return FALSE;
                         break;
 
                     default:;
