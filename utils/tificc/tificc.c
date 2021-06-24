@@ -65,16 +65,15 @@ static const char* SaveEmbedded = NULL;
 static
 void ConsoleWarningHandler(const char* module, const char* fmt, va_list ap)
 {
-    char e[512] = { '\0' };
-    if (module != NULL)
-        strcat(strcpy(e, module), ": ");
-
-    vsprintf(e+strlen(e), fmt, ap);
-    strcat(e, ".");
     if (Verbose) {
 
-        fprintf(stderr, "\nWarning");
-        fprintf(stderr, " %s\n", e);
+        fprintf(stderr, "Warning: ");
+
+        if (module != NULL)
+            fprintf(stderr, "[%s] ", module);
+
+        vfprintf(stderr, fmt, ap);
+        fprintf(stderr, "\n");
         fflush(stderr);
     }
 }
@@ -82,18 +81,18 @@ void ConsoleWarningHandler(const char* module, const char* fmt, va_list ap)
 static
 void ConsoleErrorHandler(const char* module, const char* fmt, va_list ap)
 {
-    char e[512] = { '\0' };
+    if (Verbose) {
+        
+        fprintf(stderr, "Error: ");
 
-    if (module != NULL) {
-        if (strlen(module) < 500)
-               strcat(strcpy(e, module), ": ");
+        if (module != NULL)
+            fprintf(stderr, "[%s] ", module);
+      
+        vfprintf(stderr, fmt, ap);
+        fprintf(stderr, "\n");
+        fflush(stderr);
     }
 
-    vsprintf(e+strlen(e), fmt, ap);
-    strcat(e, ".");
-    fprintf(stderr, "\nError");
-    fprintf(stderr, " %s\n", e);
-    fflush(stderr);
 }
 
 
@@ -104,7 +103,7 @@ void Warning(const char *frm, ...)
     va_list args;
 
     va_start(args, frm);
-    ConsoleWarningHandler("[tificc]", frm, args);
+    ConsoleWarningHandler("tificc", frm, args);
     va_end(args);
 }
 
@@ -1155,8 +1154,8 @@ int main(int argc, char* argv[])
     TIFF *in, *out;
    
 
-    fprintf(stderr, "Little CMS ICC profile applier for TIFF - v6.3 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
-    fprintf(stderr, "Copyright (c) 1998-2020 Marti Maria Saguer. See COPYING file for details.\n");
+    fprintf(stderr, "Little CMS ICC profile applier for TIFF - v6.4 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
+    fprintf(stderr, "Copyright (c) 1998-2021 Marti Maria Saguer. See COPYING file for details.\n");
     fflush(stderr);
 
     cmsPlugin(&TiffLabPlugin);
