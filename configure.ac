@@ -33,6 +33,7 @@ AM_INIT_AUTOMAKE([foreign 1.9 tar-ustar no-define dist-zip subdir-objects])
 AC_PROG_CC_STDC
 AC_PROG_CPP
 AC_PROG_CXX
+LT_INIT
 
 #AM_PROG_LD
 #AC_SUBST(LD)
