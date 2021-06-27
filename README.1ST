@@ -10,8 +10,3 @@ A bit of story
 Since the initial release, back in 1998, Little CMS has grown to become one of the most popular open-source color management libraries, and has been used in a large number of production projects, in areas as printer firmware, monitors, digital cameras, RIPs, publishing, scientific, and many others. You can find Little CMS in most Linux distributions, and it's released under an open source license. 
 
 Please see the complete documentation in doc folder
-
-BUILDING LINUX PACKAGES FORM DEVELOPMENT REPOSITORY: 
-
-Please run ./autogen.sh in order to generate the autotools ./configure script. You need autotools installed. Oficial releases have the configure script already created.
-
