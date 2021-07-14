@@ -81,8 +81,21 @@ AX_APPEND_COMPILE_FLAGS(["-fvisibility=hidden"])
 # Motorola and SPARC CPUs), define `WORDS_BIGENDIAN'.
 AC_C_BIGENDIAN
 
-# Check for functions that some compilers lack (or name differently)
-AC_CHECK_FUNCS([gmtime_r _gmtime64_s])
+# Check for threadsafe variants of gmtime
+# Note: check for gmtime_s is a bit more complex as it is implemented as a macro
+AC_CHECK_FUNCS(gmtime_r, [], [
+               AC_MSG_CHECKING([for gmtime_s])
+               AC_LINK_IFELSE([
+                 AC_LANG_PROGRAM([[#include <time.h>]], [[
+                   time_t t;
+                   struct tm m;
+                   gmtime_s(&m, &t);
+                   return 0;
+                 ]])],
+                 [AC_MSG_RESULT([yes])
+                  AC_DEFINE([HAVE_GMTIME_S], [1], [gmtime_s can be used])], 
+                 [AC_MSG_RESULT([no])]
+               )])
 
 # Point to JPEG installed in DIR or disable JPEG with --without-jpeg.
 AC_ARG_WITH(jpeg,
