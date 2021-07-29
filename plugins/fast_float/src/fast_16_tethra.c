@@ -293,6 +293,7 @@ void PerformanceEval16(struct _cmstransform_struct *CMMcargo,
                   {
                       res16 = *(const cmsUInt16Number*)ain;
                       TO_OUTPUT(out[OutChan], res16);
+                      ain += SourceIncrements[TotalOut];
                       out[TotalOut] += DestIncrements[TotalOut];
                   }
 
