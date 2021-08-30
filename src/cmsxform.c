@@ -319,6 +319,55 @@ void FloatXFORM(_cmsTRANSFORM* p,
 
 }
 
+// IntFloat xform converts ints to floats. No gamut check, because the input is
+// integer and assumed to be in gamut.
+static
+void IntFloatXFORM(_cmsTRANSFORM* p,
+                const void* in,
+                void* out, 
+                cmsUInt32Number PixelsPerLine,
+                cmsUInt32Number LineCount,
+                const cmsStride* Stride)
+{
+    cmsUInt8Number* accum;
+    cmsUInt8Number* output;
+    cmsUInt16Number wIn[cmsMAXCHANNELS];
+    cmsFloat32Number fIn[cmsMAXCHANNELS], fOut[cmsMAXCHANNELS];
+    cmsUInt32Number i, j, c, strideIn, strideOut;
+
+    _cmsHandleExtraChannels(p, in, out, PixelsPerLine, LineCount, Stride);
+
+    strideIn = 0;
+    strideOut = 0;
+    memset(fIn, 0, sizeof(fIn));
+    memset(fOut, 0, sizeof(fOut));
+
+    for (i = 0; i < LineCount; i++) {
+
+        accum = (cmsUInt8Number*)in + strideIn;
+        output = (cmsUInt8Number*)out + strideOut;
+
+        for (j = 0; j < PixelsPerLine; j++) {
+
+            // Load integer input as UInt16
+            accum = p->FromInput(p, wIn, accum, Stride->BytesPerPlaneIn);
+
+            // Convert to float
+            for (c = 0 ; c < T_CHANNELS(p->InputFormat); c++) {
+                fIn[c] = (cmsFloat32Number)wIn[c] / 65535.0;
+            }
+
+            cmsPipelineEvalFloat(fIn, fOut, p->Lut);
+
+            output = p->ToOutputFloat(p, fOut, output, Stride->BytesPerPlaneOut);
+        }
+
+        strideIn += Stride->BytesPerLineIn;
+        strideOut += Stride->BytesPerLineOut;
+    }
+
+}
+
 
 static
 void NullFloatXFORM(_cmsTRANSFORM* p,
@@ -899,6 +948,11 @@ _cmsTRANSFORM* AllocEmptyTransform(cmsContext ContextID, cmsPipeline* lut,
         if (*dwFlags & cmsFLAGS_NULLTRANSFORM) {
 
             p ->xform = NullXFORM;
+        }
+        else if ((*dwFlags & cmsFLAGS_UNBOUNDED_INT_INPUT) && _cmsFormatterIsFloat(*OutputFormat)) {
+
+            p ->ToOutputFloat = _cmsGetFormatter(ContextID, *OutputFormat, cmsFormatterOutput, CMS_PACK_FLAGS_FLOAT).FmtFloat;
+            p ->xform = IntFloatXFORM; // No cache, no gamut check
         }
         else {
             if (*dwFlags & cmsFLAGS_NOCACHE) {
