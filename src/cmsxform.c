@@ -319,12 +319,11 @@ void FloatXFORM(_cmsTRANSFORM* p,
 
 }
 
-// IntFloat xform converts ints to floats. No gamut check, because the input is
-// integer and assumed to be in gamut.
+// IntFloat xform is like Float xform, but from an integer input.
 static
 void IntFloatXFORM(_cmsTRANSFORM* p,
                 const void* in,
-                void* out, 
+                void* out,
                 cmsUInt32Number PixelsPerLine,
                 cmsUInt32Number LineCount,
                 const cmsStride* Stride)
@@ -333,6 +332,7 @@ void IntFloatXFORM(_cmsTRANSFORM* p,
     cmsUInt8Number* output;
     cmsUInt16Number wIn[cmsMAXCHANNELS];
     cmsFloat32Number fIn[cmsMAXCHANNELS], fOut[cmsMAXCHANNELS];
+    cmsFloat32Number OutOfGamut;
     cmsUInt32Number i, j, c, strideIn, strideOut;
 
     _cmsHandleExtraChannels(p, in, out, PixelsPerLine, LineCount, Stride);
@@ -357,7 +357,30 @@ void IntFloatXFORM(_cmsTRANSFORM* p,
                 fIn[c] = (cmsFloat32Number)wIn[c] / 65535.0;
             }
 
-            cmsPipelineEvalFloat(fIn, fOut, p->Lut);
+            // Any gamut check to do?
+            if (p->GamutCheck != NULL) {
+
+                // Evaluate gamut marker.
+                cmsPipelineEvalFloat(fIn, &OutOfGamut, p->GamutCheck);
+
+                // Is current color out of gamut?
+                if (OutOfGamut > 0.0) {
+
+                    // Certainly, out of gamut
+                    for (c = 0; c < cmsMAXCHANNELS; c++)
+                        fOut[c] = -1.0;
+
+                }
+                else {
+                    // No, proceed normally
+                    cmsPipelineEvalFloat(fIn, fOut, p->Lut);
+                }
+            }
+            else {
+
+                // No gamut check at all
+                cmsPipelineEvalFloat(fIn, fOut, p->Lut);
+            }
 
             output = p->ToOutputFloat(p, fOut, output, Stride->BytesPerPlaneOut);
         }
@@ -949,10 +972,12 @@ _cmsTRANSFORM* AllocEmptyTransform(cmsContext ContextID, cmsPipeline* lut,
 
             p ->xform = NullXFORM;
         }
-        else if ((*dwFlags & cmsFLAGS_UNBOUNDED_INT_INPUT) && _cmsFormatterIsFloat(*OutputFormat)) {
+        else if (((*dwFlags & cmsFLAGS_NONEGATIVES) == 0) && _cmsFormatterIsFloat(*OutputFormat)) {
 
             p ->ToOutputFloat = _cmsGetFormatter(ContextID, *OutputFormat, cmsFormatterOutput, CMS_PACK_FLAGS_FLOAT).FmtFloat;
-            p ->xform = IntFloatXFORM; // No cache, no gamut check
+
+            // Float transforms don't use cache, always are non-NULL
+            p ->xform = IntFloatXFORM;
         }
         else {
             if (*dwFlags & cmsFLAGS_NOCACHE) {

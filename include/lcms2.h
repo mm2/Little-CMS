@@ -1670,7 +1670,6 @@ CMSAPI cmsUInt32Number  CMSEXPORT cmsGetSupportedIntentsTHR(cmsContext ContextID
 
 // Specific to unbounded mode
 #define cmsFLAGS_NONEGATIVES              0x8000    // Prevent negative numbers in floating point transforms
-#define cmsFLAGS_UNBOUNDED_INT_INPUT      0x10000   // Enable unbounded mode for integer input
 
 // Copy alpha channels when transforming           
 #define cmsFLAGS_COPY_ALPHA               0x04000000 // Alpha channels are copied on cmsDoTransform()
