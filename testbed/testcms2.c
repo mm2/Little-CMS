@@ -8458,7 +8458,7 @@ int CheckIntToFloatTransform(void)
 
     if (rgbDBL[0] < 0 && rgbDBL[2] < 0) return 1;
 
-    Fail("Unbounded transsforms with integer output failed");
+    Fail("Unbounded transforms with integer input failed");
 
     return 0;
 }
