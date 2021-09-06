@@ -32,6 +32,7 @@
 // Fix broken libtiff 4.3.0, thanks to Bob Friesenhahn for uncovering this
 
 #if defined(HAVE_STDINT_H) && (TIFFLIB_VERSION >= 20201219)
+#include <stdint.h>
 #  undef uint16
 #  define uint16 uint16_t
 #  undef uint32
