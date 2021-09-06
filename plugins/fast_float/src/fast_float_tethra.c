@@ -212,6 +212,7 @@ void FloatCLUTEval(struct _cmstransform_struct* CMMcargo,
 
             if (ain) {
                 *(cmsFloat32Number*)(out[TotalOut]) = *ain;
+                ain += SourceIncrements[TotalOut];
                 out[TotalOut] += DestIncrements[TotalOut];
             }
         }
