@@ -621,6 +621,106 @@ void CheckUncommonValues(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut
 }
 
 
+static
+void lab8toLab(cmsUInt8Number lab8[3], cmsCIELab* Lab)
+{
+    cmsUInt16Number lab16[3];
+
+    lab16[0] = FROM_8_TO_16(lab8[0]);
+    lab16[1] = FROM_8_TO_16(lab8[1]);
+    lab16[2] = FROM_8_TO_16(lab8[2]);
+
+    cmsLabEncoded2Float(Lab, lab16);
+}
+
+static
+void CheckToEncodedLab(void)
+{
+    cmsContext Plugin = cmsCreateContext(cmsFastFloatExtensions(), NULL);
+    cmsContext Raw = cmsCreateContext(NULL, NULL);
+
+    cmsHPROFILE hsRGB = cmsCreate_sRGBProfile();
+    cmsHPROFILE hLab = cmsCreateLab4Profile(NULL);
+
+    cmsHTRANSFORM xform_plugin = cmsCreateTransformTHR(Plugin, hsRGB, TYPE_RGB_8, hLab, TYPE_Lab_8, INTENT_PERCEPTUAL, 0);
+    cmsHTRANSFORM xform = cmsCreateTransformTHR(Raw, hsRGB, TYPE_RGB_8, hLab, TYPE_Lab_8, INTENT_PERCEPTUAL, 0);
+
+    int r, g, b;
+    cmsCIELab Lab1, Lab2;
+    cmsUInt8Number rgb[3], lab1[3], lab2[3];    
+    double err;
+
+    for (r=0; r < 256; r += 5)
+        for (g = 0; g < 256; g += 5)
+            for (b = 0; b < 256; b += 5)
+            {
+                rgb[0] = (cmsUInt8Number) r; rgb[1] = (cmsUInt8Number) g; rgb[2] = (cmsUInt8Number) b;
+
+                cmsDoTransform(xform_plugin, rgb, lab1, 1);
+                cmsDoTransform(xform, rgb, lab2, 1);
+                
+                lab8toLab(lab1, &Lab1);
+                lab8toLab(lab2, &Lab2);
+                
+                err = cmsDeltaE(&Lab1, &Lab2);
+                if (err > 0.1)
+                {
+                    trace("Error on lab encoded (%f, %f, %f) <> (% f, % f, % f)\n",
+                        Lab1.L, Lab1.a, Lab1.b, Lab2.L, Lab2.a, Lab2.b);                   
+                }
+            }
+
+
+    cmsDeleteTransform(xform);
+    cmsCloseProfile(hsRGB); cmsCloseProfile(hLab);
+    cmsDeleteContext(Raw);
+    cmsDeleteContext(Plugin);
+
+}
+
+
+static
+void CheckToFloatLab(void)
+{
+    cmsContext Plugin = cmsCreateContext(cmsFastFloatExtensions(), NULL);
+    cmsContext Raw = cmsCreateContext(NULL, NULL);
+
+    cmsHPROFILE hsRGB = cmsCreate_sRGBProfile();
+    cmsHPROFILE hLab = cmsCreateLab4Profile(NULL);
+
+    cmsHTRANSFORM xform_plugin = cmsCreateTransformTHR(Plugin, hsRGB, TYPE_RGB_8, hLab, TYPE_Lab_DBL, INTENT_PERCEPTUAL, 0);
+    cmsHTRANSFORM xform = cmsCreateTransformTHR(Raw, hsRGB, TYPE_RGB_8, hLab, TYPE_Lab_DBL, INTENT_PERCEPTUAL, 0);
+
+    int r, g, b;
+    cmsCIELab Lab1, Lab2;
+    cmsUInt8Number rgb[3];
+    double err;
+
+    for (r = 0; r < 256; r += 10)
+        for (g = 0; g < 256; g += 10)
+            for (b = 0; b < 256; b += 10)
+            {
+                rgb[0] = (cmsUInt8Number)r; rgb[1] = (cmsUInt8Number)g; rgb[2] = (cmsUInt8Number)b;
+
+                cmsDoTransform(xform_plugin, rgb, &Lab1, 1);
+                cmsDoTransform(xform, rgb, &Lab2, 1);
+                
+                err = cmsDeltaE(&Lab1, &Lab2);
+                if (err > 0.1)
+                {
+                    trace("Error on lab encoded (%f, %f, %f) <> (% f, % f, % f)\n",
+                        Lab1.L, Lab1.a, Lab1.b, Lab2.L, Lab2.a, Lab2.b);
+                }
+            }
+
+
+    cmsDeleteTransform(xform);
+    cmsCloseProfile(hsRGB); cmsCloseProfile(hLab);
+    cmsDeleteContext(Raw);
+    cmsDeleteContext(Plugin);
+
+}
+
 // --------------------------------------------------------------------------------------------------
 // A C C U R A C Y   C H E C K S
 // --------------------------------------------------------------------------------------------------
@@ -1001,16 +1101,17 @@ void CheckConversionFloat(void)
        TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
        trace("Ok\n");
 
-
-       /*
-       * FIXME!!
-       */       
+              
        trace("Crash (III) test.");
        CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
        trace("..");
        CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
        trace("Ok\n");
-       
+
+       trace("Checking conversion to Lab...");
+       CheckToEncodedLab();
+       CheckToFloatLab();
+       trace("Ok\n");
 
        // Matrix-shaper should be accurate 
        trace("Checking accuracy on Matrix-shaper...");
@@ -2224,8 +2325,8 @@ void TestGrayTransformPerformance1()
 // The harness test
 int main()
 {
-       trace("FastFloating point extensions testbed - 1.3\n");
-       trace("Copyright (c) 1998-2020 Marti Maria Saguer, all rights reserved\n");
+       trace("FastFloating point extensions testbed - 1.4\n");
+       trace("Copyright (c) 1998-2021 Marti Maria Saguer, all rights reserved\n");
        
        trace("\nInstalling error logger ... ");
        cmsSetLogErrorHandler(FatalErrorQuit);
@@ -2234,7 +2335,6 @@ int main()
        trace("Installing plug-in ... ");
        cmsPlugin(cmsFastFloatExtensions());
        trace("done.\n\n");
-       
        
        CheckComputeIncrements();
 
