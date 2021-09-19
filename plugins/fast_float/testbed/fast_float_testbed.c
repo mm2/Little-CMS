@@ -1210,6 +1210,73 @@ void CheckLab2RGB(void)
 
 
 
+static
+void CheckSoftProofing(void)
+{
+    cmsHPROFILE hRGB1 = cmsOpenProfileFromFile("test5.icc", "r");
+    cmsHPROFILE hRGB2 = cmsOpenProfileFromFile("test3.icc", "r");
+    cmsContext noPlugin = cmsCreateContext(0, 0);
+
+    cmsHTRANSFORM hXformNoPlugin = cmsCreateProofingTransformTHR(noPlugin, hRGB1, TYPE_RGB_FLT, hRGB1, TYPE_RGB_FLT, hRGB2, INTENT_RELATIVE_COLORIMETRIC, INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_GAMUTCHECK | cmsFLAGS_SOFTPROOFING);
+    cmsHTRANSFORM hXformPlugin = cmsCreateProofingTransformTHR(0,          hRGB1, TYPE_RGB_FLT, hRGB1, TYPE_RGB_FLT, hRGB2, INTENT_RELATIVE_COLORIMETRIC, INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_GAMUTCHECK | cmsFLAGS_SOFTPROOFING);
+
+    cmsUInt32Number Mb, j, r, g, b;
+
+    Scanline_rgbFloat* In;
+    Scanline_rgbFloat* Out1, *Out2;
+
+
+    trace("Checking soft proofing and gamut check ...");
+
+    cmsCloseProfile(hRGB1);
+    cmsCloseProfile(hRGB2);
+
+    Mb = 256 * 256 * 256 * sizeof(Scanline_rgbFloat);
+    In = (Scanline_rgb8bits*)malloc(Mb);
+    Out1 = (Scanline_rgb8bits*)malloc(Mb);
+    Out2 = (Scanline_rgb8bits*)malloc(Mb);
+
+
+    j = 0;
+    for (r = 0; r < 256; r++)
+        for (g = 0; g < 256; g++)
+            for (b = 0; b < 256; b++)
+            {
+
+                In[j].r = (cmsFloat32Number)r / 255.0f;
+                In[j].g = (cmsFloat32Number)g / 255.0f;
+                In[j].b = (cmsFloat32Number)b / 255.0f;
+                j++;
+            }
+
+
+    cmsDoTransform(hXformNoPlugin, In, Out1, 256 * 256 * 256);
+    cmsDoTransform(hXformPlugin,   In, Out2, 256 * 256 * 256);
+
+    j = 0;
+    for (r = 0; r < 256; r++)
+        for (g = 0; g < 256; g++)
+            for (b = 0; b < 256; b++) {
+
+                // Check for same values
+                if (!ValidFloat(Out1[j].r, Out2[j].r) ||
+                    !ValidFloat(Out1[j].g, Out2[j].g) ||
+                    !ValidFloat(Out1[j].b, Out2[j].b))
+                    Fail("Conversion failed at (%f %f %f) != (%f %f %f)", Out1[j].r, Out1[j].g, Out1[j].b,
+                        Out2[j].r, Out2[j].g, Out2[j].b);
+
+                j++;
+            }
+
+    cmsDeleteTransform(hXformNoPlugin);
+    cmsDeleteTransform(hXformPlugin);
+
+    cmsDeleteContext(noPlugin);
+
+    trace("Ok\n");
+}
+
+
 
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
@@ -2325,7 +2392,7 @@ void TestGrayTransformPerformance1()
 // The harness test
 int main()
 {
-       trace("FastFloating point extensions testbed - 1.4\n");
+       trace("FastFloating point extensions testbed - 1.5\n");
        trace("Copyright (c) 1998-2021 Marti Maria Saguer, all rights reserved\n");
        
        trace("\nInstalling error logger ... ");
@@ -2335,7 +2402,7 @@ int main()
        trace("Installing plug-in ... ");
        cmsPlugin(cmsFastFloatExtensions());
        trace("done.\n\n");
-       
+              
        CheckComputeIncrements();
 
        // 15 bit functionality
@@ -2350,6 +2417,9 @@ int main()
 
        // Change format
        CheckChangeFormat();
+
+       // Soft proofing
+       CheckSoftProofing();
 
        // Floating point functionality
        CheckConversionFloat();  
