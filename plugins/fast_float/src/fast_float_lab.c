@@ -317,7 +317,8 @@ void LabCLUTEval(struct _cmstransform_struct* CMMcargo,
 
             if (xin)
             {
-                *(cmsFloat32Number*) (out[TotalOut]) = *xin;
+                *(cmsFloat32Number*) (out[TotalOut]) = *(cmsFloat32Number*)xin;
+                xin += SourceIncrements[3];
                 out[TotalOut] += DestIncrements[TotalOut];
             }
         }

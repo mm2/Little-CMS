@@ -253,7 +253,7 @@ void PerformanceEval8(struct _cmstransform_struct *CMMcargo,
 
                      if (ain) {
                          *out[TotalOut] = *ain;
-                         ain += SourceIncrements[TotalOut];
+                         ain += SourceIncrements[3];
                          out[TotalOut] += DestIncrements[TotalOut];
                      }
 
