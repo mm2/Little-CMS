@@ -48,8 +48,7 @@ jobs:
         run: testbed                 
 
   Windows-32:
-    runs-on: windows-latest
-    shell: cmd
+    runs-on: windows-latest    
     steps:
       - uses: ilammy/msvc-dev-cmd@v1      
       - name: Build Windows 32 bit       
