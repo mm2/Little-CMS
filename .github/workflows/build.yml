@@ -40,7 +40,7 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1      
       - name: Build Windows 64 bit                
         run: |
-            cd Projects\VC2019
+            cd .\Projects\VC2019
             devenv lcms2.sln /Rebuild "Release|x64" /Project testbed  
         
       - name: Run tests                
@@ -53,7 +53,7 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1      
       - name: Build Windows 32 bit        
         run: |
-            cd Projects\VC2019
+            cd .\Projects\VC2019
             devenv lcms2.sln /Rebuild "Release|Win32" /Project testbed  
 
       - name: Run tests        
