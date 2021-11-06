@@ -10,42 +10,52 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build Ubuntu
         run: |
-          ./configure 
+          ./configure --with_fastfloat
+          make 
+          make check
+
+  Ubuntu-18.04:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Ubuntu
+        run: |
+          ./configure --with_fastfloat
           make 
           make check
           
-  MacOSX:
-    runs-on: macosx-latest
+  MacOS:
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Build MacOSX
+      - name: Build MacOS
         run: |
-          ./configure 
+          ./configure --with_fastfloat
           make 
           make check        
     
   Windows-64:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: ilammy/msvc-dev-cmd@v1      
       - name: Build Windows 64 bit
-        run:
-          cd Projects\VC2019
-          devenv lcms2.sln /Rebuild "Release|x64" /Project testbed
-          cd ..\..\testbed
-          testbed.exe
+        run: devenv lcms2.sln /Rebuild "Release|x64" /Project testbed  
+        working-directory: Projects\VC2019  
+      - name: Run tests        
+        run: testbed         
+        working-directory: testbed        
 
   Windows-32:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Build Windows 32 bit
-        run:
-          cd Projects\VC2019
-          devenv lcms2.sln /Rebuild "Release|Win32" /Project testbed
-          cd ..\..\testbed
-          testbed.exe
-
+      - uses: ilammy/msvc-dev-cmd@v1      
+      - name: Build Windows 64 bit
+        run: devenv lcms2.sln /Rebuild "Release|Win32" /Project testbed  
+        working-directory: Projects\VC2019  
+      - name: Run tests        
+        run: testbed         
+        working-directory: testbed   
+        
   Ubuntu-meson:
     runs-on: ubuntu-latest
     steps:
