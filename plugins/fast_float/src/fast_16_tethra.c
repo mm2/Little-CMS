@@ -292,7 +292,7 @@ void PerformanceEval16(struct _cmstransform_struct *CMMcargo,
                   if (ain)
                   {
                       res16 = *(const cmsUInt16Number*)ain;
-                      TO_OUTPUT(out[OutChan], res16);
+                      TO_OUTPUT(out[TotalOut], res16);
                       ain += SourceIncrements[3];
                       out[TotalOut] += DestIncrements[TotalOut];
                   }
