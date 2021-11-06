@@ -3,7 +3,50 @@ name: Build
 on: [push, pull_request]
 
 jobs:
+
   Ubuntu:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Ubuntu
+        run: |
+          ./configure 
+          make 
+          make check
+          
+  MacOSX:
+    runs-on: macosx-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build MacOSX
+        run: |
+          ./configure 
+          make 
+          make check        
+    
+  Windows-64:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Windows 64 bit
+        run:
+          cd Projects\VC2019
+          devenv lcms2.sln /Rebuild "Release|x64" /Project testbed
+          cd ..\..\testbed
+          testbed.exe
+
+  Windows-64:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build Windows 32 bit
+        run:
+          cd Projects\VC2019
+          devenv lcms2.sln /Rebuild "Release|Win32" /Project testbed
+          cd ..\..\testbed
+          testbed.exe
+
+  Ubuntu-meson:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
@@ -19,7 +62,7 @@ jobs:
           meson compile -C build
           meson test -C build
 
-  VisualStudio:
+  VisualStudio-meson:
     runs-on: windows-latest
 
     steps:
