@@ -36,12 +36,14 @@ jobs:
     
   Windows-64:
     runs-on: windows-latest
+    
     steps:
-      - uses: ilammy/msvc-dev-cmd@v1      
-      - name: Build Windows 64 bit                
+      - uses: actions/checkout@v2
+      - name: Build Windows 64 bit
+        shell: cmd
         run: |
             dir
-            devenv Projects\VC2019\lcms2.sln /Rebuild "Release|x64" /Project testbed  
+            devenv .\Projects\VC2019\lcms2.sln /Rebuild "Release|x64" /Project testbed  
         
       - name: Run tests                
         working-directory: testbed        
@@ -49,12 +51,14 @@ jobs:
 
   Windows-32:
     runs-on: windows-latest
+    shell: cmd
     steps:
       - uses: ilammy/msvc-dev-cmd@v1      
-      - name: Build Windows 32 bit        
+      - name: Build Windows 32 bit
+        shell: cmd
         run: |
             dir
-            devenv Projects/VC2019/lcms2.sln /Rebuild "Release|Win32" /Project testbed  
+            devenv .\Projects/VC2019/lcms2.sln /Rebuild "Release|Win32" /Project testbed  
 
       - name: Run tests        
         working-directory: testbed   
