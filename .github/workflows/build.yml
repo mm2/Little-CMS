@@ -38,23 +38,26 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: ilammy/msvc-dev-cmd@v1      
-      - name: Build Windows 64 bit
+      - name: Build Windows 64 bit        
+        working-directory: Projects\\VC2019  
         run: devenv lcms2.sln /Rebuild "Release|x64" /Project testbed  
-        working-directory: Projects/VC2019  
       - name: Run tests        
-        run: testbed         
+        working-directory: Projects\\VC2019  
         working-directory: testbed        
+        run: testbed                 
 
   Windows-32:
     runs-on: windows-latest
     steps:
       - uses: ilammy/msvc-dev-cmd@v1      
       - name: Build Windows 64 bit
+        working-directory: Projects\\VC2019  
         run: devenv lcms2.sln /Rebuild "Release|Win32" /Project testbed  
-        working-directory: Projects/VC2019  
+
       - name: Run tests        
-        run: testbed         
         working-directory: testbed   
+        run: testbed         
+        
         
   Ubuntu-meson:
     runs-on: ubuntu-latest
