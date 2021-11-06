@@ -1232,9 +1232,9 @@ void CheckSoftProofing(void)
     cmsCloseProfile(hRGB2);
 
     Mb = 256 * 256 * 256 * sizeof(Scanline_rgbFloat);
-    In = (Scanline_rgb8bits*)malloc(Mb);
-    Out1 = (Scanline_rgb8bits*)malloc(Mb);
-    Out2 = (Scanline_rgb8bits*)malloc(Mb);
+    In = (Scanline_rgbFloat*)malloc(Mb);
+    Out1 = (Scanline_rgbFloat*)malloc(Mb);
+    Out2 = (Scanline_rgbFloat*)malloc(Mb);
 
 
     j = 0;
