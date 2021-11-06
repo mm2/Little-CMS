@@ -39,7 +39,9 @@ jobs:
     steps:
       - uses: ilammy/msvc-dev-cmd@v1      
       - name: Build Windows 64 bit                
-        run: devenv Projects\VC2019\lcms2.sln /Rebuild "Release|x64" /Project testbed  
+        run: |
+            echo %cd%
+            devenv Projects\VC2019\lcms2.sln /Rebuild "Release|x64" /Project testbed  
         
       - name: Run tests                
         working-directory: testbed        
@@ -50,7 +52,9 @@ jobs:
     steps:
       - uses: ilammy/msvc-dev-cmd@v1      
       - name: Build Windows 32 bit        
-        run: devenv Projects/VC2019/lcms2.sln /Rebuild "Release|Win32" /Project testbed  
+        run: |
+            echo %cd%
+            devenv Projects/VC2019/lcms2.sln /Rebuild "Release|Win32" /Project testbed  
 
       - name: Run tests        
         working-directory: testbed   
