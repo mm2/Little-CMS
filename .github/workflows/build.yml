@@ -10,7 +10,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build Ubuntu
         run: |
-          ./configure --with_fastfloat
+          ./configure --with-fastfloat
           make 
           make check
 
@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build Ubuntu
         run: |
-          ./configure --with_fastfloat
+          ./configure --with-fastfloat
           make 
           make check
           
@@ -30,7 +30,7 @@ jobs:
       - uses: actions/checkout@v2
       - name: Build MacOS
         run: |
-          ./configure --with_fastfloat
+          ./configure --with-fastfloat
           make 
           make check        
     
@@ -40,7 +40,7 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1      
       - name: Build Windows 64 bit
         run: devenv lcms2.sln /Rebuild "Release|x64" /Project testbed  
-        working-directory: Projects\VC2019  
+        working-directory: Projects/VC2019  
       - name: Run tests        
         run: testbed         
         working-directory: testbed        
@@ -51,7 +51,7 @@ jobs:
       - uses: ilammy/msvc-dev-cmd@v1      
       - name: Build Windows 64 bit
         run: devenv lcms2.sln /Rebuild "Release|Win32" /Project testbed  
-        working-directory: Projects\VC2019  
+        working-directory: Projects/VC2019  
       - name: Run tests        
         run: testbed         
         working-directory: testbed   
