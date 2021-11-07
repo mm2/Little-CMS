@@ -44,7 +44,7 @@ jobs:
           arch: x64
         
       - name: Build Windows 64 bit                
-        run: buildvs64.cmd  
+        run: devenv Projects\\VC2019\\lcms2.sln /Rebuild "Release|x64" /Project testbed  
             
       - name: Run tests                
         working-directory: testbed        
