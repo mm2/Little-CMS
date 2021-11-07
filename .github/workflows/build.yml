@@ -38,31 +38,27 @@ jobs:
     runs-on: windows-latest
     
     steps:
-      - uses: actions/checkout@v2
       - uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: x64
+      - name: Build Windows 64 bit        
+        working-directory: Projects/VC2019
+        run: devenv lcms2.sln /Rebuild "Release|x64" /Project testbed  
+        shell: cmd
         
-      - name: Build Windows 64 bit                
-        run: devenv Projects\\VC2019\\lcms2.sln /Rebuild "Release|x64" /Project testbed  
-            
       - name: Run tests                
-        working-directory: testbed        
+        working-directory: ./testbed        
         run: testbed                 
 
   Windows-32:
     runs-on: windows-latest    
     steps:
-      - uses: actions/checkout@v2
-      - uses: ilammy/msvc-dev-cmd@v1
-        with:
-          arch: win32
-          
-      - name: Build Windows 32 bit           
-        run: devenv Projects\\VC2019\\cms2.sln /Rebuild "Release|Win32" /Project testbed  
+      - uses: ilammy/msvc-dev-cmd@v1      
+      - name: Build Windows 32 bit   
+        working-directory: Projects/VC2019
+        run: devenv cms2.sln /Rebuild "Release|Win32" /Project testbed  
+        shell: cmd
         
       - name: Run tests        
-        working-directory: testbed   
+        working-directory: ./testbed   
         run: testbed         
         
         
