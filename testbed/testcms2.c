@@ -9179,6 +9179,10 @@ int main(int argc, char* argv[])
         Exhaustive = 1;
         printf("Running exhaustive tests (will take a while...)\n\n");
     }
+    else
+        if ((argc == 3) && strcmp(argv[1], "--chdir") == 0) {
+            CHDIR(argv[2]);
+        }
 
 #ifdef LCMS_FAST_EXTENSIONS
    printf("Installing fast float extension ...");   
