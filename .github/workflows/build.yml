@@ -47,7 +47,7 @@ jobs:
         run: devenv .\Projects\VC2019\lcms2.sln /Rebuild "Release|x64" /Project testbed  
         
       - name: Run tests                       
-        run: cd testbed & testbed.exe
+        run: .\testbed\testbed.exe
             
 
   Windows-32:
@@ -62,7 +62,9 @@ jobs:
         run: devenv .\Projects\VC2019\lcms2.sln /Rebuild "Release|Win32" /Project testbed  
 
       - name: Run tests                
-        run: cd testbed & testbed.exe
+        run: |
+            cd testbed 
+            testbed.exe
                     
         
   Ubuntu-meson:
