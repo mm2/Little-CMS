@@ -1,0 +1,1 @@
+devenv Projects\VC2019\lcms2.sln /Rebuild "Release|x64" /Project testbed  
