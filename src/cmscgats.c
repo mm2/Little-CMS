@@ -722,7 +722,6 @@ void InSymbol(cmsIT8* it8)
     CMSREGISTER char *idptr;
     CMSREGISTER int k;
     SYMBOL key;
-    int sng;
     
     do {
 

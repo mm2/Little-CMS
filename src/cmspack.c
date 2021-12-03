@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2020 Marti Maria Saguer
+//  Copyright (c) 1998-2021 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -137,6 +137,58 @@ cmsUInt8Number* UnrollChunkyBytes(CMSREGISTER _cmsTRANSFORM* info,
 
 }
 
+/**
+* Chunky bytes with premultiplied alpha. Extra channels is always 1
+*/
+static
+cmsUInt8Number* UnrollChunkyBytesPremul(CMSREGISTER _cmsTRANSFORM* info,
+                                        CMSREGISTER cmsUInt16Number wIn[],
+                                        CMSREGISTER cmsUInt8Number* accum,
+                                        CMSREGISTER cmsUInt32Number Stride)
+{
+    cmsUInt32Number nChan      = T_CHANNELS(info -> InputFormat);
+    cmsUInt32Number DoSwap     = T_DOSWAP(info ->InputFormat);
+    cmsUInt32Number Reverse    = T_FLAVOR(info ->InputFormat);
+    cmsUInt32Number SwapFirst  = T_SWAPFIRST(info -> InputFormat);
+    cmsUInt32Number ExtraFirst = DoSwap ^ SwapFirst;
+    cmsUInt32Number v;
+    cmsUInt32Number i;
+
+    cmsUInt8Number  alpha = (ExtraFirst ? accum[0] : accum[nChan - 1]);
+    cmsUInt32Number alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(alpha));
+
+    if (ExtraFirst) {
+        accum++;
+    }
+
+    for (i=0; i < nChan; i++) {
+        cmsUInt32Number index = DoSwap ? (nChan - i - 1) : i;
+
+        v = FROM_8_TO_16(*accum);
+        
+        v = (v << 16) / alpha_factor;
+        if (v > 0xffff) v = 0xffff;
+
+        v = Reverse ? REVERSE_FLAVOR_16(v) : v;
+
+        wIn[index] = (cmsUInt16Number) v;
+        accum++;
+    }
+
+    if (!ExtraFirst) {
+        accum++;
+    }
+    
+    return accum;
+
+    cmsUNUSED_PARAMETER(info);
+    cmsUNUSED_PARAMETER(Stride);
+
+}
+
+
+
+
 // Extra channels are just ignored because come in the next planes
 static
 cmsUInt8Number* UnrollPlanarBytes(CMSREGISTER _cmsTRANSFORM* info,
@@ -166,6 +218,45 @@ cmsUInt8Number* UnrollPlanarBytes(CMSREGISTER _cmsTRANSFORM* info,
 
     return (Init + 1);
 }
+
+// Extra channels are just ignored because come in the next planes
+static
+cmsUInt8Number* UnrollPlanarBytesPremul(CMSREGISTER _cmsTRANSFORM* info,
+                                        CMSREGISTER cmsUInt16Number wIn[],
+                                        CMSREGISTER cmsUInt8Number* accum,
+                                        CMSREGISTER cmsUInt32Number Stride)
+{
+    cmsUInt32Number nChan     = T_CHANNELS(info -> InputFormat);
+    cmsUInt32Number DoSwap    = T_DOSWAP(info ->InputFormat);
+    cmsUInt32Number SwapFirst = T_SWAPFIRST(info ->InputFormat);
+    cmsUInt32Number Reverse   = T_FLAVOR(info ->InputFormat);
+    cmsUInt32Number i;
+    cmsUInt32Number ExtraFirst = DoSwap ^ SwapFirst;
+    cmsUInt8Number* Init = accum;
+
+    cmsUInt8Number  alpha = (ExtraFirst ? accum[0] : accum[(nChan - 1) * Stride]);
+    cmsUInt32Number alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(alpha));
+
+    if (ExtraFirst) {
+        accum += Stride;
+    }
+
+    for (i=0; i < nChan; i++) {
+
+        cmsUInt32Number index = DoSwap ? (nChan - i - 1) : i;
+        cmsUInt32Number v = FROM_8_TO_16(*accum);
+
+        v = (v << 16) / alpha_factor;
+        if (v > 0xffff) v = 0xffff;
+
+        wIn[index] = (cmsUInt16Number) (Reverse ? REVERSE_FLAVOR_16(v) : v);
+        accum += Stride;
+    }
+
+    return (Init + 1);
+}
+
+
 
 // Special cases, provided for performance
 static
@@ -517,6 +608,55 @@ cmsUInt8Number* UnrollAnyWords(CMSREGISTER _cmsTRANSFORM* info,
     cmsUNUSED_PARAMETER(Stride);
 }
 
+
+static
+cmsUInt8Number* UnrollAnyWordsPremul(CMSREGISTER _cmsTRANSFORM* info,
+                                     CMSREGISTER cmsUInt16Number wIn[],
+                                     CMSREGISTER cmsUInt8Number* accum,
+                                     CMSREGISTER cmsUInt32Number Stride)
+{
+   cmsUInt32Number nChan       = T_CHANNELS(info -> InputFormat);
+   cmsUInt32Number SwapEndian  = T_ENDIAN16(info -> InputFormat);
+   cmsUInt32Number DoSwap      = T_DOSWAP(info ->InputFormat);
+   cmsUInt32Number Reverse     = T_FLAVOR(info ->InputFormat);
+   cmsUInt32Number SwapFirst   = T_SWAPFIRST(info -> InputFormat);   
+   cmsUInt32Number ExtraFirst  = DoSwap ^ SwapFirst;
+   cmsUInt32Number i;
+
+   cmsUInt16Number alpha = (ExtraFirst ? accum[0] : accum[nChan - 1]);
+   cmsUInt32Number alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(alpha));
+
+    if (ExtraFirst) {
+        accum += sizeof(cmsUInt16Number);
+    }
+
+    for (i=0; i < nChan; i++) {
+
+        cmsUInt32Number index = DoSwap ? (nChan - i - 1) : i;
+        cmsUInt32Number v = *(cmsUInt16Number*) accum;
+
+        if (SwapEndian)
+            v = CHANGE_ENDIAN(v);
+
+        v = (v << 16) / alpha_factor;
+        if (v > 0xffff) v = 0xffff;
+
+        wIn[index] = (cmsUInt16Number) (Reverse ? REVERSE_FLAVOR_16(v) : v);
+
+        accum += sizeof(cmsUInt16Number);
+    }
+
+    if (!ExtraFirst) {
+        accum += sizeof(cmsUInt16Number);
+    }
+
+    return accum;
+
+    cmsUNUSED_PARAMETER(Stride);
+}
+
+
+
 static
 cmsUInt8Number* UnrollPlanarWords(CMSREGISTER _cmsTRANSFORM* info,
                                   CMSREGISTER cmsUInt16Number wIn[],
@@ -550,6 +690,46 @@ cmsUInt8Number* UnrollPlanarWords(CMSREGISTER _cmsTRANSFORM* info,
     return (Init + sizeof(cmsUInt16Number));
 }
 
+static
+cmsUInt8Number* UnrollPlanarWordsPremul(CMSREGISTER _cmsTRANSFORM* info,
+                                        CMSREGISTER cmsUInt16Number wIn[],
+                                        CMSREGISTER cmsUInt8Number* accum,
+                                        CMSREGISTER cmsUInt32Number Stride)
+{
+    cmsUInt32Number nChan = T_CHANNELS(info -> InputFormat);
+    cmsUInt32Number DoSwap= T_DOSWAP(info ->InputFormat);
+    cmsUInt32Number SwapFirst = T_SWAPFIRST(info->InputFormat);
+    cmsUInt32Number Reverse= T_FLAVOR(info ->InputFormat);
+    cmsUInt32Number SwapEndian = T_ENDIAN16(info -> InputFormat);
+    cmsUInt32Number i;
+    cmsUInt32Number ExtraFirst = DoSwap ^ SwapFirst;
+    cmsUInt8Number* Init = accum;
+
+    cmsUInt16Number  alpha = (ExtraFirst ? accum[0] : accum[(nChan - 1) * Stride]);
+    cmsUInt32Number alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(alpha));
+
+    if (ExtraFirst) {
+        accum += Stride;
+    }
+
+    for (i=0; i < nChan; i++) {
+
+        cmsUInt32Number index = DoSwap ? (nChan - i - 1) : i;
+        cmsUInt32Number v = (cmsUInt32Number) *(cmsUInt16Number*) accum;
+
+        if (SwapEndian)
+            v = CHANGE_ENDIAN(v);
+
+        v = (v << 16) / alpha_factor;
+        if (v > 0xffff) v = 0xffff;
+
+        wIn[index] = (cmsUInt16Number) (Reverse ? REVERSE_FLAVOR_16(v) : v);
+
+        accum +=  Stride;
+    }
+
+    return (Init + sizeof(cmsUInt16Number));
+}
 
 static
 cmsUInt8Number* Unroll4Words(CMSREGISTER _cmsTRANSFORM* info,
@@ -1548,6 +1728,7 @@ cmsUInt8Number* PackAnyBytes(CMSREGISTER _cmsTRANSFORM* info,
 
     cmsUNUSED_PARAMETER(Stride);
 }
+
 
 
 
@@ -3212,6 +3393,12 @@ static const cmsFormatters16 InputFormatters16[] = {
     { BYTES_SH(1),    ANYFLAVOR|ANYSWAPFIRST|ANYSWAP|
                                            ANYEXTRA|ANYCHANNELS|ANYSPACE, UnrollChunkyBytes},
 
+    { BYTES_SH(1) | PLANAR_SH(1), ANYFLAVOR | ANYSWAPFIRST | PREMUL_SH(1) |
+                                   ANYSWAP | ANYEXTRA | ANYCHANNELS | ANYSPACE, UnrollPlanarBytesPremul},
+
+    { BYTES_SH(1),    ANYFLAVOR | ANYSWAPFIRST | ANYSWAP | PREMUL_SH(1) |
+                                           ANYEXTRA | ANYCHANNELS | ANYSPACE, UnrollChunkyBytesPremul},
+
     { CHANNELS_SH(1)|BYTES_SH(2),                              ANYSPACE,  Unroll1Word},
     { CHANNELS_SH(1)|BYTES_SH(2)|FLAVOR_SH(1),                 ANYSPACE,  Unroll1WordReversed},
     { CHANNELS_SH(1)|BYTES_SH(2)|EXTRA_SH(3),                  ANYSPACE,  Unroll1WordSkip3},
@@ -3231,6 +3418,10 @@ static const cmsFormatters16 InputFormatters16[] = {
 
     { BYTES_SH(2)|PLANAR_SH(1),  ANYFLAVOR|ANYSWAP|ANYENDIAN|ANYEXTRA|ANYCHANNELS|ANYSPACE,  UnrollPlanarWords},
     { BYTES_SH(2),  ANYFLAVOR|ANYSWAPFIRST|ANYSWAP|ANYENDIAN|ANYEXTRA|ANYCHANNELS|ANYSPACE,  UnrollAnyWords},
+
+    { BYTES_SH(2)|PLANAR_SH(1),  ANYFLAVOR|ANYSWAP|ANYENDIAN|ANYEXTRA|ANYCHANNELS|ANYSPACE|PREMUL_SH(1),  UnrollPlanarWordsPremul},
+    { BYTES_SH(2),  ANYFLAVOR|ANYSWAPFIRST|ANYSWAP|ANYENDIAN|ANYEXTRA|ANYCHANNELS|ANYSPACE|PREMUL_SH(1),  UnrollAnyWordsPremul}
+
 };
 
 
