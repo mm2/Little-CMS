@@ -7829,49 +7829,49 @@ cmsInt32Number CheckReadRAW(void)
 static
 cmsInt32Number CheckMeta(void)
 {
-	char *data;
-	cmsHANDLE dict;
-	cmsHPROFILE p;
-	cmsUInt32Number clen;
-	FILE *fp;
-	int rc;
-	
-	/* open file */
-	p = cmsOpenProfileFromFile("ibm-t61.icc", "r");
-	if (p == NULL) return 0;
+    char *data;
+    cmsHANDLE dict;
+    cmsHPROFILE p;
+    cmsUInt32Number clen;
+    FILE *fp;
+    int rc;
+    
+    /* open file */
+    p = cmsOpenProfileFromFile("ibm-t61.icc", "r");
+    if (p == NULL) return 0;
 
-	/* read dictionary, but don't do anything with the value */
-	//COMMENT OUT THE NEXT TWO LINES AND IT WORKS FINE!!!
-	dict = cmsReadTag(p, cmsSigMetaTag);
-	if (dict == NULL) return 0;
+    /* read dictionary, but don't do anything with the value */
+    //COMMENT OUT THE NEXT TWO LINES AND IT WORKS FINE!!!
+    dict = cmsReadTag(p, cmsSigMetaTag);
+    if (dict == NULL) return 0;
 
-	/* serialize profile to memory */
-	rc = cmsSaveProfileToMem(p, NULL, &clen);
-	if (!rc) return 0;
+    /* serialize profile to memory */
+    rc = cmsSaveProfileToMem(p, NULL, &clen);
+    if (!rc) return 0;
 
-	data = (char*) malloc(clen);
-	rc = cmsSaveProfileToMem(p, data, &clen);
-	if (!rc) return 0;
+    data = (char*) malloc(clen);
+    rc = cmsSaveProfileToMem(p, data, &clen);
+    if (!rc) return 0;
 
-	/* write the memory blob to a file */
-	//NOTE: The crash does not happen if cmsSaveProfileToFile() is used */
-	fp = fopen("new.icc", "wb");
-	fwrite(data, 1, clen, fp);
-	fclose(fp);
-	free(data);
+    /* write the memory blob to a file */
+    //NOTE: The crash does not happen if cmsSaveProfileToFile() is used */
+    fp = fopen("new.icc", "wb");
+    fwrite(data, 1, clen, fp);
+    fclose(fp);
+    free(data);
 
-	cmsCloseProfile(p);
+    cmsCloseProfile(p);
 
-	/* open newly created file and read metadata */
-	p = cmsOpenProfileFromFile("new.icc", "r");
-	//ERROR: Bad dictionary Name/Value
-	//ERROR: Corrupted tag 'meta'
-	//test: test.c:59: main: Assertion `dict' failed.
-	dict = cmsReadTag(p, cmsSigMetaTag);
+    /* open newly created file and read metadata */
+    p = cmsOpenProfileFromFile("new.icc", "r");
+    //ERROR: Bad dictionary Name/Value
+    //ERROR: Corrupted tag 'meta'
+    //test: test.c:59: main: Assertion `dict' failed.
+    dict = cmsReadTag(p, cmsSigMetaTag);
    if (dict == NULL) return 0;
 
    cmsCloseProfile(p);
-	return 1;
+    return 1;
 }
 
 
