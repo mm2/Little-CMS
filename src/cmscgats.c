@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2020 Marti Maria Saguer
+//  Copyright (c) 1998-2021 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -133,9 +133,18 @@ typedef struct _FileContext {
         FILE*          Stream;                   // File stream or NULL if holded in memory
     } FILECTX;
 
-// This struct hold all information about an open IT8 handler.
+//Very simple string 
 typedef struct {
 
+        struct struct_it8* it8;
+        cmsInt32Number max;
+        cmsInt32Number len;
+        char* begin;
+    } string;
+
+
+// This struct hold all information about an open IT8 handler.
+typedef struct struct_it8 {
 
         cmsUInt32Number  TablesCount;                     // How many tables in this stream
         cmsUInt32Number  nTable;                          // The actual table
@@ -153,8 +162,8 @@ typedef struct {
         cmsInt32Number     inum;              // integer value
         cmsFloat64Number   dnum;              // real value
 
-        char           id[MAXID];             // identifier
-        char           str[MAXSTR];           // string
+        string*        id;            // identifier
+        string*        str;           // string
 
         // Allowed keywords & datasets. They have visibility on whole stream
         KEYVALUE*      ValidKeywords;
@@ -353,6 +362,59 @@ static const char* PredefinedSampleID[] = {
 
 //Forward declaration of some internal functions
 static void* AllocChunk(cmsIT8* it8, cmsUInt32Number size);
+
+static
+string* StringAlloc(cmsIT8* it8, int max)
+{
+    string* s = (string*) AllocChunk(it8, sizeof(string));
+
+    s->it8 = it8;
+    s->max = MAXSTR;
+    s->len = 0;
+    s->begin = (char*) AllocChunk(it8, s->max);
+
+    return s;
+}
+
+static
+void StringClear(string* s)
+{
+    s->len = 0;
+}
+
+static
+void StringAppend(string* s, char c)
+{
+    if (s->len + 1 >= s->max)
+    {
+        char* new_ptr;
+
+        s->max *= 10;
+        new_ptr = AllocChunk(s->it8, s->max);
+        memcpy(new_ptr, s->begin, s->len);
+        s->begin = new_ptr;
+    }
+
+    s->begin[s->len++] = c;
+    s->begin[s->len] = 0;
+}
+
+static
+char* StringPtr(string* s)
+{
+    return s->begin;
+}
+
+static
+void StringCat(string* s, const char* c)
+{
+    while (*c)
+    {
+        StringAppend(s, *c);
+        c++;
+    }
+}
+
 
 // Checks whatever c is a separator
 static
@@ -688,26 +750,22 @@ void InStringSymbol(cmsIT8* it8)
 
     if (it8->ch == '\'' || it8->ch == '\"')
     {
-        CMSREGISTER char* idptr;
-        int k, sng;
+        int sng;
 
-        idptr = it8->str;
         sng = it8->ch;
-        k = 0;
+
         NextCh(it8);
 
-        while (k < (MAXSTR - 1) && it8->ch != sng) {
+        while (it8->ch != sng) {
 
-            if (it8->ch == '\n' || it8->ch == '\r') k = MAXSTR + 1;
+            if (it8->ch == '\n' || it8->ch == '\r') break;
             else {
-                *idptr++ = (char)it8->ch;
+                StringAppend(it8->str, (char)it8->ch);
                 NextCh(it8);
-                k++;
             }
         }
 
         it8->sy = SSTRING;
-        *idptr = '\0';
         NextCh(it8);        
     }
     else
@@ -719,8 +777,6 @@ void InStringSymbol(cmsIT8* it8)
 static
 void InSymbol(cmsIT8* it8)
 {
-    CMSREGISTER char *idptr;
-    CMSREGISTER int k;
     SYMBOL key;
     
     do {
@@ -730,21 +786,18 @@ void InSymbol(cmsIT8* it8)
 
         if (isfirstidchar(it8->ch)) {          // Identifier
 
-            k = 0;
-            idptr = it8->id;
+            StringClear(it8->id);
 
             do {
 
-                if (++k < MAXID) *idptr++ = (char) it8->ch;
+                StringAppend(it8->id, it8->ch);
 
                 NextCh(it8);
 
             } while (isidchar(it8->ch));
 
-            *idptr = '\0';
 
-
-            key = BinSrchKey(it8->id);
+            key = BinSrchKey(StringPtr(it8->id));
             if (key == SUNDEFINED) it8->sy = SIDENT;
             else it8->sy = key;
 
@@ -840,26 +893,27 @@ void InSymbol(cmsIT8* it8)
 
                 if (isidchar(it8 ->ch)) {
 
+                    char buffer[127];
+
                     if (it8 ->sy == SINUM) {
 
-                        snprintf(it8->id, 127, "%d", it8->inum);
+                        snprintf(buffer, sizeof(buffer), "%d", it8->inum);
                     }
                     else {
 
-                        snprintf(it8->id, 127, it8 ->DoubleFormatter, it8->dnum);
+                        snprintf(buffer, sizeof(buffer), it8 ->DoubleFormatter, it8->dnum);
                     }
 
-                    k = (int) strlen(it8 ->id);
-                    idptr = it8 ->id + k;
+                    StringCat(it8->id, buffer);
+
                     do {
 
-                        if (++k < MAXID) *idptr++ = (char) it8->ch;
+                        StringAppend(it8->id, (char) it8->ch);
 
                         NextCh(it8);
 
                     } while (isidchar(it8->ch));
 
-                    *idptr = '\0';
                     it8->sy = SIDENT;
                 }
                 return;
@@ -941,7 +995,7 @@ void InSymbol(cmsIT8* it8)
                     //  TODO: how to manage out-of-memory conditions?
                 }
 
-                if (BuildAbsolutePath(it8->str,
+                if (BuildAbsolutePath(StringPtr(it8->str),
                                       it8->FileStack[it8->IncludeSP]->FileName,
                                       FileNest->FileName, cmsMAX_PATH-1) == FALSE) {
                     SynError(it8, "File path too long");
@@ -1002,12 +1056,12 @@ cmsBool GetVal(cmsIT8* it8, char* Buffer, cmsUInt32Number max, const char* Error
     case SEOLN:   // Empty value
                   Buffer[0]=0;
                   break;
-    case SIDENT:  strncpy(Buffer, it8->id, max);
+    case SIDENT:  strncpy(Buffer, StringPtr(it8->id), max);
                   Buffer[max-1]=0;
                   break;
     case SINUM:   snprintf(Buffer, max, "%d", it8 -> inum); break;
     case SDNUM:   snprintf(Buffer, max, it8->DoubleFormatter, it8 -> dnum); break;
-    case SSTRING: strncpy(Buffer, it8->str, max);
+    case SSTRING: strncpy(Buffer, StringPtr(it8->str), max);
                   Buffer[max-1] = 0;
                   break;
 
@@ -1330,6 +1384,9 @@ cmsHANDLE  CMSEXPORT cmsIT8Alloc(cmsContext ContextID)
     it8->FileStack[0] = (FILECTX*)AllocChunk(it8, sizeof(FILECTX));
     it8->IncludeSP   = 0;
     it8 -> lineno = 1;
+
+    it8->id = StringAlloc(it8, MAXSTR);
+    it8->str = StringAlloc(it8, MAXSTR);
 
     strcpy(it8->DoubleFormatter, DEFAULT_DBL_FORMAT);
     cmsIT8SetSheetType((cmsHANDLE) it8, "CGATS.17");
@@ -1896,7 +1953,7 @@ cmsBool DataFormatSection(cmsIT8* it8)
                 return SynError(it8, "Sample type expected");
             }
 
-            if (!SetDataFormat(it8, iField, it8->id)) return FALSE;
+            if (!SetDataFormat(it8, iField, StringPtr(it8->id))) return FALSE;
             iField++;
 
             InSymbol(it8);
@@ -1942,11 +1999,28 @@ cmsBool DataSection (cmsIT8* it8)
 
         if (it8->sy != SEND_DATA && it8->sy != SEOF) {
 
+            switch (it8->sy)
+            {
+
+            // To keep very long data
+            case SIDENT:  
+                if (!SetData(it8, iSet, iField, StringPtr(it8->id)))
+                    return FALSE;
+                break;
+
+            case SSTRING:
+                if (!SetData(it8, iSet, iField, StringPtr(it8->str)))
+                    return FALSE;
+                break;
+
+            default:
+
             if (!GetVal(it8, Buffer, 255, "Sample data expected"))
                 return FALSE;
 
             if (!SetData(it8, iSet, iField, Buffer))
                 return FALSE;
+            }
 
             iField++;
 
@@ -2002,7 +2076,7 @@ cmsBool HeaderSection(cmsIT8* it8)
 
 
         case SIDENT:
-            strncpy(VarName, it8->id, MAXID - 1);
+            strncpy(VarName, StringPtr(it8->id), MAXID - 1);
             VarName[MAXID - 1] = 0;
 
             if (!IsAvailableOnList(it8->ValidKeywords, VarName, NULL, &Key)) {
@@ -2146,7 +2220,7 @@ cmsBool ParseIT8(cmsIT8* it8, cmsBool nosheet)
                                      // If a newline is found, then this is a type string
                                     if (it8 ->ch == '\n' || it8->ch == '\r') {
 
-                                         cmsIT8SetSheetType(it8, it8 ->id);
+                                         cmsIT8SetSheetType(it8, StringPtr(it8 ->id));
                                          InSymbol(it8);
                                     }
                                     else
@@ -2158,7 +2232,7 @@ cmsBool ParseIT8(cmsIT8* it8, cmsBool nosheet)
                                 else
                                     // Validate quoted strings
                                     if (it8 ->sy == SSTRING) {
-                                        cmsIT8SetSheetType(it8, it8 ->str);
+                                        cmsIT8SetSheetType(it8, StringPtr(it8 ->str));
                                         InSymbol(it8);
                                     }
                            }
