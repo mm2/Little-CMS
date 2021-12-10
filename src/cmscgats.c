@@ -753,6 +753,7 @@ void InStringSymbol(cmsIT8* it8)
         int sng;
 
         sng = it8->ch;
+        StringClear(it8->str);
 
         NextCh(it8);
 
