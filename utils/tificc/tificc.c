@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2020 Marti Maria Saguer
+//  Copyright (c) 1998-2021 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining 
 // a copy of this software and associated documentation files (the "Software"), 
@@ -376,8 +376,12 @@ cmsUInt32Number ComputeOutputFormatDescriptor(cmsUInt32Number dwInput, int OutCo
     int IsPlanar  = T_PLANAR(dwInput);
     int Channels  = ChanCountFromPixelType(OutColorSpace);
     int IsFlt = (bps == 0) || (bps == 4);
+    int labTiffSpecial = FALSE;
 
-    return (FLOAT_SH(IsFlt)|COLORSPACE_SH(OutColorSpace)|PLANAR_SH(IsPlanar)|CHANNELS_SH(Channels)|BYTES_SH(bps));
+    if (OutColorSpace == PT_Lab)
+        labTiffSpecial = TRUE;
+
+    return (FLOAT_SH(IsFlt)|COLORSPACE_SH(OutColorSpace)|PLANAR_SH(IsPlanar)|CHANNELS_SH(Channels)|BYTES_SH(bps) | (labTiffSpecial << 23));
 }
 
 
@@ -1155,7 +1159,7 @@ int main(int argc, char* argv[])
     TIFF *in, *out;
    
 
-    fprintf(stderr, "Little CMS ICC profile applier for TIFF - v6.4 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
+    fprintf(stderr, "Little CMS ICC profile applier for TIFF - v6.5 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
     fprintf(stderr, "Copyright (c) 1998-2021 Marti Maria Saguer. See COPYING file for details.\n");
     fflush(stderr);
 
