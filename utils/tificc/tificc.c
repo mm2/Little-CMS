@@ -119,12 +119,16 @@ void OutOfMem(cmsUInt32Number size)
 
 
 // -----------------------------------------------------------------------------------------------
-
+// Lab plug-in
 // In TIFF, Lab is encoded in a different way, so let's use the plug-in 
 // capabilities of lcms2 to change the meaning of TYPE_Lab_8.  
 
+#define LABTIFF_SH(m)           ((m) << 30)
+#define T_LABTIFF(m)            (((m)>>30)&1)
+
 // * 0xffff / 0xff00 = (255 * 257) / (255 * 256) = 257 / 256
-static int FromLabV2ToLabV4(int x) 
+static 
+int FromLabV2ToLabV4(int x) 
 {
     int a;
 
@@ -134,7 +138,8 @@ static int FromLabV2ToLabV4(int x)
 }
 
 // * 0xf00 / 0xffff = * 256 / 257
-static int FromLabV4ToLabV2(int x) 
+static 
+int FromLabV4ToLabV2(int x) 
 {
     return ((x << 8) + 0x80) / 257;
 }
@@ -230,7 +235,7 @@ cmsFormatter TiffFormatterFactory(cmsUInt32Number Type,
 {
     cmsFormatter Result = { NULL };
     int bps           = T_BYTES(Type);
-    int IsTiffSpecial = (Type >> 23) & 1;
+    int IsTiffSpecial = T_LABTIFF(Type);
 
     if (IsTiffSpecial && !(dwFlags & CMS_PACK_FLAGS_FLOAT))
     {
@@ -247,18 +252,19 @@ cmsFormatter TiffFormatterFactory(cmsUInt32Number Type,
 
 static cmsPluginFormatters TiffLabPlugin = { {cmsPluginMagicNumber, 2000, cmsPluginFormattersSig, NULL}, TiffFormatterFactory };
 
-
+// -----------------------------------------------------------------------------------------------
 
 // Build up the pixeltype descriptor
 static
 cmsUInt32Number GetInputPixelType(TIFF *Bank)
 {
     uint16 Photometric, bps, spp, extra, PlanarConfig, *info;
-    uint16 Compression, reverse = 0;
-    int ColorChannels, IsPlanar = 0, pt = 0, IsFlt;
+    uint16 Compression;
+    int ColorChannels;
+    int IsPremul = FALSE, IsPlanar = FALSE, IsFlt = FALSE, IsReverse = FALSE;
     int labTiffSpecial = FALSE;
-
-    TIFFGetField(Bank,           TIFFTAG_PHOTOMETRIC,   &Photometric);
+    int pt = PT_ANY;
+    
     TIFFGetFieldDefaulted(Bank,  TIFFTAG_BITSPERSAMPLE, &bps);
 
     if (bps == 1)
@@ -267,7 +273,7 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
     if (bps != 8 && bps != 16 && bps != 32)
         FatalError("Sorry, 8, 16 or 32 bits per sample only");
 
-    TIFFGetFieldDefaulted(Bank, TIFFTAG_SAMPLESPERPIXEL, &spp);
+   
     TIFFGetFieldDefaulted(Bank, TIFFTAG_PLANARCONFIG, &PlanarConfig);
 
     switch (PlanarConfig) {
@@ -279,8 +285,9 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
          FatalError("Unsupported planar configuration (=%d) ", (int) PlanarConfig);
     }
 
-    // If Samples per pixel == 1, PlanarConfiguration is irrelevant and need
-    // not to be included.
+    TIFFGetFieldDefaulted(Bank, TIFFTAG_SAMPLESPERPIXEL, &spp);
+
+    // If Samples per pixel == 1, PlanarConfiguration is irrelevant and need not to be included.
 
     if (spp == 1) IsPlanar = 0;
 
@@ -288,7 +295,7 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
 
     TIFFGetFieldDefaulted(Bank, TIFFTAG_EXTRASAMPLES, &extra, &info);
 
-    // Read alpha channels as colorant
+    // Read alpha channels as colorant?
 
     if (StoreAsAlpha) {
 
@@ -298,11 +305,20 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
     else
         ColorChannels = spp - extra;
 
+    // Is alpha premultiplied ? 
+
+    IsPremul = ((extra == 1) && (info[0] == EXTRASAMPLE_ASSOCALPHA));
+
+
+    // Get photometric interpretation and proceed accordly
+
+    TIFFGetField(Bank, TIFFTAG_PHOTOMETRIC, &Photometric);
+
     switch (Photometric) {
 
     case PHOTOMETRIC_MINISWHITE:
 
-        reverse = 1;
+        IsReverse = 1;
 
         // ... fall through ...
 
@@ -315,7 +331,6 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
         if (ColorChannels < 3)
             FatalError("Sorry, RGB needs at least 3 samples per pixel");
         break;
-
 
      case PHOTOMETRIC_PALETTE:                                             
          FatalError("Sorry, palette images not supported"); 
@@ -333,10 +348,12 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
              pt = PT_YCbCr;
              TIFFGetFieldDefaulted(Bank, TIFFTAG_YCBCRSUBSAMPLING, &subx, &suby);
              if (subx != 1 || suby != 1)
-                 FatalError("Sorry, subsampled images not supported");
+                 FatalError("Sorry, subsampled images are not supported");
 
          }
          break;
+
+     // Two Lab flavours
 
      case PHOTOMETRIC_ICCLAB:
          pt = PT_LabV2;         
@@ -347,8 +364,9 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
          labTiffSpecial = TRUE;
          break;
 
+    // CIE Log2(L) (u',v') 
 
-     case PHOTOMETRIC_LOGLUV:      // CIE Log2(L) (u',v') 
+     case PHOTOMETRIC_LOGLUV:     
 
          TIFFSetField(Bank, TIFFTAG_SGILOGDATAFMT, SGILOGDATAFMT_16BIT);
          pt = PT_YUV;             // *ICCSpace = icSigLuvData;
@@ -364,12 +382,13 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
     bps >>= 3; 
     IsFlt = (bps == 0) || (bps == 4);
 
-    return (FLOAT_SH(IsFlt)|COLORSPACE_SH(pt)|PLANAR_SH(IsPlanar)|EXTRA_SH(extra)|CHANNELS_SH(ColorChannels)|BYTES_SH(bps)|FLAVOR_SH(reverse) | (labTiffSpecial << 23) );
+    return (FLOAT_SH(IsFlt) | COLORSPACE_SH(pt) | PLANAR_SH(IsPlanar) | EXTRA_SH(extra) | PREMUL_SH(IsPremul) |
+           CHANNELS_SH(ColorChannels) | BYTES_SH(bps) | FLAVOR_SH(IsReverse) | LABTIFF_SH(labTiffSpecial));
 }
 
 
-
 // Rearrange pixel type to build output descriptor
+
 static
 cmsUInt32Number ComputeOutputFormatDescriptor(cmsUInt32Number dwInput, int OutColorSpace, int bps)
 {
@@ -381,7 +400,8 @@ cmsUInt32Number ComputeOutputFormatDescriptor(cmsUInt32Number dwInput, int OutCo
     if (OutColorSpace == PT_Lab)
         labTiffSpecial = TRUE;
 
-    return (FLOAT_SH(IsFlt)|COLORSPACE_SH(OutColorSpace)|PLANAR_SH(IsPlanar)|CHANNELS_SH(Channels)|BYTES_SH(bps) | (labTiffSpecial << 23));
+    return (FLOAT_SH(IsFlt)|COLORSPACE_SH(OutColorSpace)|PLANAR_SH(IsPlanar)|
+            CHANNELS_SH(Channels)|BYTES_SH(bps) | LABTIFF_SH(labTiffSpecial));
 }
 
 
@@ -396,7 +416,6 @@ int TileBasedXform(cmsHTRANSFORM hXForm, TIFF* in, TIFF* out, int nPlanes)
     ttile_t i, TileCount = TIFFNumberOfTiles(in) / nPlanes;
     uint32 tw, tl;
     int PixelCount, j;
-
 
     // Check for bad tiffs
     if (BufSizeIn > INT_MAX || BufSizeOut > INT_MAX)

@@ -112,14 +112,14 @@ cmsUInt8Number* UnrollChunkyBytes(CMSREGISTER _cmsTRANSFORM* info,
 
     if (ExtraFirst) {
         
-        if (Premul)
+        if (Premul && Extra)
             alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(accum[0]));
         accum += Extra;
     }
     else
     {
-        if (Premul)        
-            alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(accum[nChan - 1]));
+        if (Premul && Extra)        
+            alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(accum[nChan]));
     }
 
     for (i=0; i < nChan; i++) {
@@ -178,7 +178,7 @@ cmsUInt8Number* UnrollPlanarBytes(CMSREGISTER _cmsTRANSFORM* info,
 
     if (ExtraFirst) {
 
-        if (Premul)        
+        if (Premul && Extra)        
             alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(accum[0]));
 
 
@@ -186,8 +186,8 @@ cmsUInt8Number* UnrollPlanarBytes(CMSREGISTER _cmsTRANSFORM* info,
     }
     else
     {
-        if (Premul)
-            alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(accum[(nChan - 1) * Stride]));
+        if (Premul && Extra)
+            alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(accum[(nChan) * Stride]));
     }
 
     for (i=0; i < nChan; i++) {
@@ -1348,12 +1348,12 @@ cmsUInt8Number* UnrollFloatsToFloat(_cmsTRANSFORM* info,
 
     Stride /= PixelSize(info->InputFormat);
 
-    if (Premul)
+    if (Premul && Extra)
     {        
         if (Planar)
-            alpha_factor = (ExtraFirst ? ptr[0] : ptr[(nChan - 1) * Stride]) / maximum;            
+            alpha_factor = (ExtraFirst ? ptr[0] : ptr[nChan * Stride]) / maximum;            
         else
-            alpha_factor = (ExtraFirst ? ptr[0] : ptr[nChan - 1]) / maximum;        
+            alpha_factor = (ExtraFirst ? ptr[0] : ptr[nChan]) / maximum;        
     }
 
     if (ExtraFirst)
@@ -1368,7 +1368,7 @@ cmsUInt8Number* UnrollFloatsToFloat(_cmsTRANSFORM* info,
         else
             v = ptr[i + start];
 
-        if (Premul)
+        if (Premul && alpha_factor > 0)
             v /= alpha_factor;
 
         v /= maximum;
@@ -1415,12 +1415,12 @@ cmsUInt8Number* UnrollDoublesToFloat(_cmsTRANSFORM* info,
 
     Stride /= PixelSize(info->InputFormat);
 
-    if (Premul)
+    if (Premul && Extra)
     {
         if (Planar)
-            alpha_factor = (ExtraFirst ? ptr[0] : ptr[(nChan - 1) * Stride]) / maximum;
+            alpha_factor = (ExtraFirst ? ptr[0] : ptr[(nChan) * Stride]) / maximum;
         else
-            alpha_factor = (ExtraFirst ? ptr[0] : ptr[nChan - 1]) / maximum;
+            alpha_factor = (ExtraFirst ? ptr[0] : ptr[nChan]) / maximum;
     }
    
     if (ExtraFirst)
@@ -1436,7 +1436,7 @@ cmsUInt8Number* UnrollDoublesToFloat(_cmsTRANSFORM* info,
             v = (cmsFloat64Number) ((cmsFloat64Number*) accum)[i + start];
 
 
-        if (Premul)
+        if (Premul && alpha_factor > 0)
             v /= alpha_factor;
 
         v /= maximum;
@@ -1680,15 +1680,15 @@ cmsUInt8Number* PackChunkyBytes(CMSREGISTER _cmsTRANSFORM* info,
 
     if (ExtraFirst) {
         
-        if (Premul)
+        if (Premul && Extra)
             alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(output[0]));
 
         output += Extra;
     }
     else
     {
-        if (Premul)
-            alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(output[nChan - 1]));
+        if (Premul && Extra)
+            alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(output[nChan]));
     }
 
     for (i=0; i < nChan; i++) {
@@ -1746,15 +1746,15 @@ cmsUInt8Number* PackChunkyWords(CMSREGISTER _cmsTRANSFORM* info,
 
     if (ExtraFirst) {
 
-        if (Premul)
+        if (Premul && Extra)
             alpha_factor = _cmsToFixedDomain(*(cmsUInt16Number*) output);
 
         output += Extra * sizeof(cmsUInt16Number);
     }
     else
     {
-        if (Premul)
-            alpha_factor = _cmsToFixedDomain(((cmsUInt16Number*) output)[nChan - 1]);
+        if (Premul && Extra)
+            alpha_factor = _cmsToFixedDomain(((cmsUInt16Number*) output)[nChan]);
     }
 
     for (i=0; i < nChan; i++) {
@@ -1816,15 +1816,15 @@ cmsUInt8Number* PackPlanarBytes(CMSREGISTER _cmsTRANSFORM* info,
 
     if (ExtraFirst) {
 
-        if (Premul)
+        if (Premul && Extra)
             alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(output[0]));
 
         output += Extra * Stride;
     }
     else
     {
-        if (Premul)
-            alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(output[(nChan - 1) * Stride]));
+        if (Premul && Extra)
+            alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(output[nChan * Stride]));
     }
 
 
@@ -1872,15 +1872,15 @@ cmsUInt8Number* PackPlanarWords(CMSREGISTER _cmsTRANSFORM* info,
 
     if (ExtraFirst) {
 
-        if (Premul)
+        if (Premul && Extra)
             alpha_factor = _cmsToFixedDomain(((cmsUInt16Number*) output)[0]);
 
         output += Extra * Stride;
     }
     else
     {
-        if (Premul)
-            alpha_factor = _cmsToFixedDomain(((cmsUInt16Number*)output)[(nChan - 1) * Stride]);
+        if (Premul && Extra)
+            alpha_factor = _cmsToFixedDomain(((cmsUInt16Number*)output)[nChan * Stride]);
     }
 
     for (i=0; i < nChan; i++) {
