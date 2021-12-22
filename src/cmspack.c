@@ -106,7 +106,7 @@ cmsUInt8Number* UnrollChunkyBytes(CMSREGISTER _cmsTRANSFORM* info,
     cmsUInt32Number Premul     = T_PREMUL(info->InputFormat);
 
     cmsUInt32Number ExtraFirst = DoSwap ^ SwapFirst;
-    cmsUInt16Number v;
+    cmsUInt32Number v;
     cmsUInt32Number i;  
     cmsUInt32Number alpha_factor = 1;
 
@@ -114,6 +114,7 @@ cmsUInt8Number* UnrollChunkyBytes(CMSREGISTER _cmsTRANSFORM* info,
         
         if (Premul && Extra)
             alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(accum[0]));
+
         accum += Extra;
     }
     else
@@ -131,11 +132,11 @@ cmsUInt8Number* UnrollChunkyBytes(CMSREGISTER _cmsTRANSFORM* info,
 
         if (Premul && alpha_factor > 0)
         {
-            v = (cmsUInt16Number)((cmsUInt32Number)((cmsUInt32Number)v << 16) / alpha_factor);
+            v = ((cmsUInt32Number)((cmsUInt32Number)v << 16) / alpha_factor);
             if (v > 0xffff) v = 0xffff;
         }
 
-        wIn[index] = v;
+        wIn[index] = (cmsUInt16Number) v;
         accum++;
     }
 
@@ -193,17 +194,17 @@ cmsUInt8Number* UnrollPlanarBytes(CMSREGISTER _cmsTRANSFORM* info,
     for (i=0; i < nChan; i++) {
 
         cmsUInt32Number index = DoSwap ? (nChan - i - 1) : i;
-        cmsUInt16Number v = FROM_8_TO_16(*accum);
+        cmsUInt32Number v = FROM_8_TO_16(*accum);
         
         v = Reverse ? REVERSE_FLAVOR_16(v) : v;
 
         if (Premul && alpha_factor > 0)
         {
-            v = (cmsUInt16Number)((cmsUInt32Number)((cmsUInt32Number)v << 16) / alpha_factor);
+            v = ((cmsUInt32Number)((cmsUInt32Number)v << 16) / alpha_factor);
             if (v > 0xffff) v = 0xffff;
         }
 
-        wIn[index] = v;
+        wIn[index] = (cmsUInt16Number) v;
         accum += Stride;
     }
 
@@ -1672,7 +1673,7 @@ cmsUInt8Number* PackChunkyBytes(CMSREGISTER _cmsTRANSFORM* info,
     cmsUInt32Number Premul = T_PREMUL(info->OutputFormat);
     cmsUInt32Number ExtraFirst = DoSwap ^ SwapFirst;
     cmsUInt8Number* swap1;
-    cmsUInt8Number v = 0;
+    cmsUInt16Number v = 0;
     cmsUInt32Number i;
     cmsUInt32Number alpha_factor = 0;
 
@@ -1695,17 +1696,17 @@ cmsUInt8Number* PackChunkyBytes(CMSREGISTER _cmsTRANSFORM* info,
 
         cmsUInt32Number index = DoSwap ? (nChan - i - 1) : i;
 
-        v = FROM_16_TO_8(wOut[index]);
+        v = wOut[index];
 
         if (Reverse)
-            v = REVERSE_FLAVOR_8(v);
+            v = REVERSE_FLAVOR_16(v);
 
         if (Premul && alpha_factor != 0)
         {
-            v = (cmsUInt8Number)((cmsUInt32Number)((cmsUInt32Number)v * alpha_factor + 0x8000) >> 16);
+            v = (cmsUInt16Number)((cmsUInt32Number)((cmsUInt32Number)v * alpha_factor + 0x8000) >> 16);            
         }
 
-        *output++ = v;
+        *output++ = FROM_16_TO_8(v);
     }
 
     if (!ExtraFirst) {
@@ -1715,7 +1716,7 @@ cmsUInt8Number* PackChunkyBytes(CMSREGISTER _cmsTRANSFORM* info,
     if (Extra == 0 && SwapFirst) {
 
         memmove(swap1 + 1, swap1, nChan-1);
-        *swap1 = v;
+        *swap1 = FROM_16_TO_8(v);
     }
 
     return output;
@@ -1831,16 +1832,17 @@ cmsUInt8Number* PackPlanarBytes(CMSREGISTER _cmsTRANSFORM* info,
     for (i=0; i < nChan; i++) {
 
         cmsUInt32Number index = DoSwap ? (nChan - i - 1) : i;
-        cmsUInt8Number v = FROM_16_TO_8(wOut[index]);
+        cmsUInt16Number v = wOut[index];
 
-        v = (cmsUInt8Number)(Reverse ? REVERSE_FLAVOR_8(v) : v);
+        if (Reverse)
+            v = REVERSE_FLAVOR_16(v);
 
         if (Premul && alpha_factor != 0)
         {
-            v = (cmsUInt8Number)((cmsUInt32Number)((cmsUInt32Number)v * alpha_factor + 0x8000) >> 16);
+            v = (cmsUInt16Number)((cmsUInt32Number)((cmsUInt32Number)v * alpha_factor + 0x8000) >> 16);
         }
 
-        *(cmsUInt8Number*)output = v;
+        *(cmsUInt8Number*)output = FROM_16_TO_8(v);
 
         output += Stride;
     }
