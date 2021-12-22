@@ -668,11 +668,11 @@ void CopyOtherTags(TIFF* in, TIFF* out)
     // This is tricky, libtiff would access predictor in a wrong way 
     // if the codec is none of those
     if (compression == COMPRESSION_LZW ||
-        compression == COMPRESSION_LZMA || 
+        compression == 34925 /*COMPRESSION_LZMA*/ ||
         compression == COMPRESSION_PIXARLOG || 
         compression == COMPRESSION_DEFLATE ||
         compression == COMPRESSION_ADOBE_DEFLATE ||
-        compression == COMPRESSION_ZSTD)
+        compression == 50000 /*COMPRESSION_ZSTD*/)
     {
         if (PixelDepth != 32)
             CopyField(TIFFTAG_PREDICTOR, shortv);
