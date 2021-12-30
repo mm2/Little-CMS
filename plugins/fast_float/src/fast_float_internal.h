@@ -27,7 +27,7 @@
 
 #define REQUIRED_LCMS_VERSION 2120
 
-// Unused parameter warning supression
+// Unused parameter warning suppression
 #define UNUSED_PARAMETER(x) ((void)x) 
 
 // For testbed

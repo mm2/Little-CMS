@@ -53,7 +53,7 @@ void Help(void)
     fprintf(stderr, "-b - Black point compensation (CRD only)\n");
     fprintf(stderr, "-u - Do NOT generate resource name on CRD\n");
     fprintf(stderr, "-c<0,1,2> - Precision (0=LowRes, 1=Normal (default), 2=Hi-res) (CRD only)\n");
-    fprintf(stderr, "-n<gridpoints> - Alternate way to set precission, number of CLUT points (CRD only)\n");
+    fprintf(stderr, "-n<gridpoints> - Alternate way to set precision, number of CLUT points (CRD only)\n");
 
     fprintf(stderr, "\n");
     fprintf(stderr, "If no output file is specified, output goes to stdout.\n\n");

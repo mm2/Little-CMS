@@ -440,7 +440,7 @@ cmsHPROFILE Create_CMYK_DeviceLink(void)
 }
 
 
-// Create a fake CMYK profile, without any other requeriment that being coarse CMYK.
+// Create a fake CMYK profile, without any other requirement that being coarse CMYK.
 // DON'T USE THIS PROFILE FOR ANYTHING, IT IS USELESS BUT FOR TESTING PURPOSES.
 typedef struct {
 
@@ -8279,7 +8279,7 @@ double distance(const cmsUInt16Number* a, const cmsUInt16Number* b)
 
 /**
 * In 2.12, a report suggest that the built-in sRGB has roundtrip errors that makes color to move
-* when rountripping again and again
+* when roundtripping again and again
 */
 static
 int Check_sRGB_Rountrips(void)
@@ -8378,7 +8378,7 @@ int CheckGammaSpaceDetection(void)
 
 #if 0
 
-// You need to download folowing profiles to execute this test: sRGB-elle-V4-srgbtrc.icc, sRGB-elle-V4-g10.icc
+// You need to download following profiles to execute this test: sRGB-elle-V4-srgbtrc.icc, sRGB-elle-V4-g10.icc
 // The include this line in the checks list:  Check("KInear spaces detection", CheckLinearSpacesOptimization);
 static
 void uint16toFloat(cmsUInt16Number* src, cmsFloat32Number* dst)

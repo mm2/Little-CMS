@@ -2,7 +2,7 @@
 -----------------------
 2.12 Maintenance release
 -----------------------
-Added new build-in sigmoidal tone curve
+Added new built-in sigmoidal tone curve
 Added XCode 12 project
 Added support for multichannel input up to 15 channels
 Fix LUT8 write matrix
@@ -13,7 +13,7 @@ Fix matlab MEX compilation
 plugin: cleanup and better SSE detection
 plugin: add lab to any on float
 plugin: it can now be compiled as C++
-recover PDF documentation, but try to keep it under a resonable size.
+recover PDF documentation, but try to keep it under a reasonable size.
 Prevent a rare but possible out-of-bounds read in postscript generator
 Remove unused variables
 
@@ -30,7 +30,7 @@ Fixed LUT16 write matrix on multichannel V2 profiles
 -----------------------
 Added a compilation toggle to remove "register" keyword in API. 
 Previously commercial, fast_float plug-in is now released as open source under GPL3 license.
-MD5 functions are now accesible through plug-in API.
+MD5 functions are now accessible through plug-in API.
 Added support for Visual Studio 2019
 Bug fixing.
 
