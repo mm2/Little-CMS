@@ -554,7 +554,7 @@ void WriteOutputTags(TIFF* out, int Colorspace, int BytesPerSample, int AlphaCha
 
     if (AlphaChannels > 0)
     {
-        cmsUInt16Number Extra[20];
+        cmsInt16Number Extra[20];
 
         if (IsPremul)
             fillArray(Extra, EXTRASAMPLE_ASSOCALPHA, sizeof(Extra));
@@ -613,7 +613,7 @@ void WriteOutputTags(TIFF* out, int Colorspace, int BytesPerSample, int AlphaCha
 
         if (StoreAsAlpha && nChannels >= 4) {
 
-            cmsUInt16Number Extra[20];
+            cmsInt16Number Extra[20];
 
             fillArray(Extra, EXTRASAMPLE_UNASSALPHA, sizeof(Extra));
 
