@@ -134,14 +134,61 @@ cmsBool _cmsWriteWCharArray(cmsIOHANDLER* io, cmsUInt32Number n, const wchar_t* 
     return TRUE;
 }
 
+// Try to promote correctly to wchar_t when 32 bits
+cmsINLINE cmsBool is_surrogate(cmsUInt32Number uc) { return (uc - 0xd800u) < 2048u; }
+cmsINLINE cmsBool is_high_surrogate(cmsUInt32Number uc) { return (uc & 0xfffffc00) == 0xd800; }
+cmsINLINE cmsBool is_low_surrogate(cmsUInt32Number uc)  { return (uc & 0xfffffc00) == 0xdc00; }
+
+cmsINLINE cmsUInt32Number surrogate_to_utf32(cmsUInt32Number high, cmsUInt32Number low)
+{
+    return (high << 10) + low - 0x35fdc00;
+}
+
+cmsINLINE cmsBool convert_utf16_to_utf32(cmsIOHANDLER* io, cmsInt32Number n, wchar_t* output)
+{
+    cmsUInt16Number uc;
+
+    while (n > 0)
+    {
+        if (!_cmsReadUInt16Number(io, &uc)) return FALSE;
+        n--;
+
+        if (!is_surrogate(uc))
+        {
+            *output++ = (wchar_t)uc;
+        }
+        else {
+
+            cmsUInt16Number low;
+
+            if (!_cmsReadUInt16Number(io, &low)) return FALSE;
+            n--;
+
+            if (is_high_surrogate(uc) && is_low_surrogate(low))
+                *output++ = (wchar_t)surrogate_to_utf32(uc, low);
+            else
+                return FALSE;   // Corrupted string, just ignore
+        }
+    }
+
+    return TRUE;
+}
+
+
 // Auxiliary to read an array of wchar_t
 static
 cmsBool _cmsReadWCharArray(cmsIOHANDLER* io, cmsUInt32Number n, wchar_t* Array)
 {
     cmsUInt32Number i;
     cmsUInt16Number tmp;
+    cmsBool is32 = sizeof(wchar_t) > sizeof(cmsUInt16Number);
 
     _cmsAssert(io != NULL);
+
+    if (is32 && Array != NULL)
+    {
+        return convert_utf16_to_utf32(io, n, Array);
+    }
 
     for (i=0; i < n; i++) {
 
