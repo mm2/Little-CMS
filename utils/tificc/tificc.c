@@ -634,7 +634,11 @@ void WriteOutputTags(TIFF* out, int Colorspace, int BytesPerSample, int AlphaCha
     }
 
     if (PixelDepth == 32)
-        TIFFSetField(out, TIFFTAG_SAMPLEFORMAT, SAMPLEFORMAT_IEEEFP);
+        TIFFSetField(out, TIFFTAG_SAMPLEFORMAT, 
+                          SAMPLEFORMAT_IEEEFP, 
+                          SAMPLEFORMAT_IEEEFP, 
+                          SAMPLEFORMAT_IEEEFP, 
+                          SAMPLEFORMAT_IEEEFP);
 }
 
 
@@ -648,7 +652,7 @@ void CopyOtherTags(TIFF* in, TIFF* out)
 
 
     short shortv;
-    short compression;
+    unsigned short compression;
     cmsUInt32Number ow, ol;
     cmsFloat32Number floatv;
     char *stringv;
