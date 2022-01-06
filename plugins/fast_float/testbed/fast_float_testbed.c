@@ -45,7 +45,7 @@ typedef struct { cmsFloat32Number L, a, b; }     Scanline_LabFloat;
 #define FROM_15_TO_8(x15) (cmsUInt8Number) (((cmsUInt64Number) x15 * 0xFF + 0x4000) >> 15)
 
 
-// Floating point acuracy for tests 
+// Floating point accuracy for tests 
 #define EPSILON_FLOAT_TESTS 0.005
 
 // A flushed printf
@@ -83,7 +83,7 @@ void Fail(const char* frm, ...)
        vsprintf(ReasonToFailBuffer, frm, args);
        FatalErrorQuit(0, 0, ReasonToFailBuffer);
 
-      // unreacheable va_end(args);
+      // unreachable va_end(args);
 }
 
 

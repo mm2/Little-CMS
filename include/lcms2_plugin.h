@@ -24,7 +24,7 @@
 //---------------------------------------------------------------------------------
 //
 // This is the plug-in header file. Normal LittleCMS clients should not use it.
-// It is provided for plug-in writters that may want to access the support
+// It is provided for plug-in writers that may want to access the support
 // functions to do low level operations. All plug-in related structures
 // are defined here. Including this file forces to include the standard API too.
 

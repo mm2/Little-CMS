@@ -248,7 +248,7 @@ static PROPERTY PredefinedProperties[] = {
 
         {"MATERIAL",         WRITE_STRINGIFY},    // Identifies the material on which the target was produced using a code
                                                   // uniquely identifying th e material. This is intend ed to be used for IT8.7
-                                                  // physical targets only (i.e . IT8.7/1 a nd IT8.7/2).
+                                                  // physical targets only (i.e . IT8.7/1 and IT8.7/2).
 
         {"INSTRUMENTATION",  WRITE_STRINGIFY},    // Used to report the specific instrumentation used (manufacturer and
                                                   // model number) to generate the data reported. This data will often

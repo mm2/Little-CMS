@@ -110,7 +110,7 @@ void Warning(const char *frm, ...)
 
 
 
-// Out of mememory is a fatal error
+// Out of memory is a fatal error
 static
 void OutOfMem(cmsUInt32Number size)
 {
@@ -642,7 +642,7 @@ void WriteOutputTags(TIFF* out, int Colorspace, int BytesPerSample, int AlphaCha
 }
 
 
-// Copies a bunch of tages
+// Copies a bunch of tags
 
 static
 void CopyOtherTags(TIFF* in, TIFF* out)
