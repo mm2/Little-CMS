@@ -9,7 +9,7 @@ CGATS parser can now deal with very long strings
 Added Projects for Visual Studio 2020
 Travis CI discontinued, GitHub actions used instead
 Added a very preliminar meson build script (thanks to xclaesse)
-Added ARM64 target to visual studo 2019 (thanks to gaborkertesz-linaro)
+Added ARM64 target to visual studio 2019 (thanks to gaborkertesz-linaro)
 Added thread safe code to get time
 Added automatic linear space detection 
 Added cmsGetStageContextID function
