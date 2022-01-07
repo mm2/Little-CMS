@@ -8279,7 +8279,7 @@ double distance(const cmsUInt16Number* a, const cmsUInt16Number* b)
 
 /**
 * In 2.12, a report suggest that the built-in sRGB has roundtrip errors that makes color to move
-* when roundripping again and again
+* when roundtripping again and again
 */
 static
 int Check_sRGB_Rountrips(void)

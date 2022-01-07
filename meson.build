@@ -1,9 +1,9 @@
 project('Little-CMS', 'c',
-  version: '2.12',
+  version: '2.13',
   meson_version: '>=0.48.0',
 )
 
-library_version = '2.0.12'
+library_version = '2.0.13'
 
 cc = meson.get_compiler('c')
 
@@ -59,13 +59,12 @@ endif
 
 if cc.has_function_attribute('visibility:hidden')
   cargs +='-DHAVE_FUNC_ATTRIBUTE_VISIBILITY=1'
-elif cc.get_id() == 'msvc'
-  cargs += '-DCMS_DLL_BUILD=1'
 endif
 
 if host_machine.system() == 'windows'
   win = import('windows')
   lcms2_srcs += win.compile_resources('Projects/VC2019/lcms2.rc')
+  cargs += '-DCMS_DLL_BUILD=1'
 endif
 
 liblcms2_lib = library('lcms2', lcms2_srcs,

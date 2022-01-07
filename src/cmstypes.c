@@ -3227,6 +3227,10 @@ cmsBool Type_NamedColor_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER
        cmsUInt16Number Colorant[cmsMAXCHANNELS];
        char Root[cmsMAX_PATH];
 
+       memset(Root, 0, sizeof(Root));
+       memset(PCS, 0, sizeof(PCS));
+       memset(Colorant, 0, sizeof(Colorant));
+
         if (!cmsNamedColorInfo(NamedColorList, i, Root, NULL, NULL, PCS, Colorant)) return 0;
         Root[32] = 0;
         if (!io ->Write(io, 32 , Root)) return FALSE;

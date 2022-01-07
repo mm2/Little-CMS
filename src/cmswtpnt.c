@@ -267,7 +267,7 @@ cmsBool _cmsAdaptMatrixToD50(cmsMAT3* r, const cmsCIExyY* SourceWhitePt)
 // aspects of the RGB to XYZ process, and assuming that the gamma correction
 // has transitive property in the transformation chain.
 //
-// the algoritm:
+// the algorithm:
 //
 //            - First I build the absolute conversion matrix using
 //              primaries in XYZ. This matrix is next inverted
