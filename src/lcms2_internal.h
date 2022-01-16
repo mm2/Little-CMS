@@ -204,7 +204,7 @@ cmsINLINE cmsUInt16Number _cmsQuickSaturateWord(cmsFloat64Number d)
 // windows does not support pthreads. 
 #ifdef CMS_IS_WINDOWS_
 
-#define WIN32_LEAN_AND_MEAN 1
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 
