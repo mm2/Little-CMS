@@ -3593,7 +3593,7 @@ void *Type_UcrBg_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cm
     n ->Bg = cmsBuildTabulatedToneCurve16(self ->ContextID, CountBg, NULL);
     if (n ->Bg == NULL) goto error;
 
-    if (SignedSizeOfTag < (cmsInt32Number) CountBg * sizeof(cmsUInt16Number)) goto error;
+    if (SignedSizeOfTag < (cmsInt32Number) (CountBg * sizeof(cmsUInt16Number))) goto error;
     if (!_cmsReadUInt16Array(io, CountBg, n ->Bg->Table16)) goto error;
     SignedSizeOfTag -= CountBg * sizeof(cmsUInt16Number);
 
