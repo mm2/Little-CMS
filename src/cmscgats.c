@@ -1187,7 +1187,7 @@ char *AllocString(cmsIT8* it8, const char* str)
 
 
     ptr = (char *) AllocChunk(it8, Size);
-    if (ptr) strncpy (ptr, str, Size-1);
+    if (ptr) memcpy(ptr, str, Size-1);
 
     return ptr;
 }
