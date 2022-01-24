@@ -368,7 +368,7 @@ int InkLimitingSampler(CMSREGISTER const cmsUInt16Number In[], CMSREGISTER cmsUI
 
     InkLimit = (InkLimit * 655.35);
 
-    SumCMY   = In[0]  + In[1] + In[2];
+    SumCMY   = (cmsFloat64Number) In[0]  + In[1] + In[2];
     SumCMYK  = SumCMY + In[3];
 
     if (SumCMYK > InkLimit) {
