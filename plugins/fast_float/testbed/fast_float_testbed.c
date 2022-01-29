@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System, fast floating point extensions
-//  Copyright (c) 1998-2020 Marti Maria Saguer, all rights reserved
+//  Copyright (c) 1998-2022 Marti Maria Saguer, all rights reserved
 //
 //
 // This program is free software: you can redistribute it and/or modify
@@ -2393,7 +2393,7 @@ void TestGrayTransformPerformance1()
 int main()
 {
        trace("FastFloating point extensions testbed - 1.5\n");
-       trace("Copyright (c) 1998-2021 Marti Maria Saguer, all rights reserved\n");
+       trace("Copyright (c) 1998-2022 Marti Maria Saguer, all rights reserved\n");
        
        trace("\nInstalling error logger ... ");
        cmsSetLogErrorHandler(FatalErrorQuit);
