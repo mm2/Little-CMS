@@ -149,7 +149,7 @@ AC_ARG_WITH(fastfloat,
             [
                 with_fastfloat='no'
             ])
-if test "$with_fastfloat" == "yes"
+if test "x$with_fastfloat" = "xyes"
 then
             LIB_PLUGINS="$LIB_PLUGINS -llcms2_fast_float"
 fi
@@ -383,7 +383,6 @@ LCMS_LIB_DEPLIBS="$LIB_MATH $LIB_THREAD"
 LCMS_LIB_DEPLIBS=`echo $LCMS_LIB_DEPLIBS | sed -e 's/  */ /g'`
 AC_SUBST(LCMS_LIB_DEPLIBS)
 
-echo "LIB_PLUGINS: $LIB_PLUGINS"
 AC_SUBST(LIB_PLUGINS)
 
 # Libraries that the jpegicc program depends on

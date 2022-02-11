@@ -17178,7 +17178,7 @@ else
 
 fi
 
-if test "$with_fastfloat" == "yes"
+if test "x$with_fastfloat" = "xyes"
 then
             LIB_PLUGINS="$LIB_PLUGINS -llcms2_fast_float"
 fi
@@ -18504,7 +18504,6 @@ LCMS_LIB_DEPLIBS="$LIB_MATH $LIB_THREAD"
 LCMS_LIB_DEPLIBS=`echo $LCMS_LIB_DEPLIBS | sed -e 's/  */ /g'`
 
 
-echo "LIB_PLUGINS: $LIB_PLUGINS"
 
 
 # Libraries that the jpegicc program depends on
