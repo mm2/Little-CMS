@@ -55,7 +55,7 @@ AC_LIBTOOL_SETUP
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
-LIB_PLUGINS = ''
+LIB_PLUGINS=''
 
 # Add configure option --enable-maintainer-mode which enables dependency
 # checking and generation useful to package maintainers.  This is made an
