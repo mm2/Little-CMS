@@ -70,7 +70,7 @@ static struct my_error_mgr {
 } ErrorHandler;
 
 
-cmsUInt16Number Alarm[4] = {128,128,128,0};
+cmsUInt16Number Alarm[cmsMAXCHANNELS] = {128,128,128,0};
 
 
 static
