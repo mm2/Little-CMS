@@ -174,17 +174,10 @@ typedef cmsUInt32Number      cmsU16Fixed16Number;
 typedef int                  cmsBool;
 
 // Try to detect windows
-#if defined (_WIN32) || defined(_WIN64) || defined(WIN32) || defined(_WIN32_)
+#if defined (_WIN32) || defined(_WIN64) || defined(WIN32) || defined(_WIN32_) || defined(_MSC_VER) || defined(__BORLANDC__)
 #  define CMS_IS_WINDOWS_ 1
 #endif
 
-#ifdef _MSC_VER
-#  define CMS_IS_WINDOWS_ 1
-#endif
-
-#ifdef __BORLANDC__
-#  define CMS_IS_WINDOWS_ 1
-#endif
 
 // Try to detect big endian platforms. This list can be endless, so primarily rely on the configure script
 // on Unix-like systems, and allow it to be set on the compiler command line using
