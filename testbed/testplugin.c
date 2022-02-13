@@ -979,7 +979,6 @@ cmsInt32Number CheckMPEPlugin(void)
     cmsContext cpy = NULL;
     cmsContext cpy2 = NULL;
     cmsHPROFILE h = NULL;
-    cmsUInt32Number myTag = 1234;
     cmsUInt32Number rc = 0;
     char* data = NULL;
     cmsUInt32Number clen = 0;

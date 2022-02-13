@@ -41,10 +41,10 @@
 #ifdef CMS_IS_WINDOWS_
 #    include <io.h>
 #    include <direct.h>
-#    define CHDIR(a) _chdir(a)
+#    define CHDIR(a) (void)_chdir(a)
 #else
 #    include <unistd.h>
-#    define CHDIR(a) chdir(a)
+#    define CHDIR(a) (void)chdir(a)
 #endif
 
 #define cmsmin(a, b) (((a) < (b)) ? (a) : (b))
