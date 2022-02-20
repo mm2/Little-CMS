@@ -414,11 +414,7 @@ cmsBool Optimize8BitRGBTransform(_cmsTransform2Fn* TransformFn,
     // Check for validity
     lIsSuitable = TRUE;
     for (t=0; (lIsSuitable && (t < 3)); t++) {
-
-        // Exclude if non-monotonic
-        if (!cmsIsToneCurveMonotonic(Trans[t]))
-            lIsSuitable = FALSE;         
-
+        
         if (IsDegenerated(Trans[t]))
             lIsSuitable = FALSE;
     }
