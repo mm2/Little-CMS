@@ -894,7 +894,7 @@ cmsInt32Number CheckTagTypePlugin(void)
 
     ptr = (cmsUInt32Number*) cmsReadTag(h, SigInt);
     if (ptr == NULL) {        
-        Fail("Read tag/conext switching failed (2)");
+        Fail("Read tag/context switching failed (2)");
         return 0;
     }
    
@@ -1077,7 +1077,7 @@ cmsInt32Number CheckMPEPlugin(void)
 
     pipe = (cmsPipeline*) cmsReadTag(h, cmsSigDToB3Tag);
     if (pipe == NULL) {        
-        Fail("Read tag/conext switching failed (2)");
+        Fail("Read tag/context switching failed (2)");
         return 0;
     }
    
