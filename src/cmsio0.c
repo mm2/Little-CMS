@@ -1558,6 +1558,7 @@ void* CMSEXPORT cmsReadTag(cmsHPROFILE hProfile, cmsTagSignature sig)
     if (TagSize < 8) goto Error;
 
     io = Icc ->IOhandler;
+    if (!io) goto Error;
     // Seek to its location
     if (!io -> Seek(io, Offset))
         goto Error;

@@ -595,6 +595,7 @@ cmsBool CMSEXPORT cmsDesaturateLab(cmsCIELab* Lab,
 // that simplifies things: only RGB, and only profiles that can got in both directions.
 // The algorithm obtains Y from a syntetical gray R=G=B. Then least squares fitting is used to estimate gamma. 
 // For gamma close to 1.0, RGB is linear. On profiles not supported, -1 is returned.
+// If a fatal error is encountered -2 is returned.
 
 cmsFloat64Number CMSEXPORT cmsDetectRGBProfileGamma(cmsHPROFILE hProfile, cmsFloat64Number threshold)
 {
@@ -619,13 +620,16 @@ cmsFloat64Number CMSEXPORT cmsDetectRGBProfileGamma(cmsHPROFILE hProfile, cmsFlo
 
     ContextID = cmsGetProfileContextID(hProfile);
     hXYZ = cmsCreateXYZProfileTHR(ContextID);
+    if (hXYZ == NULL) {
+        return -2; // fatal error
+    }
     xform = cmsCreateTransformTHR(ContextID, hProfile, TYPE_RGB_16, hXYZ, TYPE_XYZ_DBL, 
                                     INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_NOOPTIMIZE);
 
     if (xform == NULL) { // If not RGB or forward direction is not supported, regret with the previous error
 
         cmsCloseProfile(hXYZ);        
-        return -1;
+        return -2; // fatal error
     }
 
     for (i = 0; i < 256; i++) {

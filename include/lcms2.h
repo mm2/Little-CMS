@@ -1924,7 +1924,7 @@ CMSAPI cmsBool          CMSEXPORT cmsDetectDestinationBlackPoint(cmsCIEXYZ* Blac
 // Estimate total area coverage
 CMSAPI cmsFloat64Number CMSEXPORT cmsDetectTAC(cmsHPROFILE hProfile);
 
-// Estimate gamma space, always positive. Returns -1 on error.
+// Estimate gamma space, always positive. Returns -1 for unsupported, returns -2 on fatal error.
 CMSAPI cmsFloat64Number CMSEXPORT cmsDetectRGBProfileGamma(cmsHPROFILE hProfile, cmsFloat64Number threshold);
 
 // Poor man's gamut mapping

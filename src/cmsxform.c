@@ -1085,6 +1085,10 @@ cmsHTRANSFORM CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
     if (EntryColorSpace == cmsSigRgbData && T_BYTES(InputFormat) == 2 && !(dwFlags & cmsFLAGS_NOOPTIMIZE))
     {
         cmsFloat64Number gamma = cmsDetectRGBProfileGamma(hProfiles[0], 0.1);
+        if (gamma < -1) {
+        cmsSignalError(ContextID, cmsERROR_NOT_SUITABLE, "Error in profile");
+        return NULL;
+        }
 
         if (gamma > 0 && gamma < 1.6)
             dwFlags |= cmsFLAGS_NOOPTIMIZE;
