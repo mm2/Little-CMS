@@ -1558,6 +1558,13 @@ void* CMSEXPORT cmsReadTag(cmsHPROFILE hProfile, cmsTagSignature sig)
     if (TagSize < 8) goto Error;
 
     io = Icc ->IOhandler;
+
+    if (io == NULL) { // This is a built-in profile that has been manipulated, abort early
+
+        cmsSignalError(Icc->ContextID, cmsERROR_CORRUPTION_DETECTED, "Corrupted built-in profile.");
+        goto Error;
+    }
+
     // Seek to its location
     if (!io -> Seek(io, Offset))
         goto Error;
