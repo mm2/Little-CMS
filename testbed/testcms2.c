@@ -9436,7 +9436,7 @@ int main(int argc, char* argv[])
     Check("sRGB round-trips", Check_sRGB_Rountrips);
     Check("Gamma space detection", CheckGammaSpaceDetection);
     Check("Unbounded mode w/ integer output", CheckIntToFloatTransform);
-    Check("Corrupted buit-in by using cmsWriteRawTag", CheckInducedCorruption);
+    Check("Corrupted built-in by using cmsWriteRawTag", CheckInducedCorruption);
     }
 
     if (DoPluginTests)
