@@ -391,7 +391,7 @@ cmsIOHANDLER* CMSEXPORT cmsOpenIOhandlerFromFile(cmsContext ContextID, const cha
              cmsSignalError(ContextID, cmsERROR_FILE, "File '%s' not found", FileName);
             return NULL;
         }                                     
-        fileLen = cmsfilelength(fm);
+        fileLen = (cmsInt32Number)cmsfilelength(fm);
         if (fileLen < 0)
         {
             fclose(fm);
@@ -442,7 +442,7 @@ cmsIOHANDLER* CMSEXPORT cmsOpenIOhandlerFromStream(cmsContext ContextID, FILE* S
     cmsIOHANDLER* iohandler = NULL;
     cmsInt32Number fileSize;
 
-    fileSize = cmsfilelength(Stream);
+    fileSize = (cmsInt32Number)cmsfilelength(Stream);
     if (fileSize < 0)
     {
         cmsSignalError(ContextID, cmsERROR_FILE, "Cannot get size of stream");
