@@ -1186,7 +1186,7 @@ int main(int argc, char* argv[])
     TIFF *in, *out;
    
 
-    fprintf(stderr, "Little CMS ICC profile applier for TIFF - v7.0 [LittleCMS %2.2f]\n\n", LCMS_VERSION / 1000.0);
+    fprintf(stderr, "Little CMS ICC profile applier for TIFF - v7.1 [LittleCMS %2.2f]\n\n", cmsGetEncodedCMMversion() / 1000.0);
     fprintf(stderr, "Copyright (c) 1998-2022 Marti Maria Saguer. See COPYING file for details.\n");
     fflush(stderr);
 
