@@ -310,26 +310,26 @@ Error:
 
 
 // Generates a sigmoidal function with desired steepness.
-cmsINLINE double sigmoid_base(double k, double t)
+cmsINLINE float sigmoid_base(float k, float t)
 {
-    return (1.0 / (1.0 + exp(-k * t))) - 0.5;
+    return (1.0 / (1.0 + expf(-k * t))) - 0.5;
 }
 
-cmsINLINE double inverted_sigmoid_base(double k, double t)
+cmsINLINE float inverted_sigmoid_base(float k, float t)
 {
-    return -log((1.0 / (t + 0.5)) - 1.0) / k;
+    return -logf((1.0 / (t + 0.5)) - 1.0) / k;
 }
 
-cmsINLINE double sigmoid_factory(double k, double t)
+cmsINLINE float sigmoid_factory(float k, float t)
 {
     double correction = 0.5 / sigmoid_base(k, 1);
 
     return correction * sigmoid_base(k, 2.0 * t - 1.0) + 0.5;
 }
 
-cmsINLINE double inverse_sigmoid_factory(double k, double t)
+cmsINLINE float inverse_sigmoid_factory(float k, float t)
 {
-    double correction = 0.5 / sigmoid_base(k, 1);
+    float correction = 0.5 / sigmoid_base(k, 1);
 
     return (inverted_sigmoid_base(k, (t - 0.5) / correction) + 1.0) / 2.0;
 }
@@ -339,7 +339,7 @@ cmsINLINE double inverse_sigmoid_factory(double k, double t)
 static
 cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Number Params[], cmsFloat64Number R)
 {
-    cmsFloat64Number e, Val, disc;
+    cmsFloat32Number e, Val, disc;
 
     switch (Type) {
 
@@ -347,30 +347,30 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
     case 1:
         if (R < 0) {
 
-            if (fabs(Params[0] - 1.0) < MATRIX_DET_TOLERANCE)
+            if (fabsf(Params[0] - 1.0) < MATRIX_DET_TOLERANCE)
                 Val = R;
             else
                 Val = 0;
         }
         else
-            Val = pow(R, Params[0]);
+            Val = powf(R, Params[0]);
         break;
 
     // Type 1 Reversed: X = Y ^1/gamma
     case -1:
         if (R < 0) {
 
-            if (fabs(Params[0] - 1.0) < MATRIX_DET_TOLERANCE)
+            if (fabsf(Params[0] - 1.0) < MATRIX_DET_TOLERANCE)
                 Val = R;
             else
                 Val = 0;
         }
         else
         {
-            if (fabs(Params[0]) < MATRIX_DET_TOLERANCE)
+            if (fabsf(Params[0]) < MATRIX_DET_TOLERANCE)
                 Val = PLUS_INF;
             else
-                Val = pow(R, 1 / Params[0]);
+                Val = powf(R, 1 / Params[0]);
         }
         break;
 
@@ -380,7 +380,7 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
     case 2:
     {
 
-        if (fabs(Params[1]) < MATRIX_DET_TOLERANCE)
+        if (fabsf(Params[1]) < MATRIX_DET_TOLERANCE)
         {
             Val = 0;
         }
@@ -393,7 +393,7 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
                 e = Params[1] * R + Params[2];
 
                 if (e > 0)
-                    Val = pow(e, Params[0]);
+                    Val = powf(e, Params[0]);
                 else
                     Val = 0;
             }
@@ -407,8 +407,8 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
      // X = (Y ^1/g  - b) / a
      case -2:
      {
-         if (fabs(Params[0]) < MATRIX_DET_TOLERANCE ||
-             fabs(Params[1]) < MATRIX_DET_TOLERANCE)
+         if (fabsf(Params[0]) < MATRIX_DET_TOLERANCE ||
+             fabsf(Params[1]) < MATRIX_DET_TOLERANCE)
          {
              Val = 0;
          }
@@ -417,7 +417,7 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
              if (R < 0)
                  Val = 0;
              else
-                 Val = (pow(R, 1.0 / Params[0]) - Params[2]) / Params[1];
+                 Val = (powf(R, 1.0 / Params[0]) - Params[2]) / Params[1];
 
              if (Val < 0)
                  Val = 0;
@@ -431,7 +431,7 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
     // Y = c              | else
     case 3:
     {
-        if (fabs(Params[1]) < MATRIX_DET_TOLERANCE)
+        if (fabsf(Params[1]) < MATRIX_DET_TOLERANCE)
         {
             Val = 0;
         }
@@ -446,7 +446,7 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
                 e = Params[1] * R + Params[2];
 
                 if (e > 0)
-                    Val = pow(e, Params[0]) + Params[3];
+                    Val = powf(e, Params[0]) + Params[3];
                 else
                     Val = 0;
             }
@@ -462,7 +462,7 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
     // X=-b/a                   | (Y<c)
     case -3:
     {
-        if (fabs(Params[1]) < MATRIX_DET_TOLERANCE)
+        if (fabsf(Params[1]) < MATRIX_DET_TOLERANCE)
         {
             Val = 0;
         }
@@ -473,7 +473,7 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
                 e = R - Params[3];
 
                 if (e > 0)
-                    Val = (pow(e, 1 / Params[0]) - Params[2]) / Params[1];
+                    Val = (powf(e, 1 / Params[0]) - Params[2]) / Params[1];
                 else
                     Val = 0;
             }
@@ -494,7 +494,7 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
             e = Params[1]*R + Params[2];
 
             if (e > 0)
-                Val = pow(e, Params[0]);
+                Val = powf(e, Params[0]);
             else
                 Val = 0;
         }
@@ -512,21 +512,21 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
         if (e < 0)
             disc = 0;
         else
-            disc = pow(e, Params[0]);
+            disc = powf(e, Params[0]);
 
         if (R >= disc) {
 
-            if (fabs(Params[0]) < MATRIX_DET_TOLERANCE ||
-                fabs(Params[1]) < MATRIX_DET_TOLERANCE)
+            if (fabsf(Params[0]) < MATRIX_DET_TOLERANCE ||
+                fabsf(Params[1]) < MATRIX_DET_TOLERANCE)
 
                 Val = 0;
 
             else
-                Val = (pow(R, 1.0 / Params[0]) - Params[2]) / Params[1];
+                Val = (powf(R, 1.0 / Params[0]) - Params[2]) / Params[1];
         }
         else {
 
-            if (fabs(Params[3]) < MATRIX_DET_TOLERANCE)
+            if (fabsf(Params[3]) < MATRIX_DET_TOLERANCE)
                 Val = 0;
             else
                 Val = R / Params[3];
@@ -544,7 +544,7 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
             e = Params[1]*R + Params[2];
 
             if (e > 0)
-                Val = pow(e, Params[0]) + Params[5];
+                Val = powf(e, Params[0]) + Params[5];
             else
                 Val = Params[5];
         }
@@ -566,16 +566,16 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
                 Val = 0;
             else
             {
-                if (fabs(Params[0]) < MATRIX_DET_TOLERANCE ||
-                    fabs(Params[1]) < MATRIX_DET_TOLERANCE)
+                if (fabsf(Params[0]) < MATRIX_DET_TOLERANCE ||
+                    fabsf(Params[1]) < MATRIX_DET_TOLERANCE)
 
                     Val = 0;
                 else
-                    Val = (pow(e, 1.0 / Params[0]) - Params[2]) / Params[1];
+                    Val = (powf(e, 1.0 / Params[0]) - Params[2]) / Params[1];
             }
         }
         else {
-            if (fabs(Params[3]) < MATRIX_DET_TOLERANCE)
+            if (fabsf(Params[3]) < MATRIX_DET_TOLERANCE)
                 Val = 0;
             else
                 Val = (R - Params[6]) / Params[3];
@@ -595,13 +595,13 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
         if (e < 0)
             Val = Params[3];
         else
-            Val = pow(e, Params[0]) + Params[3];
+            Val = powf(e, Params[0]) + Params[3];
         break;
 
     // ((Y - c) ^1/Gamma - b) / a
     case -6:
     {
-        if (fabs(Params[1]) < MATRIX_DET_TOLERANCE)
+        if (fabsf(Params[1]) < MATRIX_DET_TOLERANCE)
         {
             Val = 0;
         }
@@ -611,36 +611,36 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
             if (e < 0)
                 Val = 0;
             else
-                Val = (pow(e, 1.0 / Params[0]) - Params[2]) / Params[1];
+                Val = (powf(e, 1.0 / Params[0]) - Params[2]) / Params[1];
         }
     }
     break;
 
 
-    // Y = a * log (b * X^Gamma + c) + d
+    // Y = a * logf (b * X^Gamma + c) + d
     case 7:
 
-       e = Params[2] * pow(R, Params[0]) + Params[3];
+       e = Params[2] * powf(R, Params[0]) + Params[3];
        if (e <= 0)
            Val = Params[4];
        else
            Val = Params[1]*log10(e) + Params[4];
        break;
 
-    // (Y - d) / a = log(b * X ^Gamma + c)
-    // pow(10, (Y-d) / a) = b * X ^Gamma + c
-    // pow((pow(10, (Y-d) / a) - c) / b, 1/g) = X
+    // (Y - d) / a = logf(b * X ^Gamma + c)
+    // powf(10, (Y-d) / a) = b * X ^Gamma + c
+    // powf((powf(10, (Y-d) / a) - c) / b, 1/g) = X
     case -7:
     {
-        if (fabs(Params[0]) < MATRIX_DET_TOLERANCE ||
-            fabs(Params[1]) < MATRIX_DET_TOLERANCE ||
-            fabs(Params[2]) < MATRIX_DET_TOLERANCE)
+        if (fabsf(Params[0]) < MATRIX_DET_TOLERANCE ||
+            fabsf(Params[1]) < MATRIX_DET_TOLERANCE ||
+            fabsf(Params[2]) < MATRIX_DET_TOLERANCE)
         {
             Val = 0;
         }
         else
         {
-            Val = pow((pow(10.0, (R - Params[4]) / Params[1]) - Params[3]) / Params[2], 1.0 / Params[0]);
+            Val = powf((powf(10.0, (R - Params[4]) / Params[1]) - Params[3]) / Params[2], 1.0 / Params[0]);
         }
     }
     break;
@@ -648,11 +648,11 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
 
    //Y = a * b^(c*X+d) + e
    case 8:
-       Val = (Params[0] * pow(Params[1], Params[2] * R + Params[3]) + Params[4]);
+       Val = (Params[0] * powf(Params[1], Params[2] * R + Params[3]) + Params[4]);
        break;
 
 
-   // Y = (log((y-e) / a) / log(b) - d ) / c
+   // Y = (logf((y-e) / a) / logf(b) - d ) / c
    // a=0, b=1, c=2, d=3, e=4,
    case -8:
 
@@ -660,14 +660,14 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
        if (disc < 0) Val = 0;
        else
        {
-           if (fabs(Params[0]) < MATRIX_DET_TOLERANCE ||
-               fabs(Params[2]) < MATRIX_DET_TOLERANCE)
+           if (fabsf(Params[0]) < MATRIX_DET_TOLERANCE ||
+               fabsf(Params[2]) < MATRIX_DET_TOLERANCE)
            {
                Val = 0;
            }
            else
            {
-               Val = (log(disc / Params[0]) / log(Params[1]) - Params[3]) / Params[2];
+               Val = (logf(disc / Params[0]) / logf(Params[1]) - Params[3]) / Params[2];
            }
        }
        break;
@@ -675,10 +675,10 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
 
    // S-Shaped: (1 - (1-x)^1/g)^1/g
    case 108:
-       if (fabs(Params[0]) < MATRIX_DET_TOLERANCE)
+       if (fabsf(Params[0]) < MATRIX_DET_TOLERANCE)
            Val = 0;
        else
-           Val = pow(1.0 - pow(1 - R, 1/Params[0]), 1/Params[0]);
+           Val = powf(1.0 - powf(1 - R, 1/Params[0]), 1/Params[0]);
       break;
 
     // y = (1 - (1-x)^1/g)^1/g
@@ -687,7 +687,7 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
     // (1 - y^g)^g = 1 - x
     // 1 - (1 - y^g)^g
     case -108:
-        Val = 1 - pow(1 - pow(R, Params[0]), Params[0]);
+        Val = 1 - powf(1 - powf(R, Params[0]), Params[0]);
         break;
 
     // Sigmoidals
@@ -776,7 +776,7 @@ cmsToneCurve* CMSEXPORT cmsBuildTabulatedToneCurve16(cmsContext ContextID, cmsUI
 static
 cmsUInt32Number EntriesByGamma(cmsFloat64Number Gamma)
 {
-    if (fabs(Gamma - 1.0) < 0.001) return 2;
+    if (fabsf(Gamma - 1.0) < 0.001) return 2;
     return 4096;
 }
 
@@ -1440,10 +1440,10 @@ cmsUInt16Number CMSEXPORT cmsEvalToneCurve16(const cmsToneCurve* Curve, cmsUInt1
 // R2 = (yi - (xi^g))2
 // SUM R2 = SUM (yi - (xi^g))2
 //
-// dR2/dg = -2 SUM x^g log(x)(y - x^g)
+// dR2/dg = -2 SUM x^g logf(x)(y - x^g)
 // solving for dR2/dg = 0
 //
-// g = 1/n * SUM(log(y) / log(x))
+// g = 1/n * SUM(logf(y) / logf(x))
 
 cmsFloat64Number CMSEXPORT cmsEstimateGamma(const cmsToneCurve* t, cmsFloat64Number Precision)
 {
@@ -1466,7 +1466,7 @@ cmsFloat64Number CMSEXPORT cmsEstimateGamma(const cmsToneCurve* t, cmsFloat64Num
 
         if (y > 0. && y < 1. && x > 0.07) {
 
-            gamma = log(y) / log(x);
+            gamma = logf(y) / logf(x);
             sum  += gamma;
             sum2 += gamma * gamma;
             n++;
