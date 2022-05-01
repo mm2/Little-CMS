@@ -6,17 +6,16 @@
 AUTOMAKE_OPTIONS = 1.7 foreign
 
 AM_CPPFLAGS	=  -I$(builddir)/../include -I$(srcdir)/../include -I$(srcdir)/../src \
-                   -I$(top_builddir)/include 
+                   -I$(top_builddir)/include
 
 check_PROGRAMS = fast_float_testbed
 
-fast_float_testbed_LDADD =  $(srcdir)/../src/liblcms2_fast_float.la $(LCMS_LIB_DEPLIBS)
+fast_float_testbed_LDADD =  $(builddir)/../src/liblcms2_fast_float.la $(LCMS_LIB_DEPLIBS)
 fast_float_testbed_LDFLAGS = -static @LDFLAGS@
-fast_float_testbed_SOURCES = fast_float_testbed.c 
+fast_float_testbed_SOURCES = fast_float_testbed.c
 
-EXTRA_DIST = test0.icc test1.icc test2.icc test3.icc test5.icc 
+EXTRA_DIST = test0.icc test1.icc test2.icc test3.icc test5.icc
 
 check:
+	cp $(srcdir)/test?.icc .
 	./fast_float_testbed
-
-
