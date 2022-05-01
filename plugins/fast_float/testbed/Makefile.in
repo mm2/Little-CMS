@@ -113,7 +113,8 @@ am_fast_float_testbed_OBJECTS = fast_float_testbed.$(OBJEXT)
 fast_float_testbed_OBJECTS = $(am_fast_float_testbed_OBJECTS)
 am__DEPENDENCIES_1 =
 fast_float_testbed_DEPENDENCIES =  \
-	$(srcdir)/../src/liblcms2_fast_float.la $(am__DEPENDENCIES_1)
+	$(builddir)/../src/liblcms2_fast_float.la \
+	$(am__DEPENDENCIES_1)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
@@ -331,12 +332,12 @@ top_srcdir = @top_srcdir@
 # Don't require all the GNU mandated files
 AUTOMAKE_OPTIONS = 1.7 foreign
 AM_CPPFLAGS = -I$(builddir)/../include -I$(srcdir)/../include -I$(srcdir)/../src \
-                   -I$(top_builddir)/include 
+                   -I$(top_builddir)/include
 
-fast_float_testbed_LDADD = $(srcdir)/../src/liblcms2_fast_float.la $(LCMS_LIB_DEPLIBS)
+fast_float_testbed_LDADD = $(builddir)/../src/liblcms2_fast_float.la $(LCMS_LIB_DEPLIBS)
 fast_float_testbed_LDFLAGS = -static @LDFLAGS@
-fast_float_testbed_SOURCES = fast_float_testbed.c 
-EXTRA_DIST = test0.icc test1.icc test2.icc test3.icc test5.icc 
+fast_float_testbed_SOURCES = fast_float_testbed.c
+EXTRA_DIST = test0.icc test1.icc test2.icc test3.icc test5.icc
 all: all-am
 
 .SUFFIXES:
@@ -639,6 +640,9 @@ uninstall-am:
 
 
 check:
+	if [ "x$(srcdir)" != "x$(builddir)" ]; then \
+		cp $(srcdir)/test?.icc . ; \
+	fi
 	./fast_float_testbed
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
