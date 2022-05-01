@@ -17,5 +17,7 @@ fast_float_testbed_SOURCES = fast_float_testbed.c
 EXTRA_DIST = test0.icc test1.icc test2.icc test3.icc test5.icc
 
 check:
-	cp $(srcdir)/test?.icc .
+	if [ "x$(srcdir)" != "x$(builddir)" ]; then \
+		cp $(srcdir)/test?.icc . ; \
+	fi
 	./fast_float_testbed
