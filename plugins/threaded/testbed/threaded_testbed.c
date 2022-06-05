@@ -22,6 +22,7 @@
 
 #include <stdlib.h>
 #include <memory.h>
+#include <time.h>
 
 // A fast way to convert from/to 16 <-> 8 bits
 #define FROM_8_TO_16(rgb) (cmsUInt16Number) ((((cmsUInt16Number) (rgb)) << 8)|(rgb)) 
@@ -34,6 +35,34 @@ typedef struct { cmsUInt8Number  c, m, y, k; }  Scanline_cmyk8bits;
 typedef struct { cmsUInt16Number r, g, b;    }  Scanline_rgb16bits;
 typedef struct { cmsUInt16Number r, g, b, a; }  Scanline_rgba16bits;
 typedef struct { cmsUInt16Number c, m, y, k; }  Scanline_cmyk16bits;
+
+
+static struct timespec start, finish;
+
+cmsINLINE void MeasureTimeStart(void)
+{    
+#ifdef CMS_IS_WINDOWS_
+    timespec_get(&start, TIME_UTC);
+#else
+    clock_gettime(CLOCK_MONOTONIC, &start);
+#endif
+}
+
+cmsINLINE double MeasureTimeStop(void)
+{
+    double elapsed;
+
+#ifdef CMS_IS_WINDOWS_
+    timespec_get(&finish, TIME_UTC);
+#else
+    clock_gettime(CLOCK_MONOTONIC, &finish);
+#endif
+
+    elapsed = ((double) finish.tv_sec - start.tv_sec);
+    elapsed += ((double) finish.tv_nsec - start.tv_nsec) / 1000000000.0;
+    return elapsed;
+}
+
 
 
 // A flushed printf
@@ -139,9 +168,8 @@ void CheckChangeFormat(void)
 
 
 static 
-cmsFloat64Number MPixSec(cmsFloat64Number diff)
-{
-       cmsFloat64Number seconds = (cmsFloat64Number)diff / (cmsFloat64Number)CLOCKS_PER_SEC;
+cmsFloat64Number MPixSec(cmsFloat64Number seconds)
+{       
        return (256.0 * 256.0 * 256.0) / (1024.0*1024.0*seconds);
 }
 
@@ -252,8 +280,7 @@ void Comparative(const char* Title, perf_fn fn1, perf_fn fn2, const char* inICC,
 static
 cmsFloat64Number SpeedTest8bitsRGB(cmsContext ct, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut)
 {
-       cmsInt32Number r, g, b, j;
-       clock_t atime;
+       cmsInt32Number r, g, b, j;       
        cmsFloat64Number diff;
        cmsHTRANSFORM hlcmsxform;
        Scanline_rgb8bits *In;
@@ -281,11 +308,11 @@ cmsFloat64Number SpeedTest8bitsRGB(cmsContext ct, cmsHPROFILE hlcmsProfileIn, cm
                             j++;
                      }
 
-       atime = clock();
+       MeasureTimeStart();
 
        cmsDoTransform(hlcmsxform, In, In, 256 * 256 * 256);
 
-       diff = clock() - atime;
+       diff = MeasureTimeStop();
        free(In);
 
        cmsDeleteTransform(hlcmsxform);
@@ -296,8 +323,7 @@ cmsFloat64Number SpeedTest8bitsRGB(cmsContext ct, cmsHPROFILE hlcmsProfileIn, cm
 static
 cmsFloat64Number SpeedTest8bitsRGBA(cmsContext ct, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut)
 {
-       cmsInt32Number r, g, b, j;
-       clock_t atime;
+       cmsInt32Number r, g, b, j;       
        cmsFloat64Number diff;
        cmsHTRANSFORM hlcmsxform;
        Scanline_rgba8bits *In;
@@ -326,11 +352,11 @@ cmsFloat64Number SpeedTest8bitsRGBA(cmsContext ct, cmsHPROFILE hlcmsProfileIn, c
                             j++;
                      }
 
-       atime = clock();
+       MeasureTimeStart();
 
        cmsDoTransform(hlcmsxform, In, In, 256 * 256 * 256);
 
-       diff = clock() - atime;
+       diff = MeasureTimeStop();
        free(In);
 
        cmsDeleteTransform(hlcmsxform);
@@ -343,8 +369,7 @@ cmsFloat64Number SpeedTest8bitsRGBA(cmsContext ct, cmsHPROFILE hlcmsProfileIn, c
 static
 cmsFloat64Number SpeedTest16bitsRGB(cmsContext ct, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut)
 {
-    cmsInt32Number r, g, b, j;
-    clock_t atime;
+    cmsInt32Number r, g, b, j;    
     cmsFloat64Number diff;
     cmsHTRANSFORM hlcmsxform;
     Scanline_rgb16bits *In;
@@ -372,11 +397,11 @@ cmsFloat64Number SpeedTest16bitsRGB(cmsContext ct, cmsHPROFILE hlcmsProfileIn, c
                 j++;
             }
 
-    atime = clock();
+    MeasureTimeStart();
 
     cmsDoTransform(hlcmsxform, In, In, 256 * 256 * 256);
 
-    diff = clock() - atime;
+    diff = MeasureTimeStop();
     free(In);
 
     cmsDeleteTransform(hlcmsxform);
@@ -388,8 +413,7 @@ static
 cmsFloat64Number SpeedTest16bitsCMYK(cmsContext ct, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut)
 {
 
-    cmsInt32Number r, g, b, j;
-    clock_t atime;
+    cmsInt32Number r, g, b, j;    
     cmsFloat64Number diff;
     cmsHTRANSFORM hlcmsxform;
     Scanline_cmyk16bits* In;
@@ -418,11 +442,11 @@ cmsFloat64Number SpeedTest16bitsCMYK(cmsContext ct, cmsHPROFILE hlcmsProfileIn, 
                 j++;
             }
 
-    atime = clock();
+    MeasureTimeStart();
 
     cmsDoTransform(hlcmsxform, In, In, 256 * 256 * 256);
 
-    diff = clock() - atime;
+    diff = MeasureTimeStop();
     free(In);
 
     cmsDeleteTransform(hlcmsxform);
@@ -512,8 +536,7 @@ typedef struct
 static
 cmsFloat64Number SpeedTest8bitDoTransform(cmsContext ct, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut)
 {
-       cmsInt32Number r, g, b, j;
-       clock_t atime;
+       cmsInt32Number r, g, b, j;       
        cmsFloat64Number diff;
        cmsHTRANSFORM hlcmsxform;
        big_bitmap* In;
@@ -544,14 +567,14 @@ cmsFloat64Number SpeedTest8bitDoTransform(cmsContext ct, cmsHPROFILE hlcmsProfil
                             In->line[r].pixels[g][b].a = 0;
                      }
 
-       atime = clock();
+       MeasureTimeStart();
 
        for (j = 0; j < 256; j++) {
 
               cmsDoTransform(hlcmsxform, In->line[j].pixels, Out->line[j].pixels, 256 * 256);
        }
 
-       diff = clock() - atime;
+       diff = MeasureTimeStop();
        free(In); free(Out);
 
        cmsDeleteTransform(hlcmsxform);
@@ -563,8 +586,7 @@ cmsFloat64Number SpeedTest8bitDoTransform(cmsContext ct, cmsHPROFILE hlcmsProfil
 static
 cmsFloat64Number SpeedTest8bitLineStride(cmsContext ct, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut)
 {
-       cmsInt32Number r, g, b;
-       clock_t atime;
+       cmsInt32Number r, g, b;       
        cmsFloat64Number diff;
        cmsHTRANSFORM hlcmsxform;
        big_bitmap* In;
@@ -595,11 +617,11 @@ cmsFloat64Number SpeedTest8bitLineStride(cmsContext ct, cmsHPROFILE hlcmsProfile
                             In->line[r].pixels[g][b].a = 0;
                      }
 
-       atime = clock();
+       MeasureTimeStart();
        
        cmsDoTransformLineStride(hlcmsxform, In, Out, 256*256, 256, sizeof(padded_line), sizeof(padded_line), 0, 0);
        
-       diff = clock() - atime;
+       diff = MeasureTimeStop();
        free(In); free(Out);
 
        cmsDeleteTransform(hlcmsxform);
