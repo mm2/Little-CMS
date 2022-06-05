@@ -8384,11 +8384,11 @@ int CheckGammaSpaceDetection(void)
     return 1;
 }
 
-// Per issue #308. A built-in corrypted by using write raw tag was causing a segfault
+// Per issue #308. A built-in is corrupted by using write raw tag was causing a segfault
 static
 int CheckInducedCorruption(void)
 {
-    cmsHTRANSFORM xform0, xform1;
+    cmsHTRANSFORM xform0;
     char garbage[] = "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0a\x0b";
     cmsHPROFILE hsrgb = cmsCreate_sRGBProfile();
     cmsHPROFILE hLab = cmsCreateLab4Profile(NULL);
