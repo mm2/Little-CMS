@@ -632,6 +632,8 @@ ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
 LIBOBJS
+COND_THREADED_FALSE
+COND_THREADED_TRUE
 COND_FASTFLOAT_FALSE
 COND_FASTFLOAT_TRUE
 TIFFICC_DEPLIBS
@@ -802,6 +804,7 @@ with_jpeg
 with_tiff
 with_zlib
 with_fastfloat
+with_threaded
 with_threads
 '
       ac_precious_vars='build_alias
@@ -1478,7 +1481,9 @@ Optional Packages:
   --without-zlib          disable ZLIB support
   --with-fastfloat        build and install fast_float plugin, use only if GPL
                           3.0 is acceptable
-  --without-threads       disable POSIX threads API support
+  --with-threaded         build and install multi threaded plugin, use only if
+                          GPL 3.0 is acceptable
+  --without-pthreads      disable POSIX pthreads API support
 
 Some influential environment variables:
   CC          C compiler command
@@ -17183,6 +17188,24 @@ then
             LIB_PLUGINS="$LIB_PLUGINS -llcms2_fast_float"
 fi
 
+#multi threaded plugin:
+
+# Check whether --with-threaded was given.
+if test "${with_threaded+set}" = set; then :
+  withval=$with_threaded;
+                with_threaded=$withval
+
+else
+
+                with_threaded='no'
+
+fi
+
+if test "x$with_threaded" = "xyes"
+then
+            LIB_PLUGINS="$LIB_PLUGINS -llcms2_threaded"
+fi
+
 #
 # Determine POSIX threads settings
 #
@@ -18549,6 +18572,14 @@ else
   COND_FASTFLOAT_FALSE=
 fi
 
+ if test "x$with_threaded" = "xyes" ; then
+  COND_THREADED_TRUE=
+  COND_THREADED_FALSE='#'
+else
+  COND_THREADED_TRUE='#'
+  COND_THREADED_FALSE=
+fi
+
 ac_config_files="$ac_config_files plugins/Makefile"
 
 ac_config_files="$ac_config_files plugins/fast_float/Makefile"
@@ -18759,6 +18790,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${COND_FASTFLOAT_TRUE}" && test -z "${COND_FASTFLOAT_FALSE}"; then
   as_fn_error $? "conditional \"COND_FASTFLOAT\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${COND_THREADED_TRUE}" && test -z "${COND_THREADED_FALSE}"; then
+  as_fn_error $? "conditional \"COND_THREADED\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 

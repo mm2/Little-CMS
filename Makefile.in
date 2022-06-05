@@ -92,6 +92,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@COND_FASTFLOAT_TRUE@am__append_1 = plugins/fast_float
+@COND_THREADED_TRUE@am__append_2 = plugins/threaded
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/acx_pthread.m4 \
@@ -197,7 +199,8 @@ ETAGS = etags
 CTAGS = ctags
 CSCOPE = cscope
 DIST_SUBDIRS = src include utils/tificc utils/transicc utils/linkicc \
-	utils/jpgicc utils/psicc testbed plugins
+	utils/jpgicc utils/psicc testbed plugins/fast_float \
+	plugins/threaded
 am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/lcms2.pc.in AUTHORS \
 	COPYING ChangeLog INSTALL compile config.guess config.sub \
 	install-sh ltmain.sh missing
@@ -391,7 +394,7 @@ top_srcdir = @top_srcdir@
 # Don't require all the GNU mandated files
 AUTOMAKE_OPTIONS = 1.7.2 dist-zip foreign
 ACLOCAL_AMFLAGS = -I m4
-@COND_FASTFLOAT_TRUE@USER_PLUGINS = plugins
+USER_PLUGINS = $(am__append_1) $(am__append_2)
 
 # Directories containing Makefiles to 'make'
 SUBDIRS = src include utils/tificc utils/transicc utils/linkicc utils/jpgicc utils/psicc testbed $(USER_PLUGINS)
