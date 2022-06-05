@@ -10,8 +10,13 @@ ACLOCAL_AMFLAGS = -I m4
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 
+USER_PLUGINS = 
 if COND_FASTFLOAT
-    USER_PLUGINS = plugins
+    USER_PLUGINS += plugins/fast_float
+endif
+
+if COND_THREADED
+    USER_PLUGINS += plugins/threaded
 endif
 
 # Directories containing Makefiles to 'make'
