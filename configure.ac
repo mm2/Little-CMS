@@ -416,4 +416,8 @@ AC_CONFIG_FILES([plugins/fast_float/Makefile])
 AC_CONFIG_FILES([plugins/fast_float/src/Makefile])
 AC_CONFIG_FILES([plugins/fast_float/include/Makefile])
 AC_CONFIG_FILES([plugins/fast_float/testbed/Makefile])
+AC_CONFIG_FILES([plugins/threaded/Makefile])
+AC_CONFIG_FILES([plugins/threaded/src/Makefile])
+AC_CONFIG_FILES([plugins/threaded/include/Makefile])
+AC_CONFIG_FILES([plugins/threaded/testbed/Makefile])
 AC_OUTPUT
