@@ -18559,6 +18559,14 @@ ac_config_files="$ac_config_files plugins/fast_float/include/Makefile"
 
 ac_config_files="$ac_config_files plugins/fast_float/testbed/Makefile"
 
+ac_config_files="$ac_config_files plugins/threaded/Makefile"
+
+ac_config_files="$ac_config_files plugins/threaded/src/Makefile"
+
+ac_config_files="$ac_config_files plugins/threaded/include/Makefile"
+
+ac_config_files="$ac_config_files plugins/threaded/testbed/Makefile"
+
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -19725,6 +19733,10 @@ do
     "plugins/fast_float/src/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/fast_float/src/Makefile" ;;
     "plugins/fast_float/include/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/fast_float/include/Makefile" ;;
     "plugins/fast_float/testbed/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/fast_float/testbed/Makefile" ;;
+    "plugins/threaded/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/threaded/Makefile" ;;
+    "plugins/threaded/src/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/threaded/src/Makefile" ;;
+    "plugins/threaded/include/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/threaded/include/Makefile" ;;
+    "plugins/threaded/testbed/Makefile") CONFIG_FILES="$CONFIG_FILES plugins/threaded/testbed/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5;;
   esac

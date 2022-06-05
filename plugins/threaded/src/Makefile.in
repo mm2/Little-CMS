@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-# Makefile for building lcms2_fast_float library
+# Makefile for building lcms2_threaded plugin
 #
 
 VPATH = @srcdir@
@@ -92,7 +92,7 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-subdir = plugins/fast_float/src
+subdir = plugins/threaded/src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/acx_pthread.m4 \
 	$(top_srcdir)/m4/ax_append_compile_flags.m4 \
@@ -139,22 +139,18 @@ am__uninstall_files_from_dir = { \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-liblcms2_fast_float_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+liblcms2_threaded_la_DEPENDENCIES = $(am__DEPENDENCIES_1) \
 	$(top_builddir)/src/liblcms2.la
-am_liblcms2_fast_float_la_OBJECTS = fast_8_curves.lo \
-	fast_8_matsh_sse.lo fast_8_matsh.lo fast_8_tethra.lo \
-	fast_16_tethra.lo fast_float_15bits.lo fast_float_15mats.lo \
-	fast_float_cmyk.lo fast_float_curves.lo fast_float_matsh.lo \
-	fast_float_separate.lo fast_float_sup.lo fast_float_tethra.lo \
-	fast_float_lab.lo
-liblcms2_fast_float_la_OBJECTS = $(am_liblcms2_fast_float_la_OBJECTS)
+am_liblcms2_threaded_la_OBJECTS = threaded_split.lo threaded_core.lo \
+	threaded_main.lo threaded_scheduler.lo
+liblcms2_threaded_la_OBJECTS = $(am_liblcms2_threaded_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-liblcms2_fast_float_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
+liblcms2_threaded_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CCLD) \
-	$(AM_CFLAGS) $(CFLAGS) $(liblcms2_fast_float_la_LDFLAGS) \
+	$(AM_CFLAGS) $(CFLAGS) $(liblcms2_threaded_la_LDFLAGS) \
 	$(LDFLAGS) -o $@
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -171,18 +167,10 @@ am__v_at_1 =
 DEFAULT_INCLUDES = -I.@am__isrc@
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__maybe_remake_depfiles = depfiles
-am__depfiles_remade = ./$(DEPDIR)/fast_16_tethra.Plo \
-	./$(DEPDIR)/fast_8_curves.Plo ./$(DEPDIR)/fast_8_matsh.Plo \
-	./$(DEPDIR)/fast_8_matsh_sse.Plo ./$(DEPDIR)/fast_8_tethra.Plo \
-	./$(DEPDIR)/fast_float_15bits.Plo \
-	./$(DEPDIR)/fast_float_15mats.Plo \
-	./$(DEPDIR)/fast_float_cmyk.Plo \
-	./$(DEPDIR)/fast_float_curves.Plo \
-	./$(DEPDIR)/fast_float_lab.Plo \
-	./$(DEPDIR)/fast_float_matsh.Plo \
-	./$(DEPDIR)/fast_float_separate.Plo \
-	./$(DEPDIR)/fast_float_sup.Plo \
-	./$(DEPDIR)/fast_float_tethra.Plo
+am__depfiles_remade = ./$(DEPDIR)/threaded_core.Plo \
+	./$(DEPDIR)/threaded_main.Plo \
+	./$(DEPDIR)/threaded_scheduler.Plo \
+	./$(DEPDIR)/threaded_split.Plo
 am__mv = mv -f
 COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
 	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
@@ -202,8 +190,8 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(liblcms2_fast_float_la_SOURCES)
-DIST_SOURCES = $(liblcms2_fast_float_la_SOURCES)
+SOURCES = $(liblcms2_threaded_la_SOURCES)
+DIST_SOURCES = $(liblcms2_threaded_la_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -273,7 +261,7 @@ LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBRARY_AGE = 0
 LIBRARY_CURRENT = 1
-LIBRARY_REVISION = 1
+LIBRARY_REVISION = 0
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
@@ -377,16 +365,13 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = 1.7 foreign
 
 # Shared libraries built in this directory
-lib_LTLIBRARIES = liblcms2_fast_float.la
+lib_LTLIBRARIES = liblcms2_threaded.la
 AM_CPPFLAGS = -Ofast -I$(top_builddir)/include -I$(top_srcdir)/include -I$(srcdir)/../include -I$(builddir)/../include
-liblcms2_fast_float_la_LDFLAGS = -no-undefined \
+liblcms2_threaded_la_LDFLAGS = -no-undefined \
   -version-info $(LIBRARY_CURRENT):$(LIBRARY_REVISION):$(LIBRARY_AGE)
 
-liblcms2_fast_float_la_LIBADD = $(LCMS_LIB_DEPLIBS) $(top_builddir)/src/liblcms2.la  
-liblcms2_fast_float_la_SOURCES = fast_8_curves.c fast_8_matsh_sse.c fast_8_matsh.c fast_8_tethra.c \
-  fast_16_tethra.c fast_float_15bits.c fast_float_15mats.c fast_float_cmyk.c fast_float_curves.c fast_float_matsh.c  \
-  fast_float_separate.c fast_float_sup.c fast_float_tethra.c fast_float_lab.c fast_float_internal.h
-
+liblcms2_threaded_la_LIBADD = $(LCMS_LIB_DEPLIBS) $(top_builddir)/src/liblcms2.la  
+liblcms2_threaded_la_SOURCES = threaded_split.c threaded_core.c threaded_main.c  threaded_scheduler.c threaded_internal.h
 all: all-am
 
 .SUFFIXES:
@@ -400,9 +385,9 @@ $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__confi
 	      exit 1;; \
 	  esac; \
 	done; \
-	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign plugins/fast_float/src/Makefile'; \
+	echo ' cd $(top_srcdir) && $(AUTOMAKE) --foreign plugins/threaded/src/Makefile'; \
 	$(am__cd) $(top_srcdir) && \
-	  $(AUTOMAKE) --foreign plugins/fast_float/src/Makefile
+	  $(AUTOMAKE) --foreign plugins/threaded/src/Makefile
 Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 	@case '$?' in \
 	  *config.status*) \
@@ -456,8 +441,8 @@ clean-libLTLIBRARIES:
 	  rm -f $${locs}; \
 	}
 
-liblcms2_fast_float.la: $(liblcms2_fast_float_la_OBJECTS) $(liblcms2_fast_float_la_DEPENDENCIES) $(EXTRA_liblcms2_fast_float_la_DEPENDENCIES) 
-	$(AM_V_CCLD)$(liblcms2_fast_float_la_LINK) -rpath $(libdir) $(liblcms2_fast_float_la_OBJECTS) $(liblcms2_fast_float_la_LIBADD) $(LIBS)
+liblcms2_threaded.la: $(liblcms2_threaded_la_OBJECTS) $(liblcms2_threaded_la_DEPENDENCIES) $(EXTRA_liblcms2_threaded_la_DEPENDENCIES) 
+	$(AM_V_CCLD)$(liblcms2_threaded_la_LINK) -rpath $(libdir) $(liblcms2_threaded_la_OBJECTS) $(liblcms2_threaded_la_LIBADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -465,20 +450,10 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fast_16_tethra.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fast_8_curves.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fast_8_matsh.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fast_8_matsh_sse.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fast_8_tethra.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fast_float_15bits.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fast_float_15mats.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fast_float_cmyk.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fast_float_curves.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fast_float_lab.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fast_float_matsh.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fast_float_separate.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fast_float_sup.Plo@am__quote@ # am--include-marker
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/fast_float_tethra.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/threaded_core.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/threaded_main.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/threaded_scheduler.Plo@am__quote@ # am--include-marker
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/threaded_split.Plo@am__quote@ # am--include-marker
 
 $(am__depfiles_remade):
 	@$(MKDIR_P) $(@D)
@@ -644,20 +619,10 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool \
 	mostlyclean-am
 
 distclean: distclean-am
-		-rm -f ./$(DEPDIR)/fast_16_tethra.Plo
-	-rm -f ./$(DEPDIR)/fast_8_curves.Plo
-	-rm -f ./$(DEPDIR)/fast_8_matsh.Plo
-	-rm -f ./$(DEPDIR)/fast_8_matsh_sse.Plo
-	-rm -f ./$(DEPDIR)/fast_8_tethra.Plo
-	-rm -f ./$(DEPDIR)/fast_float_15bits.Plo
-	-rm -f ./$(DEPDIR)/fast_float_15mats.Plo
-	-rm -f ./$(DEPDIR)/fast_float_cmyk.Plo
-	-rm -f ./$(DEPDIR)/fast_float_curves.Plo
-	-rm -f ./$(DEPDIR)/fast_float_lab.Plo
-	-rm -f ./$(DEPDIR)/fast_float_matsh.Plo
-	-rm -f ./$(DEPDIR)/fast_float_separate.Plo
-	-rm -f ./$(DEPDIR)/fast_float_sup.Plo
-	-rm -f ./$(DEPDIR)/fast_float_tethra.Plo
+		-rm -f ./$(DEPDIR)/threaded_core.Plo
+	-rm -f ./$(DEPDIR)/threaded_main.Plo
+	-rm -f ./$(DEPDIR)/threaded_scheduler.Plo
+	-rm -f ./$(DEPDIR)/threaded_split.Plo
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic \
 	distclean-tags
@@ -703,20 +668,10 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-		-rm -f ./$(DEPDIR)/fast_16_tethra.Plo
-	-rm -f ./$(DEPDIR)/fast_8_curves.Plo
-	-rm -f ./$(DEPDIR)/fast_8_matsh.Plo
-	-rm -f ./$(DEPDIR)/fast_8_matsh_sse.Plo
-	-rm -f ./$(DEPDIR)/fast_8_tethra.Plo
-	-rm -f ./$(DEPDIR)/fast_float_15bits.Plo
-	-rm -f ./$(DEPDIR)/fast_float_15mats.Plo
-	-rm -f ./$(DEPDIR)/fast_float_cmyk.Plo
-	-rm -f ./$(DEPDIR)/fast_float_curves.Plo
-	-rm -f ./$(DEPDIR)/fast_float_lab.Plo
-	-rm -f ./$(DEPDIR)/fast_float_matsh.Plo
-	-rm -f ./$(DEPDIR)/fast_float_separate.Plo
-	-rm -f ./$(DEPDIR)/fast_float_sup.Plo
-	-rm -f ./$(DEPDIR)/fast_float_tethra.Plo
+		-rm -f ./$(DEPDIR)/threaded_core.Plo
+	-rm -f ./$(DEPDIR)/threaded_main.Plo
+	-rm -f ./$(DEPDIR)/threaded_scheduler.Plo
+	-rm -f ./$(DEPDIR)/threaded_split.Plo
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 
