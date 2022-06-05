@@ -270,7 +270,7 @@ int main(int argc, char *argv[])
     cmsHTRANSFORM hTransform = NULL;
 
     // Here we are
-    fprintf(stderr, "Little CMS ICC device link generator - v3.1 [LittleCMS %2.2f]\n", LCMS_VERSION / 1000.0);
+    fprintf(stderr, "Little CMS ICC device link generator - v3.2 [LittleCMS %2.2f]\n", cmsGetEncodedCMMversion() / 1000.0);
     fprintf(stderr, "Copyright (c) 1998-2022 Marti Maria Saguer. See COPYING file for details.\n");
     fflush(stderr);
 
