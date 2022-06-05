@@ -44,6 +44,12 @@ cmsINLINE cmsUInt32Number PixelSpacing(cmsUInt32Number format)
         return ComponentSize(format) * (T_CHANNELS(format) + T_EXTRA(format));
 }
 
+// macro is not portable
+cmsINLINE cmsUInt32Number minimum(cmsUInt32Number a, cmsUInt32Number b)
+{
+    return a < b ? a : b;
+}
+
 
 // Memory of block depends of planar or chunky. If lines is 1, then the stride does not contain
 // information and we have to calculate the size. If lines > 1, then we can take line size from stride.
@@ -129,7 +135,7 @@ void SlicePerLines(const _cmsWorkSlice* master, cmsInt32Number nslices,
         const cmsUInt8Number* PtrInput = master->InputBuffer;
         cmsUInt8Number* PtrOutput = master->OutputBuffer;
 
-        cmsInt32Number  lines = min(LinesPerSlice, TotalLines);
+        cmsInt32Number  lines = minimum(LinesPerSlice, TotalLines);
 
         memcpy(&slices[i], master, sizeof(_cmsWorkSlice));
 
@@ -157,7 +163,7 @@ void SlicePerPixels(const _cmsWorkSlice* master, cmsInt32Number nslices,
         const cmsUInt8Number* PtrInput = master->InputBuffer;
         cmsUInt8Number* PtrOutput = master->OutputBuffer;
 
-        cmsInt32Number pixels = min(PixelsPerSlice, TotalPixels);
+        cmsInt32Number pixels = minimum(PixelsPerSlice, TotalPixels);
 
         memcpy(&slices[i], master, sizeof(_cmsWorkSlice));
 
