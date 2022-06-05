@@ -108,13 +108,16 @@ typedef struct
 
 // This is the native thread on pthread
 static
-void thread_adaptor(void* p)
+void* thread_adaptor(void* p)
 {
     thread_adaptor_param* ap = (thread_adaptor_param*)p;
     _cmsWorkSlice* s = ap->param;
 
     ap->worker(s->CMMcargo, s->InputBuffer, s->OutputBuffer,
-               s->PixelsPerLine, s->LineCount, &s->Stride);
+               s->PixelsPerLine, s->LineCount, s->Stride);
+    _cmsFree(0, p);
+
+    return NULL;
 }
 
 // This function creates a thread and executes it. The thread calls the worker function
@@ -122,8 +125,15 @@ void thread_adaptor(void* p)
 cmsHANDLE _cmsThrCreateWorker(cmsContext ContextID, _cmsTransform2Fn worker, _cmsWorkSlice* param)
 {
     pthread_t threadId;
+    thread_adaptor_param* p;
 
-    int err = pthread_create(&threadId, NULL, thread_adaptor, param);
+    p = (thread_adaptor_param*)_cmsMalloc(0, sizeof(thread_adaptor_param));
+    if (p == NULL) return NULL;
+
+    p->worker = worker;
+    p->param = param;
+
+    int err = pthread_create(&threadId, NULL, thread_adaptor, p);
     if (err != 0)
     {
         cmsSignalError(ContextID, cmsERROR_UNDEFINED, "Cannot create thread [pthread error %d]", err);
