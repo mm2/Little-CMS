@@ -5312,6 +5312,40 @@ cmsInt32Number CheckRAWtags(cmsInt32Number Pass,  cmsHPROFILE hProfile)
 }
 
 
+
+static
+cmsInt32Number Check_cicp(cmsInt32Number Pass, cmsHPROFILE hProfile)
+{
+    cmsVideoSignalType* v;
+    cmsVideoSignalType  s;
+
+    switch (Pass) {
+
+    case 1:
+        s.ColourPrimaries = 1;
+        s.TransferCharacteristics = 13;
+        s.MatrixCoefficients = 0;
+        s.VideoFullRangeFlag = 1;
+        
+        if (!cmsWriteTag(hProfile, cmsSigcicpTag, &s)) return 0;
+        return 1;
+
+    case 2:
+        v = (cmsVideoSignalType*)cmsReadTag(hProfile, cmsSigcicpTag);
+        if (v == NULL) return 0;
+
+        if (v->ColourPrimaries != 1) return 0;
+        if (v->TransferCharacteristics != 13) return 0;
+        if (v->MatrixCoefficients != 0) return 0;
+        if (v->VideoFullRangeFlag != 1) return 0;
+        return 1;
+
+    default:
+        return 0;
+    }
+
+}
+
 // This is a very big test that checks every single tag
 static
 cmsInt32Number CheckProfileCreation(void)
@@ -5456,6 +5490,9 @@ cmsInt32Number CheckProfileCreation(void)
         SubTest("Dictionary meta tags");
         // if (!CheckDictionary16(Pass, h)) goto Error;
         if (!CheckDictionary24(Pass, h)) goto Error;
+
+        SubTest("cicp Video Signal Type");
+        if (!Check_cicp(Pass, h)) goto Error;
 
         if (Pass == 1) {
             cmsSaveProfileToFile(h, "alltags.icc");
