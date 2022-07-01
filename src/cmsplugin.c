@@ -178,7 +178,11 @@ cmsBool CMSEXPORT  _cmsReadFloat32Number(cmsIOHANDLER* io, cmsFloat32Number* n)
     if (n != NULL) {
 
         tmp = _cmsAdjustEndianess32(tmp);
-        *n = *(cmsFloat32Number*)(void*)&tmp;
+
+        #if __STDC_VERSION__ >= 201112L
+        static_assert(sizeof(*n) == sizeof(tmp), "*n and tmp have different sizes");
+        #endif
+        memcpy(&n, &tmp, sizeof tmp); 
         
         // Safeguard which covers against absurd values
         if (*n > 1E+20 || *n < -1E+20) return FALSE;
@@ -309,7 +313,11 @@ cmsBool CMSEXPORT  _cmsWriteFloat32Number(cmsIOHANDLER* io, cmsFloat32Number n)
 
     _cmsAssert(io != NULL);
 
-    tmp = *(cmsUInt32Number*) (void*) &n;
+    #if __STDC_VERSION__ >= 201112L
+    static_assert(sizeof(n) == sizeof(tmp), "n and tmp have different sizes");
+    #endif
+    memcpy(&tmp, &n, sizeof n); 
+
     tmp = _cmsAdjustEndianess32(tmp);
     if (io -> Write(io, sizeof(cmsUInt32Number), &tmp) != 1)
             return FALSE;
