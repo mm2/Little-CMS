@@ -7,7 +7,7 @@ AC_PREREQ(2.60)
 #
 # Set the package name and version
 #
-AC_INIT(lcms2,2.13)
+AC_INIT(lcms2,2.14)
 
 # Specify directory where m4 macros may be found.
 AC_CONFIG_MACRO_DIR([m4])
@@ -16,7 +16,7 @@ AC_CONFIG_MACRO_DIR([m4])
 # Libtool library revision control info
 #
 LIBRARY_CURRENT=2
-LIBRARY_REVISION=13
+LIBRARY_REVISION=14
 LIBRARY_AGE=0
 
 AC_SUBST(LIBRARY_CURRENT)dnl

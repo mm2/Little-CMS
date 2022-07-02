@@ -177,8 +177,12 @@ cmsBool CMSEXPORT  _cmsReadFloat32Number(cmsIOHANDLER* io, cmsFloat32Number* n)
 
     if (n != NULL) {
 
+        const cmsFloat32Number* f;         // gcc complaing on strict aliasing if this pointer is not used.
+
         tmp = _cmsAdjustEndianess32(tmp);
-        *n = *(cmsFloat32Number*)(void*)&tmp;
+
+        f  = (const cmsFloat32Number*) &tmp;
+        *n = *f;
         
         // Safeguard which covers against absurd values
         if (*n > 1E+20 || *n < -1E+20) return FALSE;
@@ -306,10 +310,11 @@ cmsBool CMSEXPORT  _cmsWriteUInt32Number(cmsIOHANDLER* io, cmsUInt32Number n)
 cmsBool CMSEXPORT  _cmsWriteFloat32Number(cmsIOHANDLER* io, cmsFloat32Number n)
 {
     cmsUInt32Number tmp;
+    const cmsFloat32Number* f = &n;
 
     _cmsAssert(io != NULL);
 
-    tmp = *(cmsUInt32Number*) (void*) &n;
+    tmp = *(cmsUInt32Number*)f;
     tmp = _cmsAdjustEndianess32(tmp);
     if (io -> Write(io, sizeof(cmsUInt32Number), &tmp) != 1)
             return FALSE;
