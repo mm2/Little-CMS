@@ -24,6 +24,10 @@
 #include <stdlib.h>
 #include <memory.h>
 
+// On Visual Studio, use debug CRT
+#ifdef _MSC_VER
+#    include "crtdbg.h"
+#endif
 
 // Some pixel representations
 typedef struct { cmsUInt8Number  r, g, b;    }  Scanline_rgb8bits;
@@ -52,12 +56,12 @@ typedef struct { cmsFloat32Number L, a, b; }     Scanline_LabFloat;
 static 
 void trace(const char* frm, ...)
 {
-	va_list args;
+    va_list args;
 
-	va_start(args, frm);
-	vfprintf(stderr, frm, args);
-	fflush(stderr);
-	va_end(args);
+    va_start(args, frm);
+    vfprintf(stderr, frm, args);
+    fflush(stderr);
+    va_end(args);
 }
 
 
@@ -586,9 +590,9 @@ void CheckUncommonValues(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut
 
     for (i = 0; i < npixels; i++)
     {
-        bufferIn[i].r = i / 40.0 - 0.5;
-        bufferIn[i].g = i / 20.0 - 0.5;
-        bufferIn[i].b = i / 60.0 - 0.5;
+        bufferIn[i].r = i / 40.0f - 0.5f;
+        bufferIn[i].g = i / 20.0f - 0.5f;
+        bufferIn[i].b = i / 60.0f - 0.5f;
     }
 
     cmsDoTransform(xformPlugin, bufferIn, bufferPluginOut, npixels);
@@ -671,7 +675,7 @@ void CheckToEncodedLab(void)
             }
 
 
-    cmsDeleteTransform(xform);
+    cmsDeleteTransform(xform); cmsDeleteTransform(xform_plugin);
     cmsCloseProfile(hsRGB); cmsCloseProfile(hLab);
     cmsDeleteContext(Raw);
     cmsDeleteContext(Plugin);
@@ -714,7 +718,7 @@ void CheckToFloatLab(void)
             }
 
 
-    cmsDeleteTransform(xform);
+    cmsDeleteTransform(xform); cmsDeleteTransform(xform_plugin);
     cmsCloseProfile(hsRGB); cmsCloseProfile(hLab);
     cmsDeleteContext(Raw);
     cmsDeleteContext(Plugin);
@@ -1089,45 +1093,45 @@ void CheckLab2Roundtrip(void)
 static
 void CheckConversionFloat(void)
 {
-       trace("Crash test.");
-       TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, FALSE);
-       trace("..");
-       TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
-       trace("Ok\n");
+	trace("Crash test.");
+	TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, FALSE);
 
-       trace("Crash (II) test.");
-       TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, FALSE);
-       trace("..");
-       TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
-       trace("Ok\n");
+	trace("..");
+	TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
+	trace("Ok\n");
 
-              
-       trace("Crash (III) test.");
-       CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
-       trace("..");
-       CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
-       trace("Ok\n");
+	trace("Crash (II) test.");
+	TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, FALSE);
+	trace("..");
+	TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
+	trace("Ok\n");
 
-       trace("Checking conversion to Lab...");
-       CheckToEncodedLab();
-       CheckToFloatLab();
-       trace("Ok\n");
+	trace("Crash (III) test.");
+	CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
+	trace("..");
+	CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
+	trace("Ok\n");
 
-       // Matrix-shaper should be accurate 
-       trace("Checking accuracy on Matrix-shaper...");
-       TryAllValuesFloat(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
-       trace("Ok\n");
+	trace("Checking conversion to Lab...");
+	CheckToEncodedLab();
+	CheckToFloatLab();
+	trace("Ok\n");
 
-       // CLUT should be as 16 bits or better
-       trace("Checking accuracy of CLUT...");
-       TryAllValuesFloatVs16(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
-       trace("Ok\n");
+	// Matrix-shaper should be accurate 
+	trace("Checking accuracy on Matrix-shaper...");
+	TryAllValuesFloat(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
+	trace("Ok\n");
 
-       // Same profile should give same values (we test both methods)
-       trace("Checking accuracy on same profile ...");
-       TryAllValuesFloatVs16(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
-       TryAllValuesFloat(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
-       trace("Ok\n");
+	// CLUT should be as 16 bits or better
+	trace("Checking accuracy of CLUT...");
+	TryAllValuesFloatVs16(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
+	trace("Ok\n");
+
+	// Same profile should give same values (we test both methods)
+	trace("Checking accuracy on same profile ...");
+	TryAllValuesFloatVs16(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
+	TryAllValuesFloat(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
+	trace("Ok\n");
 }
 
 
@@ -1163,6 +1167,9 @@ void CheckLab2RGB(void)
     cmsFloat32Number maxInside = 0, maxOutside = 0, L, a, b;
 
     trace("Checking Lab -> RGB...");
+    cmsCloseProfile(hLab);
+    cmsCloseProfile(hRGB);
+
     for (L = 4; L <= 100; L++)
     {
         for (a = -30; a < +30; a++)
@@ -1268,6 +1275,7 @@ void CheckSoftProofing(void)
                 j++;
             }
 
+    free(In); free(Out1); free(Out2);
     cmsDeleteTransform(hXformNoPlugin);
     cmsDeleteTransform(hXformPlugin);
 
@@ -1786,6 +1794,8 @@ void SpeedTest16(void)
     Performance("16 bits on same Matrix-Shaper    ", SpeedTest16bitsRGB,  0, "test0.icc", "test0.icc", sizeof(Scanline_rgb16bits), 0);
     Performance("16 bits on curves                ", SpeedTest16bitsRGB,  0, "*curves",   "*curves",   sizeof(Scanline_rgb16bits), 0);
     Performance("16 bits on CMYK CLUT profiles    ", SpeedTest16bitsCMYK, 0, "test1.icc", "test2.icc", sizeof(Scanline_cmyk16bits), 0);
+
+    cmsDeleteContext(noPlugin);
 }
 
 // The worst case is used, no cache and all rgb combinations
@@ -2118,7 +2128,7 @@ cmsFloat64Number SpeedTestFloatByUsing16BitsRGB(cmsContext ct, cmsHPROFILE hlcms
        }
 
        diff = clock() - atime;
-       free(In);
+       free(In); free(tmp16);
       
        cmsDeleteTransform(xform16);
        return MPixSec(diff);
@@ -2388,11 +2398,15 @@ void TestGrayTransformPerformance1()
        trace("Gray conversion using two devicelinks\t %-12.2f MPixels/Sec.\n", MPixSec(diff));
 }
 
-
 // The harness test
 int main()
 {
-       trace("FastFloating point extensions testbed - 1.5\n");
+
+#ifdef _MSC_VER
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+
+       trace("FastFloating point extensions testbed - 1.6\n");
        trace("Copyright (c) 1998-2022 Marti Maria Saguer, all rights reserved\n");
        
        trace("\nInstalling error logger ... ");
@@ -2402,7 +2416,7 @@ int main()
        trace("Installing plug-in ... ");
        cmsPlugin(cmsFastFloatExtensions());
        trace("done.\n\n");
-              
+             
        CheckComputeIncrements();
 
        // 15 bit functionality
@@ -2410,26 +2424,26 @@ int main()
        Check15bitsConversions();    
  
        // 16 bits functionality
-       CheckAccuracy16Bits();
+       CheckAccuracy16Bits(); 
 
        // Lab to whatever
        CheckLab2RGB();
 
        // Change format
        CheckChangeFormat();
-
+ 
        // Soft proofing
        CheckSoftProofing();
-
+    
        // Floating point functionality
        CheckConversionFloat();  
        trace("All floating point tests passed OK\n");
-                 
+                       
        SpeedTest8();
        SpeedTest16();
        SpeedTest15();
        SpeedTestFloat();
-     
+
        ComparativeFloatVs16bits();
        ComparativeLineStride8bits();
 
@@ -2442,6 +2456,7 @@ int main()
        
        trace("\nAll tests passed OK\n");
 
+       cmsUnregisterPlugins();
 
        return 0;
 }

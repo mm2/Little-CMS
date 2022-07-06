@@ -47,18 +47,19 @@
     <ClCompile Include="..\..\src\fast_float_tethra.c" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\Projects\VC2019\lcms2_static\lcms2_static.vcxproj">
-      <Project>{71dede59-3f1e-486b-a899-4283000f76b5}</Project>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\..\COPYING.GPL3" />
     <None Include="..\..\doc\LittleCMS fast float extensions 1.0.pdf" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\Projects\VC2022\lcms2_static\lcms2_static.vcxproj">
+      <Project>{71dede59-3f1e-486b-a899-4283000f76b5}</Project>
+    </ProjectReference>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{AD9FF79B-CF6E-4971-A7CF-DAA47D636676}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>fast</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
