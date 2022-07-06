@@ -24,6 +24,11 @@
 #include <memory.h>
 #include <time.h>
 
+// On Visual Studio, use debug CRT
+#ifdef _MSC_VER
+#    include "crtdbg.h"
+#endif
+
 // A fast way to convert from/to 16 <-> 8 bits
 #define FROM_8_TO_16(rgb) (cmsUInt16Number) ((((cmsUInt16Number) (rgb)) << 8)|(rgb)) 
 #define FROM_16_TO_8(rgb) (cmsUInt8Number) ((((rgb) * 65281 + 8388608) >> 24) & 0xFF)
@@ -161,6 +166,181 @@ void CheckChangeFormat(void)
 
 }
 
+// Next test checks results of optimized 8 bits versus raw 8 bits. 
+static
+void TryAllValues8bits(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut, cmsInt32Number Intent)
+{
+    cmsContext Raw = cmsCreateContext(NULL, NULL);
+    cmsContext Plugin = cmsCreateContext(cmsThreadedExtensions(CMS_THREADED_GUESS_MAX_THREADS, 0), NULL);
+
+    Scanline_rgba8bits* bufferIn;
+    Scanline_rgba8bits* bufferRawOut;
+    Scanline_rgba8bits* bufferPluginOut;
+    int r, g, b;
+
+    int j;
+    cmsUInt32Number npixels = 256 * 256 * 256;
+
+    cmsHTRANSFORM xformRaw = cmsCreateTransformTHR(Raw, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, Intent, cmsFLAGS_NOCACHE | cmsFLAGS_COPY_ALPHA);
+    cmsHTRANSFORM xformPlugin = cmsCreateTransformTHR(Plugin, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, Intent, cmsFLAGS_NOCACHE | cmsFLAGS_COPY_ALPHA);
+
+    cmsCloseProfile(hlcmsProfileIn);
+    cmsCloseProfile(hlcmsProfileOut);
+
+    if (xformRaw == NULL || xformPlugin == NULL) {
+
+        Fail("NULL transforms on check float conversions");
+    }
+
+    // Again, no checking on mem alloc because this is just a test
+    bufferIn = (Scanline_rgba8bits*)malloc(npixels * sizeof(Scanline_rgba8bits));
+    bufferRawOut = (Scanline_rgba8bits*)malloc(npixels * sizeof(Scanline_rgba8bits));
+    bufferPluginOut = (Scanline_rgba8bits*)malloc(npixels * sizeof(Scanline_rgba8bits));
+
+    // Same input to both transforms
+    j = 0;
+    for (r = 0; r < 256; r++)
+        for (g = 0; g < 256; g++)
+            for (b = 0; b < 256; b++) {
+
+                bufferIn[j].r = (cmsUInt8Number) r;
+                bufferIn[j].g = (cmsUInt8Number) g;
+                bufferIn[j].b = (cmsUInt8Number) b;
+                bufferIn[j].a = 0xff;
+
+                j++;
+            }
+
+    // Different transforms, different output buffers
+    cmsDoTransform(xformRaw, bufferIn, bufferRawOut, npixels);
+    cmsDoTransform(xformPlugin, bufferIn, bufferPluginOut, npixels);
+
+    // Lets compare results
+    j = 0;
+    for (r = 0; r < 256; r++)
+        for (g = 0; g < 256; g++)
+            for (b = 0; b < 256; b++) {
+
+                if (bufferRawOut[j].r != bufferPluginOut[j].r ||
+                    bufferRawOut[j].g != bufferPluginOut[j].g ||
+                    bufferRawOut[j].b != bufferPluginOut[j].b ||
+                    bufferRawOut[j].a != bufferPluginOut[j].a)
+                    Fail(
+                        "Conversion failed at [%x %x %x %x] (%x %x %x %x) != (%x %x %x %x)",
+                        bufferIn[j].r, bufferIn[j].g, bufferIn[j].b, bufferIn[j].a,
+                        bufferRawOut[j].r, bufferRawOut[j].g, bufferRawOut[j].b, bufferRawOut[j].a,
+                        bufferPluginOut[j].r, bufferPluginOut[j].g, bufferPluginOut[j].b, bufferPluginOut[j].a);
+
+                j++;
+            }
+
+    free(bufferIn); free(bufferRawOut);
+    free(bufferPluginOut);
+
+    cmsDeleteTransform(xformRaw);
+    cmsDeleteTransform(xformPlugin);
+
+    cmsDeleteContext(Plugin);
+    cmsDeleteContext(Raw);
+}
+
+static
+void CheckAccuracy8Bits(void)
+{
+    
+    trace("Checking accuracy of 8 bits CLUT...");
+    TryAllValues8bits(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
+    trace("OK\n");
+}
+
+
+// Next test checks results of optimized 16 bits versus raw 16 bits. 
+static
+void TryAllValues16bits(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut, cmsInt32Number Intent)
+{
+    cmsContext Raw = cmsCreateContext(NULL, NULL);
+    cmsContext Plugin = cmsCreateContext(cmsThreadedExtensions(CMS_THREADED_GUESS_MAX_THREADS, 0), NULL);
+
+    Scanline_rgba16bits* bufferIn;
+    Scanline_rgba16bits* bufferRawOut;
+    Scanline_rgba16bits* bufferPluginOut;
+    int r, g, b;
+
+    int j;
+    cmsUInt32Number npixels = 256 * 256 * 256;
+
+    cmsHTRANSFORM xformRaw = cmsCreateTransformTHR(Raw, hlcmsProfileIn, TYPE_RGBA_16, hlcmsProfileOut, TYPE_RGBA_16, Intent, cmsFLAGS_NOCACHE | cmsFLAGS_COPY_ALPHA);
+    cmsHTRANSFORM xformPlugin = cmsCreateTransformTHR(Plugin, hlcmsProfileIn, TYPE_RGBA_16, hlcmsProfileOut, TYPE_RGBA_16, Intent, cmsFLAGS_NOCACHE | cmsFLAGS_COPY_ALPHA);
+
+    cmsCloseProfile(hlcmsProfileIn);
+    cmsCloseProfile(hlcmsProfileOut);
+
+    if (xformRaw == NULL || xformPlugin == NULL) {
+
+        Fail("NULL transforms on check float conversions");
+    }
+
+    // Again, no checking on mem alloc because this is just a test
+    bufferIn = (Scanline_rgba16bits*)malloc(npixels * sizeof(Scanline_rgba16bits));
+    bufferRawOut = (Scanline_rgba16bits*)malloc(npixels * sizeof(Scanline_rgba16bits));
+    bufferPluginOut = (Scanline_rgba16bits*)malloc(npixels * sizeof(Scanline_rgba16bits));
+
+    // Same input to both transforms
+    j = 0;
+    for (r = 0; r < 256; r++)
+        for (g = 0; g < 256; g++)
+            for (b = 0; b < 256; b++) {
+
+                bufferIn[j].r = FROM_8_TO_16(r);
+                bufferIn[j].g = FROM_8_TO_16(g);
+                bufferIn[j].b = FROM_8_TO_16(b);
+                bufferIn[j].a = 0xffff;
+
+                j++;
+            }
+
+    // Different transforms, different output buffers
+    cmsDoTransform(xformRaw, bufferIn, bufferRawOut, npixels);
+    cmsDoTransform(xformPlugin, bufferIn, bufferPluginOut, npixels);
+
+    // Lets compare results
+    j = 0;
+    for (r = 0; r < 256; r++)
+        for (g = 0; g < 256; g++)
+            for (b = 0; b < 256; b++) {
+
+                if (bufferRawOut[j].r != bufferPluginOut[j].r ||
+                    bufferRawOut[j].g != bufferPluginOut[j].g ||
+                    bufferRawOut[j].b != bufferPluginOut[j].b ||
+                    bufferRawOut[j].a != bufferPluginOut[j].a)
+                    Fail(
+                        "Conversion failed at [%x %x %x %x] (%x %x %x %x) != (%x %x %x %x)",
+                        bufferIn[j].r, bufferIn[j].g, bufferIn[j].b, bufferIn[j].a,
+                        bufferRawOut[j].r, bufferRawOut[j].g, bufferRawOut[j].b, bufferRawOut[j].a,
+                        bufferPluginOut[j].r, bufferPluginOut[j].g, bufferPluginOut[j].b, bufferPluginOut[j].a);
+
+                j++;
+            }
+
+    free(bufferIn); free(bufferRawOut);
+    free(bufferPluginOut);
+
+    cmsDeleteTransform(xformRaw);
+    cmsDeleteTransform(xformPlugin);
+
+    cmsDeleteContext(Plugin);
+    cmsDeleteContext(Raw);
+}
+
+static
+void CheckAccuracy16Bits(void)
+{
+    // CLUT should be as 16 bits or better
+    trace("Checking accuracy of 16 bits CLUT...");
+    TryAllValues16bits(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
+    trace("OK\n");
+}
+
 
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
@@ -206,7 +386,7 @@ cmsHPROFILE loadProfile(const char* name)
                     Fail("Unknown builtin '%s'", name);
 
     }
-    
+
     return cmsOpenProfileFromFile(name, "r");
 }
 
@@ -214,60 +394,60 @@ cmsHPROFILE loadProfile(const char* name)
 static
 cmsFloat64Number Performance(const char* Title, perf_fn fn, cmsContext ct, const char* inICC, const char* outICC, size_t sz, cmsFloat64Number prev)
 {
-       cmsHPROFILE hlcmsProfileIn = loadProfile(inICC);
-       cmsHPROFILE hlcmsProfileOut = loadProfile(outICC);
-                 
-       cmsFloat64Number n = fn(ct, hlcmsProfileIn, hlcmsProfileOut);
+    cmsHPROFILE hlcmsProfileIn = loadProfile(inICC);
+    cmsHPROFILE hlcmsProfileOut = loadProfile(outICC);
 
-       trace("%-30s: ", Title); fflush(stdout);
-       trace("%-12.2f %-12.2f", n, n * sz);
+    cmsFloat64Number n = fn(ct, hlcmsProfileIn, hlcmsProfileOut);
 
-       if (prev > 0.0) {
+    trace("%-30s: ", Title); fflush(stdout);
+    trace("%-12.2f %-12.2f", n, n * sz);
 
-              cmsFloat64Number imp = n / prev;
-              if (imp > 1)
-                   trace(" (x %-2.1f)",  imp);
-       }
+    if (prev > 0.0) {
 
-       trace("\n"); fflush(stdout);
-       return n;
+        cmsFloat64Number imp = n / prev;
+        if (imp > 1)
+            trace(" (x %-2.1f)", imp);
+    }
+
+    trace("\n"); fflush(stdout);
+    return n;
 }
 
 
 static
 void ComparativeCt(cmsContext ct1, cmsContext ct2, const char* Title, perf_fn fn1, perf_fn fn2, const char* inICC, const char* outICC)
 {
-       cmsHPROFILE hlcmsProfileIn;
-       cmsHPROFILE hlcmsProfileOut;
+    cmsHPROFILE hlcmsProfileIn;
+    cmsHPROFILE hlcmsProfileOut;
 
-       if (inICC == NULL)
-              hlcmsProfileIn = CreateCurves();
-       else
-              hlcmsProfileIn = cmsOpenProfileFromFile(inICC, "r");
+    if (inICC == NULL)
+        hlcmsProfileIn = CreateCurves();
+    else
+        hlcmsProfileIn = cmsOpenProfileFromFile(inICC, "r");
 
-       if (outICC == NULL)
-              hlcmsProfileOut = CreateCurves();
-       else
-              hlcmsProfileOut = cmsOpenProfileFromFile(outICC, "r");
-
-
-       cmsFloat64Number n1 = fn1(ct1, hlcmsProfileIn, hlcmsProfileOut);
-
-       if (inICC == NULL)
-              hlcmsProfileIn = CreateCurves();
-       else
-              hlcmsProfileIn = cmsOpenProfileFromFile(inICC, "r");
-
-       if (outICC == NULL)
-              hlcmsProfileOut = CreateCurves();
-       else
-              hlcmsProfileOut = cmsOpenProfileFromFile(outICC, "r");
-
-       cmsFloat64Number n2 = fn2(ct2, hlcmsProfileIn, hlcmsProfileOut);
+    if (outICC == NULL)
+        hlcmsProfileOut = CreateCurves();
+    else
+        hlcmsProfileOut = cmsOpenProfileFromFile(outICC, "r");
 
 
-       trace("%-30s: ", Title); fflush(stdout);
-       trace("%-12.2f %-12.2f\n", n1, n2);
+    cmsFloat64Number n1 = fn1(ct1, hlcmsProfileIn, hlcmsProfileOut);
+
+    if (inICC == NULL)
+        hlcmsProfileIn = CreateCurves();
+    else
+        hlcmsProfileIn = cmsOpenProfileFromFile(inICC, "r");
+
+    if (outICC == NULL)
+        hlcmsProfileOut = CreateCurves();
+    else
+        hlcmsProfileOut = cmsOpenProfileFromFile(outICC, "r");
+
+    cmsFloat64Number n2 = fn2(ct2, hlcmsProfileIn, hlcmsProfileOut);
+
+
+    trace("%-30s: ", Title); fflush(stdout);
+    trace("%-12.2f %-12.2f\n", n1, n2);
 }
 
 static
@@ -280,87 +460,87 @@ void Comparative(const char* Title, perf_fn fn1, perf_fn fn2, const char* inICC,
 static
 cmsFloat64Number SpeedTest8bitsRGB(cmsContext ct, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut)
 {
-       cmsInt32Number r, g, b, j;       
-       cmsFloat64Number diff;
-       cmsHTRANSFORM hlcmsxform;
-       Scanline_rgb8bits *In;
-       cmsUInt32Number Mb;
+    cmsInt32Number r, g, b, j;
+    cmsFloat64Number diff;
+    cmsHTRANSFORM hlcmsxform;
+    Scanline_rgb8bits* In;
+    cmsUInt32Number Mb;
 
-       if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
-              Fail("Unable to open profiles");
+    if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
+        Fail("Unable to open profiles");
 
-       hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGB_8, hlcmsProfileOut, TYPE_RGB_8, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
-       cmsCloseProfile(hlcmsProfileIn);
-       cmsCloseProfile(hlcmsProfileOut);
+    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGB_8, hlcmsProfileOut, TYPE_RGB_8, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
+    cmsCloseProfile(hlcmsProfileIn);
+    cmsCloseProfile(hlcmsProfileOut);
 
-       Mb = 256 * 256 * 256 * sizeof(Scanline_rgb8bits);
-       In = (Scanline_rgb8bits*)malloc(Mb);
+    Mb = 256 * 256 * 256 * sizeof(Scanline_rgb8bits);
+    In = (Scanline_rgb8bits*)malloc(Mb);
 
-       j = 0;
-       for (r = 0; r < 256; r++)
-              for (g = 0; g < 256; g++)
-                     for (b = 0; b < 256; b++) {
+    j = 0;
+    for (r = 0; r < 256; r++)
+        for (g = 0; g < 256; g++)
+            for (b = 0; b < 256; b++) {
 
-                            In[j].r = (cmsUInt8Number)r;
-                            In[j].g = (cmsUInt8Number)g;
-                            In[j].b = (cmsUInt8Number)b;
+                In[j].r = (cmsUInt8Number)r;
+                In[j].g = (cmsUInt8Number)g;
+                In[j].b = (cmsUInt8Number)b;
 
-                            j++;
-                     }
+                j++;
+            }
 
-       MeasureTimeStart();
+    MeasureTimeStart();
 
-       cmsDoTransform(hlcmsxform, In, In, 256 * 256 * 256);
+    cmsDoTransform(hlcmsxform, In, In, 256 * 256 * 256);
 
-       diff = MeasureTimeStop();
-       free(In);
+    diff = MeasureTimeStop();
+    free(In);
 
-       cmsDeleteTransform(hlcmsxform);
+    cmsDeleteTransform(hlcmsxform);
 
-       return MPixSec(diff);
+    return MPixSec(diff);
 }
 
 static
 cmsFloat64Number SpeedTest8bitsRGBA(cmsContext ct, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut)
 {
-       cmsInt32Number r, g, b, j;       
-       cmsFloat64Number diff;
-       cmsHTRANSFORM hlcmsxform;
-       Scanline_rgba8bits *In;
-       cmsUInt32Number Mb;
+    cmsInt32Number r, g, b, j;
+    cmsFloat64Number diff;
+    cmsHTRANSFORM hlcmsxform;
+    Scanline_rgba8bits* In;
+    cmsUInt32Number Mb;
 
-       if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
-              Fail("Unable to open profiles");
+    if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
+        Fail("Unable to open profiles");
 
-       hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
-       cmsCloseProfile(hlcmsProfileIn);
-       cmsCloseProfile(hlcmsProfileOut);
+    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
+    cmsCloseProfile(hlcmsProfileIn);
+    cmsCloseProfile(hlcmsProfileOut);
 
-       Mb = 256 * 256 * 256 * sizeof(Scanline_rgba8bits);
-       In = (Scanline_rgba8bits*)malloc(Mb);
+    Mb = 256 * 256 * 256 * sizeof(Scanline_rgba8bits);
+    In = (Scanline_rgba8bits*)malloc(Mb);
 
-       j = 0;
-       for (r = 0; r < 256; r++)
-              for (g = 0; g < 256; g++)
-                     for (b = 0; b < 256; b++) {
+    j = 0;
+    for (r = 0; r < 256; r++)
+        for (g = 0; g < 256; g++)
+            for (b = 0; b < 256; b++) {
 
-                            In[j].r = (cmsUInt8Number)r;
-                            In[j].g = (cmsUInt8Number)g;
-                            In[j].b = (cmsUInt8Number)b;
-                            In[j].a = 0;
+                In[j].r = (cmsUInt8Number)r;
+                In[j].g = (cmsUInt8Number)g;
+                In[j].b = (cmsUInt8Number)b;
+                In[j].a = 0;
 
-                            j++;
-                     }
+                j++;
+            }
 
-       MeasureTimeStart();
+    MeasureTimeStart();
 
-       cmsDoTransform(hlcmsxform, In, In, 256 * 256 * 256);
+    cmsDoTransform(hlcmsxform, In, In, 256 * 256 * 256);
 
-       diff = MeasureTimeStop();
-       free(In);
+    diff = MeasureTimeStop();
+    free(In);
 
-       cmsDeleteTransform(hlcmsxform);
-       return MPixSec(diff);
+    cmsDeleteTransform(hlcmsxform);
+    return MPixSec(diff);
 
 }
 
@@ -516,69 +696,72 @@ void SpeedTest16(void)
     Performance("16 bits on same Matrix-Shaper    ", SpeedTest16bitsRGB,  0, "test0.icc", "test0.icc", sizeof(Scanline_rgb16bits), t[2]);
     Performance("16 bits on curves                ", SpeedTest16bitsRGB,  0, "*curves",   "*curves",   sizeof(Scanline_rgb16bits), t[3]);
     Performance("16 bits on CMYK CLUT profiles    ", SpeedTest16bitsCMYK, 0, "test1.icc", "test2.icc", sizeof(Scanline_cmyk16bits), t[4]);
+
+    cmsDeleteContext(noPlugin);
 }
 
 
 
 typedef struct
 {
-       Scanline_rgba8bits pixels[256][256];
-       cmsUInt8Number     padding[4];
+    Scanline_rgba8bits pixels[256][256];
+    cmsUInt8Number     padding[4];
 
 } padded_line;
 
 typedef struct
 {
-       padded_line line[256];
+    padded_line line[256];
+
 } big_bitmap;
 
 
 static
 cmsFloat64Number SpeedTest8bitDoTransform(cmsContext ct, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut)
 {
-       cmsInt32Number r, g, b, j;       
-       cmsFloat64Number diff;
-       cmsHTRANSFORM hlcmsxform;
-       big_bitmap* In;
-       big_bitmap* Out;
-       cmsUInt32Number Mb;
+    cmsInt32Number r, g, b, j;
+    cmsFloat64Number diff;
+    cmsHTRANSFORM hlcmsxform;
+    big_bitmap* In;
+    big_bitmap* Out;
+    cmsUInt32Number Mb;
 
-       if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
-              Fail("Unable to open profiles");
+    if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
+        Fail("Unable to open profiles");
 
-       hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
-       cmsCloseProfile(hlcmsProfileIn);
-       cmsCloseProfile(hlcmsProfileOut);
+    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
+    cmsCloseProfile(hlcmsProfileIn);
+    cmsCloseProfile(hlcmsProfileOut);
 
 
-       // Our test bitmap is 256 x 256 padded lines
-       Mb = sizeof(big_bitmap);
+    // Our test bitmap is 256 x 256 padded lines
+    Mb = sizeof(big_bitmap);
 
-       In = (big_bitmap*)malloc(Mb);
-       Out = (big_bitmap*)malloc(Mb);
+    In = (big_bitmap*)malloc(Mb);
+    Out = (big_bitmap*)malloc(Mb);
 
-       for (r = 0; r < 256; r++)
-              for (g = 0; g < 256; g++)
-                     for (b = 0; b < 256; b++) {
+    for (r = 0; r < 256; r++)
+        for (g = 0; g < 256; g++)
+            for (b = 0; b < 256; b++) {
 
-                            In->line[r].pixels[g][b].r = (cmsUInt8Number)r;
-                            In->line[r].pixels[g][b].g = (cmsUInt8Number)g;
-                            In->line[r].pixels[g][b].b = (cmsUInt8Number)b;
-                            In->line[r].pixels[g][b].a = 0;
-                     }
+                In->line[r].pixels[g][b].r = (cmsUInt8Number)r;
+                In->line[r].pixels[g][b].g = (cmsUInt8Number)g;
+                In->line[r].pixels[g][b].b = (cmsUInt8Number)b;
+                In->line[r].pixels[g][b].a = 0;
+            }
 
-       MeasureTimeStart();
+    MeasureTimeStart();
 
-       for (j = 0; j < 256; j++) {
+    for (j = 0; j < 256; j++) {
 
-              cmsDoTransform(hlcmsxform, In->line[j].pixels, Out->line[j].pixels, 256 * 256);
-       }
+        cmsDoTransform(hlcmsxform, In->line[j].pixels, Out->line[j].pixels, 256 * 256);
+    }
 
-       diff = MeasureTimeStop();
-       free(In); free(Out);
+    diff = MeasureTimeStop();
+    free(In); free(Out);
 
-       cmsDeleteTransform(hlcmsxform);
-       return MPixSec(diff);
+    cmsDeleteTransform(hlcmsxform);
+    return MPixSec(diff);
 
 }
 
@@ -586,46 +769,46 @@ cmsFloat64Number SpeedTest8bitDoTransform(cmsContext ct, cmsHPROFILE hlcmsProfil
 static
 cmsFloat64Number SpeedTest8bitLineStride(cmsContext ct, cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut)
 {
-       cmsInt32Number r, g, b;       
-       cmsFloat64Number diff;
-       cmsHTRANSFORM hlcmsxform;
-       big_bitmap* In;
-       big_bitmap* Out;
-       cmsUInt32Number Mb;
+    cmsInt32Number r, g, b;
+    cmsFloat64Number diff;
+    cmsHTRANSFORM hlcmsxform;
+    big_bitmap* In;
+    big_bitmap* Out;
+    cmsUInt32Number Mb;
 
-       if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
-              Fail("Unable to open profiles");
+    if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
+        Fail("Unable to open profiles");
 
-       hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
-       cmsCloseProfile(hlcmsProfileIn);
-       cmsCloseProfile(hlcmsProfileOut);
+    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
+    cmsCloseProfile(hlcmsProfileIn);
+    cmsCloseProfile(hlcmsProfileOut);
 
 
-       // Our test bitmap is 256 x 256 padded lines
-       Mb = sizeof(big_bitmap);
+    // Our test bitmap is 256 x 256 padded lines
+    Mb = sizeof(big_bitmap);
 
-       In = (big_bitmap*)malloc(Mb);
-       Out = (big_bitmap*)malloc(Mb);
+    In = (big_bitmap*)malloc(Mb);
+    Out = (big_bitmap*)malloc(Mb);
 
-       for (r = 0; r < 256; r++)
-              for (g = 0; g < 256; g++)
-                     for (b = 0; b < 256; b++) {
+    for (r = 0; r < 256; r++)
+        for (g = 0; g < 256; g++)
+            for (b = 0; b < 256; b++) {
 
-                            In->line[r].pixels[g][b].r = (cmsUInt8Number)r;
-                            In->line[r].pixels[g][b].g = (cmsUInt8Number)g;
-                            In->line[r].pixels[g][b].b = (cmsUInt8Number)b;
-                            In->line[r].pixels[g][b].a = 0;
-                     }
+                In->line[r].pixels[g][b].r = (cmsUInt8Number)r;
+                In->line[r].pixels[g][b].g = (cmsUInt8Number)g;
+                In->line[r].pixels[g][b].b = (cmsUInt8Number)b;
+                In->line[r].pixels[g][b].a = 0;
+            }
 
-       MeasureTimeStart();
-       
-       cmsDoTransformLineStride(hlcmsxform, In, Out, 256*256, 256, sizeof(padded_line), sizeof(padded_line), 0, 0);
-       
-       diff = MeasureTimeStop();
-       free(In); free(Out);
+    MeasureTimeStart();
 
-       cmsDeleteTransform(hlcmsxform);
-       return MPixSec(diff);
+    cmsDoTransformLineStride(hlcmsxform, In, Out, 256 * 256, 256, sizeof(padded_line), sizeof(padded_line), 0, 0);
+
+    diff = MeasureTimeStop();
+    free(In); free(Out);
+
+    cmsDeleteTransform(hlcmsxform);
+    return MPixSec(diff);
 
 }
 
@@ -659,7 +842,11 @@ void ComparativeLineStride8bits(void)
 // The harness test
 int main()
 {
-    trace("Multithreaded extensions testbed - 1.0\n");
+#ifdef _MSC_VER
+    _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
+#endif
+
+    trace("Multithreaded extensions testbed - 1.1\n");
     trace("Copyright (c) 1998-2022 Marti Maria Saguer, all rights reserved\n");
 
     trace("\nInstalling error logger ... ");
@@ -673,10 +860,16 @@ int main()
     // Change format
     CheckChangeFormat();
 
+    // Accuracy
+    CheckAccuracy8Bits();
+    CheckAccuracy16Bits();
+
     // Check speed
     SpeedTest8();
     SpeedTest16();
     ComparativeLineStride8bits();
+
+    cmsUnregisterPlugins();
 
     trace("\nAll tests passed OK\n");
     return 0;
