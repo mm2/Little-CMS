@@ -168,22 +168,21 @@ cmsBool CMSEXPORT  _cmsReadUInt32Number(cmsIOHANDLER* io, cmsUInt32Number* n)
 
 cmsBool CMSEXPORT  _cmsReadFloat32Number(cmsIOHANDLER* io, cmsFloat32Number* n)
 {
-    cmsUInt32Number tmp;
+    union typeConverter {
+        cmsUInt32Number integer;
+        cmsFloat32Number floating_point;
+    } tmp;
 
     _cmsAssert(io != NULL);
 
-    if (io->Read(io, &tmp, sizeof(cmsUInt32Number), 1) != 1)
+    if (io->Read(io, &tmp.integer, sizeof(cmsUInt32Number), 1) != 1)
         return FALSE;
 
     if (n != NULL) {
 
-        const cmsFloat32Number* f;         // gcc complaing on strict aliasing if this pointer is not used.
+        tmp.integer = _cmsAdjustEndianess32(tmp.integer);
+        *n = tmp.floating_point;
 
-        tmp = _cmsAdjustEndianess32(tmp);
-
-        f  = (const cmsFloat32Number*) &tmp;
-        *n = *f;
-        
         // Safeguard which covers against absurd values
         if (*n > 1E+20 || *n < -1E+20) return FALSE;
 
@@ -309,14 +308,14 @@ cmsBool CMSEXPORT  _cmsWriteUInt32Number(cmsIOHANDLER* io, cmsUInt32Number n)
 
 cmsBool CMSEXPORT  _cmsWriteFloat32Number(cmsIOHANDLER* io, cmsFloat32Number n)
 {
-    cmsUInt32Number tmp;
-    const cmsFloat32Number* f = &n;
+    union typeConverter {
+        cmsUInt32Number integer;
+        cmsFloat32Number floating_point;
+    } tmp;
 
-    _cmsAssert(io != NULL);
-
-    tmp = *(cmsUInt32Number*)f;
-    tmp = _cmsAdjustEndianess32(tmp);
-    if (io -> Write(io, sizeof(cmsUInt32Number), &tmp) != 1)
+    tmp.floating_point = n;
+    tmp.integer = _cmsAdjustEndianess32(tmp.integer);
+    if (io -> Write(io, sizeof(cmsUInt32Number), &tmp.integer) != 1)
             return FALSE;
 
     return TRUE;
