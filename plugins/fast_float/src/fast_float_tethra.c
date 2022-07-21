@@ -254,8 +254,9 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
     if (T_BYTES(*InputFormat) != sizeof(cmsFloat32Number) || 
         T_BYTES(*OutputFormat) != sizeof(cmsFloat32Number)) return FALSE;
 
-    // Input has to be RGB, Output may be any
+    // Input has to be RGB, Output may be any but Lab
     if (T_COLORSPACE(*InputFormat) != PT_RGB) return FALSE;
+    if (T_COLORSPACE(*OutputFormat) == PT_Lab) return FALSE;
 
     OriginalLut = *Lut;
    
