@@ -783,6 +783,7 @@ cmsBool _cmsReadHeader(_cmsICCPROFILE* Icc)
         if (!_cmsReadUInt32Number(io, &Tag.size)) return FALSE;
 
         // Perform some sanity check. Offset + size should fall inside file.
+        if (Tag.size == 0 || Tag.offset == 0) continue;
         if (Tag.offset + Tag.size > HeaderSize ||
             Tag.offset + Tag.size < Tag.offset)
                   continue;
@@ -805,7 +806,12 @@ cmsBool _cmsReadHeader(_cmsICCPROFILE* Icc)
         Icc ->TagCount++;
     }
 
-    return TRUE;
+    if (Icc->TagCount == 0) {
+        cmsSignalError(Icc->ContextID, cmsERROR_RANGE, "Corrupted profile: no tags found");
+        return FALSE;
+    }
+        
+     return TRUE;
 }
 
 // Saves profile header
