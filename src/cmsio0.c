@@ -804,14 +804,9 @@ cmsBool _cmsReadHeader(_cmsICCPROFILE* Icc)
         }
 
         Icc ->TagCount++;
-    }
+	}
 
-    if (Icc->TagCount == 0) {
-        cmsSignalError(Icc->ContextID, cmsERROR_RANGE, "Corrupted profile: no tags found");
-        return FALSE;
-    }
-        
-     return TRUE;
+	return TRUE;
 }
 
 // Saves profile header
