@@ -804,9 +804,9 @@ cmsBool _cmsReadHeader(_cmsICCPROFILE* Icc)
         }
 
         Icc ->TagCount++;
-	}
+    }
 
-	return TRUE;
+    return TRUE;
 }
 
 // Saves profile header
