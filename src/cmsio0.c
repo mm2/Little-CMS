@@ -1825,6 +1825,9 @@ cmsUInt32Number CMSEXPORT cmsReadRawTag(cmsHPROFILE hProfile, cmsTagSignature si
     cmsUInt32Number rc;
     cmsUInt32Number Offset, TagSize;
 
+    // Sanity check
+    if (data != NULL && BufferSize == 0) return 0;
+
     if (!_cmsLockMutex(Icc->ContextID, Icc ->UsrMutex)) return 0;
 
     // Search for given tag in ICC profile directory
@@ -1844,7 +1847,7 @@ cmsUInt32Number CMSEXPORT cmsReadRawTag(cmsHPROFILE hProfile, cmsTagSignature si
         if (data != NULL) {
 
             if (BufferSize < TagSize)
-                TagSize = BufferSize;
+                goto Error;
 
             if (!Icc ->IOhandler ->Seek(Icc ->IOhandler, Offset)) goto Error;
             if (!Icc ->IOhandler ->Read(Icc ->IOhandler, data, 1, TagSize)) goto Error;
@@ -1866,7 +1869,7 @@ cmsUInt32Number CMSEXPORT cmsReadRawTag(cmsHPROFILE hProfile, cmsTagSignature si
 
             TagSize  = Icc ->TagSizes[i];
             if (BufferSize < TagSize)
-                TagSize = BufferSize;
+                goto Error;
 
             memmove(data, Icc ->TagPtrs[i], TagSize);
 
