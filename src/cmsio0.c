@@ -689,6 +689,27 @@ cmsBool CMSEXPORT cmsIsTag(cmsHPROFILE hProfile, cmsTagSignature sig)
        return _cmsSearchTag(Icc, sig, FALSE) >= 0;
 }
 
+
+
+// Checks for link compatibility
+static
+cmsBool CompatibleTypes(const cmsTagDescriptor* desc1, const cmsTagDescriptor* desc2)
+{
+    cmsUInt32Number i;
+
+    if (desc1 == NULL || desc2 == NULL) return FALSE;
+
+    if (desc1->nSupportedTypes != desc2->nSupportedTypes) return FALSE;
+    if (desc1->ElemCount != desc2->ElemCount) return FALSE;
+
+    for (i = 0; i < desc1->nSupportedTypes; i++)
+    {
+        if (desc1->SupportedTypes[i] != desc2->SupportedTypes[i]) return FALSE;
+    }
+
+    return TRUE;
+}
+
 // Enforces that the profile version is per. spec.
 // Operates on the big endian bytes from the profile.
 // Called before converting to platform endianness.
@@ -798,7 +819,12 @@ cmsBool _cmsReadHeader(_cmsICCPROFILE* Icc)
             if ((Icc ->TagOffsets[j] == Tag.offset) &&
                 (Icc ->TagSizes[j]   == Tag.size)) {
 
-                Icc ->TagLinked[Icc ->TagCount] = Icc ->TagNames[j];
+                // Check types. Abort whole profile if a forged link is found
+                if (CompatibleTypes(_cmsGetTagDescriptor(Icc->ContextID, Icc->TagNames[j]),
+                                    _cmsGetTagDescriptor(Icc->ContextID, Tag.sig))) {
+
+                    Icc->TagLinked[Icc->TagCount] = Icc->TagNames[j];
+                }
             }
 
         }
