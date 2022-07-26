@@ -1473,6 +1473,9 @@ cmsFloat64Number CMSEXPORT cmsEstimateGamma(const cmsToneCurve* t, cmsFloat64Num
         }
     }
 
+    // We need enough valid samples
+    if (n <= 1) return -1.0;
+
     // Take a look on SD to see if gamma isn't exponential at all
     Std = sqrt((n * sum2 - sum * sum) / (n*(n-1)));
 
