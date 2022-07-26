@@ -815,11 +815,11 @@ cmsBool _cmsReadHeader(_cmsICCPROFILE* Icc)
 
        // Search for links
         for (j=0; j < Icc ->TagCount; j++) {
-
+           
             if ((Icc ->TagOffsets[j] == Tag.offset) &&
                 (Icc ->TagSizes[j]   == Tag.size)) {
 
-                // Check types. Abort whole profile if a forged link is found
+                // Check types. 
                 if (CompatibleTypes(_cmsGetTagDescriptor(Icc->ContextID, Icc->TagNames[j]),
                                     _cmsGetTagDescriptor(Icc->ContextID, Tag.sig))) {
 
@@ -830,6 +830,19 @@ cmsBool _cmsReadHeader(_cmsICCPROFILE* Icc)
         }
 
         Icc ->TagCount++;
+    }
+
+
+    for (i = 0; i < Icc->TagCount; i++) {
+        for (j = 0; j < Icc->TagCount; j++) {
+
+            // Tags cannot be duplicate
+            if ((i != j) && (Icc->TagNames[i] == Icc->TagNames[j])) {
+                cmsSignalError(Icc->ContextID, cmsERROR_RANGE, "Duplicate tag found");
+                return FALSE;
+            }
+
+        }
     }
 
     return TRUE;
