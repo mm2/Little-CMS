@@ -1171,8 +1171,9 @@ void* AllocChunk(cmsIT8* it8, cmsUInt32Number size)
 
         it8 ->Allocator.Used = 0;
         it8 ->Allocator.Block = (cmsUInt8Number*) AllocBigBlock(it8, it8 ->Allocator.BlockSize);
-        if (it8->Allocator.Block == NULL) return NULL;
     }
+
+    if (it8->Allocator.Block == NULL) return NULL;
 
     ptr = it8 ->Allocator.Block + it8 ->Allocator.Used;
     it8 ->Allocator.Used += size;
