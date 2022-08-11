@@ -367,6 +367,7 @@ static
 string* StringAlloc(cmsIT8* it8, int max)
 {
     string* s = (string*) AllocChunk(it8, sizeof(string));
+    if (s == NULL) return NULL;
 
     s->it8 = it8;
     s->max = max;
@@ -391,7 +392,9 @@ void StringAppend(string* s, char c)
 
         s->max *= 10;
         new_ptr = (char*) AllocChunk(s->it8, s->max);
-        memcpy(new_ptr, s->begin, s->len);
+        if (new_ptr != NULL)
+            memcpy(new_ptr, s->begin, s->len);
+
         s->begin = new_ptr;
     }
 
@@ -1167,7 +1170,8 @@ void* AllocChunk(cmsIT8* it8, cmsUInt32Number size)
                 it8 ->Allocator.BlockSize = size;
 
         it8 ->Allocator.Used = 0;
-        it8 ->Allocator.Block = (cmsUInt8Number*)  AllocBigBlock(it8, it8 ->Allocator.BlockSize);
+        it8 ->Allocator.Block = (cmsUInt8Number*) AllocBigBlock(it8, it8 ->Allocator.BlockSize);
+        if (it8->Allocator.Block == NULL) return NULL;
     }
 
     ptr = it8 ->Allocator.Block + it8 ->Allocator.Used;
@@ -2535,15 +2539,18 @@ cmsUInt32Number CMSEXPORT cmsIT8EnumProperties(cmsHANDLE hIT8, char ***PropertyN
     }
 
 
-    Props = (char **) AllocChunk(it8, sizeof(char *) * n);
+	Props = (char**)AllocChunk(it8, sizeof(char*) * n);
+	if (Props != NULL) {
 
-    // Pass#2 - Fill pointers
-    n = 0;
-    for (p = t -> HeaderList;  p != NULL; p = p->Next) {
-        Props[n++] = p -> Keyword;
-    }
+		// Pass#2 - Fill pointers
+		n = 0;
+		for (p = t->HeaderList; p != NULL; p = p->Next) {
+			Props[n++] = p->Keyword;
+		}
 
-    *PropertyNames = Props;
+	}
+	*PropertyNames = Props;
+
     return n;
 }
 
@@ -2575,12 +2582,14 @@ cmsUInt32Number CMSEXPORT cmsIT8EnumPropertyMulti(cmsHANDLE hIT8, const char* cP
 
 
     Props = (const char **) AllocChunk(it8, sizeof(char *) * n);
+    if (Props != NULL) {
 
-    // Pass#2 - Fill pointers
-    n = 0;
-    for (tmp = p;  tmp != NULL; tmp = tmp->NextSubkey) {
-        if(tmp->Subkey != NULL)
-            Props[n++] = p ->Subkey;
+        // Pass#2 - Fill pointers
+        n = 0;
+        for (tmp = p; tmp != NULL; tmp = tmp->NextSubkey) {
+            if (tmp->Subkey != NULL)
+                Props[n++] = p->Subkey;
+        }
     }
 
     *SubpropertyNames = Props;
