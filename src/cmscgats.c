@@ -995,8 +995,10 @@ void InSymbol(cmsIT8* it8)
                 if(FileNest == NULL) {
 
                     FileNest = it8 ->FileStack[it8 -> IncludeSP + 1] = (FILECTX*)AllocChunk(it8, sizeof(FILECTX));
-                    //if(FileNest == NULL)
-                    //  TODO: how to manage out-of-memory conditions?
+                    if (FileNest == NULL) {
+                        SynError(it8, "Out of memory");
+                        return;
+                    }
                 }
 
                 if (BuildAbsolutePath(StringPtr(it8->str),
@@ -1170,9 +1172,10 @@ void* AllocChunk(cmsIT8* it8, cmsUInt32Number size)
                 it8 ->Allocator.BlockSize = size;
 
         it8 ->Allocator.Used = 0;
-        it8 ->Allocator.Block = (cmsUInt8Number*) AllocBigBlock(it8, it8 ->Allocator.BlockSize);
-        if (it8->Allocator.Block == NULL) return NULL;
+        it8 ->Allocator.Block = (cmsUInt8Number*) AllocBigBlock(it8, it8 ->Allocator.BlockSize);       
     }
+
+    if (it8->Allocator.Block == NULL) return NULL;
 
     ptr = it8 ->Allocator.Block + it8 ->Allocator.Used;
     it8 ->Allocator.Used += size;
