@@ -36,6 +36,9 @@ cmsBool Floating_Point_Transforms_Dispatcher(_cmsTransform2Fn* TransformFn,
     // Softproofing & gamut check does not use plugin, both are activated via following flag.
     if (*dwFlags & cmsFLAGS_SOFTPROOFING) return FALSE;
 
+    // Special flags for reversing are not supported
+    if (T_FLAVOR(*InputFormat) || T_FLAVOR(*OutputFormat)) return FALSE;
+
     // Try to optimize as a set of curves plus a matrix plus a set of curves
     if (OptimizeMatrixShaper15(TransformFn, UserData, FreeUserData, Lut, InputFormat, OutputFormat, dwFlags)) return TRUE;
 
