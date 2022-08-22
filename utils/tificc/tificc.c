@@ -1005,7 +1005,7 @@ void Help(int level)
 
     fprintf(stderr, "-p<profile> - Soft proof profile\n");
     fprintf(stderr, "-m<n> - Soft proof intent\n");
-    fprintf(stderr, "\tThat is the intent used to translate the simulation to the output device.\n\tNote that the simulated intent is set by using -t not by -m");
+    fprintf(stderr, "\tThat is the intent used to translate the simulation to the output device.\n\tNote that the simulated intent is set by using -t not by -m\n");
     fprintf(stderr, "-g - Marks out-of-gamut colors on softproof\n");
 
     fprintf(stderr, "\n");
