@@ -1005,6 +1005,7 @@ void Help(int level)
 
     fprintf(stderr, "-p<profile> - Soft proof profile\n");
     fprintf(stderr, "-m<n> - Soft proof intent\n");
+    fprintf(stderr, "\tThat is the intent used to translate the simulation to the output device.\n\tNote that the simulated intent is set by using -t not by -m");
     fprintf(stderr, "-g - Marks out-of-gamut colors on softproof\n");
 
     fprintf(stderr, "\n");
@@ -1022,6 +1023,8 @@ void Help(int level)
         "\ttificc -oprinter.icm inrgb.tif outcmyk.tif\n"
         "To recover sRGB from a CMYK separation:\n"
         "\ttificc -iprinter.icm incmyk.tif outrgb.tif\n"
+        "To soft-poof how behaves Probev1_ICCv4.icc on perceptual:\n"
+        "\ttifficc -t0 -p Probev1_ICCv4.icc -m1 infile.tif out.tif\n"
         "To convert from CIELab TIFF to sRGB\n"
         "\ttificc -i*Lab in.tif out.tif\n\n");
 
@@ -1186,7 +1189,7 @@ int main(int argc, char* argv[])
     TIFF *in, *out;
    
 
-    fprintf(stderr, "Little CMS ICC profile applier for TIFF - v7.1 [LittleCMS %2.2f]\n\n", cmsGetEncodedCMMversion() / 1000.0);
+    fprintf(stderr, "Little CMS ICC profile applier for TIFF - v7.2 [LittleCMS %2.2f]\n\n", cmsGetEncodedCMMversion() / 1000.0);
     fprintf(stderr, "Copyright (c) 1998-2022 Marti Maria Saguer. See COPYING file for details.\n");
     fflush(stderr);
 
