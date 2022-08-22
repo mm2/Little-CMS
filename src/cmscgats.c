@@ -392,14 +392,17 @@ void StringAppend(string* s, char c)
 
         s->max *= 10;
         new_ptr = (char*) AllocChunk(s->it8, s->max);
-        if (new_ptr != NULL)
+        if (new_ptr != NULL && s->begin != NULL)
             memcpy(new_ptr, s->begin, s->len);
 
         s->begin = new_ptr;
     }
 
-    s->begin[s->len++] = c;
-    s->begin[s->len] = 0;
+    if (s->begin != NULL)
+    {
+        s->begin[s->len++] = c;
+        s->begin[s->len] = 0;
+    }
 }
 
 static
