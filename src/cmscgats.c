@@ -1520,6 +1520,21 @@ const char* CMSEXPORT cmsIT8GetPropertyMulti(cmsHANDLE hIT8, const char* Key, co
 
 // ----------------------------------------------------------------- Datasets
 
+// A safe atoi that returns 0 when NULL input is given
+static
+cmsInt32Number satoi(const char* b)
+{
+    int n;
+
+    if (b == NULL) return 0;
+
+    n = atoi(b);
+    if (n > 0x7fffffffL) return 0x7fffffffL;
+    if (n < -0x7ffffffeL) return -0x7ffffffeL;
+
+    return (cmsInt32Number)n;
+}
+
 
 static
 void AllocateDataFormat(cmsIT8* it8)
@@ -1580,21 +1595,6 @@ cmsBool CMSEXPORT cmsIT8SetDataFormat(cmsHANDLE  h, int n, const char *Sample)
 {
     cmsIT8* it8 = (cmsIT8*)h;
     return SetDataFormat(it8, n, Sample);
-}
-
-// A safe atoi that returns 0 when NULL input is given
-static
-cmsInt32Number satoi(const char* b)
-{
-    int n;
-    
-    if (b == NULL) return 0;
-
-    n = atoi(b);
-    if (n > 0x7fffffffL) return 0x7fffffffL;
-    if (n < -0x7ffffffeL) return -0x7ffffffeL; 
-
-    return (cmsInt32Number)n;
 }
 
 // Convert to binary
