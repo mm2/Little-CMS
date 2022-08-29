@@ -1528,7 +1528,7 @@ void AllocateDataFormat(cmsIT8* it8)
 
     if (t -> DataFormat) return;    // Already allocated
 
-    t -> nSamples  = (int) cmsIT8GetPropertyDbl(it8, "NUMBER_OF_FIELDS");
+    t -> nSamples  = satoi(cmsIT8GetProperty(it8, "NUMBER_OF_FIELDS"));
 
     if (t -> nSamples <= 0) {
 
@@ -1586,8 +1586,15 @@ cmsBool CMSEXPORT cmsIT8SetDataFormat(cmsHANDLE  h, int n, const char *Sample)
 static
 cmsInt32Number satoi(const char* b)
 {
+    int n;
+    
     if (b == NULL) return 0;
-    return atoi(b);
+
+    n = atoi(b);
+    if (n > 0x7fffffffL) return 0x7fffffffL;
+    if (n < -0x7ffffffeL) return -0x7ffffffeL; 
+
+    return (cmsInt32Number)n;
 }
 
 // Convert to binary
