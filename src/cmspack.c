@@ -592,8 +592,11 @@ cmsUInt8Number* UnrollAnyWordsPremul(CMSREGISTER _cmsTRANSFORM* info,
         if (SwapEndian)
             v = CHANGE_ENDIAN(v);
 
-        v = (v << 16) / alpha_factor;
-        if (v > 0xffff) v = 0xffff;
+        if (alpha_factor > 0) {
+
+            v = (v << 16) / alpha_factor;
+            if (v > 0xffff) v = 0xffff;
+        }
 
         wIn[index] = (cmsUInt16Number) (Reverse ? REVERSE_FLAVOR_16(v) : v);
 
@@ -674,8 +677,11 @@ cmsUInt8Number* UnrollPlanarWordsPremul(CMSREGISTER _cmsTRANSFORM* info,
         if (SwapEndian)
             v = CHANGE_ENDIAN(v);
 
-        v = (v << 16) / alpha_factor;
-        if (v > 0xffff) v = 0xffff;
+        if (alpha_factor > 0) {
+
+            v = (v << 16) / alpha_factor;
+            if (v > 0xffff) v = 0xffff;
+        }
 
         wIn[index] = (cmsUInt16Number) (Reverse ? REVERSE_FLAVOR_16(v) : v);
 
