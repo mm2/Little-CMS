@@ -818,6 +818,36 @@ void ParalellizeIfSuitable(_cmsTRANSFORM* p)
     }
 }
 
+
+/**
+* An empty unroll to avoid a check with NULL on cmsDoTransform()
+*/
+static
+cmsUInt8Number* UnrollNothing(CMSREGISTER _cmsTRANSFORM* info,
+                              CMSREGISTER cmsUInt16Number wIn[],
+                              CMSREGISTER cmsUInt8Number* accum,
+                              CMSREGISTER cmsUInt32Number Stride)
+{    
+    return accum;
+
+    cmsUNUSED_PARAMETER(info);
+    cmsUNUSED_PARAMETER(wIn);
+    cmsUNUSED_PARAMETER(Stride);
+}
+
+static
+cmsUInt8Number* PackNothing(CMSREGISTER _cmsTRANSFORM* info,
+                           CMSREGISTER cmsUInt16Number wOut[],
+                           CMSREGISTER cmsUInt8Number* output,
+                           CMSREGISTER cmsUInt32Number Stride)
+{
+    return output;
+
+    cmsUNUSED_PARAMETER(info);
+    cmsUNUSED_PARAMETER(wOut);
+    cmsUNUSED_PARAMETER(Stride);
+}
+
 // Allocate transform struct and set it to defaults. Ask the optimization plug-in about if those formats are proper
 // for separated transforms. If this is the case,
 static
@@ -910,8 +940,10 @@ _cmsTRANSFORM* AllocEmptyTransform(cmsContext ContextID, cmsPipeline* lut,
     }
     else {
 
+        // Formats are intended to be changed before use
         if (*InputFormat == 0 && *OutputFormat == 0) {
-            p ->FromInput = p ->ToOutput = NULL;
+            p->FromInput = UnrollNothing;
+            p->ToOutput = PackNothing;
             *dwFlags |= cmsFLAGS_CAN_CHANGE_FORMATTER;
         }
         else {
