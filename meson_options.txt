@@ -1,0 +1,11 @@
+option(
+  'utils',
+  type : 'boolean',
+  value : false,
+  description : 'Enable building utils')
+
+option(
+  'jpeg',
+  type : 'boolean',
+  value : true,
+  description : 'Enable building with jpeg')

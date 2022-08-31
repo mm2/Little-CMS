@@ -1,0 +1,5 @@
+subdir('jpgicc')
+#subdir('linkicc')
+#subdir('psicc')
+#subdir('tificc')
+#subdir('transicc')

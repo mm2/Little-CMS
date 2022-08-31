@@ -84,3 +84,7 @@ liblcms2_dep = declare_dependency(
 
 pkg = import('pkgconfig')
 pkg.generate(liblcms2_lib)
+
+if get_option('utils')
+  subdir('utils')
+endif
