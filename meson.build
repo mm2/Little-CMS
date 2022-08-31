@@ -1,5 +1,5 @@
 project('Little-CMS', 'c',
-  version: '2.13',
+  version: '2.14',
   meson_version: '>=0.48.0',
 )
 
