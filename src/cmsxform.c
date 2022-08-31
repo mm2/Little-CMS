@@ -1137,8 +1137,8 @@ cmsHTRANSFORM CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
     }
 
     // Check channel count
-    if ((cmsChannelsOf(EntryColorSpace) != cmsPipelineInputChannels(Lut)) ||
-        (cmsChannelsOf(ExitColorSpace)  != cmsPipelineOutputChannels(Lut))) {
+    if ((cmsChannelsOfColorSpace(EntryColorSpace) != (cmsInt32Number) cmsPipelineInputChannels(Lut)) ||
+        (cmsChannelsOfColorSpace(ExitColorSpace)  != (cmsInt32Number) cmsPipelineOutputChannels(Lut))) {
         cmsPipelineFree(Lut);
         cmsSignalError(ContextID, cmsERROR_NOT_SUITABLE, "Channel count doesn't match. Profile is corrupted");
         return NULL;

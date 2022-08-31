@@ -281,6 +281,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\..\testbed\fuzzer.c" />
     <ClCompile Include="..\..\..\testbed\testcms2.c" />
     <ClCompile Include="..\..\..\testbed\testplugin.c" />
     <ClCompile Include="..\..\..\testbed\zoo_icc.c" />

@@ -3833,7 +3833,7 @@ cmsUInt32Number CMSEXPORT cmsFormatterForColorspaceOfProfile(cmsHPROFILE hProfil
 
     cmsColorSpaceSignature ColorSpace      = cmsGetColorSpace(hProfile);
     cmsUInt32Number        ColorSpaceBits  = (cmsUInt32Number) _cmsLCMScolorSpace(ColorSpace);
-    cmsUInt32Number        nOutputChans    = cmsChannelsOf(ColorSpace);
+    cmsInt32Number         nOutputChans    = cmsChannelsOfColorSpace(ColorSpace);
     cmsUInt32Number        Float           = lIsFloat ? 1U : 0;
 
     // Create a fake formatter for result

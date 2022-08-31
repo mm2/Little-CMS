@@ -8184,7 +8184,7 @@ int CheckForgedMPE(void)
     }
 
     srcCS = cmsGetColorSpace(srcProfile);
-    nSrcComponents = cmsChannelsOf(srcCS);
+    nSrcComponents = cmsChannelsOfColorSpace(srcCS);
     
     if (srcCS == cmsSigLabData) {
         srcFormat =
@@ -9218,8 +9218,6 @@ void PrintSupportedIntents(void)
     printf("\n");
 }
 
-
-
 // ---------------------------------------------------------------------------------------
 
 int main(int argc, char* argv[])
@@ -9265,7 +9263,7 @@ int main(int argc, char* argv[])
     printf("Installing error logger ... ");
     cmsSetLogErrorHandler(FatalErrorQuit);
     printf("done.\n");
-           
+             
     PrintSupportedIntents();
     
     Check("Base types", CheckBaseTypes);

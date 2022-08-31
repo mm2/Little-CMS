@@ -19,6 +19,7 @@ cmsBuildTabulatedToneCurve16             =   cmsBuildTabulatedToneCurve16
 cmsBuildTabulatedToneCurveFloat          =   cmsBuildTabulatedToneCurveFloat
 _cmsCalloc                               =   _cmsCalloc
 cmsChannelsOf                            =    cmsChannelsOf
+cmsChannelsOfColorSpace                  =    cmsChannelsOfColorSpace
 cmsCIE2000DeltaE                         =    cmsCIE2000DeltaE
 cmsCIE94DeltaE                           =    cmsCIE94DeltaE
 cmsCIECAM02Done                          =    cmsCIECAM02Done

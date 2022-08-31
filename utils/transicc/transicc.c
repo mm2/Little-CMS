@@ -399,7 +399,7 @@ cmsNAMEDCOLORLIST* ComponentNames(cmsColorSpaceSignature space, cmsBool IsInput)
 
         SetRange(1, IsInput);
 
-        n = cmsChannelsOf(space);
+        n = cmsChannelsOfColorSpace(space);
 
         for (i=0; i < n; i++) {
 
@@ -665,7 +665,7 @@ void PrintFloatResults(cmsFloat64Number Value[])
     char ChannelName[cmsMAX_PATH];
     cmsFloat64Number v;
 
-    n = cmsChannelsOf(OutputColorSpace);
+    n = cmsChannelsOfColorSpace(OutputColorSpace);
     for (i=0; i < n; i++) {
 
         if (OutputColorant != NULL) {
@@ -745,7 +745,7 @@ void TakeFloatValues(cmsFloat64Number Float[])
         return;
     }
 
-    n = cmsChannelsOf(InputColorSpace);
+    n = cmsChannelsOfColorSpace(InputColorSpace);
     for (i=0; i < n; i++) {
 
         if (InputColorant) {
@@ -794,7 +794,7 @@ void PrintEncodedResults(cmsUInt16Number Encoded[])
     char ChannelName[cmsMAX_PATH];
     cmsUInt32Number v;
 
-    n = cmsChannelsOf(OutputColorSpace);
+    n = cmsChannelsOfColorSpace(OutputColorSpace);
     for (i=0; i < n; i++) {
 
         if (OutputColorant != NULL) {
@@ -960,7 +960,7 @@ void TakeCGATSValues(int nPatch, cmsFloat64Number Float[])
         {
             cmsUInt32Number i, n;
 
-            n = cmsChannelsOf(InputColorSpace);
+            n = cmsChannelsOfColorSpace(InputColorSpace);
             for (i=0; i < n; i++) { 
 
                 char Buffer[255];
@@ -976,7 +976,7 @@ void TakeCGATSValues(int nPatch, cmsFloat64Number Float[])
         {
             cmsUInt32Number i, n;
 
-            n = cmsChannelsOf(InputColorSpace);
+            n = cmsChannelsOfColorSpace(InputColorSpace);
             for (i=0; i < n; i++) { 
 
                 char Buffer[255];
@@ -1067,9 +1067,9 @@ void PutCGATSValues(cmsFloat64Number Float[])
     case cmsSig15colorData:
         {
 
-            cmsUInt32Number i, n;
+            cmsInt32Number i, n;
 
-            n = cmsChannelsOf(InputColorSpace);
+            n = cmsChannelsOfColorSpace(InputColorSpace);
             for (i=0; i < n; i++) { 
 
                 char Buffer[255];
@@ -1084,9 +1084,9 @@ void PutCGATSValues(cmsFloat64Number Float[])
     default: 
         {
 
-            cmsUInt32Number i, n;
+            cmsInt32Number i, n;
 
-            n = cmsChannelsOf(InputColorSpace);
+            n = cmsChannelsOfColorSpace(InputColorSpace);
             for (i=0; i < n; i++) { 
 
                 char Buffer[255];
@@ -1187,7 +1187,7 @@ void SetOutputDataFormat(void)
             int i, n;
             char Buffer[255];
 
-            n = cmsChannelsOf(OutputColorSpace);
+            n = cmsChannelsOfColorSpace(OutputColorSpace);
             cmsIT8SetPropertyDbl(hIT8out, "NUMBER_OF_FIELDS", n+1);
             cmsIT8SetDataFormat(hIT8out, 0, "SAMPLE_ID");
 
@@ -1203,7 +1203,7 @@ void SetOutputDataFormat(void)
         int i, n;
         char Buffer[255];
 
-        n = cmsChannelsOf(OutputColorSpace);
+        n = cmsChannelsOfColorSpace(OutputColorSpace);
         cmsIT8SetPropertyDbl(hIT8out, "NUMBER_OF_FIELDS", n+1);
         cmsIT8SetDataFormat(hIT8out, 0, "SAMPLE_ID");
 
