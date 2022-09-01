@@ -20,5 +20,5 @@ if libjpeg_dep.found()
     install : true)
 endif
 
-#man_MANS = jpgicc.1
+install_man('jpgicc.1')
 #EXTRA_DIST = iccjpeg.h $(man_MANS)
