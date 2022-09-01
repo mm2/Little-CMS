@@ -3805,6 +3805,11 @@ cmsFormatter CMSEXPORT _cmsGetFormatter(cmsContext ContextID,
     _cmsFormattersPluginChunkType* ctx = ( _cmsFormattersPluginChunkType*) _cmsContextGetClientChunk(ContextID, FormattersPlugin);
     cmsFormattersFactoryList* f;
 
+    if (T_CHANNELS(Type) == 0) {
+        static const cmsFormatter nullFormatter = { 0 };
+        return nullFormatter;
+    }
+
     for (f =ctx->FactoryList; f != NULL; f = f ->Next) {
 
         cmsFormatter fn = f ->Factory(Type, Dir, dwFlags);

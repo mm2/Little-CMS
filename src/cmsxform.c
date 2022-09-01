@@ -960,7 +960,7 @@ _cmsTRANSFORM* AllocEmptyTransform(cmsContext ContextID, cmsPipeline* lut,
                 return NULL;
             }
 
-            BytesPerPixelInput = T_BYTES(p ->InputFormat);
+            BytesPerPixelInput = T_BYTES(*InputFormat);
             if (BytesPerPixelInput == 0 || BytesPerPixelInput >= 2)
                    *dwFlags |= cmsFLAGS_CAN_CHANGE_FORMATTER;
 
