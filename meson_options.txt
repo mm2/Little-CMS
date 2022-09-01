@@ -6,6 +6,6 @@ option(
 
 option(
   'jpeg',
-  type : 'boolean',
-  value : true,
+  type : 'feature',
+  value : 'enabled',
   description : 'Enable building with jpeg')
