@@ -472,6 +472,9 @@ cmsFloat64Number CMSEXPORT cmsDetectTAC(cmsHPROFILE hProfile)
     // Create a fake formatter for result
     dwFormatter = cmsFormatterForColorspaceOfProfile(hProfile, 4, TRUE);
 
+    // Unsupported color space?
+    if (dwFormatter == 0) return 0;
+
     bp.nOutputChans = T_CHANNELS(dwFormatter);
     bp.MaxTAC = 0;    // Initial TAC is 0
 
