@@ -212,7 +212,7 @@ AC_LANG_PUSH([C])
 AC_MSG_CHECKING([whether compiler supports SSE2])
 AC_COMPILE_IFELSE([AC_LANG_SOURCE([[
     #include <emmintrin.h>
-    main() { __m128i n = _mm_set1_epi8(42); }]])],
+    int main() { __m128i n = _mm_set1_epi8(42); }]])],
   [ac_compiler_supports_sse2=yes], [ac_compiler_supports_sse2=no])
 AC_MSG_RESULT([$ac_compiler_supports_sse2])
 AS_IF([test "x$ac_compiler_supports_sse2" != "xyes"],
