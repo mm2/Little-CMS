@@ -725,6 +725,55 @@ void CheckToFloatLab(void)
 
 }
 
+
+
+static
+void CheckFloatToFloatLab(void)
+{
+    cmsContext Plugin = cmsCreateContext(cmsFastFloatExtensions(), NULL);
+    cmsContext Raw = cmsCreateContext(NULL, NULL);
+
+    cmsHPROFILE hsRGB = cmsCreate_sRGBProfile();
+    cmsHPROFILE hLab = cmsCreateLab4Profile(NULL);
+
+    cmsHTRANSFORM xform_plugin = cmsCreateTransformTHR(Plugin, hsRGB, TYPE_RGB_FLT, hLab, TYPE_Lab_FLT, INTENT_PERCEPTUAL, 0);
+    cmsHTRANSFORM xform = cmsCreateTransformTHR(Raw, hsRGB, TYPE_RGB_FLT, hLab, TYPE_Lab_FLT, INTENT_PERCEPTUAL, 0);
+
+    int r, g, b;
+    cmsCIELab Lab1, Lab2;
+    cmsFloat32Number rgb[3];
+    cmsFloat32Number Lab[3];
+    double err;
+
+
+    for (r = 0; r < 256; r += 10)
+        for (g = 0; g < 256; g += 10)
+            for (b = 0; b < 256; b += 10)
+            {
+                rgb[0] = (cmsFloat32Number)r / 255.0f;
+                rgb[1] = (cmsFloat32Number)g / 255.0f;
+                rgb[2] = (cmsFloat32Number)b / 255.0f;
+
+                cmsDoTransform(xform_plugin, rgb, Lab, 1);
+                Lab1.L = Lab[0]; Lab1.a = Lab[1]; Lab1.b = Lab[2];
+                cmsDoTransform(xform, rgb, Lab, 1);
+                Lab2.L = Lab[0]; Lab2.a = Lab[1]; Lab2.b = Lab[2];
+
+                err = cmsDeltaE(&Lab1, &Lab2);
+                if (err > 0.5)
+                {
+                    trace("Error on lab encoded (%f, %f, %f) <> (% f, % f, % f)\n",
+                        Lab1.L, Lab1.a, Lab1.b, Lab2.L, Lab2.a, Lab2.b);
+                }
+            }
+
+
+    cmsDeleteTransform(xform); cmsDeleteTransform(xform_plugin);
+    cmsCloseProfile(hsRGB); cmsCloseProfile(hLab);
+    cmsDeleteContext(Raw);
+    cmsDeleteContext(Plugin);
+
+}
 // --------------------------------------------------------------------------------------------------
 // A C C U R A C Y   C H E C K S
 // --------------------------------------------------------------------------------------------------
@@ -1093,45 +1142,46 @@ void CheckLab2Roundtrip(void)
 static
 void CheckConversionFloat(void)
 {
-	trace("Crash test.");
-	TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, FALSE);
+    trace("Crash test.");
+    TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, FALSE);
 
-	trace("..");
-	TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
-	trace("Ok\n");
+    trace("..");
+    TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
+    trace("Ok\n");
 
-	trace("Crash (II) test.");
-	TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, FALSE);
-	trace("..");
-	TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
-	trace("Ok\n");
+    trace("Crash (II) test.");
+    TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, FALSE);
+    trace("..");
+    TryAllValuesFloatAlpha(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL, TRUE);
+    trace("Ok\n");
 
-	trace("Crash (III) test.");
-	CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
-	trace("..");
-	CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
-	trace("Ok\n");
+    trace("Crash (III) test.");
+    CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
+    trace("..");
+    CheckUncommonValues(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
+    trace("Ok\n");
 
-	trace("Checking conversion to Lab...");
-	CheckToEncodedLab();
-	CheckToFloatLab();
-	trace("Ok\n");
+    trace("Checking conversion to Lab...");
+    CheckToEncodedLab();
+    CheckToFloatLab();
+    CheckFloatToFloatLab();
+    trace("Ok\n");
 
-	// Matrix-shaper should be accurate 
-	trace("Checking accuracy on Matrix-shaper...");
-	TryAllValuesFloat(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
-	trace("Ok\n");
+    // Matrix-shaper should be accurate 
+    trace("Checking accuracy on Matrix-shaper...");
+    TryAllValuesFloat(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
+    trace("Ok\n");
 
-	// CLUT should be as 16 bits or better
-	trace("Checking accuracy of CLUT...");
-	TryAllValuesFloatVs16(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
-	trace("Ok\n");
+    // CLUT should be as 16 bits or better
+    trace("Checking accuracy of CLUT...");
+    TryAllValuesFloatVs16(cmsOpenProfileFromFile("test5.icc", "r"), cmsOpenProfileFromFile("test3.icc", "r"), INTENT_PERCEPTUAL);
+    trace("Ok\n");
 
-	// Same profile should give same values (we test both methods)
-	trace("Checking accuracy on same profile ...");
-	TryAllValuesFloatVs16(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
-	TryAllValuesFloat(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
-	trace("Ok\n");
+    // Same profile should give same values (we test both methods)
+    trace("Checking accuracy on same profile ...");
+    TryAllValuesFloatVs16(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
+    TryAllValuesFloat(cmsOpenProfileFromFile("test0.icc", "r"), cmsOpenProfileFromFile("test0.icc", "r"), INTENT_PERCEPTUAL);
+    trace("Ok\n");
 }
 
 

@@ -254,10 +254,9 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
     if (T_BYTES(*InputFormat) != sizeof(cmsFloat32Number) || 
         T_BYTES(*OutputFormat) != sizeof(cmsFloat32Number)) return FALSE;
 
-    // Input has to be RGB, Output may be any but Lab
+    // Input has to be RGB
     if (T_COLORSPACE(*InputFormat) != PT_RGB) return FALSE;
-    if (T_COLORSPACE(*OutputFormat) == PT_Lab) return FALSE;
-
+   
     OriginalLut = *Lut;
    
     ContextID        = cmsGetPipelineContextID(OriginalLut);
@@ -286,6 +285,22 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
 
         cmsPipelineInsertStage(OriginalLut, cmsAT_END, percent);
     }
+    else
+        // If output is Lab, add a conversion stage to get Lab values
+        if (T_COLORSPACE(*OutputFormat) == PT_Lab) {
+
+            static const cmsFloat64Number mat[] = { 100.0,   0,    0,
+                                                      0,  255.0,   0,
+                                                      0,     0,   255.0 };
+
+            static const cmsFloat64Number off[] = { 0,   -128.0,     -128.0 };
+
+            cmsStage* lab_fix = cmsStageAllocMatrix(ContextID, 3, 3, mat, off);
+            if (lab_fix == NULL) goto Error;
+
+            cmsPipelineInsertStage(OriginalLut, cmsAT_END, lab_fix);
+        }
+
 
     // Resample the LUT
     if (!cmsStageSampleCLutFloat(OptimizedCLUTmpe, XFormSampler, (void*)OriginalLut, 0)) goto Error;
