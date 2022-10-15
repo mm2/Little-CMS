@@ -232,6 +232,9 @@
   <ItemGroup>
     <ClCompile Include="..\..\testbed\threaded_testbed.c" />
   </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\include\lcms2_threaded.h" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

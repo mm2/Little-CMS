@@ -39,10 +39,10 @@ extern "C" {
 // Configuration toggles
 
 // The one and only plug-in entry point. To install this plugin in your code you need to place this in 
-// some initialization place. IOf you want to combine this plug-in with fastfloat, make sure to call 
-// the threaded entry point comes last in chain.
+// some initialization place. If you want to combine this plug-in with fastfloat, make sure to call 
+// the threaded entry point comes last in chain. flags is a reserved field for future use
 //
-//  cmsPlugin(cmsThreadedExtensions(CMS_THREADED_GUESS_MAX_THREADS));
+//  cmsPlugin(cmsThreadedExtensions(CMS_THREADED_GUESS_MAX_THREADS, 0));
 // 
 
 #define CMS_THREADED_GUESS_MAX_THREADS -1
