@@ -9249,13 +9249,6 @@ int main(int argc, char* argv[])
             CHDIR(argv[2]);
         }
 
-#ifdef LCMS_FAST_EXTENSIONS
-   printf("Installing fast float extension ...");   
-   cmsPlugin(cmsFastFloatExtensions());
-   printf("done.\n");
-#endif
-
-
     printf("Installing debug memory plug-in ... ");
     cmsPlugin(&DebugMemHandler);
     printf("done.\n");
