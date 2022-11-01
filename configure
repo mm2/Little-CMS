@@ -17701,7 +17701,7 @@ cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
     #include <emmintrin.h>
-    main() { __m128i n = _mm_set1_epi8(42); }
+    int main() { __m128i n = _mm_set1_epi8(42); }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
   ac_compiler_supports_sse2=yes
