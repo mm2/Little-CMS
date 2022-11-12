@@ -2468,7 +2468,7 @@ int main()
        trace("Installing plug-in ... ");
        cmsPlugin(cmsFastFloatExtensions());
        trace("done.\n\n");
-             
+                    
        CheckComputeIncrements();
 
        // 15 bit functionality
@@ -2508,7 +2508,7 @@ int main()
        
        trace("\nAll tests passed OK\n");
 
-       cmsUnregisterPlugins();
+       cmsDeleteContext(0);
 
        return 0;
 }
