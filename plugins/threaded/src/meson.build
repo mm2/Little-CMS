@@ -30,3 +30,5 @@ liblcms2_threaded_dep = declare_dependency(
   link_with: liblcms2_threaded,
   include_directories: lcms2_threaded_incdir,
 )
+
+extra_libraries += liblcms2_threaded

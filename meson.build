@@ -90,7 +90,11 @@ if get_option('samples')
   subdir('utils/samples')
 endif
 
+extra_libraries = []
 subdir('plugins')
 
 pkg = import('pkgconfig')
-pkg.generate(liblcms2_lib)
+pkg.generate(liblcms2_lib,
+  description: 'LCMS Color Management Library',
+  libraries: extra_libraries
+)

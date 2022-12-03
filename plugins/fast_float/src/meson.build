@@ -42,3 +42,5 @@ liblcms2_fast_float_dep = declare_dependency(
   link_with: liblcms2_fast_float,
   include_directories: lcms2_fast_float_incdir,
 )
+
+extra_libraries += liblcms2_fast_float
