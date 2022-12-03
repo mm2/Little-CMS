@@ -86,5 +86,9 @@ subdir('src')
 subdir('testbed')
 subdir('utils')
 
+if get_option('samples')
+  subdir('utils/samples')
+endif
+
 pkg = import('pkgconfig')
 pkg.generate(liblcms2_lib)
