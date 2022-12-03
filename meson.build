@@ -79,6 +79,7 @@ deps = [m_dep, threads_dep]
 
 subdir('include')
 subdir('src')
+subdir('testbed')
 
 pkg = import('pkgconfig')
 pkg.generate(liblcms2_lib)
