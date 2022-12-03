@@ -90,5 +90,7 @@ if get_option('samples')
   subdir('utils/samples')
 endif
 
+subdir('plugins')
+
 pkg = import('pkgconfig')
 pkg.generate(liblcms2_lib)
