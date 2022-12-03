@@ -46,6 +46,7 @@ liblcms2_lib = library(
   dependencies: deps,
   c_args: cargs,
   version: library_version,
+  vs_module_defs: 'lcms2.def',
   install: true,
 )
 
