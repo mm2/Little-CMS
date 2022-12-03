@@ -1,0 +1,3 @@
+option('jpeg', type: 'feature', value: 'auto', description: 'Use JPEG')
+option('tiff', type: 'feature', value: 'auto', description: 'Use LibTiff')
+

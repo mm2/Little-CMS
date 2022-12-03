@@ -2,7 +2,7 @@ project(
   'Little-CMS',
   'c',
   version: '2.14',
-  meson_version: '>=0.48.0',
+  meson_version: '>=0.49.0',
 )
 
 version_components = meson.project_version().split('.')
@@ -51,6 +51,10 @@ elif cc.has_header_symbol('time.h', 'gmtime_s')
   endif
 endif
 
+jpeg_dep = dependency('libjpeg', required: get_option('jpeg'))
+
+tiff_dep = dependency('libtiff-4', required: get_option('tiff'))
+
 if (
   not cc.compiles(
     '''
@@ -80,6 +84,7 @@ deps = [m_dep, threads_dep]
 subdir('include')
 subdir('src')
 subdir('testbed')
+subdir('utils')
 
 pkg = import('pkgconfig')
 pkg.generate(liblcms2_lib)
