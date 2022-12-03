@@ -12,6 +12,12 @@ library_version = '@0@.0.@1@'.format(
   version_components.get(1, 0),
 )
 
+version_cfg = configuration_data()
+version_cfg.set('LCMS2_VERSION_MAJOR', version_components.get(0, 0))
+version_cfg.set('LCMS2_VERSION_MINOR', version_components.get(1, 0))
+version_cfg.set('LCMS2_VERSION_MICRO', version_components.get(2, 0))
+version_cfg.set_quoted('LCMS2_VERSION', meson.project_version())
+
 cc = meson.get_compiler('c')
 
 cargs = []
@@ -36,6 +42,9 @@ if cc.has_function('pthread_mutex_lock', dependencies: threads_dep)
 else
   cargs += '-DHasTHREADS=0'
 endif
+
+win = import('windows')
+
 deps = [m_dep, threads_dep]
 
 subdir('include')
