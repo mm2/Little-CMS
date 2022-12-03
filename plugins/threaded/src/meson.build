@@ -7,6 +7,15 @@ liblcms2_threaded_sources = files(
 
 lcms2_threaded_incdir = include_directories('../include', '.')
 
+if host_machine.system() == 'windows'
+  lcms2_threaded_rc = configure_file(
+    input: 'lcms2_threaded.rc.in',
+    configuration: version_cfg,
+    output: 'lcms2_threaded.rc',
+  )
+
+  liblcms2_threaded_sources += win.compile_resources(lcms2_threaded_rc)
+endif
 
 liblcms2_threaded = library(
   'lcms2_threaded',
