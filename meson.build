@@ -31,10 +31,24 @@ if host_machine.endian() == 'big'
 endif
 
 # Check for threadsafe variants of gmtime
-if cc.has_function('gmtime_r', prefix: '#include <time.h>')
+if cc.has_header_symbol('time.h', 'gmtime_r')
   cargs += '-DHAVE_GMTIME_R=1'
-elif cc.has_function('gmtime_s', prefix: '#include <time.h>')
-  cargs += '-DHAVE_GMTIME_S=1'
+elif cc.has_header_symbol('time.h', 'gmtime_s')
+  if cc.links(
+    '''
+    #include <time.h>
+
+    int main() {
+      time_t t;
+      struct tm m;
+      gmtime_s(&m, &t);
+      return 0;
+    }
+    ''',
+    name: 'gmtime_s can be used',
+  )
+    cargs += '-DHAVE_GMTIME_S=1'
+  endif
 endif
 
 m_dep = cc.find_library('m', required: false)
