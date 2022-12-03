@@ -29,7 +29,9 @@
 #    include "crtdbg.h"
 #endif
 
+#ifndef PROFILES_DIR
 #define PROFILES_DIR "../../test_profiles/"
+#endif
 
 // A fast way to convert from/to 16 <-> 8 bits
 #define FROM_8_TO_16(rgb) (cmsUInt16Number) ((((cmsUInt16Number) (rgb)) << 8)|(rgb)) 
