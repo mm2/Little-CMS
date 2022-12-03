@@ -26,6 +26,10 @@ if cc.has_function_attribute('visibility:hidden')
   cargs += '-DHAVE_FUNC_ATTRIBUTE_VISIBILITY=1'
 endif
 
+if host_machine.endian() == 'big'
+  cargs = '-DWORDS_BIGENDIAN=1'
+endif
+
 # Check for threadsafe variants of gmtime
 if cc.has_function('gmtime_r', prefix: '#include <time.h>')
   cargs += '-DHAVE_GMTIME_R=1'
