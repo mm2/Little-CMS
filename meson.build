@@ -51,6 +51,18 @@ elif cc.has_header_symbol('time.h', 'gmtime_s')
   endif
 endif
 
+if (
+  not cc.compiles(
+    '''
+    #include <emmintrin.h>
+    int main() { __m128i n = _mm_set1_epi8(42); }
+  ''',
+    name: 'supports SSE2 intrinsics',
+  )
+)
+  cargs += '-DCMS_DONT_USE_SSE2=1'
+endif
+
 m_dep = cc.find_library('m', required: false)
 
 threads_dep = dependency('threads')
