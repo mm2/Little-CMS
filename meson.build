@@ -30,8 +30,19 @@ if host_machine.endian() == 'big'
   cargs = '-DWORDS_BIGENDIAN=1'
 endif
 
+
 # Check for threadsafe variants of gmtime
-if cc.has_header_symbol('time.h', 'gmtime_r')
+# MinGW needs _POSIX_C_SOURCE or _POSIX_THREAD_SAFE_FUNCTIONS defined
+# to make gmtime_r available
+if host_machine.system() == 'windows' and cc.get_argument_syntax() != 'msvc'
+  cargs += ['-D_POSIX_C_SOURCE=199503L']
+endif
+
+if cc.has_header_symbol(
+  'time.h',
+  'gmtime_r',
+  args: cargs,
+)
   cargs += '-DHAVE_GMTIME_R=1'
 elif cc.has_header_symbol('time.h', 'gmtime_s')
   if cc.links(
