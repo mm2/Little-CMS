@@ -5,7 +5,12 @@ project(
   meson_version: '>=0.48.0',
 )
 
-library_version = '2.0.13'
+version_components = meson.project_version().split('.')
+
+library_version = '@0@.0.@1@'.format(
+  version_components.get(0, 0),
+  version_components.get(1, 0),
+)
 
 cc = meson.get_compiler('c')
 
