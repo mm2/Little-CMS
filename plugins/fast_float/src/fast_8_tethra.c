@@ -364,9 +364,8 @@ cmsBool Optimize8BitRGBTransform(_cmsTransform2Fn* TransformFn,
     // Only on RGB
     if (T_COLORSPACE(*InputFormat)  != PT_RGB) return FALSE;
    
-    // This optimization only works on RGB8->RGB8 or RGB8->CMYK8
-    if (T_COLORSPACE(*OutputFormat) != PT_RGB &&
-        T_COLORSPACE(*OutputFormat) != PT_CMYK) return FALSE;
+    // This optimization only works on RGB8->RGB8
+    if (T_COLORSPACE(*OutputFormat) != PT_RGB) return FALSE;
 
     OriginalLut = *Lut;
    
@@ -428,7 +427,7 @@ cmsBool Optimize8BitRGBTransform(_cmsTransform2Fn* TransformFn,
         if (TransReverse[t] == NULL) goto Error;
     }
 
-    // Now inset the reversed curves at the begin of transform
+    // Now insert the reversed curves at the begin of transform
     LutPlusCurves = cmsPipelineDup(OriginalLut);
     if (LutPlusCurves == NULL) goto Error;
 
