@@ -302,7 +302,6 @@ fi
     else
 	LIB_JPEG='-ljpeg'
 	LIBS="$LIB_JPEG $LIBS"
-	AC_DEFINE(HasJPEG,1,Define if you have JPEG library)
 	AC_MSG_RESULT(yes)
         have_jpeg='yes'
     fi
@@ -343,7 +342,6 @@ then
     else
       LIB_ZLIB='-lz'
       LIBS="$LIB_ZLIB $LIBS"
-      AC_DEFINE(HasZLIB,1,Define if you have zlib compression library)
       AC_MSG_RESULT(yes)
       have_zlib='yes'
     fi
@@ -380,7 +378,6 @@ then
     else
 	LIB_TIFF='-ltiff'
 	LIBS="$LIB_TIFF $LIBS"
-	AC_DEFINE(HasTIFF,1,Define if you have TIFF library)
 	AC_MSG_RESULT(yes)
 	have_tiff='yes'
 	AC_CHECK_HEADERS(tiffconf.h)
