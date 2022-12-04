@@ -1697,7 +1697,7 @@ cmsBool OptimizeMatrixShaper(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
 
               // Only RGB to RGB
               if (Matrix1->InputChannels != 3 || Matrix1->OutputChannels != 3 ||
-                  Matrix1->InputChannels != 3 || Matrix2->OutputChannels != 3) return FALSE;
+                  Matrix2->InputChannels != 3 || Matrix2->OutputChannels != 3) return FALSE;
 
               // Input offset should be zero
               if (Data1->Offset != NULL) return FALSE;
