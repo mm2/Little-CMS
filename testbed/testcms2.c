@@ -3783,7 +3783,7 @@ cmsInt32Number CreateNamedColorProfile(void)
     
     // Values
     cmsCIELab Lab;
-    cmsUInt16Number PCS[3], Colorant[4];
+    cmsUInt16Number PCS[3], Colorant[cmsMAXCHANNELS];
 
     // Set profile class
     cmsSetProfileVersion(hProfile, 4.3);
@@ -7397,22 +7397,18 @@ cmsInt32Number CheckGBD(void)
 
 static
 int CheckMD5(void)
-{
-    _cmsICCPROFILE* h;
+{    
     cmsHPROFILE pProfile = cmsOpenProfileFromFile("sRGBlcms2.icc", "r");
     cmsProfileID ProfileID1, ProfileID2, ProfileID3, ProfileID4;
-
-    h =(_cmsICCPROFILE*) pProfile;
+ 
     if (cmsMD5computeID(pProfile)) cmsGetHeaderProfileID(pProfile, ProfileID1.ID8);
-    if (cmsMD5computeID(pProfile)) cmsGetHeaderProfileID(pProfile,ProfileID2.ID8);
+    if (cmsMD5computeID(pProfile)) cmsGetHeaderProfileID(pProfile, ProfileID2.ID8);
 
     cmsCloseProfile(pProfile);
 
-
     pProfile = cmsOpenProfileFromFile("sRGBlcms2.icc", "r");
-
-    h =(_cmsICCPROFILE*) pProfile;
-    if (cmsMD5computeID(pProfile)) cmsGetHeaderProfileID(pProfile, ProfileID3.ID8);
+    
+    if (cmsMD5computeID(pProfile)) cmsGetHeaderProfileID(pProfile,ProfileID3.ID8);
     if (cmsMD5computeID(pProfile)) cmsGetHeaderProfileID(pProfile,ProfileID4.ID8);
 
     cmsCloseProfile(pProfile);
@@ -7834,41 +7830,41 @@ cmsInt32Number CheckFloatSegments(void)
 static
 cmsInt32Number CheckReadRAW(void)
 {
-	cmsInt32Number tag_size, tag_size1;
-	char buffer[37009];
-	cmsHPROFILE hProfile;
+    cmsInt32Number tag_size, tag_size1;
+    char buffer[37009];
+    cmsHPROFILE hProfile;
 
 
-	SubTest("RAW read on on-disk");
-	hProfile = cmsOpenProfileFromFile("test1.icc", "r");
+    SubTest("RAW read on on-disk");
+    hProfile = cmsOpenProfileFromFile("test1.icc", "r");
 
-	if (hProfile == NULL)
-		return 0;
-	tag_size1 = cmsReadRawTag(hProfile, cmsSigGamutTag, NULL, 0);
-	tag_size = cmsReadRawTag(hProfile, cmsSigGamutTag, buffer, 37009);
+    if (hProfile == NULL)
+        return 0;
+    tag_size1 = cmsReadRawTag(hProfile, cmsSigGamutTag, NULL, 0);
+    tag_size = cmsReadRawTag(hProfile, cmsSigGamutTag, buffer, 37009);
 
 
-	cmsCloseProfile(hProfile);
+    cmsCloseProfile(hProfile);
 
-	if (tag_size != 37009)
-		return 0;
+    if (tag_size != 37009)
+        return 0;
 
-	if (tag_size1 != 37009)
-		return 0;
+    if (tag_size1 != 37009)
+        return 0;
 
-	SubTest("RAW read on in-memory created profiles");
-	hProfile = cmsCreate_sRGBProfile();
-	tag_size1 = cmsReadRawTag(hProfile, cmsSigGreenColorantTag, NULL, 0);
-	tag_size = cmsReadRawTag(hProfile, cmsSigGreenColorantTag, buffer, 20);
+    SubTest("RAW read on in-memory created profiles");
+    hProfile = cmsCreate_sRGBProfile();
+    tag_size1 = cmsReadRawTag(hProfile, cmsSigGreenColorantTag, NULL, 0);
+    tag_size = cmsReadRawTag(hProfile, cmsSigGreenColorantTag, buffer, 20);
 
-	cmsCloseProfile(hProfile);
+    cmsCloseProfile(hProfile);
 
-	if (tag_size != 20)
-		return 0;
-	if (tag_size1 != 20)
-		return 0;
+    if (tag_size != 20)
+        return 0;
+    if (tag_size1 != 20)
+        return 0;
 
-	return 1;
+    return 1;
 }
 
 
