@@ -1,5 +1,3 @@
-LIBRARY     LCMS2.DLL
-
 EXPORTS
 
 _cms15Fixed16toDouble                    =   _cms15Fixed16toDouble

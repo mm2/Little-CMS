@@ -29,7 +29,9 @@
 #    include "crtdbg.h"
 #endif
 
+#ifndef PROFILES_DIR
 #define PROFILES_DIR "../../test_profiles/"
+#endif
 
 // Some pixel representations
 typedef struct { cmsUInt8Number  r, g, b;    }  Scanline_rgb8bits;
