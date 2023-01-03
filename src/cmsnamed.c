@@ -370,6 +370,8 @@ const wchar_t* _cmsMLUgetWide(const cmsMLU* mlu,
 
     if (len != NULL) *len   = v ->Len;
 
+    if (v->StrW + v->Len > mlu->PoolSize) return NULL;
+
     return(wchar_t*) ((cmsUInt8Number*) mlu ->MemPool + v ->StrW);
 }
 
