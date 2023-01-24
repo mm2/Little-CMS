@@ -77,7 +77,7 @@ jobs:
 
       - name: Build Ubuntu
         run: |
-          meson setup build
+          meson setup build -Dfastfloat=true
           meson compile -C build
           meson test -C build
 

@@ -32,7 +32,7 @@ liblcms2_fast_float = library(
   'lcms2_fast_float',
   lcms2_fast_float_sources,
   gnu_symbol_visibility: 'hidden',
-  dependencies: liblcms2_dep,
+  dependencies: [liblcms2_dep, m_dep],
   include_directories: lcms2_fast_float_incdir,
   c_args: cargs,
   install: true,
