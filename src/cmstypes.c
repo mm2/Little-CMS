@@ -1559,7 +1559,7 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
         Block = (wchar_t*) _cmsCalloc(self ->ContextID, 1, SizeOfTag);
         if (Block == NULL) goto Error;
        
-        NumOfWchar = SizeOfTag / sizeof(cmsUInt16Number);
+        NumOfWchar = SizeOfTag / sizeof(wchar_t);
         if (!_cmsReadWCharArray(io, NumOfWchar, Block)) {
             _cmsFree(self->ContextID, Block);
             goto Error;
