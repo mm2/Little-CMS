@@ -1,6 +1,10 @@
 subdir('common')
-subdir('jpgicc')
+if jpeg_dep.found()
+  subdir('jpgicc')
+endif
 subdir('linkicc')
 subdir('psicc')
-subdir('tificc')
+if tiff_dep.found()
+  subdir('tificc')
+endif
 subdir('transicc')
