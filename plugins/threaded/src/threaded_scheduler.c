@@ -22,8 +22,8 @@
 #include "threaded_internal.h"
 
 // The scheduler is responsible to split the work in several portions in a way that each
-// portion can be calculated by a different thread. All loacking is already done by lcms 
-// mutexes, and memory should not overlap.
+// portion can be calculated by a different thread. All locking is already done by lcms 
+// mutexes, memory should not overlap.
 void  _cmsThrScheduler(struct _cmstransform_struct* CMMcargo,
                        const void* InputBuffer,
                        void* OutputBuffer,
