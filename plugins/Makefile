@@ -89,11 +89,11 @@ build_triplet = x86_64-pc-linux-gnu
 host_triplet = x86_64-pc-linux-gnu
 subdir = plugins
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/m4/acx_pthread.m4 \
-	$(top_srcdir)/m4/ax_append_compile_flags.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/m4/ax_append_compile_flags.m4 \
 	$(top_srcdir)/m4/ax_append_flag.m4 \
 	$(top_srcdir)/m4/ax_check_compile_flag.m4 \
 	$(top_srcdir)/m4/ax_gcc_func_attribute.m4 \
+	$(top_srcdir)/m4/ax_pthread.m4 \
 	$(top_srcdir)/m4/ax_require_defined.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
 	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
@@ -186,14 +186,14 @@ am__relativize = \
     dir1=`echo "$$dir1" | sed -e "$$sed_rest"`; \
   done; \
   reldir="$$dir2"
-ACLOCAL = ${SHELL} '/home/marti/Little-CMS/missing' aclocal-1.16
+ACLOCAL = ${SHELL} '/home/marti/git/Little-CMS/missing' aclocal-1.16
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
 AR = ar
 AS = as
-AUTOCONF = ${SHELL} '/home/marti/Little-CMS/missing' autoconf
-AUTOHEADER = ${SHELL} '/home/marti/Little-CMS/missing' autoheader
-AUTOMAKE = ${SHELL} '/home/marti/Little-CMS/missing' automake-1.16
+AUTOCONF = ${SHELL} '/home/marti/git/Little-CMS/missing' autoconf
+AUTOHEADER = ${SHELL} '/home/marti/git/Little-CMS/missing' autoheader
+AUTOMAKE = ${SHELL} '/home/marti/git/Little-CMS/missing' automake-1.16
 AWK = mawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -205,7 +205,7 @@ CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
 CXXFLAGS = -g -O2 -pthread
 CYGPATH_W = echo
-DEFS = -DPACKAGE_NAME=\"lcms2\" -DPACKAGE_TARNAME=\"lcms2\" -DPACKAGE_VERSION=\"2.14\" -DPACKAGE_STRING=\"lcms2\ 2.14\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_DLFCN_H=1 -DLT_OBJDIR=\".libs/\" -DHAVE_FUNC_ATTRIBUTE_VISIBILITY=1 -DHAVE_GMTIME_R=1 -DHAVE_PTHREAD=1 -DHasTHREADS=1 -DHasJPEG=1 -DHasZLIB=1 -DHasTIFF=1 -DHAVE_TIFFCONF_H=1
+DEFS = -DPACKAGE_NAME=\"lcms2\" -DPACKAGE_TARNAME=\"lcms2\" -DPACKAGE_VERSION=\"2.15\" -DPACKAGE_STRING=\"lcms2\ 2.15\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DSTDC_HEADERS=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_MEMORY_H=1 -DHAVE_STRINGS_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_UNISTD_H=1 -DHAVE_DLFCN_H=1 -DLT_OBJDIR=\".libs/\" -DHAVE_FUNC_ATTRIBUTE_VISIBILITY=1 -DHAVE_GMTIME_R=1 -DHAVE_PTHREAD_PRIO_INHERIT=1 -DHAVE_PTHREAD=1 -DHasTHREADS=1 -DHasZLIB=1
 DEPDIR = .deps
 DLLTOOL = false
 DSYMUTIL = 
@@ -222,29 +222,29 @@ INSTALL_DATA = ${INSTALL} -m 644
 INSTALL_PROGRAM = ${INSTALL}
 INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
-JPEGICC_DEPLIBS = -ljpeg -lm -lpthread
+JPEGICC_DEPLIBS = -lm -lpthread
 LCMS_LIB_DEPLIBS = -lm -lpthread
 LD = /usr/bin/ld -m elf_x86_64
 LDFLAGS = 
 LIBOBJS = 
 LIBRARY_AGE = 0
 LIBRARY_CURRENT = 2
-LIBRARY_REVISION = 14
+LIBRARY_REVISION = 15
 LIBS = 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIBTOOL_DEPS = ./ltmain.sh
-LIB_JPEG = -ljpeg
+LIB_JPEG = 
 LIB_MATH = -lm
 LIB_PLUGINS = 
 LIB_THREAD = -lpthread
-LIB_TIFF = -ltiff
+LIB_TIFF = 
 LIB_ZLIB = -lz
 LIPO = 
 LN_S = ln -s
 LTLIBOBJS = 
 LT_SYS_LIBRARY_PATH = 
 MAINT = 
-MAKEINFO = ${SHELL} '/home/marti/Little-CMS/missing' makeinfo
+MAKEINFO = ${SHELL} '/home/marti/git/Little-CMS/missing' makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /usr/bin/mkdir -p
 NM = /usr/bin/nm -B
@@ -256,10 +256,10 @@ OTOOL64 =
 PACKAGE = lcms2
 PACKAGE_BUGREPORT = 
 PACKAGE_NAME = lcms2
-PACKAGE_STRING = lcms2 2.14
+PACKAGE_STRING = lcms2 2.15
 PACKAGE_TARNAME = lcms2
 PACKAGE_URL = 
-PACKAGE_VERSION = 2.14
+PACKAGE_VERSION = 2.15
 PATH_SEPARATOR = :
 PTHREAD_CC = gcc
 PTHREAD_CFLAGS = -pthread
@@ -270,22 +270,22 @@ SED = /usr/bin/sed
 SET_MAKE = 
 SHELL = /bin/bash
 STRIP = strip
-TIFFICC_DEPLIBS = -ltiff -ljpeg -lz -lm -lpthread
-VERSION = 2.14
-abs_builddir = /home/marti/Little-CMS/plugins
-abs_srcdir = /home/marti/Little-CMS/plugins
-abs_top_builddir = /home/marti/Little-CMS
-abs_top_srcdir = /home/marti/Little-CMS
+TIFFICC_DEPLIBS = -lz -lm -lpthread
+VERSION = 2.15
+abs_builddir = /home/marti/git/Little-CMS/plugins
+abs_srcdir = /home/marti/git/Little-CMS/plugins
+abs_top_builddir = /home/marti/git/Little-CMS
+abs_top_srcdir = /home/marti/git/Little-CMS
 ac_ct_AR = ar
 ac_ct_CC = gcc
 ac_ct_CXX = g++
 ac_ct_DUMPBIN = 
-acx_pthread_config = 
 am__include = include
 am__leading_dot = .
 am__quote = 
 am__tar = tar --format=ustar -chf - "$$tardir"
 am__untar = tar -xf -
+ax_pthread_config = 
 bindir = ${exec_prefix}/bin
 build = x86_64-pc-linux-gnu
 build_alias = 
@@ -307,7 +307,7 @@ htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
 inline = 
-install_sh = ${SHELL} /home/marti/Little-CMS/install-sh
+install_sh = ${SHELL} /home/marti/git/Little-CMS/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale

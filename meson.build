@@ -1,7 +1,7 @@
 project(
   'Little-CMS',
   'c',
-  version: '2.14',
+  version: '2.15',
   meson_version: '>=0.49.0',
 )
 
