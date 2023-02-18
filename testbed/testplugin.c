@@ -1337,7 +1337,7 @@ static cmsPluginTransform FullTransformPluginSample = {
                            
      { cmsPluginMagicNumber, 2060, cmsPluginTransformSig, NULL}, 
 
-     TransformFactory                          
+     { TransformFactory }                          
 };
 
 cmsInt32Number CheckTransformPlugin(void)

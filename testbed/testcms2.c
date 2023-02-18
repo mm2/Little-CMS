@@ -527,8 +527,8 @@ cmsInt32Number ReverseSampler(CMSREGISTER const cmsUInt16Number In[], CMSREGISTE
             rgb[2] = Clip((1 - y) * (1 - k));
         }
 
-        cmsDoTransform(p ->sRGB2Lab, rgb, Out, 1);
-        return 1;
+    cmsDoTransform(p ->sRGB2Lab, rgb, Out, 1);
+    return 1;
 }
 
 
@@ -838,7 +838,6 @@ cmsInt32Number CheckQuickFloorWord(void)
 #define FLOAT_PRECISSION      (0.00001)
 
 static cmsFloat64Number MaxErr;
-static cmsFloat64Number AllowedErr = FIXED_PRECISION_15_16;
 
 cmsBool IsGoodVal(const char *title, cmsFloat64Number in, cmsFloat64Number out, cmsFloat64Number max)
 {
@@ -2622,6 +2621,7 @@ cmsInt32Number CheckJointCurves(void)
 }
 
 
+#if 0
 // Create a gamma curve by cheating the table
 static
 cmsToneCurve* GammaTableLinear(cmsInt32Number nEntries, cmsBool Dir)
@@ -2641,6 +2641,7 @@ cmsToneCurve* GammaTableLinear(cmsInt32Number nEntries, cmsBool Dir)
 
     return g;
 }
+#endif
 
 
 static
@@ -6558,13 +6559,13 @@ cmsInt32Number CheckCMYKPerceptual(void)
 }
 
 
-
+#if 0
 static
 cmsInt32Number CheckCMYKRelCol(void)
 {
     return CheckCMYK(INTENT_RELATIVE_COLORIMETRIC, "test1.icc", "test2.icc");
 }
-
+#endif
 
 
 static
