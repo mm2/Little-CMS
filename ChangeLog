@@ -1,5 +1,5 @@
 -----------------------
-2.15 Mainenance release
+2.15 Maintenance release
 -----------------------
 New MESON build system, many thanks to amispark and Lovell Fuller for bringing this.       
 Fixed a bug that caused memory corruption on colord
