@@ -27,7 +27,7 @@ if cc.has_function_attribute('visibility:hidden')
 endif
 
 if host_machine.endian() == 'big'
-  cargs = '-DWORDS_BIGENDIAN=1'
+  cargs += '-DWORDS_BIGENDIAN=1'
 endif
 
 
