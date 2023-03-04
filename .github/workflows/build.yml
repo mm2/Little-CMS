@@ -124,9 +124,11 @@ jobs:
         with:
           msystem: ${{matrix.sys.abi}}
           update: true
-          path-type: inherit
+          path-type: minimal
           install: >-
             mingw-w64-${{matrix.sys.env}}-toolchain
+            mingw-w64-${{matrix.sys.env}}-meson
+            mingw-w64-${{matrix.sys.env}}-ninja
 
       - name: Setup compiler
         if: startsWith(matrix.sys.abi, 'mingw') || startsWith(matrix.sys.abi, 'ucrt64')
@@ -146,10 +148,6 @@ jobs:
           CC: ${{ matrix.sys.compiler }}
 
       - uses: actions/checkout@v2
-
-      - name: Install packages
-        run: |
-          pip install meson==1.0.0
 
       - name: Build Windows
         run: |
