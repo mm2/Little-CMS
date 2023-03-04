@@ -5,7 +5,7 @@ wtpt_srcs = files(
 wtpt_exe = executable(
   'wtpt',
   wtpt_srcs,
-  dependencies: [liblcms2_dep, common_dep],
+  dependencies: [liblcms2_dep, common_dep, m_dep],
 )
 
 wtpt_man = files(
@@ -28,6 +28,6 @@ foreach exe, srcs : examples
   executable(
     exe,
     srcs,
-    dependencies: [liblcms2_dep],
+    dependencies: [liblcms2_dep, m_dep],
   )
 endforeach
