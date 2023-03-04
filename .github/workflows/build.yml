@@ -111,8 +111,10 @@ jobs:
     strategy:
       matrix:
         sys:
+          - { abi: mingw32, env: i686,         compiler: gcc }
           - { abi: mingw64, env: x86_64,       compiler: gcc }
           - { abi: ucrt64,  env: ucrt-x86_64,  compiler: gcc }
+          - { abi: clang32, env: clang-i686,   compiler: clang }
           - { abi: clang64, env: clang-x86_64, compiler: clang }
         library: ['shared', 'static']
       fail-fast: false
@@ -127,7 +129,7 @@ jobs:
             mingw-w64-${{matrix.sys.env}}-toolchain
 
       - name: Setup compiler
-        if: startsWith(matrix.sys.abi, 'mingw64') || startsWith(matrix.sys.abi, 'ucrt64')
+        if: startsWith(matrix.sys.abi, 'mingw') || startsWith(matrix.sys.abi, 'ucrt64')
         run: |
           CXX=${CC/#gcc/g++}
           echo "CC=$CC" >> $GITHUB_ENV
@@ -135,7 +137,7 @@ jobs:
         env:
           CC: ${{ matrix.sys.compiler }}
       - name: Setup compiler
-        if: startsWith(matrix.sys.abi, 'clang64')
+        if: startsWith(matrix.sys.abi, 'clang')
         run: |
           CXX=${CC/#clang/clang++}
           echo "CC=$CC" >> $GITHUB_ENV
