@@ -19,7 +19,7 @@
 //
 //---------------------------------------------------------------------------------
 
-#include <Windows.h>
+#include <windows.h>
 
 1 VERSIONINFO
 FILEVERSION @LCMS2_VERSION_MAJOR@, @LCMS2_VERSION_MINOR@, @LCMS2_VERSION_MICRO@, 0
