@@ -3,6 +3,7 @@ project(
   'c',
   version: '2.15',
   meson_version: '>=0.49.0',
+  default_options: ['c_std=gnu11']
 )
 
 version_components = meson.project_version().split('.')
@@ -33,7 +34,7 @@ endif
 
 # Check for threadsafe variants of gmtime
 # MinGW needs _POSIX_C_SOURCE or _POSIX_THREAD_SAFE_FUNCTIONS defined
-# to make gmtime_r available
+# to make gmtime_r and pthread_time.h available
 if host_machine.system() == 'windows' and cc.get_argument_syntax() != 'msvc'
   cargs += ['-D_POSIX_C_SOURCE=199503L']
 endif
@@ -86,6 +87,10 @@ if cc.has_function('pthread_mutex_lock', dependencies: threads_dep)
   cargs += '-DHasTHREADS=1'
 else
   cargs += '-DHasTHREADS=0'
+endif
+
+if cc.has_header_symbol('time.h', 'timespec_get')
+  cargs += '-DHAVE_TIMESPEC_GET=1'
 endif
 
 win = import('windows')
