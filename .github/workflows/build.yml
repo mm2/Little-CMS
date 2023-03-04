@@ -101,3 +101,56 @@ jobs:
           meson setup build
           meson compile -C build
           meson test -C build
+
+  msys-meson:
+    name: 'msys-meson ${{ matrix.sys.abi }} ${{ matrix.library }}'
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    strategy:
+      matrix:
+        sys:
+          - { abi: mingw64, env: x86_64,       compiler: gcc }
+          - { abi: ucrt64,  env: ucrt-x86_64,  compiler: gcc }
+          - { abi: clang64, env: clang-x86_64, compiler: clang }
+        library: ['shared', 'static']
+      fail-fast: false
+    steps:
+      - name: Use MinGW from MSYS
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{matrix.sys.abi}}
+          update: true
+          path-type: inherit
+          install: >-
+            mingw-w64-${{matrix.sys.env}}-toolchain
+
+      - name: Setup compiler
+        if: startsWith(matrix.sys.abi, 'mingw64') || startsWith(matrix.sys.abi, 'ucrt64')
+        run: |
+          CXX=${CC/#gcc/g++}
+          echo "CC=$CC" >> $GITHUB_ENV
+          echo "CXX=$CXX" >> $GITHUB_ENV
+        env:
+          CC: ${{ matrix.sys.compiler }}
+      - name: Setup compiler
+        if: startsWith(matrix.sys.abi, 'clang64')
+        run: |
+          CXX=${CC/#clang/clang++}
+          echo "CC=$CC" >> $GITHUB_ENV
+          echo "CXX=$CXX" >> $GITHUB_ENV
+        env:
+          CC: ${{ matrix.sys.compiler }}
+
+      - uses: actions/checkout@v2
+
+      - name: Install packages
+        run: |
+          pip install meson==1.0.0
+
+      - name: Build Windows
+        run: |
+          meson setup build -Dfastfloat=true -Dthreaded=true -Dsamples=true -Ddefault_library=${{ matrix.library }}
+          meson compile -C build
+          meson test -C build
