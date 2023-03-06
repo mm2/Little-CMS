@@ -124,28 +124,10 @@ jobs:
         with:
           msystem: ${{matrix.sys.abi}}
           update: true
-          path-type: minimal
-          install: >-
-            mingw-w64-${{matrix.sys.env}}-toolchain
-            mingw-w64-${{matrix.sys.env}}-meson
-            mingw-w64-${{matrix.sys.env}}-ninja
-
-      - name: Setup compiler
-        if: startsWith(matrix.sys.abi, 'mingw') || startsWith(matrix.sys.abi, 'ucrt64')
-        run: |
-          CXX=${CC/#gcc/g++}
-          echo "CC=$CC" >> $GITHUB_ENV
-          echo "CXX=$CXX" >> $GITHUB_ENV
-        env:
-          CC: ${{ matrix.sys.compiler }}
-      - name: Setup compiler
-        if: startsWith(matrix.sys.abi, 'clang')
-        run: |
-          CXX=${CC/#clang/clang++}
-          echo "CC=$CC" >> $GITHUB_ENV
-          echo "CXX=$CXX" >> $GITHUB_ENV
-        env:
-          CC: ${{ matrix.sys.compiler }}
+          pacboy: >-
+            toolchain:p
+            meson:p
+            ninja:p
 
       - uses: actions/checkout@v2
 
