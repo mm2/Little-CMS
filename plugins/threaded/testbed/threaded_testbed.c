@@ -50,7 +50,7 @@ static struct timespec start, finish;
 
 cmsINLINE void MeasureTimeStart(void)
 {    
-#ifdef CMS_IS_WINDOWS_
+#if defined(HAVE_TIMESPEC_GET)
     timespec_get(&start, TIME_UTC);
 #else
     clock_gettime(CLOCK_MONOTONIC, &start);
@@ -61,7 +61,7 @@ cmsINLINE double MeasureTimeStop(void)
 {
     double elapsed;
 
-#ifdef CMS_IS_WINDOWS_
+#if defined(HAVE_TIMESPEC_GET)
     timespec_get(&finish, TIME_UTC);
 #else
     clock_gettime(CLOCK_MONOTONIC, &finish);
