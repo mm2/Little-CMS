@@ -12,3 +12,5 @@ psicc_exe = executable(
 psicc_man = files(
   'psicc.1',
 )
+
+install_man(psicc_man)
