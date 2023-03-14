@@ -102,8 +102,8 @@ jobs:
           meson compile -C build
           meson test -C build
 
-  msys-meson:
-    name: 'msys-meson ${{ matrix.sys.abi }} ${{ matrix.library }}'
+  msys2-meson:
+    name: 'msys2-meson ${{ matrix.sys }} ${{ matrix.library }}'
     runs-on: windows-latest
     defaults:
       run:
@@ -111,23 +111,24 @@ jobs:
     strategy:
       matrix:
         sys:
-          - { abi: mingw32, env: i686,         compiler: gcc }
-          - { abi: mingw64, env: x86_64,       compiler: gcc }
-          - { abi: ucrt64,  env: ucrt-x86_64,  compiler: gcc }
-          - { abi: clang32, env: clang-i686,   compiler: clang }
-          - { abi: clang64, env: clang-x86_64, compiler: clang }
+          - mingw32
+          - mingw64
+          - ucrt64
+          - clang32
+          - clang64
         library: ['shared', 'static']
       fail-fast: false
     steps:
       - name: Use MinGW from MSYS
         uses: msys2/setup-msys2@v2
         with:
-          msystem: ${{matrix.sys.abi}}
+          msystem: ${{matrix.sys}}
           update: true
           pacboy: >-
-            toolchain:p
+            cc:p
             meson:p
             ninja:p
+            pkgconf:p
 
       - uses: actions/checkout@v2
 
