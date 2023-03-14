@@ -100,7 +100,10 @@ deps = [m_dep, threads_dep]
 subdir('include')
 subdir('src')
 subdir('testbed')
-subdir('utils')
+
+if get_option('utils')
+  subdir('utils')
+endif
 
 if get_option('samples')
   subdir('utils/samples')
