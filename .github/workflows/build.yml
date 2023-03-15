@@ -13,68 +13,68 @@ jobs:
   Ubuntu:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build Ubuntu
         run: |
           ./configure --with-fastfloat
-          make 
+          make
           make check
 
   Ubuntu-20-04:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build Ubuntu
         run: |
           ./configure --with-fastfloat
-          make 
+          make
           make check
-          
+
   MacOS:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Build MacOS
         run: |
           ./configure --with-fastfloat
-          make 
-          make check        
-    
+          make
+          make check
+
   Windows-64:
     runs-on: windows-latest
-    
+
     steps:
-      - uses: actions/checkout@v2
-      - uses: ilammy/msvc-dev-cmd@v1   
+      - uses: actions/checkout@v3
+      - uses: ilammy/msvc-dev-cmd@v1
         with:
             arch: x64
-                
-      - name: Build Windows 64 bit        
-        run: devenv .\Projects\VC2019\lcms2.sln /Rebuild "Release|x64" /Project testbed  
-        
-      - name: Run tests               
+
+      - name: Build Windows 64 bit
+        run: devenv .\Projects\VC2019\lcms2.sln /Rebuild "Release|x64" /Project testbed
+
+      - name: Run tests
         run: testbed\testbed.exe --chdir testbed
-            
+
 
   Windows-32:
-    runs-on: windows-latest    
+    runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v2
-      - uses: ilammy/msvc-dev-cmd@v1   
+      - uses: actions/checkout@v3
+      - uses: ilammy/msvc-dev-cmd@v1
         with:
             arch: win32
-            
-      - name: Build Windows 32 bit       
-        run: devenv .\Projects\VC2019\lcms2.sln /Rebuild "Release|Win32" /Project testbed  
 
-      - name: Run tests          
+      - name: Build Windows 32 bit
+        run: devenv .\Projects\VC2019\lcms2.sln /Rebuild "Release|Win32" /Project testbed
+
+      - name: Run tests
         run: testbed\testbed.exe --chdir testbed
-                    
-        
+
+
   Ubuntu-meson:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install packages
         run: |
@@ -91,7 +91,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Install packages
         run: |
@@ -132,7 +132,7 @@ jobs:
             ninja:p
             pkgconf:p
 
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Build Windows
         run: |
