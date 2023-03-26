@@ -21,7 +21,7 @@ liblcms2_threaded = library(
   'lcms2_threaded',
   liblcms2_threaded_sources,
   include_directories: lcms2_threaded_incdir,
-  dependencies: liblcms2_dep,
+  dependencies: [ liblcms2_dep, threads_dep ],
   c_args: cargs,
   install: true,
 )
