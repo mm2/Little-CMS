@@ -1850,11 +1850,14 @@ void WriteDataFormat(SAVESTREAM* fp, cmsIT8* it8)
        WriteStr(fp, " ");
        nSamples = satoi(cmsIT8GetProperty(it8, "NUMBER_OF_FIELDS"));
 
-       for (i = 0; i < nSamples; i++) {
+       if (nSamples <= t->nSamples) {
 
-              WriteStr(fp, t->DataFormat[i]);
-              WriteStr(fp, ((i == (nSamples-1)) ? "\n" : "\t"));
-          }
+           for (i = 0; i < nSamples; i++) {
+
+               WriteStr(fp, t->DataFormat[i]);
+               WriteStr(fp, ((i == (nSamples - 1)) ? "\n" : "\t"));
+           }
+       }
 
        WriteStr (fp, "END_DATA_FORMAT\n");
 }
@@ -1864,39 +1867,42 @@ void WriteDataFormat(SAVESTREAM* fp, cmsIT8* it8)
 static
 void WriteData(SAVESTREAM* fp, cmsIT8* it8)
 {
-       int  i, j;
+       int  i, j, nPatches;
        TABLE* t = GetTable(it8);
 
        if (!t->Data) return;
 
        WriteStr (fp, "BEGIN_DATA\n");
 
-       t->nPatches = satoi(cmsIT8GetProperty(it8, "NUMBER_OF_SETS"));
+       nPatches = satoi(cmsIT8GetProperty(it8, "NUMBER_OF_SETS"));
 
-       for (i = 0; i < t-> nPatches; i++) {
+       if (nPatches <= t->nPatches) {
 
-              WriteStr(fp, " ");
+           for (i = 0; i < nPatches; i++) {
 
-              for (j = 0; j < t->nSamples; j++) {
+               WriteStr(fp, " ");
 
-                     char *ptr = t->Data[i*t->nSamples+j];
+               for (j = 0; j < t->nSamples; j++) {
 
-                     if (ptr == NULL) WriteStr(fp, "\"\"");
-                     else {
-                         // If value contains whitespace, enclose within quote
+                   char* ptr = t->Data[i * t->nSamples + j];
 
-                         if (strchr(ptr, ' ') != NULL) {
+                   if (ptr == NULL) WriteStr(fp, "\"\"");
+                   else {
+                       // If value contains whitespace, enclose within quote
 
-                             WriteStr(fp, "\"");
-                             WriteStr(fp, ptr);
-                             WriteStr(fp, "\"");
-                         }
-                         else
-                            WriteStr(fp, ptr);
-                     }
+                       if (strchr(ptr, ' ') != NULL) {
 
-                     WriteStr(fp, ((j == (t->nSamples-1)) ? "\n" : "\t"));
-              }
+                           WriteStr(fp, "\"");
+                           WriteStr(fp, ptr);
+                           WriteStr(fp, "\"");
+                       }
+                       else
+                           WriteStr(fp, ptr);
+                   }
+
+                   WriteStr(fp, ((j == (t->nSamples - 1)) ? "\n" : "\t"));
+               }
+           }
        }
        WriteStr (fp, "END_DATA\n");
 }
