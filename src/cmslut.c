@@ -574,7 +574,7 @@ cmsStage* CMSEXPORT cmsStageAllocCLut16bitGranular(cmsContext ContextID,
     NewElem -> nEntries = n = outputChan * CubeSize(clutPoints, inputChan);
     NewElem -> HasFloatValues = FALSE;
 
-    if (n == 0) {
+    if (n == 0 || n / outputChan != CubeSize(clutPoints, inputChan)) {
         cmsStageFree(NewMPE);
         return NULL;
     }
@@ -666,7 +666,7 @@ cmsStage* CMSEXPORT cmsStageAllocCLutFloatGranular(cmsContext ContextID, const c
     NewElem -> nEntries = n = outputChan * CubeSize(clutPoints, inputChan);
     NewElem -> HasFloatValues = TRUE;
 
-    if (n == 0) {
+    if (n == 0 || n / outputChan != CubeSize(clutPoints, inputChan)) {
         cmsStageFree(NewMPE);
         return NULL;
     }
