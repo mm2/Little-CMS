@@ -8503,6 +8503,40 @@ int CheckLinearSpacesOptimization(void)
 #endif
 
 
+
+static
+int CheckBadCGATS(void)
+{
+    const char* bad_it8 =
+        " \"\"\n"
+        "NUMBER_OF_FIELDS 4\n"
+        "BEGIN_DATA_FORMAT\n"
+        "I R G G\n"
+        "END_DATA_FORMAT\n"
+        "NUMBER_OF_FIELDS 9\n"
+        "NUMBER_OF_SETS 2\n"
+        "BEGIN_DATA\n"
+        "d\n"
+        "0 0Bd\n"
+        "0Ba	$ $ t .";
+
+    cmsHANDLE hIT8;
+    
+    cmsSetLogErrorHandler(NULL);
+
+    hIT8 = cmsIT8LoadFromMem(0, bad_it8, strlen(bad_it8));
+    
+    ResetFatalError();
+
+    if (hIT8 != NULL)
+    {
+        Fail("Wrong IT8 accepted as ok");
+        cmsIT8Free(hIT8);
+    }
+
+    return 1;
+}
+
 static
 int CheckIntToFloatTransform(void)
 {
@@ -9253,9 +9287,9 @@ int main(int argc, char* argv[])
     printf("Installing error logger ... ");
     cmsSetLogErrorHandler(FatalErrorQuit);
     printf("done.\n");
-         
+
     PrintSupportedIntents();
-    
+
     Check("Base types", CheckBaseTypes);
     Check("endianness", CheckEndianness);
     Check("quick floor", CheckQuickFloor);
@@ -9461,6 +9495,7 @@ int main(int argc, char* argv[])
     Check("Gamma space detection", CheckGammaSpaceDetection);
     Check("Unbounded mode w/ integer output", CheckIntToFloatTransform);
     Check("Corrupted built-in by using cmsWriteRawTag", CheckInducedCorruption);
+    Check("Bad CGATS file", CheckBadCGATS);
     }
 
     if (DoPluginTests)

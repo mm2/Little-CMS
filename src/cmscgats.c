@@ -1263,7 +1263,12 @@ KEYVALUE* AddToList(cmsIT8* it8, KEYVALUE** Head, const char *Key, const char *S
 
         // This may work for editing properties
 
-        //     return SynError(it8, "duplicate key <%s>", Key);
+        if (cmsstrcasecmp(Key, "NUMBER_OF_FIELDS") == 0 ||
+            cmsstrcasecmp(Key, "NUMBER_OF_SETS") == 0) {
+
+            SynError(it8, "duplicate key <%s>", Key);
+            return NULL;
+        }
     }
     else {
 
@@ -2470,7 +2475,7 @@ cmsHANDLE  CMSEXPORT cmsIT8LoadFromMem(cmsContext ContextID, const void *Ptr, cm
     if (it8->MemoryBlock == NULL)
     {
         cmsIT8Free(hIT8);
-        return FALSE;
+        return NULL;
     }
 
     strncpy(it8 ->MemoryBlock, (const char*) Ptr, len);
@@ -2482,7 +2487,7 @@ cmsHANDLE  CMSEXPORT cmsIT8LoadFromMem(cmsContext ContextID, const void *Ptr, cm
     if (!ParseIT8(it8, type-1)) {
 
         cmsIT8Free(hIT8);
-        return FALSE;
+        return NULL;
     }
 
     CookPointers(it8);
