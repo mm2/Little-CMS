@@ -21,9 +21,11 @@ version_cfg.set_quoted('LCMS2_VERSION', meson.project_version())
 
 cc = meson.get_compiler('c')
 
+is_visual_studio = cc.get_argument_syntax() == 'msvc'
+
 cargs = []
 
-if cc.has_function_attribute('visibility:hidden')
+if not is_visual_studio and cc.has_function_attribute('visibility:hidden')
   cargs += '-DHAVE_FUNC_ATTRIBUTE_VISIBILITY=1'
 endif
 
@@ -35,7 +37,7 @@ endif
 # Check for threadsafe variants of gmtime
 # MinGW needs _POSIX_C_SOURCE or _POSIX_THREAD_SAFE_FUNCTIONS defined
 # to make gmtime_r and pthread_time.h available
-if host_machine.system() == 'windows' and cc.get_argument_syntax() != 'msvc'
+if host_machine.system() == 'windows' and not is_visual_studio
   cargs += ['-D_POSIX_C_SOURCE=199503L']
 endif
 
@@ -79,23 +81,30 @@ if (
   cargs += '-DCMS_DONT_USE_SSE2=1'
 endif
 
-m_dep = cc.find_library('m', required: false)
 
-threads_dep = dependency('threads')
-
-if cc.has_function('pthread_mutex_lock', dependencies: threads_dep)
-  cargs += '-DHasTHREADS=1'
+if is_visual_studio    
+    m_dep = []
+    threads_dep = []
+    deps = []
 else
-  cargs += '-DHasTHREADS=0'
+    m_dep = cc.find_library('m', required: false)
+    threads_dep = dependency('threads')
+
+    if cc.has_function('pthread_mutex_lock', dependencies: threads_dep)
+        cargs += '-DHasTHREADS=1'
+    else
+        cargs += '-DHasTHREADS=0'
+    endif
+    
+    deps = [m_dep, threads_dep]
 endif
+
 
 if cc.has_header_symbol('time.h', 'timespec_get')
   cargs += '-DHAVE_TIMESPEC_GET=1'
 endif
 
 win = import('windows')
-
-deps = [m_dep, threads_dep]
 
 subdir('include')
 subdir('src')
