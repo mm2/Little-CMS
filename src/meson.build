@@ -28,14 +28,17 @@ lcms2_srcs = files(
 )
 
 if host_machine.system() == 'windows'
-  lcms2_rc = configure_file(
-    input: 'lcms2.rc.in',
-    configuration: version_cfg,
-    output: 'lcms2.rc',
-  )
+    if get_option('default_library') == 'shared'
 
-  lcms2_srcs += win.compile_resources(lcms2_rc)
-  cargs += '-DCMS_DLL_BUILD=1'
+    lcms2_rc = configure_file(
+        input: 'lcms2.rc.in',
+        configuration: version_cfg,
+        output: 'lcms2.rc',
+        )
+
+        lcms2_srcs += win.compile_resources(lcms2_rc)
+        cargs += '-DCMS_DLL_BUILD=1'
+    endif  
 endif
 
 liblcms2_lib = library(

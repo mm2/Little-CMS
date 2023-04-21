@@ -109,7 +109,10 @@ win = import('windows')
 subdir('include')
 subdir('src')
 subdir('testbed')
+
+if get_option('utils')
 subdir('utils')
+endif
 
 if get_option('samples')
   subdir('utils/samples')
