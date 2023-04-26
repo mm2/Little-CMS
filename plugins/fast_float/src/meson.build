@@ -19,13 +19,16 @@ lcms2_fast_float_sources = files(
 lcms2_fast_float_incdir = include_directories('../include', '.')
 
 if host_machine.system() == 'windows'
-  lcms2_fast_float_rc = configure_file(
-    input: 'lcms2_fast_float.rc.in',
-    configuration: version_cfg,
-    output: 'lcms2_fast_float.rc',
-  )
+ if get_option('default_library') == 'shared'
 
-  lcms2_fast_float_sources += win.compile_resources(lcms2_fast_float_rc)
+     lcms2_fast_float_rc = configure_file(
+        input: 'lcms2_fast_float.rc.in',
+        configuration: version_cfg,
+        output: 'lcms2_fast_float.rc',
+    )
+
+    lcms2_fast_float_sources += win.compile_resources(lcms2_fast_float_rc)
+  endif
 endif
 
 liblcms2_fast_float = library(
