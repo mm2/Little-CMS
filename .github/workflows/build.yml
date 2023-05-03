@@ -6,6 +6,8 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.job }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions: read-all
+
 jobs:
 
   Ubuntu:
