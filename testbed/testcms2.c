@@ -8417,7 +8417,7 @@ int Check_OkLab(void)
     cmsCloseProfile(hOkLab);
     cmsCloseProfile(hXYZ);
 
-    return 0;
+    return 1;
 }
 
 static
