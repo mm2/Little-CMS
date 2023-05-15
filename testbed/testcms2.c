@@ -8374,6 +8374,52 @@ int Check_sRGB_Rountrips(void)
     return 1;
 }
 
+/**
+* Check OKLab colorspace
+*/
+static
+int Check_OkLab(void)
+{
+    cmsHPROFILE hOkLab = cmsCreate_OkLabProfile(NULL);
+    cmsHPROFILE hXYZ = cmsCreateXYZProfile();
+    cmsCIEXYZ xyz, xyz2;
+    cmsCIELab okLab;
+
+#define TYPE_OKLAB_DBL          (FLOAT_SH(1)|COLORSPACE_SH(PT_MCH3)|CHANNELS_SH(3)|BYTES_SH(0))
+
+    cmsHTRANSFORM xform  = cmsCreateTransform(hXYZ, TYPE_XYZ_DBL,  hOkLab, TYPE_OKLAB_DBL, INTENT_RELATIVE_COLORIMETRIC, 0);
+    cmsHTRANSFORM xform2 = cmsCreateTransform(hOkLab, TYPE_OKLAB_DBL, hXYZ, TYPE_XYZ_DBL,  INTENT_RELATIVE_COLORIMETRIC, 0);
+
+    /**
+    * D50 should be converted to white by PCS definition
+    */
+    xyz.X = 0.9642; xyz.Y = 1.0000; xyz.Z = 0.8249;
+    cmsDoTransform(xform, &xyz, &okLab, 1);
+    cmsDoTransform(xform2, &okLab, &xyz2, 1);
+
+
+    xyz.X = 1.0; xyz.Y = 0.0; xyz.Z = 0.0;
+    cmsDoTransform(xform, &xyz, &okLab, 1);
+    cmsDoTransform(xform2, &okLab, &xyz2, 1);
+
+
+    xyz.X = 0.0; xyz.Y = 1.0; xyz.Z = 0.0;
+    cmsDoTransform(xform, &xyz, &okLab, 1);
+    cmsDoTransform(xform2, &okLab, &xyz2, 1);
+
+    xyz.X = 0.0; xyz.Y = 0.0; xyz.Z = 1.0;
+    cmsDoTransform(xform, &xyz, &okLab, 1);
+    cmsDoTransform(xform2, &okLab, &xyz2, 1);
+
+
+    cmsDeleteTransform(xform);
+    cmsDeleteTransform(xform2);
+    cmsCloseProfile(hOkLab);
+    cmsCloseProfile(hXYZ);
+
+    return 0;
+}
+
 static
 cmsHPROFILE createRgbGamma(cmsFloat64Number g)
 {
@@ -9492,6 +9538,7 @@ int main(int argc, char* argv[])
     Check("Proofing intersection", CheckProofingIntersection);
     Check("Empty MLUC", CheckEmptyMLUC);
     Check("sRGB round-trips", Check_sRGB_Rountrips);
+    Check("OkLab color space", Check_OkLab);
     Check("Gamma space detection", CheckGammaSpaceDetection);
     Check("Unbounded mode w/ integer output", CheckIntToFloatTransform);
     Check("Corrupted built-in by using cmsWriteRawTag", CheckInducedCorruption);

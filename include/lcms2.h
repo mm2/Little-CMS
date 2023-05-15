@@ -1634,6 +1634,8 @@ CMSAPI cmsHPROFILE      CMSEXPORT cmsCreateXYZProfile(void);
 CMSAPI cmsHPROFILE      CMSEXPORT cmsCreate_sRGBProfileTHR(cmsContext ContextID);
 CMSAPI cmsHPROFILE      CMSEXPORT cmsCreate_sRGBProfile(void);
 
+CMSAPI cmsHPROFILE      CMSEXPORT cmsCreate_OkLabProfile(cmsContext ctx);
+
 CMSAPI cmsHPROFILE      CMSEXPORT cmsCreateBCHSWabstractProfileTHR(cmsContext ContextID,
                                                              cmsUInt32Number nLUTPoints,
                                                              cmsFloat64Number Bright,

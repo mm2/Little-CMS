@@ -672,6 +672,117 @@ cmsHPROFILE CMSEXPORT cmsCreate_sRGBProfile(void)
     return cmsCreate_sRGBProfileTHR(NULL);
 }
 
+/**
+* Oklab colorspace profile (experimental)
+* 
+* This virtual profile cannot be saved as an ICC file
+*/
+cmsHPROFILE cmsCreate_OkLabProfile(cmsContext ctx)
+{
+    cmsStage* XYZPCS = _cmsStageNormalizeFromXyzFloat(ctx);
+    cmsStage* PCSXYZ = _cmsStageNormalizeToXyzFloat(ctx);
+
+    const double M_D65_D50[] =
+    {
+       1.047886, 0.022919, -0.050216,
+       0.029582, 0.990484, -0.017079,
+      -0.009252, 0.015073,  0.751678
+    };
+
+    const double M_D50_D65[] =
+    {
+         0.955513,  -0.0230732, 0.063309,
+        -0.0283249,  1.00994,   0.0210548,
+         0.0123289, -0.0205358, 1.33071
+    };
+
+    cmsStage* D65toD50 = cmsStageAllocMatrix(ctx, 3, 3, M_D65_D50, NULL);
+    cmsStage* D50toD65 = cmsStageAllocMatrix(ctx, 3, 3, M_D50_D65, NULL);
+
+    const double M_D65_LMS[] =
+    {
+        0.8189330101, 0.3618667424, -0.1288597137,
+        0.0329845436, 0.9293118715,  0.0361456387,
+        0.0482003018, 0.2643662691,  0.6338517070
+    };
+   
+    const double M_LMS_D65[] =
+    {
+        1.22701,   -0.5578,   0.281256,
+       -0.0405802,  1.11226, -0.0716767,
+       -0.0763813, -0.421482, 1.58616
+    };
+
+    cmsStage* D65toLMS = cmsStageAllocMatrix(ctx, 3, 3, M_D65_LMS, NULL);
+    cmsStage* LMStoD65 = cmsStageAllocMatrix(ctx, 3, 3, M_LMS_D65, NULL);
+
+    cmsToneCurve* CubeRoot = cmsBuildGamma(ctx, 1.0 / 3.0);
+    cmsToneCurve* Cube    = cmsBuildGamma(ctx,  3.0);
+
+    cmsToneCurve* Roots[3] = { CubeRoot, CubeRoot, CubeRoot };
+    cmsToneCurve* Cubes[3] = { Cube, Cube, Cube };
+
+    cmsStage* NonLinearityFw = cmsStageAllocToneCurves(ctx, 3, Roots);
+    cmsStage* NonLinearityRv = cmsStageAllocToneCurves(ctx, 3, Cubes);
+
+    const double M_LMSprime_OkLab[] =
+    {
+        0.2104542553,  0.7936177850, -0.0040720468,
+        1.9779984951, -2.4285922050,  0.4505937099,
+        0.0259040371,  0.7827717662, -0.8086757660
+    };
+
+    const double M_OkLab_LMSprime[] =
+    {
+        1.0,  0.396338,   0.215804,
+        1.0, -0.105561,  -0.0638542,
+        1.0, -0.0894842, -1.29149
+    };
+    
+    cmsStage* LMSprime_OkLab = cmsStageAllocMatrix(ctx, 3, 3, M_LMSprime_OkLab, NULL);
+    cmsStage* OkLab_LMSprime = cmsStageAllocMatrix(ctx, 3, 3, M_OkLab_LMSprime, NULL);
+
+    cmsPipeline* AToB = cmsPipelineAlloc(ctx, 3, 3);
+    cmsPipeline* BToA = cmsPipelineAlloc(ctx, 3, 3);
+
+    cmsHPROFILE hProfile = cmsCreateProfilePlaceholder(ctx);
+  
+    cmsSetProfileVersion(hProfile, 4.4);
+
+    cmsSetDeviceClass(hProfile, cmsSigColorSpaceClass);
+    cmsSetColorSpace(hProfile, cmsSig3colorData);
+    cmsSetPCS(hProfile, cmsSigXYZData);
+
+    cmsSetHeaderRenderingIntent(hProfile, INTENT_RELATIVE_COLORIMETRIC);
+
+    /**
+    * Conversion PCS (XYZ/D50) to OkLab 
+    */
+    cmsPipelineInsertStage(BToA, cmsAT_END, PCSXYZ);
+    cmsPipelineInsertStage(BToA, cmsAT_END, D50toD65);
+    cmsPipelineInsertStage(BToA, cmsAT_END, D65toLMS);
+    cmsPipelineInsertStage(BToA, cmsAT_END, NonLinearityFw);
+    cmsPipelineInsertStage(BToA, cmsAT_END, LMSprime_OkLab);
+
+    cmsWriteTag(hProfile, cmsSigBToA0Tag, BToA);
+    
+    cmsPipelineInsertStage(AToB, cmsAT_END, OkLab_LMSprime);
+    cmsPipelineInsertStage(AToB, cmsAT_END, NonLinearityRv);
+    cmsPipelineInsertStage(AToB, cmsAT_END, LMStoD65);
+    cmsPipelineInsertStage(AToB, cmsAT_END, D65toD50);
+    cmsPipelineInsertStage(AToB, cmsAT_END, XYZPCS);
+
+    cmsWriteTag(hProfile, cmsSigAToB0Tag, AToB);
+
+    cmsPipelineFree(BToA);
+    cmsPipelineFree(AToB);
+
+    cmsFreeToneCurve(CubeRoot);
+    cmsFreeToneCurve(Cube);
+
+    return hProfile;
+}
+
 
 
 typedef struct {
@@ -1062,9 +1173,9 @@ const cmsAllowedLUT* FindCombination(const cmsPipeline* Lut, cmsBool IsV4, cmsTa
 cmsHPROFILE CMSEXPORT cmsTransform2DeviceLink(cmsHTRANSFORM hTransform, cmsFloat64Number Version, cmsUInt32Number dwFlags)
 {
     cmsHPROFILE hProfile = NULL;
-	cmsUInt32Number FrmIn, FrmOut;
-	cmsInt32Number ChansIn, ChansOut;
-	int ColorSpaceBitsIn, ColorSpaceBitsOut;
+    cmsUInt32Number FrmIn, FrmOut;
+    cmsInt32Number ChansIn, ChansOut;
+    int ColorSpaceBitsIn, ColorSpaceBitsOut;
     _cmsTRANSFORM* xform = (_cmsTRANSFORM*) hTransform;
     cmsPipeline* LUT = NULL;
     cmsStage* mpe;
