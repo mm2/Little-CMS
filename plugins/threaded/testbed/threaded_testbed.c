@@ -27,11 +27,16 @@
 // On Visual Studio, use debug CRT
 #ifdef _MSC_VER
 #    include "crtdbg.h"
+#define HAVE_TIMESPEC_GET 1
 #endif
 
 #ifndef PROFILES_DIR
 #define PROFILES_DIR "../../test_profiles/"
 #endif
+
+
+#define FLAGS cmsFLAGS_NOOPTIMIZE
+
 
 // A fast way to convert from/to 16 <-> 8 bits
 #define FROM_8_TO_16(rgb) (cmsUInt16Number) ((((cmsUInt16Number) (rgb)) << 8)|(rgb)) 
@@ -151,7 +156,7 @@ void CheckChangeFormat(void)
     hsRGB = cmsCreate_sRGBProfile();
     hLab = cmsCreateLab4Profile(NULL);
 
-    xform = cmsCreateTransform(hsRGB, TYPE_RGB_16, hLab, TYPE_Lab_16, INTENT_PERCEPTUAL, 0);
+    xform = cmsCreateTransform(hsRGB, TYPE_RGB_16, hLab, TYPE_Lab_16, INTENT_PERCEPTUAL, FLAGS);
 
     cmsCloseProfile(hsRGB);
     cmsCloseProfile(hLab);
@@ -185,8 +190,8 @@ void TryAllValues8bits(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut, 
     int j;
     cmsUInt32Number npixels = 256 * 256 * 256;
 
-    cmsHTRANSFORM xformRaw = cmsCreateTransformTHR(Raw, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, Intent, cmsFLAGS_NOCACHE | cmsFLAGS_COPY_ALPHA);
-    cmsHTRANSFORM xformPlugin = cmsCreateTransformTHR(Plugin, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, Intent, cmsFLAGS_NOCACHE | cmsFLAGS_COPY_ALPHA);
+    cmsHTRANSFORM xformRaw = cmsCreateTransformTHR(Raw, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, Intent, FLAGS|cmsFLAGS_NOCACHE | cmsFLAGS_COPY_ALPHA);
+    cmsHTRANSFORM xformPlugin = cmsCreateTransformTHR(Plugin, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, Intent, FLAGS|cmsFLAGS_NOCACHE | cmsFLAGS_COPY_ALPHA);
 
     cmsCloseProfile(hlcmsProfileIn);
     cmsCloseProfile(hlcmsProfileOut);
@@ -273,8 +278,8 @@ void TryAllValues16bits(cmsHPROFILE hlcmsProfileIn, cmsHPROFILE hlcmsProfileOut,
     int j;
     cmsUInt32Number npixels = 256 * 256 * 256;
 
-    cmsHTRANSFORM xformRaw = cmsCreateTransformTHR(Raw, hlcmsProfileIn, TYPE_RGBA_16, hlcmsProfileOut, TYPE_RGBA_16, Intent, cmsFLAGS_NOCACHE | cmsFLAGS_COPY_ALPHA);
-    cmsHTRANSFORM xformPlugin = cmsCreateTransformTHR(Plugin, hlcmsProfileIn, TYPE_RGBA_16, hlcmsProfileOut, TYPE_RGBA_16, Intent, cmsFLAGS_NOCACHE | cmsFLAGS_COPY_ALPHA);
+    cmsHTRANSFORM xformRaw = cmsCreateTransformTHR(Raw, hlcmsProfileIn, TYPE_RGBA_16, hlcmsProfileOut, TYPE_RGBA_16, Intent, FLAGS|cmsFLAGS_NOCACHE | cmsFLAGS_COPY_ALPHA);
+    cmsHTRANSFORM xformPlugin = cmsCreateTransformTHR(Plugin, hlcmsProfileIn, TYPE_RGBA_16, hlcmsProfileOut, TYPE_RGBA_16, Intent, FLAGS|cmsFLAGS_NOCACHE | cmsFLAGS_COPY_ALPHA);
 
     cmsCloseProfile(hlcmsProfileIn);
     cmsCloseProfile(hlcmsProfileOut);
@@ -473,7 +478,7 @@ cmsFloat64Number SpeedTest8bitsRGB(cmsContext ct, cmsHPROFILE hlcmsProfileIn, cm
     if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
         Fail("Unable to open profiles");
 
-    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGB_8, hlcmsProfileOut, TYPE_RGB_8, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
+    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGB_8, hlcmsProfileOut, TYPE_RGB_8, INTENT_PERCEPTUAL, FLAGS|cmsFLAGS_NOCACHE);
     cmsCloseProfile(hlcmsProfileIn);
     cmsCloseProfile(hlcmsProfileOut);
 
@@ -516,7 +521,7 @@ cmsFloat64Number SpeedTest8bitsRGBA(cmsContext ct, cmsHPROFILE hlcmsProfileIn, c
     if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
         Fail("Unable to open profiles");
 
-    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
+    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, FLAGS|cmsFLAGS_NOCACHE);
     cmsCloseProfile(hlcmsProfileIn);
     cmsCloseProfile(hlcmsProfileOut);
 
@@ -562,7 +567,7 @@ cmsFloat64Number SpeedTest16bitsRGB(cmsContext ct, cmsHPROFILE hlcmsProfileIn, c
     if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
         Fail("Unable to open profiles");
 
-    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGB_16, hlcmsProfileOut, TYPE_RGB_16, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
+    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGB_16, hlcmsProfileOut, TYPE_RGB_16, INTENT_PERCEPTUAL, FLAGS | cmsFLAGS_NOCACHE);
     cmsCloseProfile(hlcmsProfileIn);
     cmsCloseProfile(hlcmsProfileOut);
 
@@ -606,7 +611,7 @@ cmsFloat64Number SpeedTest16bitsCMYK(cmsContext ct, cmsHPROFILE hlcmsProfileIn, 
     if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
         Fail("Unable to open profiles");
 
-    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_CMYK_16, hlcmsProfileOut, TYPE_CMYK_16, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
+    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_CMYK_16, hlcmsProfileOut, TYPE_CMYK_16, INTENT_PERCEPTUAL, FLAGS | cmsFLAGS_NOCACHE);
     cmsCloseProfile(hlcmsProfileIn);
     cmsCloseProfile(hlcmsProfileOut);
 
@@ -733,7 +738,7 @@ cmsFloat64Number SpeedTest8bitDoTransform(cmsContext ct, cmsHPROFILE hlcmsProfil
     if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
         Fail("Unable to open profiles");
 
-    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
+    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, FLAGS | cmsFLAGS_NOCACHE);
     cmsCloseProfile(hlcmsProfileIn);
     cmsCloseProfile(hlcmsProfileOut);
 
@@ -783,7 +788,7 @@ cmsFloat64Number SpeedTest8bitLineStride(cmsContext ct, cmsHPROFILE hlcmsProfile
     if (hlcmsProfileIn == NULL || hlcmsProfileOut == NULL)
         Fail("Unable to open profiles");
 
-    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, cmsFLAGS_NOCACHE);
+    hlcmsxform = cmsCreateTransformTHR(ct, hlcmsProfileIn, TYPE_RGBA_8, hlcmsProfileOut, TYPE_RGBA_8, INTENT_PERCEPTUAL, FLAGS | cmsFLAGS_NOCACHE);
     cmsCloseProfile(hlcmsProfileIn);
     cmsCloseProfile(hlcmsProfileOut);
 

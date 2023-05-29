@@ -5347,6 +5347,72 @@ cmsInt32Number Check_cicp(cmsInt32Number Pass, cmsHPROFILE hProfile)
 
 }
 
+
+static
+void SetMHC2Matrix(cmsFloat64Number XYZ2XYZmatrix[3][4])
+{
+    XYZ2XYZmatrix[0][0] = 0.5; XYZ2XYZmatrix[0][1] = 0.1; XYZ2XYZmatrix[0][2] = 0.1; XYZ2XYZmatrix[0][3] = 0.0;
+    XYZ2XYZmatrix[1][0] = 0.0; XYZ2XYZmatrix[1][1] = 1.0; XYZ2XYZmatrix[1][2] = 0.0; XYZ2XYZmatrix[1][3] = 0.0;
+    XYZ2XYZmatrix[2][0] = 0.3; XYZ2XYZmatrix[2][1] = 0.2; XYZ2XYZmatrix[2][2] = 0.4; XYZ2XYZmatrix[2][3] = 0.0;
+}
+
+static
+cmsBool CloseEnough(cmsFloat64Number a, cmsFloat64Number b)
+{
+    return fabs(b - a) < (1.0 / 65535.0);
+}
+
+cmsBool IsOriginalMHC2Matrix(cmsFloat64Number XYZ2XYZmatrix[3][4])
+{
+    cmsFloat64Number m[3][4];
+    int i, j;
+
+    SetMHC2Matrix(m);
+
+    for (i = 0; i < 3; i++)
+        for (j = 0; j < 4; j++)
+            if (!CloseEnough(XYZ2XYZmatrix[i][j], m[i][j])) return FALSE;
+
+    return TRUE;
+}
+
+
+static
+cmsInt32Number Check_MHC2(cmsInt32Number Pass, cmsHPROFILE hProfile)
+{
+    cmsMHC2Type* v;
+    cmsMHC2Type  s;
+    double curve[] = { 0, 0.5, 1.0 };
+
+    switch (Pass) {
+
+    case 1:
+        SetMHC2Matrix(s.XYZ2XYZmatrix);
+        s.CurveEntries = 3;
+        s.GreenCurve = curve;
+        s.RedCurve = curve;
+        s.BlueCurve = curve;
+        s.MinLuminance = 0.1;
+        s.PeakLuminance = 100.0;
+        
+        if (!cmsWriteTag(hProfile, cmsSigMHC2Tag, &s)) return 0;
+        return 1;
+
+    case 2:
+        v = (cmsMHC2Type*)cmsReadTag(hProfile, cmsSigMHC2Tag);
+        if (v == NULL) return 0;
+
+        if (!IsOriginalMHC2Matrix(v->XYZ2XYZmatrix)) return 0;
+        if (v->CurveEntries != 3) return 0;
+        return 1;
+
+    default:
+        return 0;
+    }
+
+}
+
+
 // This is a very big test that checks every single tag
 static
 cmsInt32Number CheckProfileCreation(void)
@@ -5494,6 +5560,10 @@ cmsInt32Number CheckProfileCreation(void)
 
         SubTest("cicp Video Signal Type");
         if (!Check_cicp(Pass, h)) goto Error;
+
+        SubTest("Microsoft MHC2 tag");
+        if (!Check_MHC2(Pass, h)) goto Error;
+
 
         if (Pass == 1) {
             cmsSaveProfileToFile(h, "alltags.icc");
