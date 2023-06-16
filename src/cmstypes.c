@@ -5674,6 +5674,8 @@ void* Type_MHC2_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cms
 Error:
     Type_MHC2_Free(self, mhc2);
     return NULL;
+
+    cmsUNUSED_PARAMETER(SizeOfTag);
 }
 
 

@@ -300,6 +300,10 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
 
             cmsPipelineInsertStage(OriginalLut, cmsAT_END, lab_fix);
         }
+        else {
+            if (T_COLORSPACE(*OutputFormat) != PT_GRAY &&
+                T_COLORSPACE(*OutputFormat) != PT_RGB) return FALSE;
+        }
 
 
     // Resample the LUT
