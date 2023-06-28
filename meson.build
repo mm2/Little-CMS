@@ -124,5 +124,16 @@ subdir('plugins')
 pkg = import('pkgconfig')
 pkg.generate(liblcms2_lib,
   description: 'LCMS Color Management Library',
-  libraries: extra_libraries
 )
+if get_option('fastfloat')
+  pkg.generate(liblcms2_fast_float,
+    description: 'LCMS fast float plugin',
+    requires: liblcms2_lib
+  )
+endif
+if get_option('threaded')
+  pkg.generate(liblcms2_threaded,
+    description: 'LCMS multi threaded plugin',
+    requires: liblcms2_lib
+  )
+endif
