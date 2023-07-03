@@ -126,7 +126,7 @@ void PerformanceEval8(struct _cmstransform_struct *CMMcargo,
     cmsS15Fixed16Number    c0, c1, c2, c3, Rest;
     cmsUInt32Number        OutChan, TotalPlusAlpha;
     cmsS15Fixed16Number    X0, X1, Y0, Y1, Z0, Z1;
-    Performance8Data* p8 = (Performance8Data*)_cmsGetTransformUserData(CMMcargo);
+    Performance8Data*      p8 = (Performance8Data*)_cmsGetTransformUserData(CMMcargo);
     const cmsInterpParams* p = p8->p;
     cmsUInt32Number        TotalOut = p->nOutputs;
     const cmsUInt16Number* LutTable = (const cmsUInt16Number*)p->Table;
