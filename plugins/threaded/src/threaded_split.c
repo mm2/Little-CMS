@@ -100,7 +100,7 @@ cmsUInt32Number _cmsThrCountSlices(struct _cmstransform_struct* CMMcargo, cmsInt
         // We allow large number of threads, but this is not going to work well. Warn it. 
         if (MaxWorkers > MaxCPUs) {
             cmsSignalError(NULL, cmsERROR_RANGE,
-                "Warning: too many threads for actual processor (CPUs=%s, asked=%d)", MaxCPUs, MaxWorkers);
+                "Warning: too many threads for actual processor (CPUs=%d, asked=%d)", MaxCPUs, MaxWorkers);
         }
     }
 
