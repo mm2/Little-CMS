@@ -814,6 +814,9 @@ void CMSEXPORT cmsFreeProfileSequenceDescription(cmsSEQ* pseq)
 {
     cmsUInt32Number i;
 
+    if (pseq == NULL)
+        return;
+
     for (i=0; i < pseq ->n; i++) {
         if (pseq ->seq[i].Manufacturer != NULL) cmsMLUfree(pseq ->seq[i].Manufacturer);
         if (pseq ->seq[i].Model != NULL) cmsMLUfree(pseq ->seq[i].Model);

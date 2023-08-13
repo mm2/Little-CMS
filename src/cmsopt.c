@@ -1113,14 +1113,17 @@ cmsBool OptimizeByComputingLinearization(cmsPipeline** Lut, cmsUInt32Number Inte
 
         // Store result in curve
         for (t=0; t < OriginalLut ->InputChannels; t++)
-            Trans[t] ->Table16[i] = _cmsQuickSaturateWord(Out[t] * 65535.0);
+        {
+            if (Trans[t]->Table16 != NULL)
+                Trans[t] ->Table16[i] = _cmsQuickSaturateWord(Out[t] * 65535.0);
+        }
     }
 
     // Slope-limit the obtained curves
     for (t = 0; t < OriginalLut ->InputChannels; t++)
         SlopeLimiting(Trans[t]);
 
-    // Check for validity
+    // Check for validity. lIsLinear is here for debug purposes
     lIsSuitable = TRUE;
     lIsLinear   = TRUE;
     for (t=0; (lIsSuitable && (t < OriginalLut ->InputChannels)); t++) {

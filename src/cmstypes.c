@@ -5221,11 +5221,13 @@ cmsBool WriteOneMLUC(struct _cms_typehandler_struct* self, cmsIOHANDLER* io,  _c
     }
 
     Before = io ->Tell(io);
-    e ->Offsets[i] = Before - BaseOffset;
+    if (e->Offsets != NULL)
+        e ->Offsets[i] = Before - BaseOffset;
 
     if (!Type_MLU_Write(self, io, (void*) mlu, 1)) return FALSE;
 
-    e ->Sizes[i] = io ->Tell(io) - Before;
+    if (e->Sizes != NULL)
+        e ->Sizes[i] = io ->Tell(io) - Before;
     return TRUE;
 }
 
