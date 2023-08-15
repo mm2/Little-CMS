@@ -1548,8 +1548,6 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
     if (SizeOfTag == 0)
     {
         Block = NULL;
-        NumOfWchar = 0;
-
     }
     else
     {
