@@ -913,7 +913,7 @@ void InSymbol(cmsIT8* it8)
                         snprintf(buffer, sizeof(buffer), it8 ->DoubleFormatter, it8->dnum);
                     }
 
-                    StringClear(it8->id)
+                    StringClear(it8->id);
                     StringCat(it8->id, buffer);
 
                     do {
@@ -2314,78 +2314,72 @@ void CookPointers(cmsIT8* it8)
     int idField, i;
     char* Fld;
     cmsUInt32Number j;
-    cmsUInt32Number nOldTable = it8 ->nTable;
+    cmsUInt32Number nOldTable = it8->nTable;
 
-    for (j=0; j < it8 ->TablesCount; j++) {
+    for (j = 0; j < it8->TablesCount; j++) {
 
-    TABLE* t = it8 ->Tab + j;
+        TABLE* t = it8->Tab + j;
 
-    t -> SampleID = 0;
-    it8 ->nTable = j;
+        t->SampleID = 0;
+        it8->nTable = j;
 
-    for (idField = 0; idField < t -> nSamples; idField++)
-    {
-        if (t ->DataFormat == NULL){
-            SynError(it8, "Undefined DATA_FORMAT");
-            return;
+        for (idField = 0; idField < t->nSamples; idField++)
+        {
+            if (t->DataFormat == NULL) {
+                SynError(it8, "Undefined DATA_FORMAT");
+                return;
+            }
+
+            Fld = t->DataFormat[idField];
+            if (!Fld) continue;
+
+
+            if (cmsstrcasecmp(Fld, "SAMPLE_ID") == 0) {
+
+                t->SampleID = idField;
+            }
+
+            // "LABEL" is an extension. It keeps references to forward tables
+
+            if ((cmsstrcasecmp(Fld, "LABEL") == 0) || Fld[0] == '$') {
+
+                // Search for table references...
+                for (i = 0; i < t->nPatches; i++) {
+
+                    char* Label = GetData(it8, i, idField);
+
+                    if (Label) {
+
+                        cmsUInt32Number k;
+
+                        // This is the label, search for a table containing
+                        // this property
+
+                        for (k = 0; k < it8->TablesCount; k++) {
+
+                            TABLE* Table = it8->Tab + k;
+                            KEYVALUE* p;
+
+                            if (IsAvailableOnList(Table->HeaderList, Label, NULL, &p)) {
+
+                                // Available, keep type and table
+                                char Buffer[256];
+
+                                char* Type = p->Value;
+                                int  nTable = (int)k;
+
+                                snprintf(Buffer, 255, "%s %d %s", Label, nTable, Type);
+
+                                SetData(it8, i, idField, Buffer);
+                            }
+                        }
+                    }
+                }
+            }
         }
+    }
 
-        Fld = t->DataFormat[idField];
-        if (!Fld) continue;
-
-
-        if (cmsstrcasecmp(Fld, "SAMPLE_ID") == 0) {
-
-            t -> SampleID = idField;            
-        }
-
-        // "LABEL" is an extension. It keeps references to forward tables
-
-        if ((cmsstrcasecmp(Fld, "LABEL") == 0) || Fld[0] == '$') {
-
-            // Search for table references...
-            for (i = 0; i < t->nPatches; i++) {
-
-                char* Label = GetData(it8, i, idField);
-
-                if (Label) {
-
-                    cmsUInt32Number k;
-
-                    // This is the label, search for a table containing
-                    // this property
-
-                    for (k = 0; k < it8->TablesCount; k++) {
-
-                        TABLE* Table = it8->Tab + k;
-                        KEYVALUE* p;
-
-                        if (IsAvailableOnList(Table->HeaderList, Label, NULL, &p)) {
-
-                            // Available, keep type and table
-                            char Buffer[256];
-
-                            char* Type = p->Value;
-                            int  nTable = (int)k;
-
-                            snprintf(Buffer, 255, "%s %d %s", Label, nTable, Type);
-
-                            SetData(it8, i, idField, Buffer);
-						}
-					}
-
-
-				}
-
-			}
-
-
-		}
-
-	}
-	}
-
-    it8 ->nTable = nOldTable;
+    it8->nTable = nOldTable;
 }
 
 // Try to infere if the file is a CGATS/IT8 file at all. Read first line
@@ -2585,17 +2579,17 @@ cmsUInt32Number CMSEXPORT cmsIT8EnumProperties(cmsHANDLE hIT8, char ***PropertyN
     }
 
 
-	Props = (char**)AllocChunk(it8, sizeof(char*) * n);
-	if (Props != NULL) {
+    Props = (char**)AllocChunk(it8, sizeof(char*) * n);
+    if (Props != NULL) {
 
-		// Pass#2 - Fill pointers
-		n = 0;
-		for (p = t->HeaderList; p != NULL; p = p->Next) {
-			Props[n++] = p->Keyword;
-		}
+        // Pass#2 - Fill pointers
+        n = 0;
+        for (p = t->HeaderList; p != NULL; p = p->Next) {
+            Props[n++] = p->Keyword;
+        }
 
-	}
-	*PropertyNames = Props;
+    }
+    *PropertyNames = Props;
 
     return n;
 }
