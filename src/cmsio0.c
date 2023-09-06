@@ -1568,8 +1568,10 @@ void freeOneTag(_cmsICCPROFILE* Icc, cmsUInt32Number i)
             LocalTypeHandler.ICCVersion = Icc->Version;
             LocalTypeHandler.FreePtr(&LocalTypeHandler, Icc->TagPtrs[i]);
         }
-        else
-            _cmsFree(Icc->ContextID, Icc->TagPtrs[i]);
+		else {
+			_cmsFree(Icc->ContextID, Icc->TagPtrs[i]);
+		}
+		Icc->TagPtrs[i] = NULL;
     }
 }
 
@@ -1754,8 +1756,7 @@ void* CMSEXPORT cmsReadTag(cmsHPROFILE hProfile, cmsTagSignature sig)
     // Return error and unlock the data
 Error:
 
-    freeOneTag(Icc, n);    
-    Icc->TagPtrs[n] = NULL;
+    freeOneTag(Icc, n);
     
     _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
     return NULL;
