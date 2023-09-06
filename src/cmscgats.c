@@ -747,7 +747,7 @@ cmsFloat64Number ParseFloatNumber(const char *Buffer)
 }
 
 
-// Reads a string, special case to avoid infinite resursion on .include
+// Reads a string, special case to avoid infinite recursion on .include
 static
 void InStringSymbol(cmsIT8* it8)
 {
