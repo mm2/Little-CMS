@@ -426,7 +426,7 @@ void StringCat(string* s, const char* c)
 static
 cmsBool isseparator(int c)
 {
-    return (c == ' ') || (c == '\t') ; 
+    return (c == ' ') || (c == '\t');
 }
 
 // Checks whatever c is a valid identifier char
@@ -943,7 +943,7 @@ void InSymbol(cmsIT8* it8)
         // Next line
         case '\r':
             NextCh(it8);
-            if (it8 ->ch == '\n') 
+            if (it8->ch == '\n')
                 NextCh(it8);
             it8->sy = SEOLN;
             it8->lineno++;

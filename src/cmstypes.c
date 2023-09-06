@@ -4450,7 +4450,7 @@ void *Type_MPEclut_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
     clut = (_cmsStageCLutData*) mpe ->Data;
     for (i=0; i < clut ->nEntries; i++) {
 
-        if (!_cmsReadFloat32Number(io, &clut->Tab.TFloat[i])) goto Error;       
+        if (!_cmsReadFloat32Number(io, &clut->Tab.TFloat[i])) goto Error;
     }
 
     *nItems = 1;

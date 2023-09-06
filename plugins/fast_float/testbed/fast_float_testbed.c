@@ -376,7 +376,7 @@ void Check15bitMacros(void)
        trace("ok\n");
 }
 
-// Do an in-depth test by checking all RGB cube of 8 bits, going from profilein to profileout. 
+// Do an in-depth test by checking all RGB cube of 8 bits, going from profileIn to profileOut.
 // Results should be same except for 2 contone levels allowed for roundoff. Note 15 bits is more 
 // precise than 8 bits and this is a source of discrepancies. Cache is disabled
 static 
@@ -790,7 +790,7 @@ cmsBool ValidFloat(cmsFloat32Number a, cmsFloat32Number b)
        return fabsf(a-b) < EPSILON_FLOAT_TESTS;
 }
 
-// Do an in-depth test by checking all RGB cube of 8 bits, going from profilein to profileout. 
+// Do an in-depth test by checking all RGB cube of 8 bits, going from profileIn to profileOut.
 // Values with and without optimization are checked (different contexts, one with the plugin and another without)
 // Results should be same except for EPSILON_FLOAT_TESTS allowed for accuracy/speed tradeoff. Cache is disabled
 static

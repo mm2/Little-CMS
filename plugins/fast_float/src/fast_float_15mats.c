@@ -19,11 +19,11 @@
 //
 //---------------------------------------------------------------------------------
 
-// Optimization for matrix-shaper in 15 bits. Numbers are operated in 1.15 usigned, 
+// Optimization for matrix-shaper in 15 bits. Numbers are operated in 1.15 unsigned,
 
 #include "fast_float_internal.h"
 
-// An storage capable to keep 1.15 signed and some extra precission. 
+// An storage capable to keep 1.15 signed and some extra precision.
 // Actually I use 32 bits integer (signed)
 typedef cmsInt32Number cmsS1Fixed15Number;   
 
