@@ -183,6 +183,7 @@ cmsBool  isFloatMatrixIdentity(const cmsMAT3* a)
 
        return TRUE;
 }
+
 // if two adjacent matrices are found, multiply them. 
 static
 cmsBool _MultiplyMatrix(cmsPipeline* Lut)
@@ -1928,7 +1929,7 @@ cmsBool CMSEXPORT _cmsOptimizePipeline(cmsContext ContextID,
     for (mpe = cmsPipelineGetPtrToFirstStage(*PtrLut);
         mpe != NULL;
         mpe = cmsStageNext(mpe)) {
-        if (cmsStageType(mpe) == cmsSigNamedColorElemType) return FALSE;
+            if (cmsStageType(mpe) == cmsSigNamedColorElemType) return FALSE;
     }
 
     // Try to get rid of identities and trivial conversions.

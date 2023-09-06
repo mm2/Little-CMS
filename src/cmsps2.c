@@ -557,7 +557,7 @@ void EmitNGamma(cmsIOHANDLER* m, cmsUInt32Number n, cmsToneCurve* g[], const cha
         }
         else {
             snprintf(buffer, sizeof(buffer), "%s%d", nameprefix, (int) i);
-        buffer[sizeof(buffer)-1] = '\0';
+            buffer[sizeof(buffer)-1] = '\0';
             Emit1Gamma(m, g[i], buffer);
         }
     }

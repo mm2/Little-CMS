@@ -225,7 +225,7 @@ void TestMemoryLeaks(cmsBool ok)
 static cmsPluginMemHandler DebugMemHandler = {{ cmsPluginMagicNumber, 2060, cmsPluginMemHandlerSig, NULL },
                                                DebugMalloc, DebugFree, DebugRealloc, NULL, NULL, NULL };
 
-// Returnds a pointer to the memhandler plugin
+// Returns a pointer to the memhandler plugin
 void* PluginMemHandler(void)
 {
     return (void*) &DebugMemHandler;
