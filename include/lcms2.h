@@ -174,7 +174,7 @@ typedef cmsUInt32Number      cmsU16Fixed16Number;
 typedef int                  cmsBool;
 
 // Try to detect windows
-#if defined (_WIN32) || defined(_WIN64) || defined(WIN32) || defined(_WIN32_)
+#if defined (_WIN32) || defined(_WIN64) || defined(WIN32) || defined(WIN64) || defined(_WIN32_) //-V1040
 #  define CMS_IS_WINDOWS_ 1
 #endif
 
