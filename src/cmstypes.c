@@ -93,7 +93,7 @@ cmsBool RegisterTypesPlugin(cmsContext id, cmsPluginBase* Data, _cmsMemoryClient
     return TRUE;
 }
 
-// Return handler for a given type or NULL if not found. Shared between normal types and MPE. It first tries the additons 
+// Return handler for a given type or NULL if not found. Shared between normal types and MPE. It first tries the additions 
 // made by plug-ins and then the built-in defaults.
 static
 cmsTagTypeHandler* GetHandler(cmsTagTypeSignature sig, _cmsTagTypeLinkedList* PluginLinkedList, _cmsTagTypeLinkedList* DefaultLinkedList)

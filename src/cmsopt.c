@@ -183,6 +183,7 @@ cmsBool  isFloatMatrixIdentity(const cmsMAT3* a)
 
        return TRUE;
 }
+
 // if two adjacent matrices are found, multiply them. 
 static
 cmsBool _MultiplyMatrix(cmsPipeline* Lut)
@@ -1771,7 +1772,7 @@ cmsBool OptimizeMatrixShaper(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
         _cmsStageToneCurvesData* mpeC2 = (_cmsStageToneCurvesData*) cmsStageData(Curve2);
 
         // In this particular optimization, cache does not help as it takes more time to deal with
-        // the cache that with the pixel handling
+        // the cache than with the pixel handling
         *dwFlags |= cmsFLAGS_NOCACHE;
 
         // Setup the optimizarion routines
@@ -1927,8 +1928,8 @@ cmsBool CMSEXPORT _cmsOptimizePipeline(cmsContext ContextID,
     // Named color pipelines cannot be optimized 
     for (mpe = cmsPipelineGetPtrToFirstStage(*PtrLut);
         mpe != NULL;
-        mpe = cmsStageNext(mpe)) {
-        if (cmsStageType(mpe) == cmsSigNamedColorElemType) return FALSE;
+        mpe = cmsStageNext(mpe)) {        
+            if (cmsStageType(mpe) == cmsSigNamedColorElemType) return FALSE;
     }
 
     // Try to get rid of identities and trivial conversions.

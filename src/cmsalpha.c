@@ -567,7 +567,7 @@ void _cmsHandleExtraChannels(_cmsTRANSFORM* p, const void* in,
     if (nExtra == 0)
         return;
 
-     // Compute the increments
+    // Compute the increments
     if (!ComputeComponentIncrements(p->InputFormat, Stride->BytesPerPlaneIn, SourceStartingOrder, SourceIncrements))
         return;
     if (!ComputeComponentIncrements(p->OutputFormat, Stride->BytesPerPlaneOut, DestStartingOrder, DestIncrements))

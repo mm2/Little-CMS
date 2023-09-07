@@ -225,7 +225,7 @@ void TestMemoryLeaks(cmsBool ok)
 static cmsPluginMemHandler DebugMemHandler = {{ cmsPluginMagicNumber, 2060, cmsPluginMemHandlerSig, NULL },
                                                DebugMalloc, DebugFree, DebugRealloc, NULL, NULL, NULL };
 
-// Returnds a pointer to the memhandler plugin
+// Returns a pointer to the memhandler plugin
 void* PluginMemHandler(void)
 {
     return (void*) &DebugMemHandler;
@@ -8640,7 +8640,7 @@ int CheckBadCGATS(void)
     
     cmsSetLogErrorHandler(NULL);
 
-    hIT8 = cmsIT8LoadFromMem(0, bad_it8, strlen(bad_it8));
+    hIT8 = cmsIT8LoadFromMem(0, bad_it8, (cmsUInt32Number) strlen(bad_it8));
     
     ResetFatalError();
 
