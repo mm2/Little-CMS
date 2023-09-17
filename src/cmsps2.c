@@ -441,12 +441,16 @@ void Emit1Gamma(cmsIOHANDLER* m, cmsToneCurve* Table)
     cmsUInt32Number i;
     cmsFloat64Number gamma;
 
-    if (Table == NULL) return; // Error
+    /**
+    * On error, empty tables or lienar assume gamma 1.0
+    */
+    if (Table == NULL ||
+        Table->nEntries <= 0 || 
+        cmsIsToneCurveLinear(Table)) {
 
-    if (Table ->nEntries <= 0) return;  // Empty table
-
-    // Suppress whole if identity
-    if (cmsIsToneCurveLinear(Table)) return;
+        _cmsIOPrintf(m, "{ 1 } bind ");
+    }
+        
 
     // Check if is really an exponential. If so, emit "exp"
     gamma = cmsEstimateGamma(Table, 0.001);
