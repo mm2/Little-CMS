@@ -518,7 +518,7 @@ cmsBool GammaTableEquals(cmsUInt16Number* g1, cmsUInt16Number* g2, cmsUInt32Numb
 // Does write a set of gamma curves
 
 static
-void EmitNGamma(cmsIOHANDLER* m, int n, cmsToneCurve* g[])
+void EmitNGamma(cmsIOHANDLER* m, cmsUInt32Number n, cmsToneCurve* g[])
 {
     cmsUInt32Number i;
    
@@ -747,7 +747,7 @@ int EmitCIEBasedDEF(cmsIOHANDLER* m, cmsPipeline* Pipeline, cmsUInt32Number Inte
     const char* PostMaj;
     const char* PreMin, *PostMin;
     cmsStage* mpe;
-    int i, numchans;
+    
     static char buffer[2048];
 
     mpe = Pipeline->Elements;
