@@ -76,6 +76,9 @@
 
 #ifndef CMS_USE_CPP_API
 #   ifdef __cplusplus
+#       if __cplusplus >= 201703L
+#            define CMS_NO_REGISTER_KEYWORD 1  
+#       endif
 extern "C" {
 #   endif
 #endif
