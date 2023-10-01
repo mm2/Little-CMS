@@ -14,7 +14,7 @@ FILETYPE VFT_DLL
    VALUE "FileDescription", "lcms color engine\000"
    VALUE "FileVersion", "2.16\000\000"
    VALUE "InternalName", "lcms2\000"
-   VALUE "LegalCopyright", "Copyright � Marti Maria 2023\000\000"
+   VALUE "LegalCopyright", "Copyright © Marti Maria 2023\000\000"
    VALUE "OriginalFilename", "lcms2.dll\000"
   }
 
