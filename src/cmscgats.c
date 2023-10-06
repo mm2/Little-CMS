@@ -486,13 +486,13 @@ cmsBool BuildAbsolutePath(const char *relPath, const char *basePath, char *buffe
     // Already absolute?
     if (isabsolutepath(relPath)) {
 
-        strncpy(buffer, relPath, MaxLen);
+        memcpy(buffer, relPath, MaxLen);
         buffer[MaxLen-1] = 0;
         return TRUE;
     }
 
     // No, search for last
-    strncpy(buffer, basePath, MaxLen);
+    memcpy(buffer, basePath, MaxLen);
     buffer[MaxLen-1] = 0;
 
     tail = strrchr(buffer, DIR_CHAR);
