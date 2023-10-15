@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2021 Marti Maria Saguer
+//  Copyright (c) 1998-2023 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -8678,6 +8678,72 @@ int CheckIntToFloatTransform(void)
     return 0;
 }
 
+static
+int CheckSaveLinearizationDevicelink(void)
+{
+    const cmsFloat32Number table[] = { 0, 0.5f, 1.0f };
+
+    cmsToneCurve* tone = cmsBuildTabulatedToneCurveFloat(NULL, 3, table);
+
+    cmsToneCurve* rgb_curves[3] = { tone, tone, tone };
+
+    cmsHPROFILE hDeviceLink = cmsCreateLinearizationDeviceLink(cmsSigRgbData, rgb_curves);
+
+    cmsBool result;
+    cmsHTRANSFORM xform;
+    int i;
+    
+    cmsFreeToneCurve(tone);
+
+    result = cmsSaveProfileToFile(hDeviceLink, "lin_rgb.icc");
+
+    cmsCloseProfile(hDeviceLink);
+
+    if (!result)
+    {
+        remove("lin_rgb.icc");
+        Fail("Couldn't save linearization devicelink");        
+    }
+
+
+    hDeviceLink = cmsOpenProfileFromFile("lin_rgb.icc", "r");
+
+    if (hDeviceLink == NULL)
+    {
+        remove("lin_rgb.icc");
+        Fail("Could't open devicelink");
+    }
+
+    xform = cmsCreateTransform(hDeviceLink, TYPE_RGB_8, NULL, TYPE_RGB_8, INTENT_PERCEPTUAL, 0);
+    cmsCloseProfile(hDeviceLink);
+
+    for (i = 0; i < 256; i++)
+    {
+        cmsUInt8Number rgb_in[3] = { i, i, i };
+        cmsUInt8Number rgb_out[3];
+
+        cmsDoTransform(xform, rgb_in, rgb_out, 1);
+
+        if (rgb_in[0] != rgb_out[0] ||
+            rgb_in[1] != rgb_out[1] ||
+            rgb_in[2] != rgb_out[2])
+        {
+            remove("lin_rgb.icc");
+            Fail("Saved devicelink was not working");
+        }
+    }
+
+
+    cmsDeleteTransform(xform);
+    remove("lin_rgb.icc");
+
+    return 1;
+
+
+
+}
+
+
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
 // --------------------------------------------------------------------------------------------------
@@ -9403,7 +9469,7 @@ int main(int argc, char* argv[])
     printf("Installing error logger ... ");
     cmsSetLogErrorHandler(FatalErrorQuit);
     printf("done.\n");
-
+    
     PrintSupportedIntents();
 
     Check("Base types", CheckBaseTypes);
@@ -9613,6 +9679,7 @@ int main(int argc, char* argv[])
     Check("Unbounded mode w/ integer output", CheckIntToFloatTransform);
     Check("Corrupted built-in by using cmsWriteRawTag", CheckInducedCorruption);
     Check("Bad CGATS file", CheckBadCGATS);
+    Check("Saving linearization devicelink", CheckSaveLinearizationDevicelink);
     }
 
     if (DoPluginTests)
