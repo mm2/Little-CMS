@@ -260,6 +260,7 @@ typedef CRITICAL_SECTION _cmsMutex;
 #ifdef _MSC_VER
 #    if (_MSC_VER >= 1800)
 #          pragma warning(disable : 26135)
+#          pragma warning(disable : 4127)
 #    endif
 #endif
 

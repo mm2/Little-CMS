@@ -1027,3 +1027,13 @@ cmsUInt32Number  CMSEXPORT cmsGetProfileInfoASCII(cmsHPROFILE hProfile, cmsInfoT
 
     return cmsMLUgetASCII(mlu, LanguageCode, CountryCode, Buffer, BufferSize);
 }
+
+cmsUInt32Number  CMSEXPORT cmsGetProfileInfoUTF8(cmsHPROFILE hProfile, cmsInfoType Info,
+                                                          const char LanguageCode[3], const char CountryCode[3],
+                                                          char* Buffer, cmsUInt32Number BufferSize)
+{
+    const cmsMLU* mlu = GetInfo(hProfile, Info);
+    if (mlu == NULL) return 0;
+
+    return cmsMLUgetUTF8(mlu, LanguageCode, CountryCode, Buffer, BufferSize);
+}

@@ -3676,6 +3676,30 @@ Error:
 }
 
 
+// Check UTF8 encoding
+static
+cmsInt32Number CheckMLU_UTF8(void)
+{
+    cmsMLU* mlu;
+    char Buffer[256];
+    cmsInt32Number rc = 1;
+        
+    mlu = cmsMLUalloc(DbgThread(), 0);
+    
+    cmsMLUsetWide(mlu, "en", "US", L"\x3b2\x14b");
+
+    cmsMLUgetUTF8(mlu, "en", "US", Buffer, 256);
+    if (strcmp(Buffer, "\xce\xb2\xc5\x8b") != 0) rc = 0;
+
+    if (rc == 0)
+        Fail("Unexpected string '%s'", Buffer);
+
+    cmsMLUfree(mlu);
+    return rc;
+}
+
+
+
 // A lightweight test of named color structures.
 static
 cmsInt32Number CheckNamedColorList(void)
@@ -9597,6 +9621,7 @@ int main(int argc, char* argv[])
 
     // MLU
     Check("Multilocalized Unicode", CheckMLU);
+    Check("Multilocalized Unicode (II)", CheckMLU_UTF8);
 
     // Named color
     Check("Named color lists", CheckNamedColorList);
