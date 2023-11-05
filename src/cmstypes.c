@@ -1922,7 +1922,7 @@ cmsBool  Type_LUT8_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io,
 
     // Disassemble the LUT into components.
     mpe = NewLUT -> Elements;
-    if (mpe ->Type == cmsSigMatrixElemType) {
+    if (mpe != NULL && mpe ->Type == cmsSigMatrixElemType) {
 
         if (mpe->InputChannels != 3 || mpe->OutputChannels != 3) return FALSE;
         MatMPE = (_cmsStageMatrixData*) mpe ->Data;
