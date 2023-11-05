@@ -1728,6 +1728,8 @@ cmsBool OptimizeMatrixShaper(cmsPipeline** Lut, cmsUInt32Number Intent, cmsUInt3
 
                      _cmsStageMatrixData* Data = (_cmsStageMatrixData*)cmsStageData(Matrix1);
 
+                     if (Matrix1->InputChannels != 3 || Matrix1->OutputChannels != 3) return FALSE;
+
                      // Copy the matrix to our result
                      memcpy(&res, Data->Double, sizeof(res));
 
