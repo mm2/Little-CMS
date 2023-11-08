@@ -1267,7 +1267,7 @@ int WriteOutputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, cmsUInt32Number Intent
     cmsUInt32Number InFrm = TYPE_Lab_16;
     cmsUInt32Number RelativeEncodingIntent;
     cmsColorSpaceSignature ColorSpace;
-
+    cmsStage* first;
 
     hLab = cmsCreateLab4ProfileTHR(m ->ContextID, NULL);
     if (hLab == NULL) return 0;
@@ -1295,6 +1295,7 @@ int WriteOutputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, cmsUInt32Number Intent
 
     if (xform == NULL) {
 
+        cmsDeleteTransform(xform);
         cmsSignalError(m ->ContextID, cmsERROR_COLORSPACE_CHECK, "Cannot create transform Lab -> Profile in CRD creation");
         return 0;
     }
@@ -1302,10 +1303,12 @@ int WriteOutputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, cmsUInt32Number Intent
     // Get a copy of the internal devicelink
     v = (_cmsTRANSFORM*) xform;
     DeviceLink = cmsPipelineDup(v ->Lut);
-    if (DeviceLink == NULL) return 0;
+    if (DeviceLink == NULL) {
+        cmsDeleteTransform(xform);
+        return 0;
+    }
 
-
-    // We need a CLUT
+     // We need a CLUT
     dwFlags |= cmsFLAGS_FORCE_CLUT;
     _cmsOptimizePipeline(m->ContextID, &DeviceLink, RelativeEncodingIntent, &InFrm, &OutputFormat, &dwFlags);
 
@@ -1332,8 +1335,10 @@ int WriteOutputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, cmsUInt32Number Intent
 
     _cmsIOPrintf(m, "/RenderTable ");
 
-
-    WriteCLUT(m, cmsPipelineGetPtrToFirstStage(DeviceLink), "<", ">\n", "", "", lFixWhite, ColorSpace);
+    first = cmsPipelineGetPtrToFirstStage(DeviceLink);
+    if (first != NULL) {
+        WriteCLUT(m, first, "<", ">\n", "", "", lFixWhite, ColorSpace);
+    }
 
     _cmsIOPrintf(m, " %d {} bind ", nChannels);
 
@@ -1341,7 +1346,6 @@ int WriteOutputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, cmsUInt32Number Intent
             _cmsIOPrintf(m, "dup ");
 
     _cmsIOPrintf(m, "]\n");
-
 
     EmitIntent(m, Intent);
 

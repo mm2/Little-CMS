@@ -406,10 +406,9 @@ cmsHPROFILE CMSEXPORT cmsCreateInkLimitingDeviceLinkTHR(cmsContext ContextID,
 
     if (Limit < 0.0 || Limit > 400) {
 
-        cmsSignalError(ContextID, cmsERROR_RANGE, "InkLimiting: Limit should be between 0..400");
-        if (Limit < 0) Limit = 0;
+        cmsSignalError(ContextID, cmsERROR_RANGE, "InkLimiting: Limit should be between 1..400");
+        if (Limit < 1) Limit = 1;
         if (Limit > 400) Limit = 400;
-
     }
 
     hICC = cmsCreateProfilePlaceholder(ContextID);
@@ -1152,7 +1151,7 @@ cmsBool CheckOne(const cmsAllowedLUT* Tab, const cmsPipeline* Lut)
 
     for (n=0, mpe = Lut ->Elements; mpe != NULL; mpe = mpe ->Next, n++) {
 
-        if (n > Tab ->nTypes) return FALSE;
+        if (n >= Tab ->nTypes) return FALSE;
         if (cmsStageType(mpe) != Tab ->MpeTypes[n]) return FALSE;
     }
 
