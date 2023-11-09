@@ -1293,9 +1293,7 @@ int WriteOutputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, cmsUInt32Number Intent
                                               OutputFormat, RelativeEncodingIntent, 0);
     cmsCloseProfile(hLab);
 
-    if (xform == NULL) {
-
-        cmsDeleteTransform(xform);
+    if (xform == NULL) {        
         cmsSignalError(m ->ContextID, cmsERROR_COLORSPACE_CHECK, "Cannot create transform Lab -> Profile in CRD creation");
         return 0;
     }
