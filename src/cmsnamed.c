@@ -645,12 +645,12 @@ cmsUInt32Number CMSEXPORT cmsMLUgetWide(const cmsMLU* mlu,
     // Maybe we want only to know the len?
     if (Buffer == NULL) return StrLen + sizeof(wchar_t);
 
-    // No buffer size means no data
-    if (BufferSize <= 0) return 0;
+    // Invalid buffer size means no data
+    if (BufferSize < sizeof(wchar_t)) return 0;
 
     // Some clipping may be required
     if (BufferSize < StrLen + sizeof(wchar_t))
-        StrLen = BufferSize - + sizeof(wchar_t);
+        StrLen = BufferSize - sizeof(wchar_t);
 
     memmove(Buffer, Wide, StrLen);
     Buffer[StrLen / sizeof(wchar_t)] = 0;
