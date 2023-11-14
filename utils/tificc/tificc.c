@@ -47,6 +47,7 @@ static cmsBool EmbedProfile           = FALSE;
 static int     PixelDepth             = 8;
 static cmsBool GamutCheck             = FALSE;
 static cmsBool lIsDeviceLink          = FALSE;
+static cmsBool lIsCUBE                = FALSE;
 static cmsBool StoreAsAlpha           = FALSE;
 
 static int Intent                  = INTENT_PERCEPTUAL;
@@ -925,7 +926,10 @@ int TransformImage(TIFF* in, TIFF* out, const char *cDefInpProf)
 
     if (lIsDeviceLink) {
 
-        hIn = cmsOpenProfileFromFile(cDefInpProf, "r");                  
+        if (lIsCUBE)
+            hIn = cmsOpenCubeFromFile(cDefInpProf);
+        else
+            hIn = cmsOpenProfileFromFile(cDefInpProf, "r");                  
     }
     else {
 
@@ -1044,6 +1048,7 @@ void Help(int level)
     fprintf(stderr, "-i<profile> - Input profile (defaults to sRGB)\n");
     fprintf(stderr, "-o<profile> - Output profile (defaults to sRGB)\n");
     fprintf(stderr, "-l<profile> - Transform by device-link profile\n");
+    fprintf(stderr, "-u<profile> - Transform by CUBE colormap\n");
 
     PrintBuiltins();
 
@@ -1107,7 +1112,7 @@ void HandleSwitches(int argc, char *argv[])
 {
     int s;
 
-    while ((s=xgetopt(argc,argv,"aAeEbBw:W:nNvVGgh:H:i:I:o:O:P:p:t:T:c:C:l:L:M:m:K:k:S:s:D:d:-:")) != EOF) {
+    while ((s=xgetopt(argc,argv,"aAeEbBw:W:nNvVGgh:H:i:I:o:O:P:p:t:T:c:C:l:L:u:U:M:m:K:k:S:s:D:d:-:")) != EOF) {
 
         switch (s) {
 
@@ -1184,6 +1189,17 @@ void HandleSwitches(int argc, char *argv[])
 
             cInpProf = xoptarg;
             lIsDeviceLink = TRUE;
+            lIsCUBE = FALSE;
+            break;
+
+        case 'u':
+        case 'U':
+            if (cInpProf != NULL || cOutProf != NULL)
+                FatalError("input/output profiles already specified");
+
+            cInpProf = xoptarg;
+            lIsDeviceLink = TRUE;
+            lIsCUBE = TRUE;
             break;
 
         case 'p':
