@@ -481,7 +481,7 @@ cmsBool isidchar(int c)
 static
 cmsBool isfirstidchar(int c)
 {
-     return !isdigit(c) && ismiddle(c);
+     return c != '-' && !isdigit(c) && ismiddle(c);
 }
 
 // Guess whether the supplied path looks like an absolute path
@@ -3139,9 +3139,9 @@ cmsBool ParseCube(cmsIT8* cube, cmsStage** Shaper, cmsStage** CLUT, char title[]
 
                     if (!ReadNumbers(cube, 3, nums)) return FALSE;
 
-                    lut_table[i * 3 + 0] = (cmsFloat32Number) ((nums[0] - domain_min[0]) / (domain_max[0] - domain_min[0]));
+                    lut_table[i * 3 + 2] = (cmsFloat32Number) ((nums[0] - domain_min[0]) / (domain_max[0] - domain_min[0]));
                     lut_table[i * 3 + 1] = (cmsFloat32Number) ((nums[1] - domain_min[1]) / (domain_max[1] - domain_min[1]));
-                    lut_table[i * 3 + 2] = (cmsFloat32Number) ((nums[2] - domain_min[2]) / (domain_max[2] - domain_min[2]));
+                    lut_table[i * 3 + 0] = (cmsFloat32Number) ((nums[2] - domain_min[2]) / (domain_max[2] - domain_min[2]));
                 }
 
                 *CLUT = cmsStageAllocCLutFloat(cube->ContextID, lut_size, 3, 3, lut_table);
