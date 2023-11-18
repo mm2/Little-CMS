@@ -2998,7 +2998,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # Libtool library revision control info
 #
 LIBRARY_CURRENT=2
-LIBRARY_REVISION=15
+LIBRARY_REVISION=16
 LIBRARY_AGE=0
 
 
