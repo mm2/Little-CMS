@@ -927,7 +927,7 @@ int TransformImage(TIFF* in, TIFF* out, const char *cDefInpProf)
     if (lIsDeviceLink) {
 
         if (lIsCUBE)
-            hIn = cmsOpenCubeFromFile(cDefInpProf);
+            hIn = cmsCreateDeviceLinkFromCubeFile(cDefInpProf);
         else
             hIn = cmsOpenProfileFromFile(cDefInpProf, "r");                  
     }
