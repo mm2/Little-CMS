@@ -124,18 +124,18 @@
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'" />
     <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IncludePath);E:\liteCommons\3rdparty\tiff-4.1.0\libtiff</IncludePath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(IncludePath);c:/liteCommons/3rdparty/components/Win_$(PlatformShortName)/include</IncludePath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(IncludePath);E:\liteCommons\3rdparty\tiff-4.1.0\libtiff</IncludePath>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IncludePath);E:\liteCommons\3rdparty\tiff-4.1.0\libtiff</IncludePath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(LibraryPath);E:\liteCommons\3rdparty\tiff-4.1.0\libtiff</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(IncludePath);c:/liteCommons/3rdparty/components/Win_$(PlatformShortName)/include</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(LibraryPath);c:/liteCommons/3rdparty/components/Win_$(PlatformShortName)/lib</LibraryPath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|ARM64'">$(LibraryPath);E:\liteCommons\3rdparty\tiff-4.1.0\libtiff</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(LibraryPath);E:\liteCommons\3rdparty\tiff-4.1.0\libtiff</LibraryPath>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IncludePath);E:\liteCommons\3rdparty\tiff-4.1.0\libtiff</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(LibraryPath);c:/liteCommons/3rdparty/components/Win_$(PlatformShortName)/lib</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(IncludePath);c:/liteCommons/3rdparty/components/Win_$(PlatformShortName)/include</IncludePath>
     <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(IncludePath);E:\liteCommons\3rdparty\tiff-4.1.0\libtiff</IncludePath>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IncludePath);E:\liteCommons\3rdparty\tiff-4.1.0\libtiff</IncludePath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(LibraryPath);E:\liteCommons\3rdparty\tiff-4.1.0\libtiff</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(IncludePath);c:/liteCommons/3rdparty/components/Win_$(PlatformShortName)/include</IncludePath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(LibraryPath);c:/liteCommons/3rdparty/components/Win_$(PlatformShortName)/lib</LibraryPath>
     <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|ARM64'">$(LibraryPath);E:\liteCommons\3rdparty\tiff-4.1.0\libtiff</LibraryPath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(LibraryPath);E:\liteCommons\3rdparty\tiff-4.1.0\libtiff</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(LibraryPath);c:/liteCommons/3rdparty/components/Win_$(PlatformShortName)/lib</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -152,7 +152,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libtiff.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tiff.lib;jpeg-static.lib;zlibstatic.lib;webp.lib;webpdecoder.lib;webpdemux.lib;webpmux.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -194,7 +194,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libtiff.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tiff.lib;jpeg-static.lib;zlibstatic.lib;webp.lib;webpdecoder.lib;webpdemux.lib;webpmux.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <ImageHasSafeExceptionHandlers>false</ImageHasSafeExceptionHandlers>
@@ -216,7 +216,7 @@
       <BrowseInformation>false</BrowseInformation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libtiff.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tiff.lib;jpeg-static.lib;zlibstatic.lib;webp.lib;webpdecoder.lib;webpdemux.lib;webpmux.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -270,7 +270,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>libtiff.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>tiff.lib;jpeg-static.lib;zlibstatic.lib;webp.lib;webpdecoder.lib;webpdemux.lib;webpmux.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Console</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>

@@ -3156,7 +3156,7 @@ cmsBool ParseCube(cmsIT8* cube, cmsStage** Shaper, cmsStage** CLUT, char title[]
 }
 
 // Share the parser to read .cube format and create RGB devicelink profiles
-cmsHPROFILE cmsOpenCubeFromFileTHR(cmsContext ContextID, const char* cFileName)
+cmsHPROFILE CMSEXPORT cmsCreateDeviceLinkFromCubeFileTHR(cmsContext ContextID, const char* cFileName)
 {    
     cmsHPROFILE hProfile = NULL;
     cmsIT8* cube = NULL;
@@ -3230,7 +3230,7 @@ Done:
     return hProfile;
 }
 
-cmsHPROFILE CMSEXPORT cmsOpenCubeFromFile(const char* cFileName)
+cmsHPROFILE CMSEXPORT cmsCreateDeviceLinkFromCubeFile(const char* cFileName)
 {
-    return cmsOpenCubeFromFileTHR(0, cFileName);
+    return cmsCreateDeviceLinkFromCubeFileTHR(NULL, cFileName);
 }
