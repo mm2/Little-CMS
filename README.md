@@ -1,5 +1,5 @@
 
-![Little CMS](doc/logo_small.png)
+![Little CMS](doc/logo-small.png)
 
 # About Little CMS
 [www.littlecms.com](https://www.littlecms.com)
