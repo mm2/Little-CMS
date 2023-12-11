@@ -577,8 +577,8 @@ cmsUInt8Number* UnrollAnyWordsPremul(CMSREGISTER _cmsTRANSFORM* info,
    cmsUInt32Number ExtraFirst  = DoSwap ^ SwapFirst;
    cmsUInt32Number i;
 
-   cmsUInt16Number alpha = (ExtraFirst ? accum[0] : accum[nChan - 1]);
-   cmsUInt32Number alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(alpha));
+   cmsUInt16Number alpha = (ExtraFirst ? ((cmsUInt16Number*)accum)[0] : ((cmsUInt16Number*)accum)[nChan]);
+   cmsUInt32Number alpha_factor = _cmsToFixedDomain(alpha);
 
     if (ExtraFirst) {
         accum += sizeof(cmsUInt16Number);
@@ -661,9 +661,9 @@ cmsUInt8Number* UnrollPlanarWordsPremul(CMSREGISTER _cmsTRANSFORM* info,
     cmsUInt32Number i;
     cmsUInt32Number ExtraFirst = DoSwap ^ SwapFirst;
     cmsUInt8Number* Init = accum;
-
-    cmsUInt16Number  alpha = (ExtraFirst ? accum[0] : accum[(nChan - 1) * Stride]);
-    cmsUInt32Number alpha_factor = _cmsToFixedDomain(FROM_8_TO_16(alpha));
+    
+    cmsUInt16Number alpha = (ExtraFirst ? ((cmsUInt16Number*)accum)[0] : ((cmsUInt16Number*)accum)[nChan * Stride / 2]);
+    cmsUInt32Number alpha_factor = _cmsToFixedDomain(alpha);
 
     if (ExtraFirst) {
         accum += Stride;
@@ -1358,7 +1358,7 @@ cmsUInt8Number* UnrollFloatsToFloat(_cmsTRANSFORM* info,
     if (Premul && Extra)
     {        
         if (Planar)
-            alpha_factor = (ExtraFirst ? ptr[0] : ptr[nChan * Stride]) / maximum;            
+            alpha_factor = (ExtraFirst ? ptr[0] : ptr[nChan * Stride / sizeof(cmsFloat32Number)]) / maximum;
         else
             alpha_factor = (ExtraFirst ? ptr[0] : ptr[nChan]) / maximum;        
     }
@@ -1425,7 +1425,7 @@ cmsUInt8Number* UnrollDoublesToFloat(_cmsTRANSFORM* info,
     if (Premul && Extra)
     {
         if (Planar)
-            alpha_factor = (ExtraFirst ? ptr[0] : ptr[(nChan) * Stride]) / maximum;
+            alpha_factor = (ExtraFirst ? ptr[0] : ptr[(nChan) * Stride / sizeof(cmsFloat64Number)]) / maximum;
         else
             alpha_factor = (ExtraFirst ? ptr[0] : ptr[nChan]) / maximum;
     }
