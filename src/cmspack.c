@@ -3035,7 +3035,7 @@ cmsUInt8Number* PackWordsFromFloat(_cmsTRANSFORM* info,
         vv = _cmsQuickSaturateWord(v);
 
         if (Planar)
-            ((cmsUInt16Number*)output)[(i + start) * Stride] = vv;
+            ((cmsUInt16Number*)output)[(i + start) * Stride/2] = vv;
         else
             ((cmsUInt16Number*)output)[i + start] = vv;
     }
