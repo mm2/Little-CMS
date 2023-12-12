@@ -1078,8 +1078,7 @@ cmsINLINE cmsBool IsInkSpace(cmsUInt32Number Type)
 }
 
 // Return the size in bytes of a given formatter
-static
-cmsUInt32Number PixelSize(cmsUInt32Number Format)
+cmsINLINE cmsUInt32Number PixelSize(cmsUInt32Number Format)
 {
     cmsUInt32Number fmt_bytes = T_BYTES(Format);
 
@@ -3426,7 +3425,7 @@ cmsUInt8Number* UnrollHalfToFloat(_cmsTRANSFORM* info,
     cmsUInt32Number i, start = 0;
     cmsFloat32Number maximum = IsInkSpace(info ->InputFormat) ? 100.0F : 1.0F;
 
-    Stride /= PixelSize(info->OutputFormat);
+    Stride /= PixelSize(info->InputFormat);
 
     if (ExtraFirst)
             start = Extra;
