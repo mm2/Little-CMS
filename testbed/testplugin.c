@@ -72,9 +72,9 @@ cmsInt32Number CheckAllocContext(void)
      
 
 
-     cmsDeleteContext(c1);  // Should be deleted by using nomal malloc
+     cmsDeleteContext(c1);  // Should be deleted by using normal malloc
      cmsDeleteContext(c2);  // Should be deleted by using debug malloc
-     cmsDeleteContext(c3);  // Should be deleted by using nomal malloc
+     cmsDeleteContext(c3);  // Should be deleted by using normal malloc
      cmsDeleteContext(c4);  // Should be deleted by using debug malloc
 
      return 1;

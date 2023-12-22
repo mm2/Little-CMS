@@ -78,7 +78,7 @@ void  _cmsThrScheduler(struct _cmstransform_struct* CMMcargo,
     // All seems ok so far
     if (_cmsThrSplitWork(&master, nSlices, slices))
     {
-        // Work is splitted. Create threads
+        // Work is split. Create threads
         cmsUInt32Number i;
 
         for (i = 1; i < nSlices; i++)

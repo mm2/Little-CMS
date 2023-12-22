@@ -7489,7 +7489,7 @@ fi
 
 # Use ARFLAGS variable as AR's operation code to sync the variable naming with
 # Automake.  If both AR_FLAGS and ARFLAGS are specified, AR_FLAGS should have
-# higher priority because thats what people were doing historically (setting
+# higher priority because that's what people were doing historically (setting
 # ARFLAGS for automake and AR_FLAGS for libtool).  FIXME: Make the AR_FLAGS
 # variable obsoleted/removed.
 
@@ -12764,7 +12764,7 @@ fi
   # before this can be enabled.
   hardcode_into_libs=yes
 
-  # Ideally, we could use ldconfig to report *all* directores which are
+  # Ideally, we could use ldconfig to report *all* directories which are
   # searched for libraries, however this is still not possible.  Aside from not
   # being certain /sbin/ldconfig is available, command
   # 'ldconfig -N -X -v | grep ^/' on 64bit Fedora does not report /usr/lib64,
@@ -16768,7 +16768,7 @@ fi
   # before this can be enabled.
   hardcode_into_libs=yes
 
-  # Ideally, we could use ldconfig to report *all* directores which are
+  # Ideally, we could use ldconfig to report *all* directories which are
   # searched for libraries, however this is still not possible.  Aside from not
   # being certain /sbin/ldconfig is available, command
   # 'ldconfig -N -X -v | grep ^/' on 64bit Fedora does not report /usr/lib64,

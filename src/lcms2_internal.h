@@ -439,7 +439,7 @@ cmsBool  _cmsRegisterTransformPlugin(cmsContext ContextID, cmsPluginBase* Plugin
 // Mutex
 cmsBool _cmsRegisterMutexPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
 
-// Paralellization
+// Parallelization
 cmsBool _cmsRegisterParallelizationPlugin(cmsContext ContextID, cmsPluginBase* Plugin);
 
 // ---------------------------------------------------------------------------------------------------------
@@ -972,7 +972,7 @@ cmsBool           _cmsReadCHAD(cmsMAT3* Dest, cmsHPROFILE hProfile);
 
 // Link several profiles to obtain a single LUT modelling the whole color transform. Intents, Black point
 // compensation and Adaptation parameters may vary across profiles. BPC and Adaptation refers to the PCS
-// after the profile. I.e, BPC[0] refers to connexion between profile(0) and profile(1)
+// after the profile. I.e, BPC[0] refers to connection between profile(0) and profile(1)
 cmsPipeline* _cmsLinkProfiles(cmsContext         ContextID,
                               cmsUInt32Number    nProfiles,
                               cmsUInt32Number    TheIntents[],

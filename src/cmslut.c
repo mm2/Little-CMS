@@ -1080,7 +1080,7 @@ cmsStage* _cmsStageNormalizeFromLabFloat(cmsContext ContextID)
     return mpe;
 }
 
-// Fom XYZ to floating point PCS
+// From XYZ to floating point PCS
 cmsStage* _cmsStageNormalizeFromXyzFloat(cmsContext ContextID)
 {
 #define n (32768.0/65535.0)

@@ -52,7 +52,7 @@ typedef struct {
        // The context
        cmsContext ContextID;
 
-       // Poits to the raw, unaligned memory
+       // Points to the raw, unaligned memory
        void * real_ptr;
 
 

@@ -36,7 +36,7 @@ extern "C" {
 
 // Uncomment this if you want to avoid SSE2 entirely.
 // Default is commented out. There are two kernels, one is vectorized and the other is not.
-// On inizialization, there is a SSE2 detection. If the SSE2 detection succeeds, then the vectorized code is selected.
+// On initialization, there is a SSE2 detection. If the SSE2 detection succeeds, then the vectorized code is selected.
 // If the CPU is old and does not support SSE2, then the non-vectorized  code is used.
 // If you define the toggle, there is no detection and the non-vectorized kernel is always used.
 

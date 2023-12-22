@@ -495,7 +495,7 @@ void TrilinearInterpFloat(const cmsFloat32Number Input[],
     py = fclamp(Input[1]) * p->Domain[1];
     pz = fclamp(Input[2]) * p->Domain[2];
 
-    x0 = (int) floor(px); fx = px - (cmsFloat32Number) x0;  // We need full floor funcionality here
+    x0 = (int) floor(px); fx = px - (cmsFloat32Number) x0;  // We need full floor functionality here
     y0 = (int) floor(py); fy = py - (cmsFloat32Number) y0;
     z0 = (int) floor(pz); fz = pz - (cmsFloat32Number) z0;
 

@@ -465,7 +465,7 @@ void Emit1Gamma(cmsIOHANDLER* m, cmsToneCurve* Table)
     // Bounds check
     EmitRangeCheck(m);
 
-    // Emit intepolation code
+    // Emit interpolation code
 
     // PostScript code                      Stack
     // ===============                      ========================
@@ -589,7 +589,7 @@ int OutputValueSampler(CMSREGISTER const cmsUInt16Number In[], CMSREGISTER cmsUI
     }
 
 
-    // Hadle the parenthesis on rows
+    // Handle the parenthesis on rows
 
     if (In[0] != sc ->FirstComponent) {
 

@@ -569,7 +569,7 @@ cmsUInt32Number CMSEXPORT cmsMLUgetASCII(const cmsMLU* mlu,
     if (BufferSize < ASCIIlen + 1)
         ASCIIlen = BufferSize - 1;
 
-    // Precess each character
+    // Process each character
     for (i=0; i < ASCIIlen; i++) {
 
         wchar_t wc = Wide[i];
