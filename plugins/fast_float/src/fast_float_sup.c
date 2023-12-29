@@ -39,7 +39,11 @@ cmsBool Floating_Point_Transforms_Dispatcher(_cmsTransform2Fn* TransformFn,
     if (T_FLAVOR(*InputFormat) || T_FLAVOR(*OutputFormat)) return FALSE;
 
     // Check consistency for alpha channel copy
-    if (*dwFlags & cmsFLAGS_COPY_ALPHA && (T_EXTRA(*InputFormat) != T_EXTRA(*OutputFormat))) return FALSE;        
+    if (*dwFlags & cmsFLAGS_COPY_ALPHA)
+    {
+        if ((T_EXTRA(*InputFormat) != T_EXTRA(*OutputFormat))) return FALSE;
+        if (T_PREMUL(*InputFormat) || T_PREMUL(*OutputFormat)) return FALSE;
+    }
 
     // Try to optimize as a set of curves plus a matrix plus a set of curves
     if (OptimizeMatrixShaper15(TransformFn, UserData, FreeUserData, Lut, InputFormat, OutputFormat, dwFlags)) return TRUE;
