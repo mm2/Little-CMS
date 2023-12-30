@@ -8235,7 +8235,7 @@ int CheckPlanarFloat2int(void)
     cmsHTRANSFORM transform = cmsCreateTransform(sRGB, TYPE_RGB_FLT_PLANAR,
         sRGB, TYPE_RGB_16_PLANAR,INTENT_PERCEPTUAL, 0);
 
-    const cmsFloat32Number input[] = { 0, 0.4, 0.8,  0.1, 0.5, 0.9,  0.2, 0.6, 1.0,   0.3, 0.7, 1.0 };
+    const cmsFloat32Number input[] = { 0.0f, 0.4f, 0.8f,  0.1f, 0.5f, 0.9f,  0.2f, 0.6f, 1.0f,   0.3f, 0.7f, 1.0f };
     cmsUInt16Number output[3*4] = { 0 };
 
     cmsDoTransform(transform, input, output, 4);
@@ -9525,6 +9525,7 @@ void PrintSupportedIntents(void)
 
 // ---------------------------------------------------------------------------------------
 
+
 int main(int argc, char* argv[])
 {
     cmsInt32Number Exhaustive = 0;
@@ -9561,7 +9562,7 @@ int main(int argc, char* argv[])
     printf("Installing error logger ... ");
     cmsSetLogErrorHandler(FatalErrorQuit);
     printf("done.\n");
-    
+       
     PrintSupportedIntents();
 
     Check("Base types", CheckBaseTypes);

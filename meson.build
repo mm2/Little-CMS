@@ -3,7 +3,7 @@ project(
   'c',
   version: '2.16',
   meson_version: '>=0.49.0',
-  default_options: ['c_std=gnu11']
+  default_options: ['c_std=c99']
 )
 
 version_components = meson.project_version().split('.')
