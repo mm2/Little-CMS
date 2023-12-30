@@ -4,6 +4,17 @@ testcms_srcs = files(
   'zoo_icc.c',
 )
 
+# copy all iccs to the build dir and run the tests there
+iccs = [
+  'bad.icc', 'crayons.icc', 'new.icc', 'test2.icc', 'test4.icc', 'TestCLT.icc',
+  'bad_mpe.icc', 'ibm-t61.icc', 'test1.icc', 'test3.icc', 'test5.icc',
+  'toosmall.icc'
+]
+fs=import('fs')
+foreach icc : iccs
+  fs.copyfile(icc)
+endforeach
+
 testcms = executable(
   'testcms',
   testcms_srcs,
@@ -14,6 +25,6 @@ testcms = executable(
 test(
   'testcms',
   testcms,
-  workdir: meson.current_source_dir(),
+  workdir: meson.current_build_dir(),
   timeout: 600,
 )

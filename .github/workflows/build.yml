@@ -79,7 +79,7 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get -y install build-essential python3-pip ninja-build
-          pip install meson==0.59.2
+          pip install meson==0.64.0
 
       - name: Build Ubuntu
         run: |
@@ -95,7 +95,7 @@ jobs:
 
       - name: Install packages
         run: |
-          pip install meson==0.59.2
+          pip install meson==0.64.0
 
       - uses: ilammy/msvc-dev-cmd@v1
       - name: Build Windows
