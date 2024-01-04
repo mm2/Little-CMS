@@ -114,10 +114,6 @@ if get_option('utils')
 subdir('utils')
 endif
 
-if get_option('samples')
-  subdir('utils/samples')
-endif
-
 extra_libraries = []
 subdir('plugins')
 
