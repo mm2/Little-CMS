@@ -88,16 +88,15 @@ cmsFloat64Number computeFL(cmsCIECAM02* pMod)
     return FL;
 }
 
-static
-cmsFloat64Number computeD(cmsCIECAM02* pMod)
+static cmsFloat64Number computeD(cmsCIECAM02* pMod) 
 {
-    cmsFloat64Number D;
+    cmsFloat64Number D, temp;
 
-    D = pMod->F - (1.0/3.6)*(exp(((-pMod ->LA-42) / 92.0)));
-
+    temp = 1.0 - ((1.0 / 3.6) * exp((-pMod->LA - 42) / 92.0));
+    
+    D = pMod->F * temp;
     return D;
 }
-
 
 static
 CAM02COLOR XYZtoCAT02(CAM02COLOR clr)
