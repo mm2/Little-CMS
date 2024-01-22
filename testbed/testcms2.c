@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2023 Marti Maria Saguer
+//  Copyright (c) 1998-2024 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -3597,7 +3597,7 @@ cmsInt32Number CheckMLU(void)
     // Now for performance, allocate an empty struct
     mlu = cmsMLUalloc(DbgThread(), 0);
 
-    // Fill it with several thousands of different lenguages
+    // Fill it with several thousands of different languages
     for (i=0; i < 4096; i++) {
 
         char Lang[3];
@@ -6549,7 +6549,7 @@ int CheckRGBPrimaries(void)
     cmsXYZ2xyY(&tripxyY.Green, &tripXYZ.Green);
     cmsXYZ2xyY(&tripxyY.Blue, &tripXYZ.Blue);
 
-    /* valus were taken from
+    /* values were taken from
     http://en.wikipedia.org/wiki/RGB_color_spaces#Specifications */
 
     if (!IsGoodFixed15_16("xRed", tripxyY.Red.x, 0.64) ||
@@ -8803,7 +8803,7 @@ int CheckSaveLinearizationDevicelink(void)
     if (hDeviceLink == NULL)
     {
         remove("lin_rgb.icc");
-        Fail("Could't open devicelink");
+        Fail("Couldn't open devicelink");
     }
 
     xform = cmsCreateTransform(hDeviceLink, TYPE_RGB_8, NULL, TYPE_RGB_8, INTENT_PERCEPTUAL, 0);
