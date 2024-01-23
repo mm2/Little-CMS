@@ -640,10 +640,9 @@ void GetLine(char* Buffer, const char* frm, ...)
         if (xisatty(stdin)) 
             vfprintf(stderr, frm, args);
 
-        res = scanf("%4095s", Buffer);
-        // An amazing bug of codeQL here. It reports: 
-        // 'The result of scanf is only checked against 0, but it can also return EOF."
-        // Not only is not compared against zero, it happens that C99 requires EOF to be negative!
+        res = scanf("%4095s", Buffer);        
+        // Reported codeQL bug: 'The result of scanf is only checked against 0, but it can also return EOF.'
+        // It is not obviously "only checked against 0", but it happens that C99 requires EOF to be negative
         if (res < 0 || toupper(Buffer[0]) == 'Q') { // Quit?
 
             CloseTransforms();
