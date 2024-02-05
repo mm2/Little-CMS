@@ -13,7 +13,7 @@ jobs:
   Ubuntu:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Build Ubuntu
         run: |
           ./configure --with-fastfloat --with-threaded
@@ -23,18 +23,21 @@ jobs:
   Ubuntu-20-04:
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: Build Ubuntu
         run: |
           ./configure --with-fastfloat --with-threaded
           make 
           make check
           
-  MacOS:
-    runs-on: macos-latest
+  macOS:
+    strategy:
+      matrix:
+        runner: [ macos-12, macos-14 ]
+    runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v2
-      - name: Build MacOS
+      - uses: actions/checkout@v4
+      - name: Build macOS
         run: |
           ./configure --with-fastfloat --with-threaded
           make 
@@ -44,7 +47,7 @@ jobs:
     runs-on: windows-latest
     
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: ilammy/msvc-dev-cmd@v1   
         with:
             arch: x64
@@ -59,7 +62,7 @@ jobs:
   Windows-32:
     runs-on: windows-latest    
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - uses: ilammy/msvc-dev-cmd@v1   
         with:
             arch: win32
@@ -74,7 +77,7 @@ jobs:
   Ubuntu-meson:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install packages
         run: |
@@ -91,7 +94,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
 
       - name: Install packages
         run: |
