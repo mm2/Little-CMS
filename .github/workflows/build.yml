@@ -11,7 +11,10 @@ permissions: read-all
 jobs:
 
   Ubuntu:
-    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        runner: [ ubuntu-20.04, ubuntu-latest ]
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - name: Build Ubuntu
@@ -20,16 +23,6 @@ jobs:
           make 
           make check
 
-  Ubuntu-20-04:
-    runs-on: ubuntu-20.04
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build Ubuntu
-        run: |
-          ./configure --with-fastfloat --with-threaded
-          make 
-          make check
-          
   macOS:
     strategy:
       matrix:
