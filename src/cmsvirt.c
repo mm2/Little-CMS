@@ -745,6 +745,8 @@ cmsHPROFILE CMSEXPORT cmsCreate_OkLabProfile(cmsContext ctx)
     cmsPipeline* BToA = cmsPipelineAlloc(ctx, 3, 3);
 
     cmsHPROFILE hProfile = cmsCreateProfilePlaceholder(ctx);
+    if (!hProfile)            // can't allocate
+        goto error;
   
     cmsSetProfileVersion(hProfile, 4.4);
 
