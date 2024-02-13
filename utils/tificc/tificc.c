@@ -406,6 +406,7 @@ cmsUInt32Number GetInputPixelType(TIFF *Bank)
          break;
 
      // Two Lab flavours
+     case PHOTOMETRIC_ITULAB:
      case PHOTOMETRIC_ICCLAB:
          pt = PT_Lab;         
          break;

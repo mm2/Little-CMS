@@ -8499,9 +8499,6 @@ int Check_sRGB_Rountrips(void)
 /**
 * Check OKLab colorspace
 */
-
-
-
 static
 int Check_OkLab(void)
 {

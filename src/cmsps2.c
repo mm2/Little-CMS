@@ -665,8 +665,10 @@ void WriteCLUT(cmsIOHANDLER* m, cmsStage* mpe, const char* PreMaj,
 
         _cmsIOPrintf(m, "[");
 
-        for (i = 0; i < sc.Pipeline->Params->nInputs; i++)
-            _cmsIOPrintf(m, " %d ", sc.Pipeline->Params->nSamples[i]);
+        for (i = 0; i < sc.Pipeline->Params->nInputs; i++) {
+            if (i < MAX_INPUT_DIMENSIONS)
+                _cmsIOPrintf(m, " %d ", sc.Pipeline->Params->nSamples[i]);
+        }
 
         _cmsIOPrintf(m, " [\n");
 
