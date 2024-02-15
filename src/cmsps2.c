@@ -842,13 +842,13 @@ cmsToneCurve* ExtractGray2Y(cmsContext ContextID, cmsHPROFILE hProfile, cmsUInt3
 // a more perceptually uniform space... I do choose Lab.
 
 static
-int WriteInputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, cmsUInt32Number Intent, cmsUInt32Number dwFlags)
+cmsBool WriteInputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, cmsUInt32Number Intent, cmsUInt32Number dwFlags)
 {
     cmsHPROFILE hLab;
     cmsHTRANSFORM xform;
     cmsUInt32Number nChannels;
     cmsUInt32Number InputFormat;
-    int rc;
+
     cmsHPROFILE Profiles[2];
     cmsCIEXYZ BlackPointAdaptedToD50;
 
@@ -873,7 +873,7 @@ int WriteInputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, cmsUInt32Number Intent,
     if (xform == NULL) {
 
         cmsSignalError(m ->ContextID, cmsERROR_COLORSPACE_CHECK, "Cannot create transform Profile -> Lab");
-        return 0;
+        return FALSE;
     }
 
     // Only 1, 3 and 4 channels are allowed
@@ -883,7 +883,7 @@ int WriteInputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, cmsUInt32Number Intent,
     case 1: {
             cmsToneCurve* Gray2Y = ExtractGray2Y(m ->ContextID, hProfile, Intent);
             EmitCIEBasedA(m, Gray2Y, &BlackPointAdaptedToD50);
-            cmsFreeToneCurve(Gray2Y);
+            cmsFreeToneCurve(Gray2Y);            
             }
             break;
 
@@ -892,29 +892,35 @@ int WriteInputLUT(cmsIOHANDLER* m, cmsHPROFILE hProfile, cmsUInt32Number Intent,
             cmsUInt32Number OutFrm = TYPE_Lab_16;
             cmsPipeline* DeviceLink;
             _cmsTRANSFORM* v = (_cmsTRANSFORM*) xform;
+            cmsBool rc;
 
             DeviceLink = cmsPipelineDup(v ->Lut);
-            if (DeviceLink == NULL) return 0;
+            if (DeviceLink == NULL) {
+                cmsDeleteTransform(xform);
+                return FALSE;
+            }
 
             dwFlags |= cmsFLAGS_FORCE_CLUT;
             _cmsOptimizePipeline(m->ContextID, &DeviceLink, Intent, &InputFormat, &OutFrm, &dwFlags);
 
             rc = EmitCIEBasedDEF(m, DeviceLink, Intent, &BlackPointAdaptedToD50);
-            cmsPipelineFree(DeviceLink);
-            if (rc == 0) return 0;
+            cmsPipelineFree(DeviceLink);            
+            if (!rc) {
+                cmsDeleteTransform(xform);
+                return FALSE;
+            }
             }
             break;
 
     default:
 
-        cmsSignalError(m ->ContextID, cmsERROR_COLORSPACE_CHECK, "Only 3, 4 channels are supported for CSA. This profile has %d channels.", nChannels);
-        return 0;
+        cmsDeleteTransform(xform);        
+        cmsSignalError(m ->ContextID, cmsERROR_COLORSPACE_CHECK, "Only 3, 4 channels are supported for CSA. This profile has %d channels.", nChannels);        
+        return FALSE;        
     }
 
-
     cmsDeleteTransform(xform);
-
-    return 1;
+    return TRUE;
 }
 
 static
