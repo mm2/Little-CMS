@@ -146,7 +146,7 @@ void PerformanceEval8(struct _cmstransform_struct *CMMcargo,
     const cmsUInt8Number* bin;
     const cmsUInt8Number* ain = NULL;
 
-    cmsUInt32Number nalpha, strideIn, strideOut;
+    size_t nalpha, strideIn, strideOut;
 
     _cmsComputeComponentIncrements(cmsGetTransformInputFormat((cmsHTRANSFORM)CMMcargo), Stride->BytesPerPlaneIn, NULL, &nalpha, SourceStartingOrder, SourceIncrements);
     _cmsComputeComponentIncrements(cmsGetTransformOutputFormat((cmsHTRANSFORM)CMMcargo), Stride->BytesPerPlaneOut, NULL, &nalpha, DestStartingOrder, DestIncrements);

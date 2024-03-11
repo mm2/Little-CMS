@@ -112,7 +112,7 @@ void PerformanceEval16(struct _cmstransform_struct *CMMcargo,
 
        int    in16, out16;  // Used by macros!
 
-       cmsUInt32Number nalpha, strideIn, strideOut;
+       size_t nalpha, strideIn, strideOut;
           
        cmsUInt32Number dwInFormat = cmsGetTransformInputFormat((cmsHTRANSFORM)CMMcargo);
        cmsUInt32Number dwOutFormat = cmsGetTransformOutputFormat((cmsHTRANSFORM)CMMcargo);
