@@ -197,7 +197,8 @@ void MatShaperXform8SSE(struct _cmstransform_struct *CMMcargo,
     cmsUInt8Number* bout;
     cmsUInt8Number* aout = NULL;
 
-    size_t nalpha, strideIn, strideOut;
+    cmsUInt32Number nalpha;
+    size_t strideIn, strideOut;
  
  
     __m128 mat0 = _mm_load_ps(p->Mat[0]);

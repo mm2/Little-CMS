@@ -56,7 +56,8 @@ static void FastEvaluateRGBCurves8(struct _cmstransform_struct *CMMcargo,
        cmsUInt8Number* bout;
        cmsUInt8Number* aout = NULL;
 
-       cmsUInt32Number nalpha, strideIn, strideOut;
+       cmsUInt32Number nalpha;
+       size_t strideIn, strideOut;
 
        Curves8Data* Data = (Curves8Data*)_cmsGetTransformUserData(CMMcargo);
 
@@ -135,7 +136,8 @@ static void FastRGBIdentity8(struct _cmstransform_struct *CMMcargo,
        cmsUInt8Number* bout;
        cmsUInt8Number* aout = NULL;
 
-       cmsUInt32Number nalpha, strideIn, strideOut;
+       cmsUInt32Number nalpha;
+       size_t strideIn, strideOut;
     
        _cmsComputeComponentIncrements(cmsGetTransformInputFormat((cmsHTRANSFORM)CMMcargo), Stride->BytesPerPlaneIn, NULL, &nalpha, SourceStartingOrder, SourceIncrements);
        _cmsComputeComponentIncrements(cmsGetTransformOutputFormat((cmsHTRANSFORM)CMMcargo), Stride->BytesPerPlaneOut, NULL, &nalpha, DestStartingOrder, DestIncrements);
@@ -209,7 +211,8 @@ static void FastEvaluateGrayCurves8(struct _cmstransform_struct *CMMcargo,
        cmsUInt8Number* gout;
        cmsUInt8Number* aout = NULL;
 
-       size_t nalpha, strideIn, strideOut;
+       cmsUInt32Number nalpha;
+       size_t strideIn, strideOut;
 
        Curves8Data* Data = (Curves8Data*)_cmsGetTransformUserData(CMMcargo);
 
@@ -274,7 +277,8 @@ static void FastGrayIdentity8(struct _cmstransform_struct *CMMcargo,
        cmsUInt8Number* gout;
        cmsUInt8Number* aout = NULL;
 
-       cmsUInt32Number nalpha, strideIn, strideOut;
+       cmsUInt32Number nalpha;
+       size_t strideIn, strideOut;
        
        _cmsComputeComponentIncrements(cmsGetTransformInputFormat((cmsHTRANSFORM)CMMcargo), Stride->BytesPerPlaneIn, NULL, &nalpha, SourceStartingOrder, SourceIncrements);
        _cmsComputeComponentIncrements(cmsGetTransformOutputFormat((cmsHTRANSFORM)CMMcargo), Stride->BytesPerPlaneOut, NULL, &nalpha, DestStartingOrder, DestIncrements);
