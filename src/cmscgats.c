@@ -1375,9 +1375,12 @@ KEYVALUE* AddAvailableSampleID(cmsIT8* it8, const char* Key)
 
 
 static
-void AllocTable(cmsIT8* it8)
+cmsBool AllocTable(cmsIT8* it8)
 {
     TABLE* t;
+
+    if (it8->TablesCount >= (MAXTABLES-1)) 
+        return FALSE;
 
     t = it8 ->Tab + it8 ->TablesCount;
 
@@ -1386,6 +1389,7 @@ void AllocTable(cmsIT8* it8)
     t->Data       = NULL;
 
     it8 ->TablesCount++;
+    return TRUE;
 }
 
 
@@ -1397,7 +1401,10 @@ cmsInt32Number CMSEXPORT cmsIT8SetTable(cmsHANDLE  IT8, cmsUInt32Number nTable)
 
          if (nTable == it8 ->TablesCount) {
 
-             AllocTable(it8);
+             if (!AllocTable(it8)) {
+                 SynError(it8, "Too many tables");
+                 return -1;
+             }
          }
          else {
              SynError(it8, "Table %d is out of sequence", nTable);
@@ -2197,8 +2204,8 @@ cmsBool HeaderSection(cmsIT8* it8)
             if (!GetVal(it8, Buffer, MAXSTR - 1, "Property data expected")) return FALSE;
 
             if (Key->WriteAs != WRITE_PAIR) {
-                AddToList(it8, &GetTable(it8)->HeaderList, VarName, NULL, Buffer,
-                    (it8->sy == SSTRING) ? WRITE_STRINGIFY : WRITE_UNCOOKED);
+                if (AddToList(it8, &GetTable(it8)->HeaderList, VarName, NULL, Buffer,
+                    (it8->sy == SSTRING) ? WRITE_STRINGIFY : WRITE_UNCOOKED) == NULL) return FALSE;
             }
             else {
                 const char *Subkey;
@@ -2306,7 +2313,8 @@ cmsBool ParseIT8(cmsIT8* it8, cmsBool nosheet)
 
                     if (it8 -> sy != SEOF) {
 
-                            AllocTable(it8);
+                            if (!AllocTable(it8)) return FALSE;                        
+
                             it8 ->nTable = it8 ->TablesCount - 1;
 
                             // Read sheet type if present. We only support identifier and string.
