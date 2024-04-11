@@ -1684,7 +1684,8 @@ cmsBool AllocateDataSet(cmsIT8* it8)
     t-> nSamples   = satoi(cmsIT8GetProperty(it8, "NUMBER_OF_FIELDS"));
     t-> nPatches   = satoi(cmsIT8GetProperty(it8, "NUMBER_OF_SETS"));
 
-    if (t -> nSamples < 0 || t->nSamples > 0x7ffe || t->nPatches < 0 || t->nPatches > 0x7ffe)
+    if (t -> nSamples < 0 || t->nSamples > 0x7ffe || t->nPatches < 0 || t->nPatches > 0x7ffe || 
+        (t->nPatches * t->nSamples) > 200000)
     {
         SynError(it8, "AllocateDataSet: too much data");
         return FALSE;
