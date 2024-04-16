@@ -1206,6 +1206,7 @@ void* AllocChunk(cmsIT8* it8, cmsUInt32Number size)
     cmsUInt8Number* ptr;
 
     size = _cmsALIGNMEM(size);
+    if (size == 0) return NULL;
 
     if (size > Free) {
 
@@ -1598,22 +1599,26 @@ cmsInt32Number satoi(const char* b)
 static
 cmsBool AllocateDataFormat(cmsIT8* it8)
 {
+    cmsUInt32Number size;
+
     TABLE* t = GetTable(it8);
 
-    if (t -> DataFormat) return TRUE;    // Already allocated
+    if (t->DataFormat) return TRUE;    // Already allocated
 
-    t -> nSamples  = satoi(cmsIT8GetProperty(it8, "NUMBER_OF_FIELDS"));
+    t->nSamples = satoi(cmsIT8GetProperty(it8, "NUMBER_OF_FIELDS"));
 
-    if (t -> nSamples <= 0) {
+    if (t->nSamples <= 0 || t->nSamples > 0x7ffe) {
 
-        SynError(it8, "AllocateDataFormat: Unknown NUMBER_OF_FIELDS");
-        return FALSE;        
-        }
+        SynError(it8, "Wrong NUMBER_OF_FIELDS");
+        return FALSE;
+    }
 
-    t -> DataFormat = (char**) AllocChunk (it8, ((cmsUInt32Number) t->nSamples + 1) * sizeof(char *));
+    size = ((cmsUInt32Number)t->nSamples + 1) * sizeof(char*);
+
+    t->DataFormat = (char**)AllocChunk(it8, size);
     if (t->DataFormat == NULL) {
 
-        SynError(it8, "AllocateDataFormat: Unable to allocate dataFormat array");
+        SynError(it8, "Unable to allocate dataFormat array");
         return FALSE;
     }
 
@@ -1642,7 +1647,7 @@ cmsBool SetDataFormat(cmsIT8* it8, int n, const char *label)
             return FALSE;
     }
 
-    if (n > t -> nSamples) {
+    if (n >= t -> nSamples) {
         SynError(it8, "More than NUMBER_OF_FIELDS fields.");
         return FALSE;
     }
