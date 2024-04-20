@@ -1210,6 +1210,8 @@ void* AllocChunk(cmsIT8* it8, cmsUInt32Number size)
 
     if (size > Free) {
 
+        cmsUInt8Number* new_block;
+
         if (it8 -> Allocator.BlockSize == 0)
 
                 it8 -> Allocator.BlockSize = 20*1024;
@@ -1220,7 +1222,11 @@ void* AllocChunk(cmsIT8* it8, cmsUInt32Number size)
                 it8 ->Allocator.BlockSize = size;
 
         it8 ->Allocator.Used = 0;
-        it8 ->Allocator.Block = (cmsUInt8Number*) AllocBigBlock(it8, it8 ->Allocator.BlockSize);       
+        new_block = (cmsUInt8Number*)AllocBigBlock(it8, it8->Allocator.BlockSize);
+        if (new_block == NULL) 
+            return NULL;
+
+        it8->Allocator.Block = new_block;
     }
 
     if (it8->Allocator.Block == NULL)
@@ -1230,7 +1236,6 @@ void* AllocChunk(cmsIT8* it8, cmsUInt32Number size)
     it8 ->Allocator.Used += size;
 
     return (void*) ptr;
-
 }
 
 
@@ -1732,7 +1737,10 @@ char* GetData(cmsIT8* it8, int nSet, int nField)
 static
 cmsBool SetData(cmsIT8* it8, int nSet, int nField, const char *Val)
 {
+    char* ptr;
+
     TABLE* t = GetTable(it8);
+    
 
     if (!t->Data) {
         if (!AllocateDataSet(it8)) return FALSE;
@@ -1750,7 +1758,11 @@ cmsBool SetData(cmsIT8* it8, int nSet, int nField, const char *Val)
 
     }
 
-    t->Data [nSet * t -> nSamples + nField] = AllocString(it8, Val);
+    ptr = AllocString(it8, Val);
+    if (ptr == NULL)
+        return FALSE;
+
+    t->Data [nSet * t -> nSamples + nField] = ptr;
     return TRUE;
 }
 
