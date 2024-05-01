@@ -414,11 +414,12 @@ string* StringAlloc(cmsIT8* it8, int max)
 static
 void StringClear(string* s)
 {
-    s->len = 0;
+    s->len = 0;    
+    s->begin[0] = 0;
 }
 
 static
-void StringAppend(string* s, char c)
+cmsBool StringAppend(string* s, char c)
 {
     if (s->len + 1 >= s->max)
     {
@@ -426,6 +427,8 @@ void StringAppend(string* s, char c)
 
         s->max *= 10;
         new_ptr = (char*) AllocChunk(s->it8, s->max);
+        if (new_ptr == NULL) return FALSE;
+
         if (new_ptr != NULL && s->begin != NULL)
             memcpy(new_ptr, s->begin, s->len);
 
@@ -437,6 +440,8 @@ void StringAppend(string* s, char c)
         s->begin[s->len++] = c;
         s->begin[s->len] = 0;
     }
+
+    return TRUE;
 }
 
 static
@@ -446,13 +451,15 @@ char* StringPtr(string* s)
 }
 
 static
-void StringCat(string* s, const char* c)
+cmsBool StringCat(string* s, const char* c)
 {
     while (*c)
     {
-        StringAppend(s, *c);
+        if (!StringAppend(s, *c)) return FALSE;
         c++;
     }
+
+    return TRUE;
 }
 
 
@@ -801,7 +808,12 @@ void InStringSymbol(cmsIT8* it8)
 
             if (it8->ch == '\n' || it8->ch == '\r' || it8->ch == 0) break;
             else {
-                StringAppend(it8->str, (char)it8->ch);
+                if (!StringAppend(it8->str, (char)it8->ch)) {
+
+                    SynError(it8, "Out of memory");                    
+                    return;
+                }
+
                 NextCh(it8);
             }
         }
@@ -831,7 +843,11 @@ void InSymbol(cmsIT8* it8)
 
             do {
 
-                StringAppend(it8->id, (char) it8->ch);
+                if (!StringAppend(it8->id, (char)it8->ch)) {
+
+                    SynError(it8, "Out of memory");                    
+                    return;
+                }
 
                 NextCh(it8);
 
@@ -875,7 +891,6 @@ void InSymbol(cmsIT8* it8)
                             if ((cmsFloat64Number) it8->inum * 16.0 + (cmsFloat64Number) j > (cmsFloat64Number)+2147483647.0)
                             {
                                 SynError(it8, "Invalid hexadecimal number");
-                                it8->sy = SEOF;
                                 return;
                             }
 
@@ -896,8 +911,7 @@ void InSymbol(cmsIT8* it8)
 
                             if ((cmsFloat64Number) it8->inum * 2.0 + j > (cmsFloat64Number)+2147483647.0)
                             {
-                                SynError(it8, "Invalid binary number");
-                                it8->sy = SEOF;
+                                SynError(it8, "Invalid binary number");                                
                                 return;
                             }
 
@@ -950,11 +964,19 @@ void InSymbol(cmsIT8* it8)
                     }
 
                     StringClear(it8->id);
-                    StringCat(it8->id, buffer);
+                    if (!StringCat(it8->id, buffer)) {
+
+                        SynError(it8, "Out of memory");                        
+                        return;
+                    }
 
                     do {
 
-                        StringAppend(it8->id, (char) it8->ch);
+                        if (!StringAppend(it8->id, (char)it8->ch)) {
+
+                            SynError(it8, "Out of memory");                            
+                            return;
+                        }
 
                         NextCh(it8);
 
@@ -1008,8 +1030,7 @@ void InSymbol(cmsIT8* it8)
 
 
         default:
-            SynError(it8, "Unrecognized character: 0x%x", it8 ->ch);
-            it8->sy = SEOF;
+            SynError(it8, "Unrecognized character: 0x%x", it8 ->ch);            
             return;
             }
 
@@ -1023,25 +1044,22 @@ void InSymbol(cmsIT8* it8)
 
                 if(it8 -> IncludeSP >= (MAXINCLUDE-1)) {
 
-                    SynError(it8, "Too many recursion levels");
-                    it8->sy = SEOF;
+                    SynError(it8, "Too many recursion levels");                    
                     return;
                 }
 
                 InStringSymbol(it8);
-                if (!Check(it8, SSTRING, "Filename expected"))
-                {
-                    it8->sy = SEOF;
+                if (!Check(it8, SSTRING, "Filename expected"))                                    
                     return;
-                }
+                
 
                 FileNest = it8 -> FileStack[it8 -> IncludeSP + 1];
                 if(FileNest == NULL) {
 
                     FileNest = it8 ->FileStack[it8 -> IncludeSP + 1] = (FILECTX*)AllocChunk(it8, sizeof(FILECTX));
                     if (FileNest == NULL) {
-                        SynError(it8, "Out of memory");
-                        it8->sy = SEOF;
+
+                        SynError(it8, "Out of memory");                        
                         return;
                     }
                 }
@@ -1049,16 +1067,15 @@ void InSymbol(cmsIT8* it8)
                 if (BuildAbsolutePath(StringPtr(it8->str),
                                       it8->FileStack[it8->IncludeSP]->FileName,
                                       FileNest->FileName, cmsMAX_PATH-1) == FALSE) {
-                    SynError(it8, "File path too long");
-                    it8->sy = SEOF;
+
+                    SynError(it8, "File path too long");                    
                     return;
                 }
 
                 FileNest->Stream = fopen(FileNest->FileName, "rt");
                 if (FileNest->Stream == NULL) {
 
-                        SynError(it8, "File %s not found", FileNest->FileName);
-                        it8->sy = SEOF;
+                        SynError(it8, "File %s not found", FileNest->FileName);                        
                         return;
                 }
                 it8->IncludeSP++;
@@ -1073,10 +1090,10 @@ void InSymbol(cmsIT8* it8)
 static
 cmsBool CheckEOLN(cmsIT8* it8)
 {
-        if (!Check(it8, SEOLN, "Expected separator")) return FALSE;
-        while (it8 -> sy == SEOLN)
-                        InSymbol(it8);
-        return TRUE;
+    if (!Check(it8, SEOLN, "Expected separator")) return FALSE;
+    while (it8->sy == SEOLN)
+        InSymbol(it8);
+    return TRUE;
 
 }
 
@@ -1085,8 +1102,8 @@ cmsBool CheckEOLN(cmsIT8* it8)
 static
 void Skip(cmsIT8* it8, SYMBOL sy)
 {
-        if (it8->sy == sy && it8->sy != SEOF)
-                        InSymbol(it8);
+    if (it8->sy == sy && it8->sy != SEOF && it8->sy != SSYNERROR)
+        InSymbol(it8);
 }
 
 
@@ -1095,7 +1112,7 @@ static
 void SkipEOLN(cmsIT8* it8)
 {
     while (it8->sy == SEOLN) {
-             InSymbol(it8);
+        InSymbol(it8);
     }
 }
 
@@ -1331,11 +1348,6 @@ KEYVALUE* AddToList(cmsIT8* it8, KEYVALUE** Head, const char *Key, const char *S
         // Store name and value
         p->Keyword = AllocString(it8, Key);
         p->Subkey = (Subkey == NULL) ? NULL : AllocString(it8, Subkey);
-        if (p->Keyword == NULL || p->Subkey == NULL)
-        {
-            SynError(it8, "AddToList: out of memory");
-            return NULL;
-        }
 
         // Keep the container in our list
         if (*Head == NULL) {
@@ -2125,7 +2137,7 @@ cmsBool DataSection (cmsIT8* it8)
         if (!AllocateDataSet(it8)) return FALSE;
     }
 
-    while (it8->sy != SEND_DATA && it8->sy != SEOF)
+    while (it8->sy != SEND_DATA && it8->sy != SEOF && it8->sy != SSYNERROR)
     {
         if (iField >= t -> nSamples) {
             iField = 0;
@@ -2133,7 +2145,7 @@ cmsBool DataSection (cmsIT8* it8)
 
         }
 
-        if (it8->sy != SEND_DATA && it8->sy != SEOF) {
+        if (it8->sy != SEND_DATA && it8->sy != SEOF && it8->sy != SSYNERROR) {
 
             switch (it8->sy)
             {
@@ -2336,7 +2348,7 @@ cmsBool ParseIT8(cmsIT8* it8, cmsBool nosheet)
 
                     if (!DataSection(it8)) return FALSE;
 
-                    if (it8 -> sy != SEOF) {
+                    if (it8 -> sy != SEOF && it8->sy != SSYNERROR) {
 
                             if (!AllocTable(it8)) return FALSE;                        
 
@@ -3069,7 +3081,8 @@ cmsBool ParseCube(cmsIT8* cube, cmsStage** Shaper, cmsStage** CLUT, char title[]
 
     InSymbol(cube);
 
-    while (cube->sy != SEOF) {
+    while (cube->sy != SEOF && cube->sy != SSYNERROR) {
+
         switch (cube->sy)
         {
         // Set profile description
