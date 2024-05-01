@@ -1243,9 +1243,12 @@ void* AllocChunk(cmsIT8* it8, cmsUInt32Number size)
 static
 char *AllocString(cmsIT8* it8, const char* str)
 {
-    cmsUInt32Number Size = (cmsUInt32Number) strlen(str)+1;
+    cmsUInt32Number Size;
     char *ptr;
 
+    if (str == NULL) return NULL;
+
+    Size = (cmsUInt32Number)strlen(str) + 1;
 
     ptr = (char *) AllocChunk(it8, Size);
     if (ptr) memcpy(ptr, str, Size-1);
@@ -1328,6 +1331,11 @@ KEYVALUE* AddToList(cmsIT8* it8, KEYVALUE** Head, const char *Key, const char *S
         // Store name and value
         p->Keyword = AllocString(it8, Key);
         p->Subkey = (Subkey == NULL) ? NULL : AllocString(it8, Subkey);
+        if (p->Keyword == NULL || p->Subkey == NULL)
+        {
+            SynError(it8, "AddToList: out of memory");
+            return NULL;
+        }
 
         // Keep the container in our list
         if (*Head == NULL) {
