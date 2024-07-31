@@ -60,13 +60,12 @@ void ReadAllRAWTags(cmsHPROFILE h)
 {
     cmsInt32Number i, n;
     cmsTagSignature sig;
-    cmsInt32Number len;
-
+    
     n = cmsGetTagCount(h);
     for (i=0; i < n; i++) {
 
         sig = cmsGetTagSignature(h, i);
-        len = cmsReadRawTag(h, sig, NULL, 0);
+        cmsReadRawTag(h, sig, NULL, 0);
     }
 }
 

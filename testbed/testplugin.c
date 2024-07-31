@@ -807,7 +807,7 @@ static cmsPluginTag HiddenTagPluginSample = {
 
 static cmsPluginTag HiddenTagPluginSample2 = {
 
-    { cmsPluginMagicNumber, 2060, cmsPluginTagSig, &HiddenTagPluginSample},
+    { cmsPluginMagicNumber, 2060, cmsPluginTagSig, (cmsPluginBase*) &HiddenTagPluginSample},
     SigInt32,  {  1, 1, { cmsSigUInt32ArrayType }, NULL }
 };
 
