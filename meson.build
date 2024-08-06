@@ -2,7 +2,7 @@ project(
   'Little-CMS',
   'c',
   version: '2.16',
-  meson_version: '>=0.64.0',
+  meson_version: '>=0.63.0',
   # default_options: ['c_std=c99']
 )
 

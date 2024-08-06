@@ -31,7 +31,7 @@
 
 PROGRAM=libtool
 PACKAGE=libtool
-VERSION="2.4.7 Debian-2.4.7-5"
+VERSION=2.4.7
 package_revision=2.4.7
 
 
@@ -430,7 +430,7 @@ EXIT_SKIP=77	  # $? = 77 is used to indicate a skipped test to automake.
 # putting '$debug_cmd' at the start of all your functions, you can get
 # bash to show function call trace with:
 #
-#    debug_cmd='echo "${FUNCNAME[0]} $*" >&2' bash your-script-name
+#    debug_cmd='eval echo "${FUNCNAME[0]} $*" >&2' bash your-script-name
 debug_cmd=${debug_cmd-":"}
 exit_cmd=:
 
@@ -1706,8 +1706,6 @@ func_run_hooks ()
 {
     $debug_cmd
 
-    _G_rc_run_hooks=false
-
     case " $hookable_fns " in
       *" $1 "*) ;;
       *) func_fatal_error "'$1' does not support hook functions." ;;
@@ -2308,12 +2306,12 @@ include the following information:
        compiler:       $LTCC
        compiler flags: $LTCFLAGS
        linker:         $LD (gnu? $with_gnu_ld)
-       version:        $progname $scriptversion Debian-2.4.7-5
+       version:        $progname (GNU libtool) 2.4.7
        automake:       `($AUTOMAKE --version) 2>/dev/null |$SED 1q`
        autoconf:       `($AUTOCONF --version) 2>/dev/null |$SED 1q`
 
 Report bugs to <bug-libtool@gnu.org>.
-GNU libtool home page: <http://www.gnu.org/s/libtool/>.
+GNU libtool home page: <http://www.gnu.org/software/libtool/>.
 General help using GNU software: <http://www.gnu.org/gethelp/>."
     exit 0
 }
@@ -2512,8 +2510,6 @@ libtool_options_prep ()
 
     _G_rc_lt_options_prep=:
 
-    _G_rc_lt_options_prep=:
-
     # Shorthand for --mode=foo, only valid as the first argument
     case $1 in
     clean|clea|cle|cl)
@@ -2672,17 +2668,10 @@ libtool_validate_options ()
     # preserve --debug
     test : = "$debug_cmd" || func_append preserve_args " --debug"
 
-    case $host in
-      # Solaris2 added to fix http://debbugs.gnu.org/cgi/bugreport.cgi?bug=16452
-      # see also: http://gcc.gnu.org/bugzilla/show_bug.cgi?id=59788
-      *cygwin* | *mingw* | *pw32* | *cegcc* | *solaris2* | *os2*)
-        # don't eliminate duplications in $postdeps and $predeps
-        opt_duplicate_compiler_generated_deps=:
-        ;;
-      *)
-        opt_duplicate_compiler_generated_deps=$opt_preserve_dup_deps
-        ;;
-    esac
+    # Keeping compiler generated duplicates in $postdeps and $predeps is not
+    # harmful, and is necessary in a majority of systems that use it to satisfy
+    # symbol dependencies.
+    opt_duplicate_compiler_generated_deps=:
 
     $opt_help || {
       # Sanity checks first:
@@ -7561,13 +7550,11 @@ func_mode_link ()
       # -stdlib=*            select c++ std lib with clang
       # -fsanitize=*         Clang/GCC memory and address sanitizer
       # -fuse-ld=*           Linker select flags for GCC
-      # -static-*            direct GCC to link specific libraries statically
-      # -fcilkplus           Cilk Plus language extension features for C/C++
       # -Wa,*                Pass flags directly to the assembler
       -64|-mips[0-9]|-r[0-9][0-9]*|-xarch=*|-xtarget=*|+DA*|+DD*|-q*|-m*| \
       -t[45]*|-txscale*|-p|-pg|--coverage|-fprofile-*|-F*|@*|-tp=*|--sysroot=*| \
       -O*|-g*|-flto*|-fwhopr*|-fuse-linker-plugin|-fstack-protector*|-stdlib=*| \
-      -specs=*|-fsanitize=*|-fuse-ld=*|-static-*|-fcilkplus|-Wa,*)
+      -specs=*|-fsanitize=*|-fuse-ld=*|-Wa,*)
         func_quote_arg pretty "$arg"
 	arg=$func_quote_arg_result
         func_append compile_command " $arg"
@@ -7860,10 +7847,7 @@ func_mode_link ()
 	case $pass in
 	dlopen) libs=$dlfiles ;;
 	dlpreopen) libs=$dlprefiles ;;
-	link)
-	  libs="$deplibs %DEPLIBS%"
-	  test "X$link_all_deplibs" != Xno && libs="$libs $dependency_libs"
-	  ;;
+	link) libs="$deplibs %DEPLIBS% $dependency_libs" ;;
 	esac
       fi
       if test lib,dlpreopen = "$linkmode,$pass"; then
@@ -8182,19 +8166,19 @@ func_mode_link ()
 	    # It is a libtool convenience library, so add in its objects.
 	    func_append convenience " $ladir/$objdir/$old_library"
 	    func_append old_convenience " $ladir/$objdir/$old_library"
-	    tmp_libs=
-	    for deplib in $dependency_libs; do
-	      deplibs="$deplib $deplibs"
-	      if $opt_preserve_dup_deps; then
-		case "$tmp_libs " in
-		*" $deplib "*) func_append specialdeplibs " $deplib" ;;
-		esac
-	      fi
-	      func_append tmp_libs " $deplib"
-	    done
 	  elif test prog != "$linkmode" && test lib != "$linkmode"; then
 	    func_fatal_error "'$lib' is not a convenience library"
 	  fi
+	  tmp_libs=
+	  for deplib in $dependency_libs; do
+	    deplibs="$deplib $deplibs"
+	    if $opt_preserve_dup_deps; then
+	      case "$tmp_libs " in
+	      *" $deplib "*) func_append specialdeplibs " $deplib" ;;
+	      esac
+	    fi
+	    func_append tmp_libs " $deplib"
+	  done
 	  continue
 	fi # $pass = conv
 
@@ -9117,9 +9101,6 @@ func_mode_link ()
 	    age=$number_minor
 	    revision=$number_minor
 	    lt_irix_increment=no
-	    ;;
-	  *)
-	    func_fatal_configuration "$modename: unknown library version type '$version_type'"
 	    ;;
 	  esac
 	  ;;
