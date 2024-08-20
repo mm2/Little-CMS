@@ -34,7 +34,7 @@ extern "C" {
 #   endif
 #endif
 
-#define LCMS2_THREADED_VERSION   1000
+#define LCMS2_THREADED_VERSION   LCMS_VERSION
 
 // Configuration toggles
 

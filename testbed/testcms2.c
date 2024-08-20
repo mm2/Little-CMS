@@ -5201,7 +5201,6 @@ cmsInt32Number CheckVCGT(cmsInt32Number Pass,  cmsHPROFILE hProfile)
 
 
 // Only one of the two following may be used, as they share the same tag
-static
 cmsInt32Number CheckDictionary16(cmsInt32Number Pass,  cmsHPROFILE hProfile)
 {
       cmsHANDLE hDict;
@@ -5245,9 +5244,6 @@ cmsInt32Number CheckDictionary16(cmsInt32Number Pass,  cmsHPROFILE hProfile)
     return 0;
 }
 
-
-
-static
 cmsInt32Number CheckDictionary24(cmsInt32Number Pass,  cmsHPROFILE hProfile)
 {
     cmsHANDLE hDict;
@@ -9529,7 +9525,10 @@ int main(int argc, char* argv[])
     cmsInt32Number DoSpeedTests = 1;
     cmsInt32Number DoCheckTests = 1;
     cmsInt32Number DoPluginTests = 1;
+
+#ifdef CMS_IS_WINDOWS_
     cmsInt32Number DoZooTests = 0;
+#endif
 
 #ifdef _MSC_VER
     _CrtSetDbgFlag ( _CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF );

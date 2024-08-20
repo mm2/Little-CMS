@@ -12,7 +12,8 @@ iccs = [
 ]
 fs=import('fs')
 foreach icc : iccs
-  fs.copyfile(icc)
+  # fs.copyfile(icc) # DOES NOT WORK ON FEDORA 40
+  configure_file(input : icc,  output : icc, copy : true)
 endforeach
 
 testcms = executable(

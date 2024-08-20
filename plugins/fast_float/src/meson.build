@@ -38,6 +38,7 @@ liblcms2_fast_float = library(
   dependencies: [liblcms2_dep, m_dep],
   include_directories: lcms2_fast_float_incdir,
   c_args: cargs,
+  version: library_version,
   install: true,
 )
 

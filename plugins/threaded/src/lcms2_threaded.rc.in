@@ -39,7 +39,7 @@ FILETYPE VFT_DLL
             VALUE "FileDescription", "Multithread plugin"
             VALUE "FileVersion", @LCMS2_VERSION@
             VALUE "InternalName", "lcms2_threaded"
-            VALUE "LegalCopyright", "Copyright (C) Marti Maria 2022, GPL-3.0-or-later"
+            VALUE "LegalCopyright", "Copyright (C) Marti Maria 2024, GPL-3.0-or-later"
             VALUE "OriginalFilename", "lcms2_threaded.dll"
             VALUE "ProductName", "LittleCMS color engine"
             VALUE "ProductVersion", @LCMS2_VERSION@
