@@ -1521,7 +1521,11 @@ int CMSEXPORT cmsPipelineInsertStage(cmsPipeline* lut, cmsStageLoc loc, cmsStage
     cmsStage* Anterior = NULL, *pt;
 
     if (lut == NULL || mpe == NULL)
+    {
+        if (mpe)
+            cmsStageFree(mpe);
         return FALSE;
+    }
 
     switch (loc) {
 

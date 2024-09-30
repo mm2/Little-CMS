@@ -3253,11 +3253,13 @@ cmsHPROFILE CMSEXPORT cmsCreateDeviceLinkFromCubeFileTHR(cmsContext ContextID, c
     if (Shaper != NULL) {
         if (!cmsPipelineInsertStage(Pipeline, cmsAT_BEGIN, Shaper))
             goto Done;
+	Shaper = NULL;
     }
 
     if (CLUT != NULL) {
         if (!cmsPipelineInsertStage(Pipeline, cmsAT_END, CLUT))
             goto Done;
+	CLUT = NULL;
     }
 
     // Propagate the description. We put no copyright because we know
@@ -3270,6 +3272,11 @@ cmsHPROFILE CMSEXPORT cmsCreateDeviceLinkFromCubeFileTHR(cmsContext ContextID, c
     if (!cmsWriteTag(hProfile, cmsSigAToB0Tag, (void*)Pipeline)) goto Done;
 
 Done:
+    if (CLUT != NULL)
+        cmsStageFree(CLUT);
+
+    if (Shaper != NULL)
+        cmsStageFree(Shaper);
 
     if (DescriptionMLU != NULL)
         cmsMLUfree(DescriptionMLU);
