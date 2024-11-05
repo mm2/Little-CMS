@@ -8823,9 +8823,38 @@ int CheckSaveLinearizationDevicelink(void)
     remove("lin_rgb.icc");
 
     return 1;
+}
 
+static
+int CheckGamutCheckFloats(void)
+{
+    cmsHPROFILE hLab = cmsCreateLab4Profile(NULL);
+    cmsHPROFILE hNull = cmsCreateNULLProfile();
+    cmsHPROFILE hsRGB = cmsCreate_sRGBProfile();
 
+    cmsHTRANSFORM xfrm = cmsCreateProofingTransform(hLab,
+        TYPE_Lab_DBL, hNull, TYPE_GRAY_8, hsRGB,
+        INTENT_RELATIVE_COLORIMETRIC, INTENT_ABSOLUTE_COLORIMETRIC,
+        cmsFLAGS_GAMUTCHECK);
 
+    cmsCloseProfile(hLab);
+    cmsCloseProfile(hNull);
+    cmsCloseProfile(hsRGB);
+
+    cmsCIELab Lab = { 50, -125, 125 };
+    cmsCIELab Lab2 = { 50, -10, 12 };
+
+    cmsUInt8Number gamut;
+    cmsDoTransform(xfrm, &Lab, &gamut, 1);  // Gives the alarm != 0
+    if (gamut == 0)
+        Fail("Gamut check not zero");
+
+    cmsDoTransform(xfrm, &Lab2, &gamut, 1);
+    if (gamut != 0)
+        Fail("Gamut check zero");
+
+    cmsDeleteTransform(xfrm);
+    return 1;
 }
 
 
@@ -9558,7 +9587,7 @@ int main(int argc, char* argv[])
     printf("Installing error logger ... ");
     cmsSetLogErrorHandler(FatalErrorQuit);
     printf("done.\n");
-       
+        
     PrintSupportedIntents();
 
     Check("Base types", CheckBaseTypes);
@@ -9772,6 +9801,7 @@ int main(int argc, char* argv[])
     Check("Corrupted built-in by using cmsWriteRawTag", CheckInducedCorruption);
     Check("Bad CGATS file", CheckBadCGATS);
     Check("Saving linearization devicelink", CheckSaveLinearizationDevicelink);
+    Check("Gamut check on floats", CheckGamutCheckFloats);
     }
 
     if (DoPluginTests)
