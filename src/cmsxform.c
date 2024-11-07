@@ -297,7 +297,7 @@ void FloatXFORM(_cmsTRANSFORM* p,
 
                     // Certainly, out of gamut
                     for (c = 0; c < cmsMAXCHANNELS; c++)
-                        fOut[c] = ContextAlarmCodes->AlarmCodes[c] / 65535.0;
+                        fOut[c] = (cmsFloat32Number) (ContextAlarmCodes->AlarmCodes[c] / 65535.0);
 
                 }
                 else {
