@@ -8828,6 +8828,10 @@ int CheckSaveLinearizationDevicelink(void)
 static
 int CheckGamutCheckFloats(void)
 {
+
+    cmsUInt16Number alarms[16] = { 0x0f0f,3,4,5,6,7,8,9,10 };
+    
+
     cmsHPROFILE hLab = cmsCreateLab4Profile(NULL);
     cmsHPROFILE hNull = cmsCreateNULLProfile();
     cmsHPROFILE hsRGB = cmsCreate_sRGBProfile();
@@ -8845,9 +8849,12 @@ int CheckGamutCheckFloats(void)
     cmsCIELab Lab2 = { 50, -10, 12 };
 
     cmsUInt8Number gamut;
+
+    cmsSetAlarmCodes(alarms);
+
     cmsDoTransform(xfrm, &Lab, &gamut, 1);  // Gives the alarm != 0
-    if (gamut == 0)
-        Fail("Gamut check not zero");
+    if (gamut != 0x0f)
+        Fail("Gamut check not good");
 
     cmsDoTransform(xfrm, &Lab2, &gamut, 1);
     if (gamut != 0)
