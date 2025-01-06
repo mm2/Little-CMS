@@ -38,6 +38,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "threaded", "threaded", "{09
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lcms2_threaded_plugin_testbed", "..\..\plugins\threaded\Projects\VC2022\lcms2_threaded_plugin_testbed.vcxproj", "{F56B9CBA-A34D-4C68-9003-A6919236399E}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fuzzers", "fuzzers\fuzzers.vcxproj", "{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|ARM64 = Debug|ARM64
@@ -205,6 +207,18 @@ Global
 		{F56B9CBA-A34D-4C68-9003-A6919236399E}.Release|Win32.Build.0 = Release|Win32
 		{F56B9CBA-A34D-4C68-9003-A6919236399E}.Release|x64.ActiveCfg = Release|x64
 		{F56B9CBA-A34D-4C68-9003-A6919236399E}.Release|x64.Build.0 = Release|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|ARM64.ActiveCfg = Debug|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|ARM64.Build.0 = Debug|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|Win32.Build.0 = Debug|Win32
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|x64.ActiveCfg = Debug|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|x64.Build.0 = Debug|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|ARM64.ActiveCfg = Release|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|ARM64.Build.0 = Release|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|Win32.ActiveCfg = Release|Win32
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|Win32.Build.0 = Release|Win32
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|x64.ActiveCfg = Release|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -218,7 +232,7 @@ Global
 		{F56B9CBA-A34D-4C68-9003-A6919236399E} = {09D18587-D927-4047-977F-49918A174D5E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {E95EA102-6884-4CAD-AF6D-9BF36C69A33D}
 		QtVersion = $(DefaultQtVersion)
+		SolutionGuid = {E95EA102-6884-4CAD-AF6D-9BF36C69A33D}
 	EndGlobalSection
 EndGlobal
