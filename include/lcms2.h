@@ -64,6 +64,9 @@
 // Uncomment this to remove the "register" storage class
 // #define CMS_NO_REGISTER_KEYWORD 1
 
+// Uncomment this to remove visibility attribute when building shared objects
+// #define CMS_NO_VISIBILITY 1
+
 // ********** End of configuration toggles ******************************
 
 // Needed for streams
