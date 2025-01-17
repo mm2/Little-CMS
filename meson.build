@@ -1,8 +1,8 @@
 project(
   'Little-CMS',
   'c',
-  version: '2.16',
-  meson_version: '>=0.63.0',
+  version: '2.17',
+  meson_version: '>=0.49.0',
   # default_options: ['c_std=c99']
 )
 
@@ -108,7 +108,10 @@ win = import('windows')
 
 subdir('include')
 subdir('src')
+
+if get_option('tests').enabled()
 subdir('testbed')
+endif
 
 if get_option('utils')
 subdir('utils')

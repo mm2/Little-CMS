@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System
-//  Copyright (c) 1998-2024 Marti Maria Saguer
+//  Copyright (c) 1998-2025 Marti Maria Saguer
 //
 // Permission is hereby granted, free of charge, to any person obtaining
 // a copy of this software and associated documentation files (the "Software"),
@@ -62,7 +62,7 @@ void ReadAllRAWTags(cmsHPROFILE h)
     }
 }
 
-// read and decode information 
+// Read and decode information 
 static
 void FetchInfo(cmsHPROFILE h, cmsInfoType Info)
 {
@@ -140,12 +140,12 @@ void ReadAllLUTS(cmsHPROFILE h)
     cmsDetectDestinationBlackPoint(&Black, h, INTENT_RELATIVE_COLORIMETRIC, 0);
     cmsDetectDestinationBlackPoint(&Black, h, INTENT_SATURATION, 0);
     cmsDetectDestinationBlackPoint(&Black, h, INTENT_ABSOLUTE_COLORIMETRIC, 0);
+
     cmsDetectTAC(h);
 }
 
 
 // Create PostScript resources
-
 static
 void GenerateCSA(cmsHPROFILE hProfile)
 {

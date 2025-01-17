@@ -1,3 +1,5 @@
+option('tests', type: 'feature', value: 'enabled', yield: true, description: 'Enable or disable tests')
+
 option('jpeg', type: 'feature', value: 'auto', description: 'Use JPEG')
 option('tiff', type: 'feature', value: 'auto', description: 'Use LibTiff')
 
