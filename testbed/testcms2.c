@@ -9828,7 +9828,7 @@ int main(int argc, char* argv[])
         Check("Rendering intent plugin", CheckIntentPlugin);
         Check("Full transform plugin",   CheckTransformPlugin);
         Check("Mutex plugin",            CheckMutexPlugin);
-       
+        Check("Double from float",       CheckMethodPackDoublesFromFloat);       
     }
 
 
