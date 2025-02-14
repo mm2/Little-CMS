@@ -61,13 +61,14 @@ jobs:
       - name: Install packages
         run: |
           sudo apt-get -y install build-essential python3-pip ninja-build
-          pip install meson==0.64.0
+          pip install meson==0.52.0
 
       - name: Build Ubuntu
         run: |
           meson setup build -Dfastfloat=true -Dthreaded=true
-          meson compile -C build
-          meson test -C build
+          cd build
+          ninja
+          meson test
 
   VisualStudio-meson:
     runs-on: windows-latest
@@ -77,12 +78,13 @@ jobs:
 
       - name: Install packages
         run: |
-          pip install meson==0.64.0
+          pip install meson==0.52.0
 
       - uses: ilammy/msvc-dev-cmd@v1
       - name: Build Windows
         run: |
           meson setup build
-          meson compile -C build
-          meson test -C build
+          cd build
+          ninja
+          meson test
 
