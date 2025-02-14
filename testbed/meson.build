@@ -10,7 +10,7 @@ iccs = [
   'bad_mpe.icc', 'ibm-t61.icc', 'test1.icc', 'test3.icc', 'test5.icc',
   'toosmall.icc'
 ]
-fs=import('fs')
+# fs=import('fs') - requires Meson >=0.53.0
 foreach icc : iccs
   # fs.copyfile(icc) # DOES NOT WORK ON FEDORA 40
   configure_file(input : icc,  output : icc, copy : true)
