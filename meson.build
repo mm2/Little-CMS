@@ -82,7 +82,7 @@ if (
 endif
 
 
-if is_visual_studio    
+if host_machine.system() == 'windows'
     m_dep = []
     threads_dep = []
     deps = []
