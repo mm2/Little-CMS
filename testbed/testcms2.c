@@ -5227,7 +5227,7 @@ cmsInt32Number CheckDictionary16(cmsInt32Number Pass,  cmsHPROFILE hProfile)
              if (memcmp(e ->Value, L"12",  sizeof(wchar_t) * 2) != 0) return 0;
              e = cmsDictNextEntry(e);
              if (memcmp(e ->Name, L"Name", sizeof(wchar_t) * 4) != 0) return 0;
-             if (memcmp(e ->Value, L"String",  sizeof(wchar_t) * 5) != 0) return 0;
+             if (memcmp(e ->Value, L"String",  sizeof(wchar_t) * 6) != 0) return 0;
              e = cmsDictNextEntry(e);
              if (memcmp(e ->Name, L"Name1", sizeof(wchar_t) *5) != 0) return 0;
              if (e ->Value == NULL) return 0;
@@ -5284,7 +5284,7 @@ cmsInt32Number CheckDictionary24(cmsInt32Number Pass,  cmsHPROFILE hProfile)
         if (memcmp(e ->Value, L"12",  sizeof(wchar_t) * 2) != 0) return 0;
         e = cmsDictNextEntry(e);
         if (memcmp(e ->Name, L"Name", sizeof(wchar_t) * 4) != 0) return 0;
-        if (memcmp(e ->Value, L"String",  sizeof(wchar_t) * 5) != 0) return 0;
+        if (memcmp(e ->Value, L"String",  sizeof(wchar_t) * 6) != 0) return 0;
 
         cmsMLUgetASCII(e->DisplayName, "en", "US", Buffer, 256);
         if (strcmp(Buffer, "Hello, world") != 0) rc = 0;
