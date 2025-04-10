@@ -1,7 +1,7 @@
 //---------------------------------------------------------------------------------
 //
 //  Little Color Management System, fast floating point extensions
-//  Copyright (c) 1998-2024 Marti Maria Saguer, all rights reserved
+//  Copyright (c) 1998-2025 Marti Maria Saguer, all rights reserved
 //
 //
 // This program is free software: you can redistribute it and/or modify
@@ -300,10 +300,32 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
 
             cmsPipelineInsertStage(OriginalLut, cmsAT_END, lab_fix);
         }
-        else {
-            if (T_COLORSPACE(*OutputFormat) != PT_GRAY &&
-                T_COLORSPACE(*OutputFormat) != PT_RGB) return FALSE;
-        }
+        else
+            // If output is XYZ 
+            if (T_COLORSPACE(*OutputFormat) == PT_XYZ) {
+
+                /**
+                * XYZ is encoded in 1.15 fixed point, but in 
+                * out table it is on 0..1.0 range, so we need to  adjust it. 
+                */
+
+#define MAX_ENCODEABLE_XYZ  (1.0 + 32767.0/32768.0)
+
+                static const cmsFloat64Number mat[] = { MAX_ENCODEABLE_XYZ,      0,   0,
+                                                            0,  MAX_ENCODEABLE_XYZ,   0,
+                                                            0,      0,   MAX_ENCODEABLE_XYZ };
+
+                
+                cmsStage* XYZ_fix = cmsStageAllocMatrix(ContextID, 3, 3, mat, NULL);
+                if (XYZ_fix == NULL) goto Error;
+
+                cmsPipelineInsertStage(OriginalLut, cmsAT_END, XYZ_fix);
+
+            }
+            else {
+                if (T_COLORSPACE(*OutputFormat) != PT_GRAY &&
+                    T_COLORSPACE(*OutputFormat) != PT_RGB) return FALSE;
+            }
 
 
     // Resample the LUT

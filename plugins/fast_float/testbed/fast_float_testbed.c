@@ -726,7 +726,6 @@ void CheckToFloatLab(void)
     cmsCloseProfile(hsRGB); cmsCloseProfile(hLab);
     cmsDeleteContext(Raw);
     cmsDeleteContext(Plugin);
-
 }
 
 
@@ -778,6 +777,107 @@ void CheckFloatToFloatLab(void)
     cmsDeleteContext(Plugin);
 
 }
+
+
+static
+void CheckToFloatXYZ(void)
+{
+    cmsContext Plugin = cmsCreateContext(cmsFastFloatExtensions(), NULL);
+    cmsContext Raw = cmsCreateContext(NULL, NULL);
+
+    cmsHPROFILE hsRGB = cmsCreate_sRGBProfile();
+    cmsHPROFILE hXYZ = cmsCreateXYZProfile();
+
+    cmsHTRANSFORM xform_plugin = cmsCreateTransformTHR(Plugin, hsRGB, TYPE_RGB_8, hXYZ, TYPE_XYZ_DBL, INTENT_PERCEPTUAL, 0);
+    cmsHTRANSFORM xform = cmsCreateTransformTHR(Raw, hsRGB, TYPE_RGB_8, hXYZ, TYPE_XYZ_DBL, INTENT_PERCEPTUAL, 0);
+
+    int r, g, b;
+    cmsCIEXYZ XYZ1, XYZ2;
+    cmsCIELab Lab1, Lab2;
+    cmsUInt8Number rgb[3];
+    double err;
+
+    for (r = 0; r < 256; r += 10)
+        for (g = 0; g < 256; g += 10)
+            for (b = 0; b < 256; b += 10)
+            {
+                rgb[0] = (cmsUInt8Number)r; rgb[1] = (cmsUInt8Number)g; rgb[2] = (cmsUInt8Number)b;
+
+                cmsDoTransform(xform_plugin, rgb, &XYZ1, 1);
+                cmsDoTransform(xform, rgb, &XYZ2, 1);
+
+                cmsXYZ2Lab(NULL, &Lab1, &XYZ1);
+                cmsXYZ2Lab(NULL, &Lab2, &XYZ2);
+
+                err = cmsDeltaE(&Lab1, &Lab2);
+                if (err > 0.1)
+                {
+                    trace("Error on lab encoded (%f, %f, %f) <> (% f, % f, % f)\n",
+                        Lab1.L, Lab1.a, Lab1.b, Lab2.L, Lab2.a, Lab2.b);
+                }
+            }
+
+
+    cmsDeleteTransform(xform); cmsDeleteTransform(xform_plugin);
+    cmsCloseProfile(hsRGB); cmsCloseProfile(hXYZ);
+    cmsDeleteContext(Raw);
+    cmsDeleteContext(Plugin);
+}
+
+static
+void CheckFloatToFloatXYZ(void)
+{
+    cmsContext Plugin = cmsCreateContext(cmsFastFloatExtensions(), NULL);
+    cmsContext Raw = cmsCreateContext(NULL, NULL);
+
+    cmsHPROFILE hsRGB = cmsCreate_sRGBProfile();
+    cmsHPROFILE hXYZ  = cmsCreateXYZProfile();
+
+    cmsHTRANSFORM xform_plugin = cmsCreateTransformTHR(Plugin, hsRGB, TYPE_RGB_FLT, hXYZ, TYPE_XYZ_FLT, INTENT_PERCEPTUAL, 0);
+    cmsHTRANSFORM xform = cmsCreateTransformTHR(Raw, hsRGB, TYPE_RGB_FLT, hXYZ, TYPE_XYZ_FLT, INTENT_PERCEPTUAL, 0);
+
+    int r, g, b;
+    cmsCIEXYZ XYZ1, XYZ2;
+    cmsCIELab Lab1, Lab2;
+    cmsFloat32Number rgb[3];
+    cmsFloat32Number XYZ[3];
+    double err;
+
+
+    for (r = 0; r < 256; r += 10)
+        for (g = 0; g < 256; g += 10)
+            for (b = 0; b < 256; b += 10)
+            {
+                rgb[0] = (cmsFloat32Number)r / 255.0f;
+                rgb[1] = (cmsFloat32Number)g / 255.0f;
+                rgb[2] = (cmsFloat32Number)b / 255.0f;
+
+                cmsDoTransform(xform_plugin, rgb, XYZ, 1);
+                XYZ1.X = XYZ[0]; XYZ1.Y = XYZ[1]; XYZ1.Z = XYZ[2];
+                cmsDoTransform(xform, rgb, XYZ, 1);
+                XYZ2.X = XYZ[0]; XYZ2.Y = XYZ[1]; XYZ2.Z = XYZ[2];
+
+                cmsXYZ2Lab(NULL, &Lab1, &XYZ1);
+                cmsXYZ2Lab(NULL, &Lab2, &XYZ2);
+
+                err = cmsDeltaE(&Lab1, &Lab2);
+                if (err > 0.5)
+                {
+                    trace("Error on XYZ encoded (%f, %f, %f) <> (% f, % f, % f)\n",
+                        Lab1.L, Lab1.a, Lab1.b, Lab2.L, Lab2.a, Lab2.b);
+                }
+            }
+
+
+    cmsDeleteTransform(xform); cmsDeleteTransform(xform_plugin);
+    cmsCloseProfile(hsRGB); cmsCloseProfile(hXYZ);
+    cmsDeleteContext(Raw);
+    cmsDeleteContext(Plugin);
+
+}
+
+
+
 // --------------------------------------------------------------------------------------------------
 // A C C U R A C Y   C H E C K S
 // --------------------------------------------------------------------------------------------------
@@ -1192,6 +1292,11 @@ void CheckConversionFloat(void)
     CheckToEncodedLab();
     CheckToFloatLab();
     CheckFloatToFloatLab();
+    trace("Ok\n");
+
+    trace("Checking conversion to XYZ...");    
+    CheckToFloatXYZ();
+    CheckFloatToFloatXYZ();
     trace("Ok\n");
 
     // Matrix-shaper should be accurate 
@@ -2536,7 +2641,7 @@ int main()
        trace("Installing plug-in ... ");
        cmsPlugin(cmsFastFloatExtensions());
        trace("done.\n\n");                     
-
+       
        CheckComputeIncrements();
 
        CheckPremultiplied();
