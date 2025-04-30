@@ -6,3 +6,5 @@ option('tiff', type: 'feature', value: 'auto', description: 'Use LibTiff')
 option('utils', type: 'boolean', value: false, description: 'Build the utils')
 option('fastfloat', type: 'boolean', value: false, description: 'Build and install the fast float plugin, use only if GPL 3.0 is acceptable')
 option('threaded', type: 'boolean', value: false, description: 'Build and install the multi threaded plugin, use only if GPL 3.0 is acceptable')
+
+option('versionedlibs', type: 'boolean', value: true, description: 'Enable building of .so.version libraries, disable when crosscompiling for Android')
