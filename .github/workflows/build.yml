@@ -40,21 +40,24 @@ jobs:
     strategy:
       matrix:
         include:
-      - arch: win32
-        runner: windows-latest
-      - arch: x64
-        runner: windows-latest
-      - arch: x64
-        runner: windows-11-arm
-      - arch: arm64
-        runner: windows-11-arm
-    runs-on: ${{ matrix.runner }}  
+          - arch: win32
+            runner: windows-latest
+          - arch: x64
+            runner: windows-latest
+          - arch: x64
+            runner: windows-11-arm
+          - arch: arm64
+            runner: windows-11-arm  
+
+    runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
       
-      - uses: ilammy/msvc-dev-cmd@v1   
+      - name: Setup MSVC Build Environment
+        uses: ilammy/msvc-dev-cmd@v1   
         with:
-            arch: ${{ matrix.arch }}
+          arch: ${{ matrix.arch }}
 
       - name: Build Windows
         run: devenv .\Projects\VC2019\lcms2.sln /Rebuild "Release|${{ matrix.arch }}" /Project testbed  
