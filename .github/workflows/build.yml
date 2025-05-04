@@ -39,8 +39,15 @@ jobs:
   Windows:
     strategy:
       matrix:
-        arch: [ win32, x64, arm64 ]
-        runner: [ windows-latest, windows-11-arm ]  
+        include:
+      - arch: win32
+        runner: windows-latest
+      - arch: x64
+        runner: windows-latest
+      - arch: x64
+        runner: windows-11-arm
+      - arch: arm64
+        runner: windows-11-arm
     runs-on: ${{ matrix.runner }}  
     steps:
       - uses: actions/checkout@v4
