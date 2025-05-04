@@ -68,8 +68,5 @@
     <None Include="..\..\COPYING.GPL3">
       <Filter>doc</Filter>
     </None>
-    <None Include="..\..\doc\LittleCMS fast float extensions 1.0.pdf">
-      <Filter>doc</Filter>
-    </None>
   </ItemGroup>
 </Project>

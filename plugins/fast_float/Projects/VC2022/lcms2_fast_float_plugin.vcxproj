@@ -48,7 +48,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="..\..\COPYING.GPL3" />
-    <None Include="..\..\doc\LittleCMS fast float extensions 1.0.pdf" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\Projects\VC2022\lcms2_static\lcms2_static.vcxproj">

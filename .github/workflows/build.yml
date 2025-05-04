@@ -13,7 +13,7 @@ jobs:
   Ubuntu:
     strategy:
       matrix:
-        runner: [ ubuntu-20.04, ubuntu-latest ]
+        runner: [ ubuntu-latest ]
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +26,7 @@ jobs:
   macOS:
     strategy:
       matrix:
-        runner: [ macos-14, macos-15 ]
+        runner: [ macos-14, macos-latest ]
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
@@ -39,10 +39,12 @@ jobs:
   Windows:
     strategy:
       matrix:
-        arch: [ win32, x64 ]
-    runs-on: windows-latest    
+        arch: [ win32, x64, arm64 ]
+        runner: [ windows-latest, windows-11-arm ]  
+    runs-on: ${{ matrix.runner }}  
     steps:
       - uses: actions/checkout@v4
+      
       - uses: ilammy/msvc-dev-cmd@v1   
         with:
             arch: ${{ matrix.arch }}
