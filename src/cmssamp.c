@@ -73,8 +73,7 @@ cmsBool  BlackPointAsDarkerColorant(cmsHPROFILE    hInput,
     cmsUInt32Number dwFormat;
     cmsHPROFILE hLab;
     cmsCIELab  Lab;
-    cmsCIEXYZ  BlackXYZ;
-    cmsUInt32Number attribs;
+    cmsCIEXYZ  BlackXYZ;    
     cmsContext ContextID = cmsGetProfileContextID(hInput);
 
     // If the profile does not support input direction, assume Black point 0
