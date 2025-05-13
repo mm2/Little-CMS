@@ -10,9 +10,9 @@ includedir = ${prefix}/include
 # Shared libraries built in this directory
 lib_LTLIBRARIES = liblcms2_threaded.la
 
-LIBRARY_CURRENT    = 1
-LIBRARY_REVISION   = 0
-LIBRARY_AGE        = 0
+LIBRARY_CURRENT    = @LIBRARY_CURRENT@
+LIBRARY_REVISION   = @LIBRARY_REVISION@
+LIBRARY_AGE        = @LIBRARY_AGE@
 
 AM_CPPFLAGS = -Ofast -I$(top_builddir)/include -I$(top_srcdir)/include -I$(srcdir)/../include -I$(builddir)/../include
 
