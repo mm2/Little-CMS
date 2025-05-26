@@ -113,6 +113,8 @@ cmsHPROFILE OpenStockProfile(cmsContext ContextID, const char* File)
        if (cmsstrcasecmp(File, "*null") == 0)
                 return cmsCreateNULLProfileTHR(ContextID);
 
+       if (cmsstrcasecmp(File, "*oklab") == 0)
+           return cmsCreate_OkLabProfile(ContextID);
 
        if (cmsstrcasecmp(File, "*Lin2222") == 0) {
 
