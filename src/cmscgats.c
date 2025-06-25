@@ -429,7 +429,7 @@ cmsBool StringAppend(string* s, char c)
         new_ptr = (char*) AllocChunk(s->it8, s->max);
         if (new_ptr == NULL) return FALSE;
 
-        if (new_ptr != NULL && s->begin != NULL)
+        if (s->begin != NULL)
             memcpy(new_ptr, s->begin, s->len);
 
         s->begin = new_ptr;
