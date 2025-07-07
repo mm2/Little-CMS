@@ -2653,7 +2653,7 @@ void sRGB_XYZ_roundtrip(void)
 
                 for (int i = 0; i < 3; i++)
                 {
-                    float d = fabs(output_rgb[i] - input_rgb[i]);
+                    float d = fabsf(output_rgb[i] - input_rgb[i]);
                     if (d > diff[i])
                         diff[i] = d;
                 }
