@@ -241,7 +241,7 @@ cmsBool OptimizeFloatMatrixShaper(_cmsTransform2Fn* TransformFn,
                                   cmsUInt32Number* dwFlags)    
 {
     cmsStage* Curve1, *Curve2;
-    cmsStage* Matrix1, *Matrix2;
+    cmsStage* Matrix1, *Matrix2, * XYZmatrix = NULL;
     _cmsStageMatrixData* Data1;
     _cmsStageMatrixData* Data2;
     cmsMAT3 res;
@@ -266,9 +266,41 @@ cmsBool OptimizeFloatMatrixShaper(_cmsTransform2Fn* TransformFn,
     Src = *Lut;
 
     // Check for shaper-matrix-matrix-shaper structure, that is what this optimizer stands for
-    if (!cmsPipelineCheckAndRetreiveStages(Src, 4, 
-        cmsSigCurveSetElemType, cmsSigMatrixElemType, cmsSigMatrixElemType, cmsSigCurveSetElemType, 
-        &Curve1, &Matrix1, &Matrix2, &Curve2)) return FALSE;
+
+    if (cmsPipelineCheckAndRetreiveStages(Src, 3,
+        cmsSigCurveSetElemType, cmsSigMatrixElemType, cmsSigCurveSetElemType,
+        &Curve1, &Matrix1, &Curve2))
+    {
+        if (T_COLORSPACE(*OutputFormat) == PT_XYZ) {
+
+            /**
+            * XYZ is encoded in 1.15 fixed point, but in
+            * out table it is on 0..1.0 range, so we need to  adjust it.
+            */
+#define MAX_ENCODEABLE_XYZ  (1.0 + 32767.0/32768.0)
+
+            static const cmsFloat64Number mat[] = { MAX_ENCODEABLE_XYZ,      0,   0,
+                                                        0,  MAX_ENCODEABLE_XYZ,   0,
+                                                        0,      0,   MAX_ENCODEABLE_XYZ };
+
+            XYZmatrix = Matrix2 = cmsStageAllocMatrix(cmsGetPipelineContextID(Src), 3, 3, mat, NULL);
+        }
+        else 
+            if (T_COLORSPACE(*InputFormat) == PT_XYZ) {
+                static const cmsFloat64Number mat[] = { 1.0/MAX_ENCODEABLE_XYZ,  0,   0,
+                                                        0,  1.0/MAX_ENCODEABLE_XYZ,   0,
+                                                        0,      0,   1.0/MAX_ENCODEABLE_XYZ };
+
+                Matrix2 = Matrix1;
+                XYZmatrix = Matrix1 = cmsStageAllocMatrix(cmsGetPipelineContextID(Src), 3, 3, mat, NULL);
+            }
+            else
+                return FALSE;
+    }
+    else
+        if (!cmsPipelineCheckAndRetreiveStages(Src, 4, 
+            cmsSigCurveSetElemType, cmsSigMatrixElemType, cmsSigMatrixElemType, cmsSigCurveSetElemType, 
+            &Curve1, &Matrix1, &Matrix2, &Curve2)) return FALSE;
 
     ContextID = cmsGetPipelineContextID(Src);
     nChans    = T_CHANNELS(*InputFormat);
@@ -345,6 +377,8 @@ cmsBool OptimizeFloatMatrixShaper(_cmsTransform2Fn* TransformFn,
 
     *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
     cmsPipelineFree(Src);
+    if (XYZmatrix != NULL)
+        cmsStageFree(XYZmatrix);
     *Lut = Dest;
     return TRUE;
 }
