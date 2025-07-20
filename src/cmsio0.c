@@ -658,7 +658,7 @@ void _cmsDeleteTagByPos(_cmsICCPROFILE* Icc, int i)
             _cmsFree(Icc ->ContextID, Icc ->TagPtrs[i]);
         }
         else {
-            cmsTagTypeHandler* TypeHandler = Icc ->TagTypeHandlers[i];
+            const cmsTagTypeHandler* TypeHandler = Icc ->TagTypeHandlers[i];
 
             if (TypeHandler != NULL) {
 
@@ -1310,7 +1310,7 @@ cmsBool SaveTags(_cmsICCPROFILE* Icc, _cmsICCPROFILE* FileOrig)
     cmsTagDescriptor* TagDescriptor;
     cmsTagTypeSignature TypeBase;
     cmsTagTypeSignature Type;
-    cmsTagTypeHandler* TypeHandler;
+    const cmsTagTypeHandler* TypeHandler;
     cmsFloat64Number   Version = cmsGetProfileVersion((cmsHPROFILE) Icc);
     cmsTagTypeHandler LocalTypeHandler;
 
@@ -1564,7 +1564,7 @@ void freeOneTag(_cmsICCPROFILE* Icc, cmsUInt32Number i)
 {
     if (Icc->TagPtrs[i]) {
 
-        cmsTagTypeHandler* TypeHandler = Icc->TagTypeHandlers[i];
+        const cmsTagTypeHandler* TypeHandler = Icc->TagTypeHandlers[i];
 
         if (TypeHandler != NULL) {
             cmsTagTypeHandler LocalTypeHandler = *TypeHandler;
@@ -1637,7 +1637,7 @@ void* CMSEXPORT cmsReadTag(cmsHPROFILE hProfile, cmsTagSignature sig)
 {
     _cmsICCPROFILE* Icc = (_cmsICCPROFILE*) hProfile;
     cmsIOHANDLER* io;
-    cmsTagTypeHandler* TypeHandler;
+    const cmsTagTypeHandler* TypeHandler;
     cmsTagTypeHandler LocalTypeHandler;
     cmsTagDescriptor*  TagDescriptor;
     cmsTagTypeSignature BaseType;
@@ -1771,7 +1771,7 @@ Error:
 cmsTagTypeSignature _cmsGetTagTrueType(cmsHPROFILE hProfile, cmsTagSignature sig)
 {
     _cmsICCPROFILE* Icc = (_cmsICCPROFILE*) hProfile;
-    cmsTagTypeHandler* TypeHandler;
+    const cmsTagTypeHandler* TypeHandler;
     int n;
 
     // Search for given tag in ICC profile directory
@@ -1789,7 +1789,7 @@ cmsTagTypeSignature _cmsGetTagTrueType(cmsHPROFILE hProfile, cmsTagSignature sig
 cmsBool CMSEXPORT cmsWriteTag(cmsHPROFILE hProfile, cmsTagSignature sig, const void* data)
 {
     _cmsICCPROFILE* Icc = (_cmsICCPROFILE*) hProfile;
-    cmsTagTypeHandler* TypeHandler = NULL;
+    const cmsTagTypeHandler* TypeHandler = NULL;
     cmsTagTypeHandler LocalTypeHandler;
     cmsTagDescriptor* TagDescriptor = NULL;
     cmsTagTypeSignature Type;
@@ -1910,7 +1910,7 @@ cmsUInt32Number CMSEXPORT cmsReadRawTag(cmsHPROFILE hProfile, cmsTagSignature si
     void *Object;
     int i;
     cmsIOHANDLER* MemIO;
-    cmsTagTypeHandler* TypeHandler = NULL;
+    const cmsTagTypeHandler* TypeHandler = NULL;
     cmsTagTypeHandler LocalTypeHandler;
     cmsTagDescriptor* TagDescriptor = NULL;
     cmsUInt32Number rc;

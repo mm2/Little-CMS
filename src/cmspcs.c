@@ -705,22 +705,22 @@ cmsUInt32Number CMSEXPORT _cmsReasonableGridpointsByColorspace(cmsColorSpaceSign
 
 
 cmsBool  _cmsEndPointsBySpace(cmsColorSpaceSignature Space,
-                             cmsUInt16Number **White,
-                             cmsUInt16Number **Black,
+                             const cmsUInt16Number **White,
+                             const cmsUInt16Number **Black,
                              cmsUInt32Number *nOutputs)
 {
        // Only most common spaces
 
-       static cmsUInt16Number RGBblack[4]  = { 0, 0, 0 };
-       static cmsUInt16Number RGBwhite[4]  = { 0xffff, 0xffff, 0xffff };
-       static cmsUInt16Number CMYKblack[4] = { 0xffff, 0xffff, 0xffff, 0xffff };   // 400% of ink
-       static cmsUInt16Number CMYKwhite[4] = { 0, 0, 0, 0 };
-       static cmsUInt16Number LABblack[4]  = { 0, 0x8080, 0x8080 };               // V4 Lab encoding
-       static cmsUInt16Number LABwhite[4]  = { 0xFFFF, 0x8080, 0x8080 };
-       static cmsUInt16Number CMYblack[4]  = { 0xffff, 0xffff, 0xffff };
-       static cmsUInt16Number CMYwhite[4]  = { 0, 0, 0 };
-       static cmsUInt16Number Grayblack[4] = { 0 };
-       static cmsUInt16Number GrayWhite[4] = { 0xffff };
+       static const cmsUInt16Number RGBblack[4]  = { 0, 0, 0 };
+       static const cmsUInt16Number RGBwhite[4]  = { 0xffff, 0xffff, 0xffff };
+       static const cmsUInt16Number CMYKblack[4] = { 0xffff, 0xffff, 0xffff, 0xffff };   // 400% of ink
+       static const cmsUInt16Number CMYKwhite[4] = { 0, 0, 0, 0 };
+       static const cmsUInt16Number LABblack[4]  = { 0, 0x8080, 0x8080 };               // V4 Lab encoding
+       static const cmsUInt16Number LABwhite[4]  = { 0xFFFF, 0x8080, 0x8080 };
+       static const cmsUInt16Number CMYblack[4]  = { 0xffff, 0xffff, 0xffff };
+       static const cmsUInt16Number CMYwhite[4]  = { 0, 0, 0 };
+       static const cmsUInt16Number Grayblack[4] = { 0 };
+       static const cmsUInt16Number GrayWhite[4] = { 0xffff };
 
        switch (Space) {
 

@@ -838,7 +838,7 @@ typedef struct _cms_iccprofile_struct {
     cmsUInt32Number          TagOffsets[MAX_TABLE_TAG];
     cmsBool                  TagSaveAsRaw[MAX_TABLE_TAG];        // True to write uncooked
     void *                   TagPtrs[MAX_TABLE_TAG];
-    cmsTagTypeHandler*       TagTypeHandlers[MAX_TABLE_TAG];     // Same structure may be serialized on different types
+    const cmsTagTypeHandler* TagTypeHandlers[MAX_TABLE_TAG];     // Same structure may be serialized on different types
                                                                  // depending on profile version, so we keep track of the
                                                                  // type handler for each tag in the list.
     // Special
@@ -855,7 +855,7 @@ cmsBool              _cmsWriteHeader(_cmsICCPROFILE* Icc, cmsUInt32Number UsedSp
 int                  _cmsSearchTag(_cmsICCPROFILE* Icc, cmsTagSignature sig, cmsBool lFollowLinks);
 
 // Tag types
-cmsTagTypeHandler*   _cmsGetTagTypeHandler(cmsContext ContextID, cmsTagTypeSignature sig);
+const cmsTagTypeHandler*   _cmsGetTagTypeHandler(cmsContext ContextID, cmsTagTypeSignature sig);
 cmsTagTypeSignature  _cmsGetTagTrueType(cmsHPROFILE hProfile, cmsTagSignature sig);
 cmsTagDescriptor*    _cmsGetTagDescriptor(cmsContext ContextID, cmsTagSignature sig);
 
@@ -995,8 +995,8 @@ CMSCHECKPOINT cmsUInt16Number  CMSEXPORT _cmsQuantizeVal(cmsFloat64Number i, cms
 CMSAPI cmsUInt32Number  CMSEXPORT _cmsReasonableGridpointsByColorspace(cmsColorSpaceSignature Colorspace, cmsUInt32Number dwFlags);
 
 cmsBool          _cmsEndPointsBySpace(cmsColorSpaceSignature Space,
-                                      cmsUInt16Number **White,
-                                      cmsUInt16Number **Black,
+                                      const cmsUInt16Number **White,
+                                      const cmsUInt16Number **Black,
                                       cmsUInt32Number *nOutputs);
 
 CMSAPI cmsBool CMSEXPORT _cmsOptimizePipeline(cmsContext ContextID,

@@ -66,7 +66,7 @@ cmsBool  BlackPointAsDarkerColorant(cmsHPROFILE    hInput,
                                     cmsCIEXYZ* BlackPoint,
                                     cmsUInt32Number dwFlags)
 {
-    cmsUInt16Number *Black;
+    const cmsUInt16Number *Black;
     cmsHTRANSFORM xform;
     cmsColorSpaceSignature Space;
     cmsUInt32Number nChannels;

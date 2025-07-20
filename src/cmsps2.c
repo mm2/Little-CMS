@@ -573,8 +573,8 @@ int OutputValueSampler(CMSREGISTER const cmsUInt16Number In[], CMSREGISTER cmsUI
             if ((In[1] >= 0x7800 && In[1] <= 0x8800) &&
                 (In[2] >= 0x7800 && In[2] <= 0x8800)) {
 
-                cmsUInt16Number* Black;
-                cmsUInt16Number* White;
+                const cmsUInt16Number* Black;
+                const cmsUInt16Number* White;
                 cmsUInt32Number nOutputs;
 
                 if (!_cmsEndPointsBySpace(sc ->ColorSpace, &White, &Black, &nOutputs))

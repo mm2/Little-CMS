@@ -266,7 +266,7 @@ typedef struct {
         WRITEMODE as;      // How is supposed to be written
     } PROPERTY;
 
-static PROPERTY PredefinedProperties[] = {
+static const PROPERTY PredefinedProperties[] = {
 
         {"NUMBER_OF_FIELDS", WRITE_UNCOOKED},    // Required - NUMBER OF FIELDS
         {"NUMBER_OF_SETS",   WRITE_UNCOOKED},    // Required - NUMBER OF SETS
@@ -344,7 +344,7 @@ static PROPERTY PredefinedProperties[] = {
 
 
 // Predefined sample types on dataset
-static const char* PredefinedSampleID[] = {
+static const char* const PredefinedSampleID[] = {
         "SAMPLE_ID",      // Identifies sample that data represents
         "STRING",         // Identifies label, or other non-machine readable value.
                           // Value must begin and end with a " symbol

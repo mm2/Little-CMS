@@ -547,7 +547,7 @@ cmsBool  PatchLUT(cmsStage* CLUT, cmsUInt16Number At[], cmsUInt16Number Value[],
 
 // Auxiliary, to see if two values are equal or very different
 static
-cmsBool WhitesAreEqual(cmsUInt32Number n, cmsUInt16Number White1[], cmsUInt16Number White2[] )
+cmsBool WhitesAreEqual(cmsUInt32Number n, const cmsUInt16Number White1[], const cmsUInt16Number White2[] )
 {
     cmsUInt32Number i;
 
@@ -564,7 +564,7 @@ cmsBool WhitesAreEqual(cmsUInt32Number n, cmsUInt16Number White1[], cmsUInt16Num
 static
 cmsBool FixWhiteMisalignment(cmsPipeline* Lut, cmsColorSpaceSignature EntryColorSpace, cmsColorSpaceSignature ExitColorSpace)
 {
-    cmsUInt16Number *WhitePointIn, *WhitePointOut;
+    const cmsUInt16Number *WhitePointIn, *WhitePointOut;
     cmsUInt16Number  WhiteIn[cmsMAXCHANNELS], WhiteOut[cmsMAXCHANNELS], ObtainedOut[cmsMAXCHANNELS];
     cmsUInt32Number i, nOuts, nIns;
     cmsStage *PreLin = NULL, *CLUT = NULL, *PostLin = NULL;
@@ -1799,13 +1799,13 @@ typedef struct _cmsOptimizationCollection_st {
 
     _cmsOPToptimizeFn  OptimizePtr;
 
-    struct _cmsOptimizationCollection_st *Next;
+    const struct _cmsOptimizationCollection_st *Next;
 
 } _cmsOptimizationCollection;
 
 
 // The built-in list. We currently implement 4 types of optimizations. Joining of curves, matrix-shaper, linearization and resampling
-static _cmsOptimizationCollection DefaultOptimization[] = {
+static const _cmsOptimizationCollection DefaultOptimization[] = {
 
     { OptimizeByJoiningCurves,            &DefaultOptimization[1] },
     { OptimizeMatrixShaper,               &DefaultOptimization[2] },
@@ -1823,7 +1823,7 @@ void DupPluginOptimizationList(struct _cmsContext_struct* ctx,
                                const struct _cmsContext_struct* src)
 {
    _cmsOptimizationPluginChunkType newHead = { NULL };
-   _cmsOptimizationCollection*  entry;
+   const _cmsOptimizationCollection*  entry;
    _cmsOptimizationCollection*  Anterior = NULL;
    _cmsOptimizationPluginChunkType* head = (_cmsOptimizationPluginChunkType*) src->chunks[OptimizationPlugin];
 
@@ -1910,7 +1910,7 @@ cmsBool CMSEXPORT _cmsOptimizePipeline(cmsContext ContextID,
                              cmsUInt32Number* dwFlags)
 {
     _cmsOptimizationPluginChunkType* ctx = ( _cmsOptimizationPluginChunkType*) _cmsContextGetClientChunk(ContextID, OptimizationPlugin);
-    _cmsOptimizationCollection* Opts;
+    const _cmsOptimizationCollection* Opts;
     cmsBool AnySuccess = FALSE;
     cmsStage* mpe;
 

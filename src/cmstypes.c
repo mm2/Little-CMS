@@ -44,7 +44,7 @@
 typedef struct _cmsTagTypeLinkedList_st {
 
     cmsTagTypeHandler Handler;
-    struct _cmsTagTypeLinkedList_st* Next;
+    const struct _cmsTagTypeLinkedList_st* Next;
 
 } _cmsTagTypeLinkedList;
 
@@ -96,9 +96,9 @@ cmsBool RegisterTypesPlugin(cmsContext id, cmsPluginBase* Data, _cmsMemoryClient
 // Return handler for a given type or NULL if not found. Shared between normal types and MPE. It first tries the additions 
 // made by plug-ins and then the built-in defaults.
 static
-cmsTagTypeHandler* GetHandler(cmsTagTypeSignature sig, _cmsTagTypeLinkedList* PluginLinkedList, _cmsTagTypeLinkedList* DefaultLinkedList)
+const cmsTagTypeHandler* GetHandler(cmsTagTypeSignature sig, _cmsTagTypeLinkedList* PluginLinkedList, const _cmsTagTypeLinkedList* DefaultLinkedList)
 {
-    _cmsTagTypeLinkedList* pt;
+    const _cmsTagTypeLinkedList* pt;
 
     for (pt = PluginLinkedList;
          pt != NULL;
@@ -4701,7 +4701,7 @@ cmsBool  Type_MPEclut_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* 
 
 
 // This is the list of built-in MPE types
-static _cmsTagTypeLinkedList SupportedMPEtypes[] = {
+static const _cmsTagTypeLinkedList SupportedMPEtypes[] = {
 
 {{ (cmsTagTypeSignature) cmsSigBAcsElemType, NULL, NULL, NULL, NULL, NULL, 0 }, &SupportedMPEtypes[1] },   // Ignore those elements for now
 {{ (cmsTagTypeSignature) cmsSigEAcsElemType, NULL, NULL, NULL, NULL, NULL, 0 }, &SupportedMPEtypes[2] },   // (That's what the spec says)
@@ -4721,7 +4721,7 @@ cmsBool ReadMPEElem(struct _cms_typehandler_struct* self,
                     cmsUInt32Number SizeOfTag)
 {
     cmsStageSignature ElementSig;
-    cmsTagTypeHandler* TypeHandler;
+    const cmsTagTypeHandler* TypeHandler;
     cmsUInt32Number nItems;
     cmsPipeline *NewLUT = (cmsPipeline *) Cargo;
     _cmsTagTypePluginChunkType* MPETypePluginChunk  = ( _cmsTagTypePluginChunkType*) _cmsContextGetClientChunk(self->ContextID, MPEPlugin);
@@ -4817,7 +4817,7 @@ cmsBool Type_MPE_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, v
     cmsStageSignature ElementSig;
     cmsPipeline* Lut = (cmsPipeline*) Ptr;
     cmsStage* Elem = Lut ->Elements;
-    cmsTagTypeHandler* TypeHandler;
+    const cmsTagTypeHandler* TypeHandler;
     _cmsTagTypePluginChunkType* MPETypePluginChunk  = ( _cmsTagTypePluginChunkType*) _cmsContextGetClientChunk(self->ContextID, MPEPlugin);
 
     BaseOffset = io ->Tell(io) - sizeof(_cmsTagBase);
@@ -5934,7 +5934,7 @@ void DupTagTypeList(struct _cmsContext_struct* ctx,
                     int loc)
 {
    _cmsTagTypePluginChunkType newHead = { NULL };
-   _cmsTagTypeLinkedList*  entry;
+   const _cmsTagTypeLinkedList*  entry;
    _cmsTagTypeLinkedList*  Anterior = NULL;
    _cmsTagTypePluginChunkType* head = (_cmsTagTypePluginChunkType*) src->chunks[loc];
 
@@ -6006,7 +6006,7 @@ cmsBool  _cmsRegisterMultiProcessElementPlugin(cmsContext id, cmsPluginBase* Dat
 
 
 // Wrapper for tag types
-cmsTagTypeHandler* _cmsGetTagTypeHandler(cmsContext ContextID, cmsTagTypeSignature sig)
+const cmsTagTypeHandler* _cmsGetTagTypeHandler(cmsContext ContextID, cmsTagTypeSignature sig)
 {
     _cmsTagTypePluginChunkType* ctx = ( _cmsTagTypePluginChunkType*) _cmsContextGetClientChunk(ContextID, TagTypePlugin);
 

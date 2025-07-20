@@ -103,7 +103,7 @@ void DupPluginIntentsList(struct _cmsContext_struct* ctx,
                                                const struct _cmsContext_struct* src)
 {
    _cmsIntentsPluginChunkType newHead = { NULL };
-   cmsIntentsList*  entry;
+   const cmsIntentsList*  entry;
    cmsIntentsList*  Anterior = NULL;
    _cmsIntentsPluginChunkType* head = (_cmsIntentsPluginChunkType*) src->chunks[IntentPlugin];
 
@@ -148,10 +148,10 @@ void  _cmsAllocIntentsPluginChunk(struct _cmsContext_struct* ctx,
 
 // Search the list for a suitable intent. Returns NULL if not found
 static
-cmsIntentsList* SearchIntent(cmsContext ContextID, cmsUInt32Number Intent)
+const cmsIntentsList* SearchIntent(cmsContext ContextID, cmsUInt32Number Intent)
 {
     _cmsIntentsPluginChunkType* ctx = ( _cmsIntentsPluginChunkType*) _cmsContextGetClientChunk(ContextID, IntentPlugin);
-    cmsIntentsList* pt;
+    const cmsIntentsList* pt;
 
     for (pt = ctx -> Intents; pt != NULL; pt = pt -> Next)
         if (pt ->Intent == Intent) return pt;
@@ -1108,7 +1108,7 @@ cmsPipeline* _cmsLinkProfiles(cmsContext     ContextID,
                               cmsUInt32Number dwFlags)
 {
     cmsUInt32Number i;
-    cmsIntentsList* Intent;
+    const cmsIntentsList* Intent;
 
     // Make sure a reasonable number of profiles is provided
     if (nProfiles <= 0 || nProfiles > 255) {
