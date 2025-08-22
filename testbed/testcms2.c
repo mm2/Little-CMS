@@ -5917,7 +5917,7 @@ cmsInt32Number Compare8bitXFORM(cmsHTRANSFORM xform1, cmsHTRANSFORM xform2, cmsI
 
 // Check a linear xform
 static
-cmsInt32Number Check16linearXFORM(cmsHTRANSFORM xform, cmsInt32Number nChan)
+cmsInt32Number Check16linearXFORMPrecision(cmsHTRANSFORM xform, cmsInt32Number nChan, cmsInt32Number precision)
 {
     cmsInt32Number n2, i, j;
     cmsUInt16Number Inw[cmsMAXCHANNELS], Outw[cmsMAXCHANNELS];
@@ -5937,8 +5937,7 @@ cmsInt32Number Check16linearXFORM(cmsHTRANSFORM xform, cmsInt32Number nChan)
         }
 
 
-   // We allow 2 contone of difference on 16 bits
-    if (n2 > 0x200) {
+    if (n2 > precision) {
 
         Fail("Differences too big (%x)", n2);
         return 0;
@@ -5946,6 +5945,13 @@ cmsInt32Number Check16linearXFORM(cmsHTRANSFORM xform, cmsInt32Number nChan)
     }
 
     return 1;
+}
+
+static
+cmsInt32Number Check16linearXFORM(cmsHTRANSFORM xform, cmsInt32Number nChan)
+{
+    // We allow 2 contone of difference on 16 bits by default
+    return Check16linearXFORMPrecision(xform, nChan, 0x200);
 }
 
 static
@@ -6843,6 +6849,44 @@ cmsInt32Number CheckProofingXFORM16(void)
     return rc;
 }
 
+
+static
+cmsInt32Number CheckProofingXFORM16_v2_output_no_chad(void)
+{
+    cmsHPROFILE hDisplayProfile;
+    cmsHPROFILE hProofingProfile;
+    cmsHTRANSFORM xform;
+    cmsInt32Number rc;
+
+    hDisplayProfile  = cmsOpenProfileFromFileTHR(DbgThread(), "reference-v4-d65-chad.icc", "r");
+    hProofingProfile  = cmsOpenProfileFromFileTHR(DbgThread(), "output-v2-d65-no-chad.icc", "r");
+    xform =  cmsCreateProofingTransformTHR(DbgThread(), hDisplayProfile, TYPE_RGB_16, hDisplayProfile, TYPE_RGB_16, hProofingProfile,
+                                           INTENT_RELATIVE_COLORIMETRIC, INTENT_ABSOLUTE_COLORIMETRIC, cmsFLAGS_SOFTPROOFING|cmsFLAGS_NOCACHE);
+    cmsCloseProfile(hDisplayProfile);
+    cmsCloseProfile(hProofingProfile);
+    rc = Check16linearXFORMPrecision(xform, 3, 0);
+    cmsDeleteTransform(xform);
+    return rc;
+}
+
+static
+cmsInt32Number CheckProofingXFORM16_v2_display_no_chad(void)
+{
+    cmsHPROFILE hDisplayProfile;
+    cmsHPROFILE hProofingProfile;
+    cmsHTRANSFORM xform;
+    cmsInt32Number rc;
+
+    hDisplayProfile  = cmsOpenProfileFromFileTHR(DbgThread(), "reference-v4-d65-chad.icc", "r");
+    hProofingProfile  = cmsOpenProfileFromFileTHR(DbgThread(), "display-v2-d65-no-chad.icc", "r");
+    xform =  cmsCreateProofingTransformTHR(DbgThread(), hDisplayProfile, TYPE_RGB_16, hDisplayProfile, TYPE_RGB_16, hProofingProfile,
+                                           INTENT_RELATIVE_COLORIMETRIC, INTENT_ABSOLUTE_COLORIMETRIC, cmsFLAGS_SOFTPROOFING|cmsFLAGS_NOCACHE);
+    cmsCloseProfile(hDisplayProfile);
+    cmsCloseProfile(hProofingProfile);
+    rc = Check16linearXFORMPrecision(xform, 3, 0);
+    cmsDeleteTransform(xform);
+    return rc;
+}
 
 static
 cmsInt32Number CheckGamutCheck(void)
@@ -9759,6 +9803,9 @@ int main(int argc, char* argv[])
 
     Check("Matrix-shaper proofing transform (float)",   CheckProofingXFORMFloat);
     Check("Matrix-shaper proofing transform (16 bits)",  CheckProofingXFORM16);
+    Check("Matrix-shaper proofing transform V2 output profile no CHAD (16 bits)",  CheckProofingXFORM16_v2_output_no_chad);
+    Check("Matrix-shaper proofing transform V2 display profile no CHAD (16 bits)",  CheckProofingXFORM16_v2_display_no_chad);
+
 
     Check("Gamut check", CheckGamutCheck);
 
