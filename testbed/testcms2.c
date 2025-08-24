@@ -8492,6 +8492,41 @@ int Check_sRGB_Rountrips(void)
     return 1;
 }
 
+
+static
+int CheckCenteringOfLab(void)
+{
+    cmsHPROFILE hProPhoto = cmsOpenProfileFromFile("test4.icc", "r");
+    cmsHPROFILE hLab = cmsCreateLab4Profile(NULL);
+
+    cmsHTRANSFORM xform1 = cmsCreateTransform(hProPhoto, TYPE_BGR_16, hLab, TYPE_Lab_16, INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_HIGHRESPRECALC);
+    cmsHTRANSFORM xform2 = cmsCreateTransform(hLab, TYPE_Lab_16, hProPhoto, TYPE_BGR_16, INTENT_RELATIVE_COLORIMETRIC, cmsFLAGS_HIGHRESPRECALC);
+
+    cmsUInt16Number bgr[3] = { 0xffff, 0xffff, 0xffff };
+    cmsUInt16Number bgr2[3];
+    cmsUInt16Number lab[3];
+
+    cmsDoTransform(xform1, bgr, lab, 1);
+    cmsDoTransform(xform2, lab, bgr2, 1);
+
+    if ((0xffff - bgr2[0]) > 5 ||
+        (0xffff - bgr2[1]) > 5 ||
+        (0xffff - bgr2[2]) > 5)
+    {
+        printf("Centering of Lab16 failed. Got %x %x %x\n", bgr2[0], bgr2[1], bgr2[2]);
+        return 0;
+    }
+
+
+    cmsCloseProfile(hLab);
+    cmsCloseProfile(hProPhoto);
+    cmsDeleteTransform(xform1);
+    cmsDeleteTransform(xform2);
+
+    return 1;
+}
+
+
 /**
 * Check OKLab colorspace
 */
@@ -9803,6 +9838,7 @@ int main(int argc, char* argv[])
     Check("sRGB round-trips", Check_sRGB_Rountrips);
     Check("OkLab color space", Check_OkLab);
     Check("OkLab color space (2)", Check_OkLab2);
+    Check("centering of Lab16", CheckCenteringOfLab);
     Check("Gamma space detection", CheckGammaSpaceDetection);
     Check("Unbounded mode w/ integer output", CheckIntToFloatTransform);
     Check("Corrupted built-in by using cmsWriteRawTag", CheckInducedCorruption);
