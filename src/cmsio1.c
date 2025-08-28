@@ -78,7 +78,8 @@ cmsBool  _cmsReadMediaWhitePoint(cmsCIEXYZ* Dest, cmsHPROFILE hProfile)
     // V2 display profiles should give D50
     if (cmsGetEncodedICCversion(hProfile) < 0x4000000) {
 
-        if (cmsGetDeviceClass(hProfile) == cmsSigDisplayClass) {
+        if (cmsGetDeviceClass(hProfile) == cmsSigDisplayClass ||
+            cmsGetDeviceClass(hProfile) == cmsSigOutputClass) {
             *Dest = *cmsD50_XYZ();
             return TRUE;
         }
@@ -110,7 +111,8 @@ cmsBool  _cmsReadCHAD(cmsMAT3* Dest, cmsHPROFILE hProfile)
     // V2 display profiles should give D50
     if (cmsGetEncodedICCversion(hProfile) < 0x4000000) {
 
-        if (cmsGetDeviceClass(hProfile) == cmsSigDisplayClass) {
+        if (cmsGetDeviceClass(hProfile) == cmsSigDisplayClass ||
+            cmsGetDeviceClass(hProfile) == cmsSigOutputClass) {
 
             cmsCIEXYZ* White = (cmsCIEXYZ*) cmsReadTag(hProfile, cmsSigMediaWhitePointTag);
 
