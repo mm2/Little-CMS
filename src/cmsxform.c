@@ -1156,6 +1156,11 @@ cmsHTRANSFORM CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
         if (hGamutProfile == NULL) dwFlags &= ~cmsFLAGS_GAMUTCHECK;
     }
 
+    if ((dwFlags & cmsFLAGS_GAMUTCHECK) && (nGamutPCSposition <= 0 || nGamutPCSposition >= nProfiles - 1)) {
+        cmsSignalError(ContextID, cmsERROR_RANGE, "Wrong gamut PCS position '%d'", nGamutPCSposition);
+        return NULL;
+    }
+
     // On floating point transforms, inhibit cache
     if (_cmsFormatterIsFloat(InputFormat) || _cmsFormatterIsFloat(OutputFormat))
         dwFlags |= cmsFLAGS_NOCACHE;
