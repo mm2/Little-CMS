@@ -207,7 +207,7 @@ CXXCPP = g++ -E
 CXXDEPMODE = depmode=gcc3
 CXXFLAGS = -g -O2 -pthread
 CYGPATH_W = echo
-DEFS = -DPACKAGE_NAME=\"lcms2\" -DPACKAGE_TARNAME=\"lcms2\" -DPACKAGE_VERSION=\"2.17\" -DPACKAGE_STRING=\"lcms2\ 2.17\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DHAVE_STDIO_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_STRINGS_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_DLFCN_H=1 -DLT_OBJDIR=\".libs/\" -DHAVE_FUNC_ATTRIBUTE_VISIBILITY=1 -DHAVE_GMTIME_R=1 -DHAVE_PTHREAD_PRIO_INHERIT=1 -DHAVE_PTHREAD=1 -DHasTHREADS=1 -DHasJPEG=1 -DHasZLIB=1 -DHasTIFF=1 -DHAVE_TIFFCONF_H=1
+DEFS = -DPACKAGE_NAME=\"lcms2\" -DPACKAGE_TARNAME=\"lcms2\" -DPACKAGE_VERSION=\"2.18\" -DPACKAGE_STRING=\"lcms2\ 2.18\" -DPACKAGE_BUGREPORT=\"\" -DPACKAGE_URL=\"\" -DHAVE_STDIO_H=1 -DHAVE_STDLIB_H=1 -DHAVE_STRING_H=1 -DHAVE_INTTYPES_H=1 -DHAVE_STDINT_H=1 -DHAVE_STRINGS_H=1 -DHAVE_SYS_STAT_H=1 -DHAVE_SYS_TYPES_H=1 -DHAVE_UNISTD_H=1 -DSTDC_HEADERS=1 -DHAVE_DLFCN_H=1 -DLT_OBJDIR=\".libs/\" -DHAVE_FUNC_ATTRIBUTE_VISIBILITY=1 -DHAVE_GMTIME_R=1 -DHAVE_PTHREAD_PRIO_INHERIT=1 -DHAVE_PTHREAD=1 -DHasTHREADS=1 -DHasJPEG=1 -DHasZLIB=1 -DHasTIFF=1 -DHAVE_TIFFCONF_H=1
 DEPDIR = .deps
 DLLTOOL = false
 DSYMUTIL = 
@@ -233,7 +233,7 @@ LDFLAGS =
 LIBOBJS = 
 LIBRARY_AGE = 0
 LIBRARY_CURRENT = 2
-LIBRARY_REVISION = 17
+LIBRARY_REVISION = 18
 LIBS = 
 LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIBTOOL_DEPS = .//ltmain.sh
@@ -247,7 +247,7 @@ LIPO =
 LN_S = ln -s
 LTLIBOBJS = 
 LT_SYS_LIBRARY_PATH = 
-MAINT = #
+MAINT = 
 MAKEINFO = ${SHELL} '/home/marti/Documents/GitHub/Little-CMS/missing' makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /usr/bin/mkdir -p
@@ -260,10 +260,10 @@ OTOOL64 =
 PACKAGE = lcms2
 PACKAGE_BUGREPORT = 
 PACKAGE_NAME = lcms2
-PACKAGE_STRING = lcms2 2.17
+PACKAGE_STRING = lcms2 2.18
 PACKAGE_TARNAME = lcms2
 PACKAGE_URL = 
-PACKAGE_VERSION = 2.17
+PACKAGE_VERSION = 2.18
 PATH_SEPARATOR = :
 PTHREAD_CC = gcc
 PTHREAD_CFLAGS = -pthread
@@ -275,7 +275,7 @@ SET_MAKE =
 SHELL = /bin/sh
 STRIP = strip
 TIFFICC_DEPLIBS = -ltiff -ljpeg -lz -lm -lpthread
-VERSION = 2.17
+VERSION = 2.18
 abs_builddir = /home/marti/Documents/GitHub/Little-CMS/plugins
 abs_srcdir = /home/marti/Documents/GitHub/Little-CMS/plugins
 abs_top_builddir = /home/marti/Documents/GitHub/Little-CMS
@@ -338,7 +338,7 @@ SUBDIRS = fast_float threaded
 all: all-recursive
 
 .SUFFIXES:
-$(srcdir)/Makefile.in: # $(srcdir)/Makefile.am  $(am__configure_deps)
+$(srcdir)/Makefile.in:  $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
 	    *$$dep*) \
@@ -362,9 +362,9 @@ Makefile: $(srcdir)/Makefile.in $(top_builddir)/config.status
 $(top_builddir)/config.status: $(top_srcdir)/configure $(CONFIG_STATUS_DEPENDENCIES)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 
-$(top_srcdir)/configure: # $(am__configure_deps)
+$(top_srcdir)/configure:  $(am__configure_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
-$(ACLOCAL_M4): # $(am__aclocal_m4_deps)
+$(ACLOCAL_M4):  $(am__aclocal_m4_deps)
 	cd $(top_builddir) && $(MAKE) $(AM_MAKEFLAGS) am--refresh
 $(am__aclocal_m4_deps):
 
