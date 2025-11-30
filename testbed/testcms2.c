@@ -8914,7 +8914,7 @@ int CheckMixedRawAndCooked(void)
         _cmsTagBase base;
         cmsUInt32Number data;
 
-    } buffer = { { (cmsTagTypeSignature) cmsSigTechnologyTag, 0 }, cmsSigFilmScanner };
+    } buffer = { { (cmsTagTypeSignature) cmsSigTechnologyTag, {0} }, cmsSigFilmScanner };
 
     cmsHPROFILE hProfile = cmsCreateProfilePlaceholder(0);   
     cmsWriteRawTag(hProfile, cmsSigTechnologyTag, &buffer, sizeof buffer);
