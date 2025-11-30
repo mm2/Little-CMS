@@ -83,7 +83,13 @@
 		4198300D2EDC66D700E88CD7 /* liblcms2.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 418B0A3124C5E19500DF2C21 /* liblcms2.a */; };
 		419830262EDC887300E88CD7 /* fast_float_lab.c in Sources */ = {isa = PBXBuildFile; fileRef = 419830252EDC887300E88CD7 /* fast_float_lab.c */; };
 		419830352EDC8AC800E88CD7 /* threaded_testbed.c in Sources */ = {isa = PBXBuildFile; fileRef = 419830342EDC8AC800E88CD7 /* threaded_testbed.c */; };
-		4198303E2EDC8BC000E88CD7 /* libthreaded_plugin.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4198303A2EDC8B1A00E88CD7 /* libthreaded_plugin.a */; };
+		419830412EDC8CF800E88CD7 /* libthreaded_plugin.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4198303A2EDC8B1A00E88CD7 /* libthreaded_plugin.a */; };
+		419830492EDC8DC900E88CD7 /* threaded_core.c in Sources */ = {isa = PBXBuildFile; fileRef = 419830442EDC8DC900E88CD7 /* threaded_core.c */; };
+		4198304A2EDC8DC900E88CD7 /* threaded_scheduler.c in Sources */ = {isa = PBXBuildFile; fileRef = 419830472EDC8DC900E88CD7 /* threaded_scheduler.c */; };
+		4198304B2EDC8DC900E88CD7 /* threaded_main.c in Sources */ = {isa = PBXBuildFile; fileRef = 419830462EDC8DC900E88CD7 /* threaded_main.c */; };
+		4198304C2EDC8DC900E88CD7 /* threaded_split.c in Sources */ = {isa = PBXBuildFile; fileRef = 419830482EDC8DC900E88CD7 /* threaded_split.c */; };
+		4198304D2EDC8DC900E88CD7 /* threaded_internal.h in Headers */ = {isa = PBXBuildFile; fileRef = 419830452EDC8DC900E88CD7 /* threaded_internal.h */; };
+		419830782EDC8ECC00E88CD7 /* lcms2_threaded.h in Headers */ = {isa = PBXBuildFile; fileRef = 419830772EDC8ECC00E88CD7 /* lcms2_threaded.h */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -157,7 +163,7 @@
 			remoteGlobalIDString = 418B0A3024C5E19500DF2C21;
 			remoteInfo = lcms2;
 		};
-		4198303F2EDC8BC000E88CD7 /* PBXContainerItemProxy */ = {
+		419830422EDC8CF800E88CD7 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 418B0A2924C5E19500DF2C21 /* Project object */;
 			proxyType = 1;
@@ -324,14 +330,14 @@
 		418B0B4824C5EC2A00DF2C21 /* zoo_icc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = zoo_icc.c; path = ../../../testbed/zoo_icc.c; sourceTree = SOURCE_ROOT; };
 		41982FF62EDC65BC00E88CD7 /* threaded_plugin_testbed */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = threaded_plugin_testbed; sourceTree = BUILT_PRODUCTS_DIR; };
 		419830252EDC887300E88CD7 /* fast_float_lab.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = fast_float_lab.c; path = "/Users/marti/Documents/GitHub/Little-CMS/plugins/fast_float/src/fast_float_lab.c"; sourceTree = "<absolute>"; };
-		4198302B2EDC89B500E88CD7 /* threaded_core.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = threaded_core.c; path = "/Users/marti/Documents/GitHub/Little-CMS/plugins/threaded/src/threaded_core.c"; sourceTree = "<absolute>"; };
-		4198302C2EDC89B500E88CD7 /* threaded_internal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = threaded_internal.h; path = "/Users/marti/Documents/GitHub/Little-CMS/plugins/threaded/src/threaded_internal.h"; sourceTree = "<absolute>"; };
-		4198302D2EDC89B500E88CD7 /* threaded_main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = threaded_main.c; path = "/Users/marti/Documents/GitHub/Little-CMS/plugins/threaded/src/threaded_main.c"; sourceTree = "<absolute>"; };
-		4198302E2EDC89B500E88CD7 /* threaded_scheduler.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = threaded_scheduler.c; path = "/Users/marti/Documents/GitHub/Little-CMS/plugins/threaded/src/threaded_scheduler.c"; sourceTree = "<absolute>"; };
-		4198302F2EDC89B500E88CD7 /* threaded_split.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = threaded_split.c; path = "/Users/marti/Documents/GitHub/Little-CMS/plugins/threaded/src/threaded_split.c"; sourceTree = "<absolute>"; };
-		419830302EDC89DC00E88CD7 /* lcms2_threaded.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = lcms2_threaded.h; path = "/Users/marti/Documents/GitHub/Little-CMS/plugins/threaded/include/lcms2_threaded.h"; sourceTree = "<absolute>"; };
 		419830342EDC8AC800E88CD7 /* threaded_testbed.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = threaded_testbed.c; path = "/Users/marti/Documents/GitHub/Little-CMS/plugins/threaded/testbed/threaded_testbed.c"; sourceTree = "<absolute>"; };
 		4198303A2EDC8B1A00E88CD7 /* libthreaded_plugin.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = libthreaded_plugin.a; sourceTree = BUILT_PRODUCTS_DIR; };
+		419830442EDC8DC900E88CD7 /* threaded_core.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = threaded_core.c; path = "/Users/marti/Documents/GitHub/Little-CMS/plugins/threaded/src/threaded_core.c"; sourceTree = "<absolute>"; };
+		419830452EDC8DC900E88CD7 /* threaded_internal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = threaded_internal.h; path = "/Users/marti/Documents/GitHub/Little-CMS/plugins/threaded/src/threaded_internal.h"; sourceTree = "<absolute>"; };
+		419830462EDC8DC900E88CD7 /* threaded_main.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = threaded_main.c; path = "/Users/marti/Documents/GitHub/Little-CMS/plugins/threaded/src/threaded_main.c"; sourceTree = "<absolute>"; };
+		419830472EDC8DC900E88CD7 /* threaded_scheduler.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = threaded_scheduler.c; path = "/Users/marti/Documents/GitHub/Little-CMS/plugins/threaded/src/threaded_scheduler.c"; sourceTree = "<absolute>"; };
+		419830482EDC8DC900E88CD7 /* threaded_split.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = threaded_split.c; path = "/Users/marti/Documents/GitHub/Little-CMS/plugins/threaded/src/threaded_split.c"; sourceTree = "<absolute>"; };
+		419830772EDC8ECC00E88CD7 /* lcms2_threaded.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = lcms2_threaded.h; path = "/Users/marti/Documents/GitHub/Little-CMS/plugins/threaded/include/lcms2_threaded.h"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -411,7 +417,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				4198300D2EDC66D700E88CD7 /* liblcms2.a in Frameworks */,
-				4198303E2EDC8BC000E88CD7 /* libthreaded_plugin.a in Frameworks */,
+				419830412EDC8CF800E88CD7 /* libthreaded_plugin.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -428,8 +434,8 @@
 		418B0A2824C5E19500DF2C21 = {
 			isa = PBXGroup;
 			children = (
+				419830762EDC8E3400E88CD7 /* threaded_plugin */,
 				419830332EDC8A9C00E88CD7 /* threaded_plugin_testbed */,
-				4198302A2EDC897700E88CD7 /* threaded_plugin */,
 				418B0AB124C5E39A00DF2C21 /* fast_float_plugin */,
 				418B0A7324C5E1FE00DF2C21 /* include */,
 				418B0A6C24C5E1CE00DF2C21 /* src */,
@@ -617,25 +623,25 @@
 			path = ../../../utils/jpgicc;
 			sourceTree = "<group>";
 		};
-		4198302A2EDC897700E88CD7 /* threaded_plugin */ = {
-			isa = PBXGroup;
-			children = (
-				419830302EDC89DC00E88CD7 /* lcms2_threaded.h */,
-				4198302B2EDC89B500E88CD7 /* threaded_core.c */,
-				4198302C2EDC89B500E88CD7 /* threaded_internal.h */,
-				4198302D2EDC89B500E88CD7 /* threaded_main.c */,
-				4198302E2EDC89B500E88CD7 /* threaded_scheduler.c */,
-				4198302F2EDC89B500E88CD7 /* threaded_split.c */,
-			);
-			path = threaded_plugin;
-			sourceTree = "<group>";
-		};
 		419830332EDC8A9C00E88CD7 /* threaded_plugin_testbed */ = {
 			isa = PBXGroup;
 			children = (
 				419830342EDC8AC800E88CD7 /* threaded_testbed.c */,
 			);
 			path = threaded_plugin_testbed;
+			sourceTree = "<group>";
+		};
+		419830762EDC8E3400E88CD7 /* threaded_plugin */ = {
+			isa = PBXGroup;
+			children = (
+				419830772EDC8ECC00E88CD7 /* lcms2_threaded.h */,
+				419830442EDC8DC900E88CD7 /* threaded_core.c */,
+				419830452EDC8DC900E88CD7 /* threaded_internal.h */,
+				419830462EDC8DC900E88CD7 /* threaded_main.c */,
+				419830472EDC8DC900E88CD7 /* threaded_scheduler.c */,
+				419830482EDC8DC900E88CD7 /* threaded_split.c */,
+			);
+			path = threaded_plugin;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -664,6 +670,8 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				4198304D2EDC8DC900E88CD7 /* threaded_internal.h in Headers */,
+				419830782EDC8ECC00E88CD7 /* lcms2_threaded.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -844,7 +852,7 @@
 			);
 			dependencies = (
 				4198300F2EDC66D700E88CD7 /* PBXTargetDependency */,
-				419830402EDC8BC000E88CD7 /* PBXTargetDependency */,
+				419830432EDC8CF800E88CD7 /* PBXTargetDependency */,
 			);
 			name = threaded_plugin_testbed;
 			packageProductDependencies = (
@@ -1082,6 +1090,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				419830492EDC8DC900E88CD7 /* threaded_core.c in Sources */,
+				4198304A2EDC8DC900E88CD7 /* threaded_scheduler.c in Sources */,
+				4198304B2EDC8DC900E88CD7 /* threaded_main.c in Sources */,
+				4198304C2EDC8DC900E88CD7 /* threaded_split.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1138,10 +1150,10 @@
 			target = 418B0A3024C5E19500DF2C21 /* lcms2 */;
 			targetProxy = 4198300E2EDC66D700E88CD7 /* PBXContainerItemProxy */;
 		};
-		419830402EDC8BC000E88CD7 /* PBXTargetDependency */ = {
+		419830432EDC8CF800E88CD7 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 419830392EDC8B1A00E88CD7 /* threaded_plugin */;
-			targetProxy = 4198303F2EDC8BC000E88CD7 /* PBXContainerItemProxy */;
+			targetProxy = 419830422EDC8CF800E88CD7 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -1533,7 +1545,7 @@
 				EXECUTABLE_PREFIX = lib;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.1;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 			};
@@ -1550,7 +1562,7 @@
 				EXECUTABLE_PREFIX = lib;
 				GCC_C_LANGUAGE_STANDARD = gnu17;
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
-				MACOSX_DEPLOYMENT_TARGET = 26.1;
+				MACOSX_DEPLOYMENT_TARGET = "$(RECOMMENDED_MACOSX_DEPLOYMENT_TARGET)";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 			};
