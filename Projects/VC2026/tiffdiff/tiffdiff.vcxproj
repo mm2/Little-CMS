@@ -194,6 +194,7 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
       <AdditionalDependencies>libtiff.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -272,6 +273,7 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
       <AdditionalDependencies>libtiff.lib;%(AdditionalDependencies)</AdditionalDependencies>

@@ -169,7 +169,7 @@
       <FunctionLevelLinking>
       </FunctionLevelLinking>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <CompileAs>Default</CompileAs>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -246,6 +246,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <EnableParallelCodeGeneration>true</EnableParallelCodeGeneration>
       <StringPooling>true</StringPooling>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
   </ItemDefinitionGroup>
   <ItemGroup>

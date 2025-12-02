@@ -194,6 +194,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
       <AdditionalDependencies>tiff.lib;jpeg-static.lib;zlibstatic.lib;webp.lib;webpdecoder.lib;webpdemux.lib;webpmux.lib;%(AdditionalDependencies)</AdditionalDependencies>
@@ -270,6 +271,7 @@
       <WarningLevel>Level4</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
+      <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
       <AdditionalDependencies>tiff.lib;jpeg-static.lib;zlibstatic.lib;webp.lib;webpdecoder.lib;webpdemux.lib;webpmux.lib;%(AdditionalDependencies)</AdditionalDependencies>
