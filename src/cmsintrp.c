@@ -957,7 +957,7 @@ void Eval4Inputs(CMSREGISTER const cmsUInt16Number Input[],
 
         Rest = c1 * rx + c2 * ry + c3 * rz;
 
-        Tmp1[OutChan] = (cmsUInt16Number)(c0 + ROUND_FIXED_TO_INT(_cmsToFixedDomain(Rest)));
+        Tmp1[OutChan] = (cmsUInt16Number)c0 + ((Rest + (Rest >> 16)) >> 16);
     }
 
 
@@ -1021,7 +1021,7 @@ void Eval4Inputs(CMSREGISTER const cmsUInt16Number Input[],
 
         Rest = c1 * rx + c2 * ry + c3 * rz;
 
-        Tmp2[OutChan] = (cmsUInt16Number) (c0 + ROUND_FIXED_TO_INT(_cmsToFixedDomain(Rest)));
+        Tmp2[OutChan] = (cmsUInt16Number) c0 + ((Rest + (Rest >> 16)) >> 16);
     }
 
 
