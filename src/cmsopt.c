@@ -789,6 +789,11 @@ Error:
             Dest ->OutputChannels,
             DataSetOut);
 
+        if (p16 == NULL) {
+            cmsPipelineFree(Dest);
+            return FALSE;
+        }
+
         _cmsPipelineSetOptimizationParameters(Dest, PrelinEval16, (void*) p16, PrelinOpt16free, Prelin16dup);
     }
 
