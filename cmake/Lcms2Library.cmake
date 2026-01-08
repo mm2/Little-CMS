@@ -64,10 +64,11 @@ function(_lcms2_apply_common_settings tgt)
     target_compile_options(${tgt} PRIVATE "-fvisibility=hidden")
   endif()
 
-  # libm (primarily needed on Linux).
+  # libm (primarily needed on Linux). Make it PUBLIC so dependents (tools)
+  # also link it, matching autotools *_DEPLIBS behavior.
   find_library(_lcms2_math_lib m)
   if(_lcms2_math_lib)
-    target_link_libraries(${tgt} PRIVATE "${_lcms2_math_lib}")
+    target_link_libraries(${tgt} PUBLIC "${_lcms2_math_lib}")
   endif()
 endfunction()
 
@@ -87,9 +88,10 @@ function(_lcms2_apply_thread_settings tgt)
   if(Threads_FOUND)
     target_compile_definitions(${tgt} PRIVATE HasTHREADS=1)
     if(TARGET Threads::Threads)
-      target_link_libraries(${tgt} PRIVATE Threads::Threads)
+      # PUBLIC so dependents also pick up pthread flags/libs when needed.
+      target_link_libraries(${tgt} PUBLIC Threads::Threads)
     elseif(CMAKE_THREAD_LIBS_INIT)
-      target_link_libraries(${tgt} PRIVATE "${CMAKE_THREAD_LIBS_INIT}")
+      target_link_libraries(${tgt} PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
     endif()
   else()
     target_compile_definitions(${tgt} PRIVATE HasTHREADS=0)
