@@ -194,6 +194,7 @@ cmsBool BlackPointUsingPerceptualBlack(cmsCIEXYZ* BlackPoint, cmsHPROFILE hProfi
 cmsBool CMSEXPORT cmsDetectBlackPoint(cmsCIEXYZ* BlackPoint, cmsHPROFILE hProfile, cmsUInt32Number Intent, cmsUInt32Number dwFlags)
 {
     cmsProfileClassSignature devClass;
+    cmsColorSpaceSignature ColorSpace;
 
     // Make sure the device class is adequate
     devClass = cmsGetDeviceClass(hProfile);
@@ -267,9 +268,10 @@ cmsBool CMSEXPORT cmsDetectBlackPoint(cmsCIEXYZ* BlackPoint, cmsHPROFILE hProfil
     // That is about v2 profiles.
 
     // If output profile, discount ink-limiting and that's all
+    ColorSpace = cmsGetColorSpace(hProfile);
     if (Intent == INTENT_RELATIVE_COLORIMETRIC &&
         (cmsGetDeviceClass(hProfile) == cmsSigOutputClass) &&
-        (cmsGetColorSpace(hProfile)  == cmsSigCmykData))
+        (cmsDiscountRelativeInkLimiting(ColorSpace)))
         return BlackPointUsingPerceptualBlack(BlackPoint, hProfile);
 
     // Nope, compute BP using current intent.
