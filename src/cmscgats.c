@@ -3251,13 +3251,17 @@ cmsHPROFILE CMSEXPORT cmsCreateDeviceLinkFromCubeFileTHR(cmsContext ContextID, c
 
     // Populates the pipeline
     if (Shaper != NULL) {
-        if (!cmsPipelineInsertStage(Pipeline, cmsAT_BEGIN, Shaper))
+        if (!cmsPipelineInsertStage(Pipeline, cmsAT_BEGIN, Shaper)) {
+            cmsStageFree(Shaper);
             goto Done;
+        }
     }
 
     if (CLUT != NULL) {
-        if (!cmsPipelineInsertStage(Pipeline, cmsAT_END, CLUT))
+        if (!cmsPipelineInsertStage(Pipeline, cmsAT_END, CLUT)) {
+            cmsStageFree(CLUT);
             goto Done;
+        }
     }
 
     // Propagate the description. We put no copyright because we know
