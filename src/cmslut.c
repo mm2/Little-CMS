@@ -460,7 +460,8 @@ void EvaluateCLUTfloatIn16(const cmsFloat32Number In[], cmsFloat32Number Out[], 
 static
 cmsUInt32Number CubeSize(const cmsUInt32Number Dims[], cmsUInt32Number b)
 {
-    cmsUInt32Number rv, dim;
+    cmsUInt32Number dim;
+    cmsUInt64Number rv;
 
     _cmsAssert(Dims != NULL);
 
