@@ -3183,7 +3183,7 @@ cmsBool ParseCube(cmsIT8* cube, cmsStage** Shaper, cmsStage** CLUT, char title[]
                 int nodes;
                 
                 /**
-                * Professional LUT‑generation tools (e.g., Nobe LutBake) list 65×65×65 as their highest supported size.                
+                * Professional LUT generation tools (e.g., Nobe LutBake) list 65×65×65 as their highest supported size.                
                 */
                 if (lut_size > 65)
                     return SynError(cube, "LUT size '%d' is over maximum of 65", lut_size);

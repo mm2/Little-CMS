@@ -479,7 +479,7 @@ cmsUInt32Number CubeSize(const cmsUInt32Number Dims[], cmsUInt32Number b)
     // Again, prevent overflow
     if (rv > UINT_MAX / 15) return 0;
 
-    return rv;
+    return (cmsUInt32Number) rv;
 }
 
 static
