@@ -597,6 +597,18 @@ cmsTagSignature CMSEXPORT cmsGetTagSignature(cmsHPROFILE hProfile, cmsUInt32Numb
     return Icc ->TagNames[n];
 }
 
+// Return location of the tag
+cmsBool cmsGetTagOffsetAndSize(cmsHPROFILE hProfile, cmsUInt32Number n, cmsUInt32Number* offset, cmsUInt32Number* size)
+{
+    _cmsICCPROFILE* Icc = (_cmsICCPROFILE*)hProfile;
+
+    if (n > Icc->TagCount) return FALSE;
+    if (n >= MAX_TABLE_TAG) return FALSE;
+
+    if (offset != NULL) *offset = Icc->TagOffsets[n];
+    if (size != NULL) *size = Icc->TagSizes[n];
+    return TRUE;
+}
 
 static
 int SearchOneTag(_cmsICCPROFILE* Profile, cmsTagSignature sig)

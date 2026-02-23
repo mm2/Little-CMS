@@ -1502,6 +1502,7 @@ CMSAPI cmsHPROFILE       CMSEXPORT cmsCreateProfilePlaceholder(cmsContext Contex
 CMSAPI cmsContext        CMSEXPORT cmsGetProfileContextID(cmsHPROFILE hProfile);
 CMSAPI cmsInt32Number    CMSEXPORT cmsGetTagCount(cmsHPROFILE hProfile);
 CMSAPI cmsTagSignature   CMSEXPORT cmsGetTagSignature(cmsHPROFILE hProfile, cmsUInt32Number n);
+CMSAPI cmsBool           CMSEXPORT cmsGetTagOffsetAndSize(cmsHPROFILE hProfile, cmsUInt32Number n, cmsUInt32Number* offset, cmsUInt32Number* size);
 CMSAPI cmsBool           CMSEXPORT cmsIsTag(cmsHPROFILE hProfile, cmsTagSignature sig);
 
 // Read and write pre-formatted data
