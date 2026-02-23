@@ -1793,6 +1793,8 @@ cmsTagTypeSignature _cmsGetTagTrueType(cmsHPROFILE hProfile, cmsTagSignature sig
 
     // Get the handler. The true type is there
     TypeHandler =  Icc -> TagTypeHandlers[n];
+    if (TypeHandler == NULL) return (cmsTagTypeSignature) 0;
+
     return TypeHandler ->Signature;
 }
 
