@@ -939,6 +939,29 @@ cmsInt32Number CMSEXPORT cmsChannelsOfColorSpace(cmsColorSpaceSignature ColorSpa
     }
 }
 
+cmsBool CMSEXPORT cmsDiscountRelativeInkLimiting(cmsColorSpaceSignature ColorSpace)
+{
+    switch (ColorSpace) {
+    case cmsSigCmykData:
+    case cmsSig1colorData:
+    case cmsSig2colorData:
+    case cmsSig3colorData:
+    case cmsSig4colorData:
+    case cmsSig5colorData:
+    case cmsSig6colorData:
+    case cmsSig7colorData:
+    case cmsSig8colorData:
+    case cmsSig9colorData:
+    case cmsSig10colorData:
+    case cmsSig11colorData:
+    case cmsSig12colorData:
+    case cmsSig13colorData:
+    case cmsSig14colorData:
+    case cmsSig15colorData: return TRUE;
+    default: return FALSE;
+    }
+}
+
 /**
 * DEPRECATED: Provided for compatibility only
 */

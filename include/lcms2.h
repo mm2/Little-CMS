@@ -1571,6 +1571,9 @@ CMSAPI cmsUInt32Number   CMSEXPORT cmsChannelsOf(cmsColorSpaceSignature ColorSpa
 // Get number of channels of color space or -1 if color space is not listed/supported
 CMSAPI cmsInt32Number CMSEXPORT cmsChannelsOfColorSpace(cmsColorSpaceSignature ColorSpace);
 
+// Determine if Relative renderings with Black Point Compensation should discount ink limiting for the color space
+CMSAPI cmsBool CMSEXPORT cmsDiscountRelativeInkLimiting(cmsColorSpaceSignature ColorSpace);
+
 // Build a suitable formatter for the colorspace of this profile. nBytes=1 means 8 bits, nBytes=2 means 16 bits. 
 CMSAPI cmsUInt32Number   CMSEXPORT cmsFormatterForColorspaceOfProfile(cmsHPROFILE hProfile, cmsUInt32Number nBytes, cmsBool lIsFloat);
 CMSAPI cmsUInt32Number   CMSEXPORT cmsFormatterForPCSOfProfile(cmsHPROFILE hProfile, cmsUInt32Number nBytes, cmsBool lIsFloat);
