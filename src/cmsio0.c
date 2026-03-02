@@ -774,7 +774,8 @@ cmsUInt32Number _validatedVersion(cmsUInt32Number DWord)
 static 
 cmsBool validDeviceClass(cmsProfileClassSignature cl)
 {
-    if ((int)cl == 0) return TRUE; // We allow zero because older lcms versions defaulted to that.
+    if (cl == (cmsProfileClassSignature)0) 
+        return TRUE; // We allow zero because older lcms versions defaulted to that.
 
     switch (cl)
     {    
@@ -785,6 +786,10 @@ cmsBool validDeviceClass(cmsProfileClassSignature cl)
     case cmsSigAbstractClass:
     case cmsSigColorSpaceClass:
     case cmsSigNamedColorClass:
+    case cmsSigColorEncodingSpaceClass:
+    case cmsSigMultiplexIdentificationClass:
+    case cmsSigMultiplexLinkClass:
+    case cmsSigMultiplexVisualizationClass:
         return TRUE;
 
     default:
