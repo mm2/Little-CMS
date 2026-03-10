@@ -598,7 +598,7 @@ cmsTagSignature CMSEXPORT cmsGetTagSignature(cmsHPROFILE hProfile, cmsUInt32Numb
 }
 
 // Return location of the tag
-cmsBool cmsGetTagOffsetAndSize(cmsHPROFILE hProfile, cmsUInt32Number n, cmsUInt32Number* offset, cmsUInt32Number* size)
+cmsBool CMSEXPORT cmsGetTagOffsetAndSize(cmsHPROFILE hProfile, cmsUInt32Number n, cmsUInt32Number* offset, cmsUInt32Number* size)
 {
     _cmsICCPROFILE* Icc = (_cmsICCPROFILE*)hProfile;
 
