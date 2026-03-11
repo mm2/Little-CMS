@@ -375,3 +375,4 @@ _cmsGetTransformFlags                    =   _cmsGetTransformFlags
 _cmsGetTransformWorker                   =   _cmsGetTransformWorker
 _cmsGetTransformMaxWorkers               =   _cmsGetTransformMaxWorkers
 _cmsGetTransformWorkerFlags              =   _cmsGetTransformWorkerFlags
+cmsGetTagOffsetAndSize				     =   cmsGetTagOffsetAndSize
