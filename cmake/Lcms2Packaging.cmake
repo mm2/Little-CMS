@@ -38,7 +38,7 @@ function(lcms2_setup_packaging)
   if(_install_targets)
     install(
       TARGETS ${_install_targets}
-      EXPORT lcms2Targets
+      EXPORT lcms2-targets
       RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
       LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
       ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
@@ -58,35 +58,35 @@ function(lcms2_setup_packaging)
   set(_lcms2_cmake_config_dir "${CMAKE_INSTALL_LIBDIR}/cmake/lcms2")
 
   install(
-    EXPORT lcms2Targets
+    EXPORT lcms2-targets
     NAMESPACE lcms2::
     DESTINATION "${_lcms2_cmake_config_dir}"
   )
 
   configure_package_config_file(
-    "${PROJECT_SOURCE_DIR}/cmake/lcms2Config.cmake.in"
-    "${PROJECT_BINARY_DIR}/lcms2Config.cmake"
+    "${PROJECT_SOURCE_DIR}/cmake/lcms2-config.cmake.in"
+    "${PROJECT_BINARY_DIR}/lcms2-config.cmake"
     INSTALL_DESTINATION "${_lcms2_cmake_config_dir}"
   )
 
   write_basic_package_version_file(
-    "${PROJECT_BINARY_DIR}/lcms2ConfigVersion.cmake"
+    "${PROJECT_BINARY_DIR}/lcms2-config-version.cmake"
     VERSION "${PROJECT_VERSION}"
     COMPATIBILITY SameMajorVersion
   )
 
   install(
     FILES
-      "${PROJECT_BINARY_DIR}/lcms2Config.cmake"
-      "${PROJECT_BINARY_DIR}/lcms2ConfigVersion.cmake"
+      "${PROJECT_BINARY_DIR}/lcms2-config.cmake"
+      "${PROJECT_BINARY_DIR}/lcms2-config-version.cmake"
     DESTINATION "${_lcms2_cmake_config_dir}"
   )
 
   # Build-tree export for local consumption.
   export(
-    EXPORT lcms2Targets
+    EXPORT lcms2-targets
     NAMESPACE lcms2::
-    FILE "${PROJECT_BINARY_DIR}/lcms2Targets.cmake"
+    FILE "${PROJECT_BINARY_DIR}/lcms2-targets.cmake"
   )
 
   # pkg-config generation (mirrors lcms2.pc.in semantics).
