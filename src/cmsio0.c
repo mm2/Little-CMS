@@ -130,7 +130,6 @@ Error:
 
 }
 
-
 // Memory-based stream --------------------------------------------------------------
 
 // Those functions implements an iohandler which takes a block of memory as storage medium.
@@ -150,32 +149,43 @@ cmsUInt32Number MemoryRead(struct _cms_io_handler* iohandler, void *Buffer, cmsU
     cmsUInt8Number* Ptr;
     cmsUInt32Number len = size * count;
 
-    if (ResData -> Pointer + len > ResData -> Size){
-
-        len = (ResData -> Size - ResData -> Pointer);
-        cmsSignalError(iohandler ->ContextID, cmsERROR_READ, "Read from memory error. Got %d bytes, block should be of %d bytes", len, count * size);
+    if (size == 0 || count == 0)
         return 0;
-    }
 
+    if ((len / count) != size)
+        goto ReadError;
+    
+    if (Buffer == NULL)                  
+        goto ReadError;
+
+    if (len > ResData->Size)
+        goto ReadError;
+
+    if (ResData -> Pointer > ResData -> Size - len)         
+        goto ReadError;
+    
     Ptr  = ResData -> Block;
     Ptr += ResData -> Pointer;
     memmove(Buffer, Ptr, len);
     ResData -> Pointer += len;
 
     return count;
+
+ReadError:
+    cmsSignalError(iohandler->ContextID, cmsERROR_READ, "Read from memory error");
+    return 0;
+
 }
 
 // SEEK_CUR is assumed
 static
-cmsBool  MemorySeek(struct _cms_io_handler* iohandler, cmsUInt32Number offset)
+cmsBool MemorySeek(struct _cms_io_handler* iohandler, cmsUInt32Number offset)
 {
     FILEMEM* ResData = (FILEMEM*) iohandler ->stream;
 
-    if (offset > ResData ->Size) {
-        cmsSignalError(iohandler ->ContextID, cmsERROR_SEEK,  "Too few data; probably corrupted profile");
+    if (offset > ResData ->Size)         
         return FALSE;
-    }
-
+    
     ResData ->Pointer = offset;
     return TRUE;
 }
@@ -197,15 +207,15 @@ cmsBool MemoryWrite(struct _cms_io_handler* iohandler, cmsUInt32Number size, con
 {
     FILEMEM* ResData = (FILEMEM*) iohandler ->stream;
 
-    if (ResData == NULL) return FALSE; // Housekeeping
+    if (ResData == NULL || Ptr == NULL) goto WriteError; 
 
-    // Check for available space. Clip.
-    if (ResData->Pointer + size > ResData->Size) {
-        size = ResData ->Size - ResData->Pointer;
-    }
-      
     if (size == 0) return TRUE;     // Write zero bytes is ok, but does nothing
 
+    // Check for available space. 
+
+    if (size > ResData->Size || ResData->Pointer > (ResData->Size - size))
+        goto WriteError;
+             
     memmove(ResData ->Block + ResData ->Pointer, Ptr, size);
     ResData ->Pointer += size;
 
@@ -213,6 +223,10 @@ cmsBool MemoryWrite(struct _cms_io_handler* iohandler, cmsUInt32Number size, con
         iohandler->UsedSpace = ResData ->Pointer;
 
     return TRUE;
+
+WriteError:
+    cmsSignalError(iohandler->ContextID, cmsERROR_WRITE, "Write to memory error");
+    return FALSE;
 }
 
 
