@@ -805,7 +805,8 @@ cmsNAMEDCOLORLIST* CMSEXPORT cmsDupNamedColorList(const cmsNAMEDCOLORLIST* v)
     memmove(NewNC ->Prefix, v ->Prefix, sizeof(v ->Prefix));
     memmove(NewNC ->Suffix, v ->Suffix, sizeof(v ->Suffix));
     NewNC ->ColorantCount = v ->ColorantCount;
-    memmove(NewNC->List, v ->List, v->nColors * sizeof(_cmsNAMEDCOLOR));
+    if (v->nColors > 0) 
+        memmove(NewNC->List, v ->List, v->nColors * sizeof(_cmsNAMEDCOLOR));
     NewNC ->nColors = v ->nColors;
     return NewNC;
 }
