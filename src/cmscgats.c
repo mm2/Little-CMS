@@ -1245,19 +1245,26 @@ void* AllocChunk(cmsIT8* it8, cmsUInt32Number size)
 
         it8 ->Allocator.Used = 0;
         new_block = (cmsUInt8Number*)AllocBigBlock(it8, it8->Allocator.BlockSize);
-        if (new_block == NULL) 
-            return NULL;
+        if (new_block == NULL) goto Error;            
 
         it8->Allocator.Block = new_block;
     }
 
     if (it8->Allocator.Block == NULL)
-        return NULL;
+        goto Error;
 
     ptr = it8 ->Allocator.Block + it8 ->Allocator.Used;
     it8 ->Allocator.Used += size;
 
     return (void*) ptr;
+
+Error:
+
+    SynError(it8, "Allocation error");
+    it8->Allocator.BlockSize = 0;
+    it8->Allocator.Used = 0;
+    it8->Allocator.Block = NULL;
+    return NULL;
 }
 
 
