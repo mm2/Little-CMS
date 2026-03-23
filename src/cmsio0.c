@@ -77,6 +77,9 @@ cmsBool  NULLWrite(cmsIOHANDLER* iohandler, cmsUInt32Number size, const void *Pt
 {
     FILENULL* ResData = (FILENULL*) iohandler ->stream;
 
+    if (size > (cmsUInt32Number)(0xFFFFFFFFU - ResData->Pointer))         
+        return FALSE;
+    
     ResData ->Pointer += size;
     if (ResData ->Pointer > iohandler->UsedSpace)
         iohandler->UsedSpace = ResData ->Pointer;
@@ -347,8 +350,15 @@ cmsUInt32Number FileRead(cmsIOHANDLER* iohandler, void *Buffer, cmsUInt32Number 
 static
 cmsBool  FileSeek(cmsIOHANDLER* iohandler, cmsUInt32Number offset)
 {
+#ifdef CMS_LARGE_FILE_SUPPORT
+#  ifdef CMS_IS_WINDOWS_
+    if (_fseeki64((FILE*) iohandler->stream, (long long int) offset, SEEK_SET) != 0) {
+#  else
+    if (fseeko((FILE*) iohandler->stream, (off_t) offset, SEEK_SET) != 0) {
+#  endif
+#else
     if (fseek((FILE*) iohandler ->stream, (long) offset, SEEK_SET) != 0) {
-
+#endif
        cmsSignalError(iohandler ->ContextID, cmsERROR_FILE, "Seek error; probably corrupted file");
        return FALSE;
     }
@@ -360,13 +370,24 @@ cmsBool  FileSeek(cmsIOHANDLER* iohandler, cmsUInt32Number offset)
 static
 cmsUInt32Number FileTell(cmsIOHANDLER* iohandler)
 {
+#ifdef CMS_LARGE_FILE_SUPPORT
+#  ifdef CMS_IS_WINDOWS_
+    long long int t = _ftelli64((FILE*) iohandler->stream);
+#  else
+    long long int t = (long long int) ftello((FILE*) iohandler->stream);
+#  endif
+    if (t < 0) {
+        cmsSignalError(iohandler->ContextID, cmsERROR_FILE, "Tell error; probably corrupted file");
+        return 0;
+    }
+#else
     long t = ftell((FILE*)iohandler ->stream);
     if (t == -1L) {
         cmsSignalError(iohandler->ContextID, cmsERROR_FILE, "Tell error; probably corrupted file");
         return 0;
     }
-
-    return (cmsUInt32Number)t;
+#endif
+    return (cmsUInt32Number) t;
 }
 
 // Writes data to stream, also keeps used space for further reference. Returns TRUE on success, FALSE on error
@@ -393,7 +414,11 @@ cmsIOHANDLER* CMSEXPORT cmsOpenIOhandlerFromFile(cmsContext ContextID, const cha
 {
     cmsIOHANDLER* iohandler = NULL;
     FILE* fm = NULL;
-    cmsInt32Number fileLen;    
+#ifdef CMS_LARGE_FILE_SUPPORT
+    long long int fileLen;
+#else
+    long int fileLen;
+#endif
     char mode[4] = { 0,0,0,0 };
 
     _cmsAssert(FileName != NULL);
@@ -444,7 +469,7 @@ cmsIOHANDLER* CMSEXPORT cmsOpenIOhandlerFromFile(cmsContext ContextID, const cha
              cmsSignalError(ContextID, cmsERROR_FILE, "File '%s' not found", FileName);
             return NULL;
         }                                     
-        fileLen = (cmsInt32Number)cmsfilelength(fm);
+        fileLen = cmsfilelength(fm);
         if (fileLen < 0)
         {
             fclose(fm);
@@ -452,6 +477,15 @@ cmsIOHANDLER* CMSEXPORT cmsOpenIOhandlerFromFile(cmsContext ContextID, const cha
             cmsSignalError(ContextID, cmsERROR_FILE, "Cannot get size of file '%s'", FileName);
             return NULL;
         }
+#ifdef CMS_LARGE_FILE_SUPPORT
+        if (fileLen > (long long int) 0xFFFFFFFFLL)
+        {
+            fclose(fm);
+            _cmsFree(ContextID, iohandler);
+            cmsSignalError(ContextID, cmsERROR_FILE, "File '%s' is too large", FileName);
+            return NULL;
+        }
+#endif
         iohandler -> ReportedSize = (cmsUInt32Number) fileLen;
         break;
 
@@ -491,14 +525,25 @@ cmsIOHANDLER* CMSEXPORT cmsOpenIOhandlerFromFile(cmsContext ContextID, const cha
 cmsIOHANDLER* CMSEXPORT cmsOpenIOhandlerFromStream(cmsContext ContextID, FILE* Stream)
 {
     cmsIOHANDLER* iohandler = NULL;
-    cmsInt32Number fileSize;
+#ifdef CMS_LARGE_FILE_SUPPORT
+    long long int fileSize;
+#else
+    long int fileSize;
+#endif
 
-    fileSize = (cmsInt32Number)cmsfilelength(Stream);
+    fileSize = cmsfilelength(Stream);
     if (fileSize < 0)
     {
         cmsSignalError(ContextID, cmsERROR_FILE, "Cannot get size of stream");
         return NULL;
     }
+#ifdef CMS_LARGE_FILE_SUPPORT
+    if (fileSize > (long long int) 0xFFFFFFFFLL)
+    {
+        cmsSignalError(ContextID, cmsERROR_FILE, "Stream is too large");
+        return NULL;
+    }
+#endif
 
     iohandler = (cmsIOHANDLER*) _cmsMallocZero(ContextID, sizeof(cmsIOHANDLER));
     if (iohandler == NULL) return NULL;
@@ -1230,7 +1275,6 @@ Error:
     return NULL;
 }
 
-
 // Create profile from disk file
 cmsHPROFILE CMSEXPORT cmsOpenProfileFromFileTHR(cmsContext ContextID, const char *lpFileName, const char *sAccess)
 {
@@ -1297,7 +1341,6 @@ cmsHPROFILE  CMSEXPORT cmsOpenProfileFromStream(FILE* ICCProfile, const char *sA
 {
     return cmsOpenProfileFromStreamTHR(NULL, ICCProfile, sAccess);
 }
-
 
 // Open from memory block
 cmsHPROFILE CMSEXPORT cmsOpenProfileFromMemTHR(cmsContext ContextID, const void* MemPtr, cmsUInt32Number dwSize)
@@ -1447,7 +1490,6 @@ cmsBool SaveTags(_cmsICCPROFILE* Icc, _cmsICCPROFILE* FileOrig)
     return TRUE;
 }
 
-
 // Fill the offset and size fields for all linked tags
 static
 cmsBool SetLinks( _cmsICCPROFILE* Icc)
@@ -1528,7 +1570,6 @@ Error:
 
     return 0;
 }
-
 
 // Low-level save to disk.
 cmsBool  CMSEXPORT cmsSaveProfileToFile(cmsHPROFILE hProfile, const char* FileName)
@@ -1664,7 +1705,6 @@ cmsBool IsTypeSupported(cmsTagDescriptor* TagDescriptor, cmsTagTypeSignature Typ
 
     return FALSE;
 }
-
 
 // That's the main read function
 void* CMSEXPORT cmsReadTag(cmsHPROFILE hProfile, cmsTagSignature sig)
@@ -2135,7 +2175,6 @@ cmsBool CMSEXPORT cmsLinkTag(cmsHPROFILE hProfile, cmsTagSignature sig, cmsTagSi
     _cmsUnlockMutex(Icc->ContextID, Icc ->UsrMutex);
     return TRUE;
 }
-
 
 // Returns the tag linked to sig, in the case two tags are sharing same resource
 cmsTagSignature  CMSEXPORT cmsTagLinkedTo(cmsHPROFILE hProfile, cmsTagSignature sig)

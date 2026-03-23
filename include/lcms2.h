@@ -23,7 +23,7 @@
 //
 //---------------------------------------------------------------------------------
 //
-// Version 2.19a2
+// Version 2.19a3
 //
 
 #ifndef _lcms2_H
@@ -36,6 +36,13 @@
 // Uncomment this one if your compiler/machine does NOT support the
 // "long long" type.
 // #define CMS_DONT_USE_INT64        1
+
+// Uncomment this one to enable large file support on file/stream I/O.
+// LittleCMS is still limited by ICC 32-bit offsets and sizes, so the
+// practical maximum remains 4 GiB minus profile overhead. Be careful 
+// because such huge profiles have to be loaded into memory and that's
+// usually a very bad idea.
+// #define CMS_LARGE_FILE_SUPPORT    1
 
 // Uncomment this if your compiler doesn't work with fast floor function
 // #define CMS_DONT_USE_FAST_FLOOR 1
@@ -168,6 +175,9 @@ typedef double               cmsFloat64Number;
 #ifdef CMS_DONT_USE_INT64
     typedef cmsUInt32Number      cmsUInt64Number[2];
     typedef cmsInt32Number       cmsInt64Number[2];
+#   if defined(CMS_LARGE_FILE_SUPPORT) 
+#      error "You need int64 for large file support"
+#   endif
 #endif
 
 // Derivative types
@@ -1084,8 +1094,12 @@ CMSAPI int               CMSEXPORT cmsGetEncodedCMMversion(void);
 // Support of non-standard functions --------------------------------------------------------------------------------------
 
 CMSAPI int               CMSEXPORT cmsstrcasecmp(const char* s1, const char* s2);
-CMSAPI long int          CMSEXPORT cmsfilelength(FILE* f);
 
+#ifdef CMS_LARGE_FILE_SUPPORT
+CMSAPI long long int     CMSEXPORT cmsfilelength(FILE* f);
+#else
+CMSAPI long int          CMSEXPORT cmsfilelength(FILE* f);
+#endif
 
 // Context handling --------------------------------------------------------------------------------------------------------
 
