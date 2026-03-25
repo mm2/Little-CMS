@@ -1546,6 +1546,8 @@ CMSAPI void              CMSEXPORT cmsGetHeaderAttributes(cmsHPROFILE hProfile, 
 CMSAPI void              CMSEXPORT cmsGetHeaderProfileID(cmsHPROFILE hProfile, cmsUInt8Number* ProfileID);
 CMSAPI cmsBool           CMSEXPORT cmsGetHeaderCreationDateTime(cmsHPROFILE hProfile, struct tm *Dest);
 CMSAPI cmsUInt32Number   CMSEXPORT cmsGetHeaderRenderingIntent(cmsHPROFILE hProfile);
+CMSAPI cmsUInt32Number   CMSEXPORT cmsGetHeaderCMM(cmsHPROFILE hProfile);
+
 
 CMSAPI void              CMSEXPORT cmsSetHeaderFlags(cmsHPROFILE hProfile, cmsUInt32Number Flags);
 CMSAPI cmsUInt32Number   CMSEXPORT cmsGetHeaderManufacturer(cmsHPROFILE hProfile);

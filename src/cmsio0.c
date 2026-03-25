@@ -1057,6 +1057,17 @@ cmsBool _cmsWriteHeader(_cmsICCPROFILE* Icc, cmsUInt32Number UsedSpace)
 
 // ----------------------------------------------------------------------- Set/Get several struct members
 
+cmsUInt32Number CMSEXPORT cmsGetHeaderCMM(cmsHPROFILE hProfile)
+{
+    _cmsICCPROFILE* Icc = (_cmsICCPROFILE*)hProfile;
+    return Icc->CMM;
+}
+
+void CMSEXPORT _cmsSetHeaderCMM(cmsHPROFILE hProfile, cmsUInt32Number CMM)
+{
+    _cmsICCPROFILE* Icc = (_cmsICCPROFILE*)hProfile;
+    Icc->CMM = CMM;
+}
 
 cmsUInt32Number CMSEXPORT cmsGetHeaderRenderingIntent(cmsHPROFILE hProfile)
 {

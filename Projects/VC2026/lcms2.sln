@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 17
-VisualStudioVersion = 17.0.32014.148
+# Visual Studio Version 18
+VisualStudioVersion = 18.4.11612.150
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "testbed", "testbed\testbed.vcxproj", "{928A3A2B-46EF-4279-959C-513B3652FF0E}"
 EndProject
@@ -32,13 +32,23 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lcms2_fast_float_plugin", "
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lcms2_fast_float_plugin_testbed", "..\..\plugins\fast_float\Projects\VC2022\lcms2_fast_float_plugin_testbed.vcxproj", "{7629D670-C419-402B-8A90-747952EE9FC0}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lcms2_threaded_plugin", "..\..\plugins\threaded\Projects\VC2022\lcms2_threaded_plugin.vcxproj", "{6A44744B-BED4-49EC-87BB-83978458CE19}"
-EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "threaded", "threaded", "{09D18587-D927-4047-977F-49918A174D5E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lcms2_threaded_plugin_testbed", "..\..\plugins\threaded\Projects\VC2022\lcms2_threaded_plugin_testbed.vcxproj", "{F56B9CBA-A34D-4C68-9003-A6919236399E}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "fuzzers", "fuzzers\fuzzers.vcxproj", "{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lcms2_threaded_plugin", "..\..\plugins\threaded\Projects\VC2026\lcms2_threaded_plugin.vcxproj", "{6A44744B-BED4-49EC-87BB-83978458CE19}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "lcms2_threaded_plugin_testbed", "..\..\plugins\threaded\Projects\VC2026\lcms2_threaded_plugin_testbed.vcxproj", "{F56B9CBA-A34D-4C68-9003-A6919236399E}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{4DD637AE-09B1-4994-8FC7-7F6EB19165EC}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\plugins\fast_float\doc\LittleCMS floating point extensions 1.7.pdf = ..\..\plugins\fast_float\doc\LittleCMS floating point extensions 1.7.pdf
+		..\..\plugins\threaded\doc\LittleCMS threaded extensions 1.0.pdf = ..\..\plugins\threaded\doc\LittleCMS threaded extensions 1.0.pdf
+		..\..\doc\LittleCMS2.18 API.pdf = ..\..\doc\LittleCMS2.18 API.pdf
+		..\..\doc\LittleCMS2.18 Plugin API.pdf = ..\..\doc\LittleCMS2.18 Plugin API.pdf
+		..\..\doc\LittleCMS2.18 tutorial.pdf = ..\..\doc\LittleCMS2.18 tutorial.pdf
+		..\..\doc\prompt.md = ..\..\doc\prompt.md
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -183,6 +193,18 @@ Global
 		{7629D670-C419-402B-8A90-747952EE9FC0}.Release|Win32.Build.0 = Release|Win32
 		{7629D670-C419-402B-8A90-747952EE9FC0}.Release|x64.ActiveCfg = Release|x64
 		{7629D670-C419-402B-8A90-747952EE9FC0}.Release|x64.Build.0 = Release|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|ARM64.ActiveCfg = Debug|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|ARM64.Build.0 = Debug|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|Win32.ActiveCfg = Debug|Win32
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|Win32.Build.0 = Debug|Win32
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|x64.ActiveCfg = Debug|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|x64.Build.0 = Debug|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|ARM64.ActiveCfg = Release|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|ARM64.Build.0 = Release|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|Win32.ActiveCfg = Release|Win32
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|Win32.Build.0 = Release|Win32
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|x64.ActiveCfg = Release|x64
+		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|x64.Build.0 = Release|x64
 		{6A44744B-BED4-49EC-87BB-83978458CE19}.Debug|ARM64.ActiveCfg = Debug|ARM64
 		{6A44744B-BED4-49EC-87BB-83978458CE19}.Debug|ARM64.Build.0 = Debug|ARM64
 		{6A44744B-BED4-49EC-87BB-83978458CE19}.Debug|Win32.ActiveCfg = Debug|Win32
@@ -207,18 +229,6 @@ Global
 		{F56B9CBA-A34D-4C68-9003-A6919236399E}.Release|Win32.Build.0 = Release|Win32
 		{F56B9CBA-A34D-4C68-9003-A6919236399E}.Release|x64.ActiveCfg = Release|x64
 		{F56B9CBA-A34D-4C68-9003-A6919236399E}.Release|x64.Build.0 = Release|x64
-		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|ARM64.ActiveCfg = Debug|x64
-		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|ARM64.Build.0 = Debug|x64
-		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|Win32.ActiveCfg = Debug|Win32
-		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|Win32.Build.0 = Debug|Win32
-		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|x64.ActiveCfg = Debug|x64
-		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Debug|x64.Build.0 = Debug|x64
-		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|ARM64.ActiveCfg = Release|x64
-		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|ARM64.Build.0 = Release|x64
-		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|Win32.ActiveCfg = Release|Win32
-		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|Win32.Build.0 = Release|Win32
-		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|x64.ActiveCfg = Release|x64
-		{32E8C094-1D6B-4959-90AD-9A443DF4AE9A}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -227,8 +237,8 @@ Global
 		{1696CDC1-F411-4F84-BC94-C63FEB867D06} = {8349DD7F-F750-4910-A5A5-0628223BD3EB}
 		{AD9FF79B-CF6E-4971-A7CF-DAA47D636676} = {1696CDC1-F411-4F84-BC94-C63FEB867D06}
 		{7629D670-C419-402B-8A90-747952EE9FC0} = {1696CDC1-F411-4F84-BC94-C63FEB867D06}
-		{6A44744B-BED4-49EC-87BB-83978458CE19} = {09D18587-D927-4047-977F-49918A174D5E}
 		{09D18587-D927-4047-977F-49918A174D5E} = {8349DD7F-F750-4910-A5A5-0628223BD3EB}
+		{6A44744B-BED4-49EC-87BB-83978458CE19} = {09D18587-D927-4047-977F-49918A174D5E}
 		{F56B9CBA-A34D-4C68-9003-A6919236399E} = {09D18587-D927-4047-977F-49918A174D5E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
