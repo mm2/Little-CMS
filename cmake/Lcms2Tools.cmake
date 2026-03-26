@@ -19,6 +19,11 @@ function(_lcms2_add_tool exe_name)
     target_link_libraries(${exe_name} PRIVATE "${LCMS2_LIBRARY_TARGET}")
   endif()
 
+  # Per-target debug postfix for MSVC builds (avoids modifying CMAKE_DEBUG_POSTFIX globally).
+  if(MSVC)
+    set_target_properties(${exe_name} PROPERTIES DEBUG_POSTFIX "d")
+  endif()
+
   set(_lcms2_tool_targets "${LCMS2_TOOL_TARGETS}")
   list(APPEND _lcms2_tool_targets "${exe_name}")
   set(LCMS2_TOOL_TARGETS "${_lcms2_tool_targets}" PARENT_SCOPE)

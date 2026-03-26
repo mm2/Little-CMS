@@ -22,11 +22,6 @@ function(lcms2_setup_options)
   option(LCMS2_WITH_FASTFLOAT "Build and install fast_float plugin (GPL-3.0)" OFF)
   option(LCMS2_WITH_THREADED_PLUGIN "Build and install threaded plugin (GPL-3.0)" OFF)
 
-  # Default debug postfix for MSVC builds.
-  if(MSVC AND NOT DEFINED CMAKE_DEBUG_POSTFIX)
-    set(CMAKE_DEBUG_POSTFIX "d" CACHE STRING "Debug postfix for binaries and libraries")
-  endif()
-
   if(NOT LCMS2_BUILD_SHARED AND NOT LCMS2_BUILD_STATIC)
     message(FATAL_ERROR "At least one of LCMS2_BUILD_SHARED or LCMS2_BUILD_STATIC must be ON")
   endif()
