@@ -46,6 +46,11 @@ function(lcms2_add_tests)
     RUNTIME_OUTPUT_DIRECTORY "${_testbed_bin_dir}"
   )
 
+  # Per-target debug postfix for MSVC builds (avoids modifying CMAKE_DEBUG_POSTFIX globally).
+  if(MSVC)
+    set_target_properties(testcms PROPERTIES DEBUG_POSTFIX "d")
+  endif()
+
   # Copy ICC fixtures into the build testbed dir (mirrors autotools make check behavior).
   set(_icc_files
     "${PROJECT_SOURCE_DIR}/testbed/test1.icc"
