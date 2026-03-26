@@ -98,3 +98,79 @@ jobs:
           ninja
           meson test
 
+  Ubuntu-cmake:
+    strategy:
+      matrix:
+        runner: [ ubuntu-latest ]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Install packages
+        run: sudo apt-get -y install build-essential cmake
+
+      - name: Configure
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLCMS2_FAST_FLOAT=ON \
+            -DLCMS2_THREADED=ON \
+            -DLCMS2_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure
+
+  macOS-cmake:
+    strategy:
+      matrix:
+        runner: [ macos-14, macos-latest ]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Configure
+        run: |
+          cmake -B build \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLCMS2_FAST_FLOAT=ON \
+            -DLCMS2_THREADED=ON \
+            -DLCMS2_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure
+
+  Windows-cmake:
+    strategy:
+      matrix:
+        include:
+          - arch: Win32
+            runner: windows-latest
+          - arch: x64
+            runner: windows-latest
+          # - arch: ARM64
+          #   runner: windows-11-arm
+
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Configure
+        run: |
+          cmake -B build -A ${{ matrix.arch }} `
+            -DLCMS2_FAST_FLOAT=ON `
+            -DLCMS2_THREADED=ON `
+            -DLCMS2_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --config Release --parallel
+
+      - name: Run tests
+        run: ctest --test-dir build -C Release --output-on-failure
+
