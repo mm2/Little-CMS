@@ -107,14 +107,15 @@ jobs:
       - uses: actions/checkout@v6.0.2
 
       - name: Install packages
-        run: sudo apt-get -y install build-essential cmake
+        run: sudo apt-get -y install build-essential cmake ninja-build
 
       - name: Configure
         run: |
           cmake -B build \
+            -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DLCMS2_FAST_FLOAT=ON \
-            -DLCMS2_THREADED=ON \
+            -DLCMS2_WITH_FASTFLOAT=ON \
+            -DLCMS2_WITH_THREADS=ON \
             -DLCMS2_BUILD_TESTS=ON
 
       - name: Build
@@ -134,9 +135,10 @@ jobs:
       - name: Configure
         run: |
           cmake -B build \
+            -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
-            -DLCMS2_FAST_FLOAT=ON \
-            -DLCMS2_THREADED=ON \
+            -DLCMS2_WITH_FASTFLOAT=ON \
+            -DLCMS2_WITH_THREADS=ON \
             -DLCMS2_BUILD_TESTS=ON
 
       - name: Build
@@ -164,8 +166,8 @@ jobs:
       - name: Configure
         run: |
           cmake -B build -A ${{ matrix.arch }} `
-            -DLCMS2_FAST_FLOAT=ON `
-            -DLCMS2_THREADED=ON `
+            -DLCMS2_WITH_FASTFLOAT=ON `
+            -DLCMS2_WITH_THREADS=ON `
             -DLCMS2_BUILD_TESTS=ON
 
       - name: Build
@@ -173,4 +175,65 @@ jobs:
 
       - name: Run tests
         run: ctest --test-dir build -C Release --output-on-failure
+
+  MSYS2-cmake:
+    strategy:
+      matrix:
+        sys: [ MINGW64, UCRT64 ]
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: ${{ matrix.sys }}
+          update: true
+          pacboy: cmake:p gcc:p ninja:p
+
+      - name: Configure
+        run: |
+          cmake -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLCMS2_WITH_FASTFLOAT=ON \
+            -DLCMS2_WITH_THREADS=ON \
+            -DLCMS2_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure
+
+  Cygwin-cmake:
+    runs-on: windows-latest
+    env:
+      CHERE_INVOKING: "1"
+    defaults:
+      run:
+        shell: C:\cygwin64\bin\bash.exe --login -eo pipefail -o igncr '{0}'
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - uses: cygwin/install-action@v4
+        with:
+          packages: cmake ninja gcc-core gcc-g++
+
+      - name: Configure
+        run: |
+          cmake -B build \
+            -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DLCMS2_WITH_FASTFLOAT=ON \
+            -DLCMS2_WITH_THREADS=ON \
+            -DLCMS2_BUILD_TESTS=ON
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Run tests
+        run: ctest --test-dir build --output-on-failure
 
