@@ -175,7 +175,7 @@ CMSCHECKPOINT void CMSEXPORT _cmsComputeComponentIncrements(cmsUInt32Number Form
                                                             cmsUInt32Number ComponentPointerIncrements[]);
 
 // 15 bits formatters
-CMSCHECKPOINT cmsFormatter Formatter_15Bit_Factory(cmsUInt32Number Type,
+CMSCHECKPOINT cmsFormatter CMSEXPORT Formatter_15Bit_Factory(cmsUInt32Number Type,
                                                              cmsFormatterDirection Dir,
                                                              cmsUInt32Number dwFlags);
 

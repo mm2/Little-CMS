@@ -83,11 +83,20 @@ cmsBool Floating_Point_Transforms_Dispatcher(_cmsTransform2Fn* TransformFn,
     return FALSE;
 }
 
+// On Win32, CMSEXPORT expands to __stdcall but cmsFormatterFactory is __cdecl.
+// This wrapper has the cdecl calling convention so it can be stored in the plugin struct.
+static cmsFormatter Formatter_15Bit_Factory_wrapper(cmsUInt32Number Type,
+                                                    cmsFormatterDirection Dir,
+                                                    cmsUInt32Number dwFlags)
+{
+    return Formatter_15Bit_Factory(Type, Dir, dwFlags);
+}
+
 // The Plug-in entry points
 static cmsPluginFormatters PluginFastFloat = {
               { cmsPluginMagicNumber, REQUIRED_LCMS_VERSION, cmsPluginFormattersSig, NULL },
 
-              Formatter_15Bit_Factory
+              Formatter_15Bit_Factory_wrapper
 };
 
 static cmsPluginTransform PluginList = {
