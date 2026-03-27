@@ -175,7 +175,7 @@ CMSCHECKPOINT void CMSEXPORT _cmsComputeComponentIncrements(cmsUInt32Number Form
                                                             cmsUInt32Number ComponentPointerIncrements[]);
 
 // 15 bits formatters
-CMSCHECKPOINT cmsFormatter CMSEXPORT Formatter_15Bit_Factory(cmsUInt32Number Type,
+CMSCHECKPOINT cmsFormatter Formatter_15Bit_Factory(cmsUInt32Number Type,
                                                              cmsFormatterDirection Dir,
                                                              cmsUInt32Number dwFlags);
 
@@ -273,5 +273,10 @@ cmsBool OptimizeCLUTLabTransform(_cmsTransform2Fn* TransformFn,
                                  cmsUInt32Number* OutputFormat, 
                                  cmsUInt32Number* dwFlags);      
 
+// Wrapper for _cmsFree that matches the _cmsFreeUserDataFn calling convention.
+// On Win32, _cmsFree uses __stdcall (CMSEXPORT) but _cmsFreeUserDataFn is __cdecl.
+// Using _cmsFree directly as a _cmsFreeUserDataFn would cause a calling convention
+// mismatch on 32-bit Windows builds. This wrapper uses the default (cdecl) convention.
+cmsINLINE void _fast_float_free_user_data(cmsContext ContextID, void* Data) { _cmsFree(ContextID, Data); }
 
 #endif

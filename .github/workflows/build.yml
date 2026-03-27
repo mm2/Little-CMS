@@ -218,8 +218,9 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.2
 
-      - uses: cygwin/install-action@v4
+      - uses: cygwin/cygwin-install-action@v6
         with:
+          install-dir: 'C:\cygwin64'
           packages: cmake ninja gcc-core gcc-g++
 
       - name: Configure

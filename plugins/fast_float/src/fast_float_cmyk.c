@@ -380,7 +380,7 @@ cmsBool OptimizeCLUTCMYKTransform(_cmsTransform2Fn* TransformFn,
     *Lut = OptimizedLUT;
     *TransformFn = FloatCMYKCLUTEval;
     *UserData   = pcmyk;
-    *FreeDataFn = _cmsFree;
+    *FreeDataFn = _fast_float_free_user_data;
     *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
     return TRUE;
 
