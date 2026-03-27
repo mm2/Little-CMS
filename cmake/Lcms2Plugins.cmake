@@ -65,6 +65,9 @@ function(lcms2_add_plugins)
         "${PROJECT_SOURCE_DIR}/plugins/fast_float/include"
         "${PROJECT_SOURCE_DIR}/plugins/fast_float/src/../include"
     )
+    if(LCMS2_DEFINE_CMS_DONT_USE_SSE2)
+      target_compile_definitions(lcms2_fast_float PRIVATE CMS_DONT_USE_SSE2=1)
+    endif()
   endif()
 
   if(LCMS2_WITH_THREADED_PLUGIN)

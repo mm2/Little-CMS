@@ -408,7 +408,7 @@ cmsBool Optimize8ByJoiningCurves(_cmsTransform2Fn* TransformFn,
     *dwFlags |= cmsFLAGS_NOCACHE;
     *dwFlags &= ~cmsFLAGS_CAN_CHANGE_FORMATTER;
     *UserData = Data;
-    *FreeUserData = _cmsFree;
+    *FreeUserData = _fast_float_free_user_data;
 
     // Maybe the curves are linear at the end
     if (nChans == 1)
