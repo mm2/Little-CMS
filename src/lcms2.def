@@ -378,3 +378,6 @@ _cmsGetTransformWorkerFlags              =   _cmsGetTransformWorkerFlags
 cmsGetTagOffsetAndSize				     =   cmsGetTagOffsetAndSize
 cmsGetHeaderCMM                          =   cmsGetHeaderCMM
 _cmsSetHeaderCMM                         =  _cmsSetHeaderCMM
+cmsGetTransformPipeline                  =  cmsGetTransformPipeline
+cmsGetTransformGamutCheckPipeline        =  cmsGetTransformGamutCheckPipeline
+

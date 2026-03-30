@@ -499,7 +499,6 @@ void PrecalculatedXFORMGamutCheck(_cmsTRANSFORM* p,
     }
 }
 
-
 // No gamut check, Cache, 16 bits,
 static
 void CachedXFORM(_cmsTRANSFORM* p,
@@ -1440,6 +1439,22 @@ cmsUInt32Number CMSEXPORT cmsGetTransformOutputFormat(cmsHTRANSFORM hTransform)
 
     if (xform == NULL) return 0;
     return xform->OutputFormat;
+}
+
+// Returns the optimized pipeline (Lut) inside a transform. Read-only; do not free.
+cmsPipeline* CMSEXPORT cmsGetTransformPipeline(cmsHTRANSFORM hTransform)
+{
+    _cmsTRANSFORM* xform = (_cmsTRANSFORM*) hTransform;
+    if (xform == NULL) return NULL;
+    return xform->Lut;
+}
+
+// Returns the gamut-check pipeline inside a transform. Read-only; do not free.
+cmsPipeline* CMSEXPORT cmsGetTransformGamutCheckPipeline(cmsHTRANSFORM hTransform)
+{
+    _cmsTRANSFORM* xform = (_cmsTRANSFORM*) hTransform;
+    if (xform == NULL) return NULL;
+    return xform->GamutCheck;
 }
 
 // For backwards compatibility

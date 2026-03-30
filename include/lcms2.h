@@ -1890,6 +1890,10 @@ CMSAPI cmsContext       CMSEXPORT cmsGetTransformContextID(cmsHTRANSFORM hTransf
 CMSAPI cmsUInt32Number CMSEXPORT cmsGetTransformInputFormat(cmsHTRANSFORM hTransform);
 CMSAPI cmsUInt32Number CMSEXPORT cmsGetTransformOutputFormat(cmsHTRANSFORM hTransform);
 
+// Access the optimized pipeline and gamut-check pipeline inside a transform.
+CMSAPI cmsPipeline*    CMSEXPORT cmsGetTransformPipeline(cmsHTRANSFORM hTransform);
+CMSAPI cmsPipeline*    CMSEXPORT cmsGetTransformGamutCheckPipeline(cmsHTRANSFORM hTransform);
+
 // For backwards compatibility
 CMSAPI cmsBool          CMSEXPORT cmsChangeBuffersFormat(cmsHTRANSFORM hTransform,
                                                          cmsUInt32Number InputFormat,
