@@ -141,6 +141,30 @@ function(lcms2_add_tools)
     endif()
   endif()
 
+  # Optional tiffdiff (requires TIFF).
+  if(LCMS2_BUILD_TIFFDIFF)
+    if(LCMS2_WITH_TIFF)
+      find_package(TIFF)
+    endif()
+
+    if(TIFF_FOUND)
+      _lcms2_add_tool(tiffdiff
+        SOURCES
+          "${PROJECT_SOURCE_DIR}/utils/tificc/tifdiff.c"
+          ${_common_sources}
+      )
+      if(TARGET TIFF::TIFF)
+        target_link_libraries(tiffdiff PRIVATE TIFF::TIFF)
+      else()
+        # Do not quote list variables: they may contain debug/optimized keywords.
+        target_include_directories(tiffdiff PRIVATE ${TIFF_INCLUDE_DIR})
+        target_link_libraries(tiffdiff PRIVATE ${TIFF_LIBRARIES})
+      endif()
+    else()
+      message(STATUS "TIFF not found or disabled; skipping tiffdiff")
+    endif()
+  endif()
+
   # Manpages (install handled by packaging module).
   set(_manpages
     "${PROJECT_SOURCE_DIR}/utils/jpgicc/jpgicc.1"
