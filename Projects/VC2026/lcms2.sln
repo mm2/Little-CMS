@@ -47,7 +47,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{4DD637AE-09B
 		..\..\doc\LittleCMS2.18 API.pdf = ..\..\doc\LittleCMS2.18 API.pdf
 		..\..\doc\LittleCMS2.18 Plugin API.pdf = ..\..\doc\LittleCMS2.18 Plugin API.pdf
 		..\..\doc\LittleCMS2.18 tutorial.pdf = ..\..\doc\LittleCMS2.18 tutorial.pdf
-		..\..\doc\prompt.md = ..\..\doc\prompt.md
 	EndProjectSection
 EndProject
 Global
@@ -242,7 +241,7 @@ Global
 		{F56B9CBA-A34D-4C68-9003-A6919236399E} = {09D18587-D927-4047-977F-49918A174D5E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		QtVersion = $(DefaultQtVersion)
 		SolutionGuid = {E95EA102-6884-4CAD-AF6D-9BF36C69A33D}
+		QtVersion = $(DefaultQtVersion)
 	EndGlobalSection
 EndGlobal
