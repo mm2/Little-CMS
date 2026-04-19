@@ -7199,6 +7199,452 @@ cmsInt32Number CheckPostScript(void)
     return 1;
 }
 
+// ---------------------------------------------------------------------------
+// Named-color PostScript-literal escaping (issue #554 / T-2).
+//
+// The plan: name bytes passed to cmsGetPostScriptCSA/CRD for a named-color
+// profile must be emitted inside a PS literal string with ( ) \ escaped and
+// bytes <0x20 or >=0x7F emitted as three-digit \ddd octal.  Raw injection
+// payloads like "foo) /exec (bar" must never appear unescaped.
+// ---------------------------------------------------------------------------
+
+static
+cmsHPROFILE BuildNamedColorProfile(const char* name)
+{
+    cmsHPROFILE placeholder = NULL;
+    cmsHPROFILE loaded = NULL;
+    cmsNAMEDCOLORLIST* colors = NULL;
+    cmsMLU* description = NULL;
+    cmsMLU* copyright = NULL;
+    cmsCIELab lab;
+    cmsUInt16Number pcs[3];
+    cmsUInt16Number colorant[cmsMAXCHANNELS];
+    cmsUInt32Number bytes = 0;
+    void* buf = NULL;
+    int i;
+
+    placeholder = cmsCreateProfilePlaceholder(DbgThread());
+    colors = cmsAllocNamedColorList(DbgThread(), 1, 4, "PANTONE", "TCX");
+    description = cmsMLUalloc(DbgThread(), 1);
+    copyright = cmsMLUalloc(DbgThread(), 1);
+    if (placeholder == NULL || colors == NULL ||
+        description == NULL || copyright == NULL)
+        goto done;
+
+    cmsSetProfileVersion(placeholder, 4.3);
+    cmsSetDeviceClass(placeholder, cmsSigNamedColorClass);
+    cmsSetColorSpace(placeholder, cmsSigCmykData);
+    cmsSetPCS(placeholder, cmsSigLabData);
+    cmsSetHeaderRenderingIntent(placeholder, INTENT_PERCEPTUAL);
+
+    cmsMLUsetWide(description, "en", "US", L"namedcolor PS escape test");
+    cmsMLUsetWide(copyright, "en", "US", L"test only");
+
+    if (!cmsWriteTag(placeholder, cmsSigProfileDescriptionTag, description)) goto done;
+    if (!cmsWriteTag(placeholder, cmsSigCopyrightTag, copyright)) goto done;
+    if (!cmsWriteTag(placeholder, cmsSigMediaWhitePointTag, cmsD50_XYZ())) goto done;
+
+    lab.L = 50.0; lab.a = 10.0; lab.b = -10.0;
+    cmsFloat2LabEncodedV2(pcs, &lab);
+    for (i = 0; i < cmsMAXCHANNELS; i++) colorant[i] = 0;
+    colorant[0] = (cmsUInt16Number)(10u * 257u);
+    colorant[1] = (cmsUInt16Number)(20u * 257u);
+    colorant[2] = (cmsUInt16Number)(30u * 257u);
+    colorant[3] = (cmsUInt16Number)(40u * 257u);
+
+    if (!cmsAppendNamedColor(colors, name, pcs, colorant)) goto done;
+    if (!cmsWriteTag(placeholder, cmsSigNamedColor2Tag, colors)) goto done;
+
+    if (!cmsSaveProfileToMem(placeholder, NULL, &bytes)) goto done;
+    buf = malloc(bytes);
+    if (buf == NULL) goto done;
+    if (!cmsSaveProfileToMem(placeholder, buf, &bytes)) goto done;
+
+    loaded = cmsOpenProfileFromMemTHR(DbgThread(), buf, bytes);
+
+done:
+    if (placeholder != NULL) cmsCloseProfile(placeholder);
+    if (colors != NULL) cmsFreeNamedColorList(colors);
+    if (description != NULL) cmsMLUfree(description);
+    if (copyright != NULL) cmsMLUfree(copyright);
+    if (buf != NULL) free(buf);
+    return loaded;
+}
+
+// Emit CSA (emit_kind == 0) or CRD (emit_kind == 1) into a malloc'd buffer.
+// Buffer is NUL-terminated (one byte beyond *out_len).  Returns NULL on
+// failure.  Caller frees.
+static
+char* EmitNamedColorPS(cmsHPROFILE hProfile, int emit_kind, cmsUInt32Number* out_len)
+{
+    cmsUInt32Number n;
+    char* buf;
+
+    if (emit_kind == 0)
+        n = cmsGetPostScriptCSA(DbgThread(), hProfile, 0, 0, NULL, 0);
+    else
+        n = cmsGetPostScriptCRD(DbgThread(), hProfile, 0, 0, NULL, 0);
+    if (n == 0) return NULL;
+
+    buf = (char*) malloc((size_t)n + 1);
+    if (buf == NULL) return NULL;
+
+    if (emit_kind == 0)
+        cmsGetPostScriptCSA(DbgThread(), hProfile, 0, 0, buf, n);
+    else
+        cmsGetPostScriptCRD(DbgThread(), hProfile, 0, 0, buf, n);
+
+    buf[n] = '\0';
+    if (out_len != NULL) *out_len = n;
+    return buf;
+}
+
+// Binary-safe substring search — strstr is insufficient because injection
+// payloads and octal-escaped forms are all ASCII, but we also look for raw
+// bytes like 0x01 / 0xff that could be adjacent to other data; using
+// memcmp-style search keeps the test robust regardless.
+static
+const char* FindBytes(const char* haystack, cmsUInt32Number hlen,
+                      const char* needle, cmsUInt32Number nlen)
+{
+    cmsUInt32Number i;
+    if (nlen == 0) return haystack;
+    if (hlen < nlen) return NULL;
+    for (i = 0; i + nlen <= hlen; i++) {
+        if (memcmp(haystack + i, needle, (size_t)nlen) == 0)
+            return haystack + i;
+    }
+    return NULL;
+}
+
+// Generate PS output for both CSA and CRD, then assert that `needle` is
+// present (present_required != 0) or absent (present_required == 0) in
+// BOTH outputs.  Returns 1 on pass, 0 on fail.
+static
+cmsInt32Number RunPSEscapeCheck(const char* label,
+                                const char* name,
+                                const char* needle,
+                                cmsUInt32Number needle_len,
+                                int present_required)
+{
+    cmsHPROFILE hProfile;
+    char* csa = NULL;
+    char* crd = NULL;
+    cmsUInt32Number csa_len = 0, crd_len = 0;
+    const char* hit_csa;
+    const char* hit_crd;
+    int ok = 1;
+
+    SubTest("%s", label);
+
+    hProfile = BuildNamedColorProfile(name);
+    if (hProfile == NULL) {
+        Fail("[%s] could not construct in-memory named-color profile", label);
+        return 0;
+    }
+
+    csa = EmitNamedColorPS(hProfile, 0, &csa_len);
+    crd = EmitNamedColorPS(hProfile, 1, &crd_len);
+
+    if (csa == NULL) {
+        Fail("[%s] cmsGetPostScriptCSA returned 0 bytes", label);
+        ok = 0;
+    }
+    if (crd == NULL) {
+        Fail("[%s] cmsGetPostScriptCRD returned 0 bytes", label);
+        ok = 0;
+    }
+
+    if (ok) {
+        hit_csa = FindBytes(csa, csa_len, needle, needle_len);
+        hit_crd = FindBytes(crd, crd_len, needle, needle_len);
+
+        if (present_required && hit_csa == NULL) {
+            Fail("[%s] CSA output missing expected bytes", label);
+            ok = 0;
+        }
+        if (present_required && hit_crd == NULL) {
+            Fail("[%s] CRD output missing expected bytes", label);
+            ok = 0;
+        }
+        if (!present_required && hit_csa != NULL) {
+            Fail("[%s] CSA output contained forbidden bytes", label);
+            ok = 0;
+        }
+        if (!present_required && hit_crd != NULL) {
+            Fail("[%s] CRD output contained forbidden bytes", label);
+            ok = 0;
+        }
+    }
+
+    if (csa != NULL) free(csa);
+    if (crd != NULL) free(crd);
+    cmsCloseProfile(hProfile);
+    return ok;
+}
+
+static
+cmsInt32Number CheckNamedColorPSEscaping(void)
+{
+    // ---- 1) Primary injection vector from issue #554 -----------------------
+    // Name bytes:  f o o )   / e x e c   ( b a r \ b a z 0x01 0xff
+    // Effective (string-terminated) name.
+    {
+        static const char name[] = "foo) /exec (bar\\baz\x01\xff";
+        // The original unescaped ASCII fragment must NEVER appear as-is.
+        static const char raw[] = "foo) /exec (bar";
+        // The fully escaped form (from plan §5.1): the PLRM-style escape of
+        // every metacharacter plus octal for the two non-printables.
+        static const char esc[] = "foo\\) /exec \\(bar\\\\baz\\001\\377";
+
+        if (!RunPSEscapeCheck("injection: raw payload must be absent",
+                              name, raw, (cmsUInt32Number)(sizeof(raw) - 1), 0))
+            return 0;
+        if (!RunPSEscapeCheck("injection: fully escaped form present",
+                              name, esc, (cmsUInt32Number)(sizeof(esc) - 1), 1))
+            return 0;
+        // The injected tokens `/exec`, `/run`, `/file` (bare, outside a
+        // literal) must not leak.  After correct escaping they only appear
+        // INSIDE `(...)` as `\(...\)` wrappers, so a standalone ` /exec `
+        // flanked by ` ` and ` ` (i.e., not inside a literal context) would
+        // indicate bleed-through.  The simpler check above is sufficient,
+        // but this is a belt-and-braces check against future regressions.
+        if (!RunPSEscapeCheck("injection: `) /exec (` sequence absent",
+                              name, ") /exec (",
+                              (cmsUInt32Number)9, 0))
+            return 0;
+    }
+
+    // ---- 2) Benign name passes through untouched ---------------------------
+    {
+        static const char name[] = "Hazelnut 14-1315";
+        if (!RunPSEscapeCheck("benign name survives verbatim",
+                              name, name, (cmsUInt32Number)(sizeof(name) - 1), 1))
+            return 0;
+        // No over-eager escaping: a legitimate printable-ASCII name should
+        // contain no backslash at all.  Search for the exact name surrounded
+        // by `(` and `)`, which is the uncontaminated literal form.
+        if (!RunPSEscapeCheck("benign name wrapped in bare parens",
+                              name, "(Hazelnut 14-1315)",
+                              (cmsUInt32Number)18, 1))
+            return 0;
+    }
+
+    // ---- 3) Another legitimate printable name ------------------------------
+    {
+        static const char name[] = "PANTONE Orange 021 C";
+        if (!RunPSEscapeCheck("PANTONE name unchanged",
+                              name, name, (cmsUInt32Number)(sizeof(name) - 1), 1))
+            return 0;
+    }
+
+    // ---- 4) Empty name: must produce `()` and nothing between --------------
+    {
+        static const char name[] = "";
+        // The caller-side emission is `  (` + EmitPSEscaped() + `) [ ... ]`,
+        // so an empty helper yields the exact byte sequence "  ()" followed
+        // by " [".
+        if (!RunPSEscapeCheck("empty name produces `  ()`",
+                              name, "  ()",
+                              (cmsUInt32Number)4, 1))
+            return 0;
+    }
+
+    // ---- 5) Standalone backslash ------------------------------------------
+    //
+    // The historically-common oversight cited in plan §4: a literal '\\' in
+    // the name must be escaped to '\\\\' (backslash-backslash).
+    {
+        static const char name[] = "a\\b";
+        static const char esc[]  = "a\\\\b";          // a\\b -- doubled backslash
+        static const char bad[]  = "(a\\b)";          // unescaped form wrapped
+
+        if (!RunPSEscapeCheck("backslash doubled",
+                              name, esc, (cmsUInt32Number)(sizeof(esc) - 1), 1))
+            return 0;
+        if (!RunPSEscapeCheck("backslash not emitted raw inside literal",
+                              name, bad, (cmsUInt32Number)(sizeof(bad) - 1), 0))
+            return 0;
+    }
+
+    // ---- 6) All-open-paren name (2x expansion) ----------------------------
+    {
+        static const char name[] = "((((";
+        static const char esc[]  = "\\(\\(\\(\\(";  // four `\(` tokens
+
+        if (!RunPSEscapeCheck("`(((( ` escaped as `\\(\\(\\(\\(`",
+                              name, esc, (cmsUInt32Number)(sizeof(esc) - 1), 1))
+            return 0;
+        // A well-escaped output contains `  (\(\(\(\()` — at most one run
+        // of two adjacent `(` (the literal opener + the first `\(`).  A run
+        // of five contiguous `(` can only arise from unescaped payload.
+        if (!RunPSEscapeCheck("no run of five '(' from unescaped payload",
+                              name, "(((((",
+                              (cmsUInt32Number)5, 0))
+            return 0;
+    }
+
+    // ---- 7) All-close-paren name ------------------------------------------
+    {
+        static const char name[] = "))))";
+        static const char esc[]  = "\\)\\)\\)\\)";   // four `\)` tokens
+
+        if (!RunPSEscapeCheck("`)))) ` escaped as `\\)\\)\\)\\)`",
+                              name, esc, (cmsUInt32Number)(sizeof(esc) - 1), 1))
+            return 0;
+        // A well-escaped output never has four raw `)` in a row; the maximum
+        // legitimate run is two (final `\)` + literal closer).
+        if (!RunPSEscapeCheck("no run of four ')' from unescaped payload",
+                              name, "))))",
+                              (cmsUInt32Number)4, 0))
+            return 0;
+    }
+
+    // ---- 8) Boundary bytes around the printable ASCII range ---------------
+    //
+    // 0x1F (< 0x20) must be escaped as octal.
+    // 0x20 (space) must pass through.
+    // 0x7E (tilde) must pass through.
+    // 0x7F (DEL, >= 0x7F) must be escaped as octal.
+    {
+        static const char name[] = { 0x1f, 0x20, 0x7e, 0x7f, 0x00 };
+        static const char esc[]  = "\\037 ~\\177";
+        static const char raw_low[] = { 0x1f, 0x00 };
+        static const char raw_hi[]  = { 0x7f, 0x00 };
+
+        if (!RunPSEscapeCheck("boundary bytes 0x1F/0x20/0x7E/0x7F escape",
+                              name, esc, (cmsUInt32Number)(sizeof(esc) - 1), 1))
+            return 0;
+        if (!RunPSEscapeCheck("raw 0x1F absent from output",
+                              name, raw_low, (cmsUInt32Number)1, 0))
+            return 0;
+        if (!RunPSEscapeCheck("raw 0x7F absent from output",
+                              name, raw_hi, (cmsUInt32Number)1, 0))
+            return 0;
+    }
+
+    // ---- 9) Exactly 0x20 and 0x7E alone pass through (negative boundary) --
+    {
+        static const char name[] = { 0x20, 0x7e, 0x00 };   // just " ~"
+        if (!RunPSEscapeCheck("0x20 and 0x7E pass through",
+                              name, name, (cmsUInt32Number)2, 1))
+            return 0;
+    }
+
+    // ---- 10) High-bit bytes — 4x expansion sanity -------------------------
+    {
+        static const char name[] = { (char)0xff, (char)0xff, (char)0xff, (char)0xff, 0x00 };
+        static const char esc[]  = "\\377\\377\\377\\377";
+        static const char raw[]  = { (char)0xff, 0x00 };
+
+        if (!RunPSEscapeCheck("0xFF bytes escape to \\377",
+                              name, esc, (cmsUInt32Number)(sizeof(esc) - 1), 1))
+            return 0;
+        if (!RunPSEscapeCheck("no raw 0xFF in output",
+                              name, raw, (cmsUInt32Number)1, 0))
+            return 0;
+    }
+
+    // ---- 11) LF / CR / TAB — critical control-byte escapes ----------------
+    //
+    // Newline / CR are a second-class injection vector (they can terminate
+    // PS line context in some interpreters even inside a literal for
+    // adjacent tokens).  \n = 0x0A -> \012, \r = 0x0D -> \015, \t = 0x09 ->
+    // \011.
+    {
+        static const char name[] = "a\tb\nc\rd";
+        static const char esc[]  = "a\\011b\\012c\\015d";
+        static const char lf[]   = "\n";
+        static const char cr[]   = "\r";
+
+        if (!RunPSEscapeCheck("LF/CR/TAB octal-escaped",
+                              name, esc, (cmsUInt32Number)(sizeof(esc) - 1), 1))
+            return 0;
+        // Raw \n/\r appear naturally elsewhere in PS output (line breaks),
+        // so we cannot assert global absence — but we CAN assert that no
+        // line in the output begins with `c` after a raw `\n` that came
+        // from our name (that would mean the literal was broken open).
+        // The safer invariant: the substring "a\tb" with a raw TAB should
+        // never appear since 0x09 must always be escaped.
+        {
+            static const char rawtab[] = "a\tb";
+            if (!RunPSEscapeCheck("no raw TAB survives between escape-neighbors",
+                                  name, rawtab, (cmsUInt32Number)(sizeof(rawtab) - 1), 0))
+                return 0;
+        }
+        // Suppress unused-variable warnings when asserts are cheap.
+        (void)lf; (void)cr;
+    }
+
+    // ---- 12) Mixed printable + metacharacter interleave -------------------
+    {
+        static const char name[] = "A(B)C\\D";
+        static const char esc[]  = "A\\(B\\)C\\\\D";
+
+        if (!RunPSEscapeCheck("interleaved printable+metachar",
+                              name, esc, (cmsUInt32Number)(sizeof(esc) - 1), 1))
+            return 0;
+        if (!RunPSEscapeCheck("raw `(B)` sub-literal absent",
+                              name, "(B)", (cmsUInt32Number)3, 0))
+            return 0;
+    }
+
+    // ---- 13) Stress: long name near cmsMAX_PATH, all metacharacters -------
+    //
+    // Plan §4 observes that an all-metacharacter name expands 2x, and an
+    // all-high-bit name expands 4x.  We don't need to hit cmsMAX_PATH
+    // exactly; 31 bytes of '(' (ncl2 Root is 32 bytes, last is NUL) is
+    // the practical upper bound on a profile-sourced name.
+    {
+        char name[32];
+        char esc[64 + 1];
+        int i;
+
+        for (i = 0; i < 31; i++) name[i] = '(';
+        name[31] = '\0';
+
+        for (i = 0; i < 31; i++) {
+            esc[2*i]   = '\\';
+            esc[2*i+1] = '(';
+        }
+        esc[62] = '\0';
+
+        if (!RunPSEscapeCheck("31 '(' bytes expand to 62 escape bytes",
+                              name, esc, (cmsUInt32Number)62, 1))
+            return 0;
+    }
+
+    // ---- 14) Trailing partial escape boundary -----------------------------
+    // A name ending in a backslash must not leave the PS literal dangling.
+    {
+        static const char name[] = "xyz\\";
+        static const char esc[]  = "xyz\\\\";
+        static const char bad[]  = "xyz\\)";
+
+        if (!RunPSEscapeCheck("trailing backslash doubled",
+                              name, esc, (cmsUInt32Number)(sizeof(esc) - 1), 1))
+            return 0;
+        if (!RunPSEscapeCheck("trailing backslash does not escape closer",
+                              name, bad, (cmsUInt32Number)(sizeof(bad) - 1), 0))
+            return 0;
+    }
+
+    // ---- 15) A name consisting solely of a close-paren (minimal repro) ----
+    {
+        static const char name[] = ")";
+        static const char esc[]  = "(\\))";     // full literal form
+
+        if (!RunPSEscapeCheck("single ')' emits `(\\))`",
+                              name, esc, (cmsUInt32Number)(sizeof(esc) - 1), 1))
+            return 0;
+        if (!RunPSEscapeCheck("raw `())` sequence (literal early-close) absent",
+                              name, "())", (cmsUInt32Number)3, 0))
+            return 0;
+    }
+
+    return 1;
+}
+
 
 static
 cmsInt32Number CheckGray(cmsHTRANSFORM xform, cmsUInt8Number g, double L)
@@ -9849,6 +10295,7 @@ int main(int argc, char* argv[])
     Check("CGATS parser on junk", CheckCGATS2);
     Check("CGATS parser on overflow", CheckCGATS_Overflow);
     Check("PostScript generator", CheckPostScript);
+    Check("PostScript named-color escaping (issue #554)", CheckNamedColorPSEscaping);
     Check("Segment maxima GBD", CheckGBD);
     Check("MD5 digest", CheckMD5);
     Check("Linking", CheckLinking);
