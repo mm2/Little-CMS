@@ -3122,6 +3122,8 @@ cmsBool ParseCube(cmsIT8* cube, cmsStage** Shaper, cmsStage** CLUT, char title[]
             InSymbol(cube);
             if (!Check(cube, SINUM, "Shaper size expected")) return FALSE;
             shaper_size = cube->inum;
+            if (shaper_size < 2 || shaper_size > 65536)
+                 return SynError(cube, "LUT_1D_SIZE '%d' is out of bounds", shaper_size);
             InSymbol(cube);
             break;
         
@@ -3192,8 +3194,8 @@ cmsBool ParseCube(cmsIT8* cube, cmsStage** Shaper, cmsStage** CLUT, char title[]
                 /**
                 * Professional LUT generation tools (e.g., Nobe LutBake) list 65×65×65 as their highest supported size.                
                 */
-                if (lut_size > 65)
-                    return SynError(cube, "LUT size '%d' is over maximum of 65", lut_size);
+                if (lut_size < 2 || lut_size > 65)
+                    return SynError(cube, "LUT size '%d' is not allowed", lut_size);
 
                 nodes = lut_size * lut_size * lut_size;
 
