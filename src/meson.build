@@ -68,4 +68,5 @@ endif
 liblcms2_dep = declare_dependency(
   link_with: liblcms2_lib,
   include_directories: [inc_dirs, include_directories('.')],
+  dependencies: deps,
 )
