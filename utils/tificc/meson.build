@@ -15,13 +15,13 @@ tificc_man = files(
 
 install_man(tificc_man)
 
-tiffdiff_sources = files(
+tifdiff_sources = files(
   'tifdiff.c',
 )
 
-tiffdiff_exe = executable(
-  'tiffdiff',
-  tiffdiff_sources,
+tifdiff_exe = executable(
+  'tifdiff',
+  tifdiff_sources,
   dependencies: [liblcms2_dep, common_dep, tiff_dep],
   install: true,
 )
