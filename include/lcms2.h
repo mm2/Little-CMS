@@ -1893,6 +1893,9 @@ CMSAPI cmsUInt32Number CMSEXPORT cmsGetTransformOutputFormat(cmsHTRANSFORM hTran
 // Access the optimized pipeline and gamut-check pipeline inside a transform.
 CMSAPI cmsPipeline*    CMSEXPORT cmsGetTransformPipeline(cmsHTRANSFORM hTransform);
 CMSAPI cmsPipeline*    CMSEXPORT cmsGetTransformGamutCheckPipeline(cmsHTRANSFORM hTransform);
+// Grab colorants
+CMSAPI cmsNAMEDCOLORLIST* CMSEXPORT cmsGetTransformInputColorants(cmsHTRANSFORM hTransform);
+CMSAPI cmsNAMEDCOLORLIST* CMSEXPORT cmsGetTransformOutputColorants(cmsHTRANSFORM hTransform);
 
 // For backwards compatibility
 CMSAPI cmsBool          CMSEXPORT cmsChangeBuffersFormat(cmsHTRANSFORM hTransform,

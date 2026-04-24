@@ -1488,3 +1488,19 @@ cmsBool CMSEXPORT cmsChangeBuffersFormat(cmsHTRANSFORM hTransform,
     xform ->ToOutput     = ToOutput;
     return TRUE;
 }
+
+cmsNAMEDCOLORLIST* CMSEXPORT cmsGetTransformInputColorants(cmsHTRANSFORM hTransform)
+{
+    _cmsTRANSFORM* xform = (_cmsTRANSFORM*)hTransform;
+
+    if (xform == NULL) return NULL;
+    return xform->InputColorant;
+}
+
+cmsNAMEDCOLORLIST* CMSEXPORT cmsGetTransformOutputColorants(cmsHTRANSFORM hTransform)
+{
+    _cmsTRANSFORM* xform = (_cmsTRANSFORM*)hTransform;
+
+    if (xform == NULL) return NULL;
+    return xform->OutputColorant;
+}

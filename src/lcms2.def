@@ -380,4 +380,5 @@ cmsGetHeaderCMM                          =   cmsGetHeaderCMM
 _cmsSetHeaderCMM                         =  _cmsSetHeaderCMM
 cmsGetTransformPipeline                  =  cmsGetTransformPipeline
 cmsGetTransformGamutCheckPipeline        =  cmsGetTransformGamutCheckPipeline
-
+cmsGetTransformInputColorants            =  cmsGetTransformInputColorants
+cmsGetTransformOutputColorants           =  cmsGetTransformOutputColorants
