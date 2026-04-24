@@ -9,7 +9,7 @@ function(lcms2_setup_options)
   # Tool-specific toggles (only meaningful when LCMS2_BUILD_TOOLS=ON).
   option(LCMS2_BUILD_JPGICC "Build jpgicc tool (requires JPEG)" ON)
   option(LCMS2_BUILD_TIFICC "Build tificc tool (requires TIFF, optionally ZLIB)" ON)
-  option(LCMS2_BUILD_TIFFDIFF "Build tiffdiff tool (requires TIFF)" ON)
+  option(LCMS2_BUILD_TIFDIFF "Build tifdiff tool (requires TIFF)" ON)
 
   # Dependency toggles (only consulted when the dependent tool is enabled).
   option(LCMS2_WITH_JPEG "Enable JPEG support for tools (find_package only when needed)" ON)
