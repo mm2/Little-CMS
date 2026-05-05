@@ -20,11 +20,11 @@ if COND_THREADED
 endif
 
 # Directories containing Makefiles to 'make'
-SUBDIRS = src include utils/tificc utils/transicc utils/linkicc utils/jpgicc utils/psicc utils/samples testbed $(USER_PLUGINS)
+SUBDIRS = src include utils/tificc utils/transicc utils/linkicc utils/jpgicc utils/psicc utils/samples testbed plugins
 
 # Additional files to distribute
 EXTRA_DIST = AUTHORS LICENSE ChangeLog doc Projects include bin Lib INSTALL README.md SECURITY.md autogen.sh \
-             lcms2.pc.in plugins CMakeLists.txt cmake meson.build meson_options.txt fuzzers \
+             lcms2.pc.in CMakeLists.txt cmake meson.build meson_options.txt fuzzers \
              utils/delphi utils/matlab utils/common utils/meson.build
 
 pkgconfigdir = $(libdir)/pkgconfig
@@ -33,15 +33,15 @@ pkgconfig_DATA = lcms2.pc
 
 # Make sure get rid of VC stuff...
 clean-local:
-	rm -rf autom4te.cache
-	find Projects -name "*.user" | xargs rm -rf
-	find Projects -name "Release" | xargs rm -rf
-	find Projects -name "Debug" | xargs rm -rf
-	find Projects -name "*.aps" | xargs rm -rf
-	find Projects -name "*.suo" | xargs rm -rf
-	find Projects -name "*.log" | xargs rm -rf
-	find Projects -name "*.sdf" | xargs rm -rf
-	find Projects -name "*.opensdf" | xargs rm -rf
-	find Projects -name "ipch" | xargs rm -rf
+	-rm -rf autom4te.cache
+	-find Projects -name "*.user" | xargs rm -rf
+	-find Projects -name "Release" | xargs rm -rf
+	-find Projects -name "Debug" | xargs rm -rf
+	-find Projects -name "*.aps" | xargs rm -rf
+	-find Projects -name "*.suo" | xargs rm -rf
+	-find Projects -name "*.log" | xargs rm -rf
+	-find Projects -name "*.sdf" | xargs rm -rf
+	-find Projects -name "*.opensdf" | xargs rm -rf
+	-find Projects -name "ipch" | xargs rm -rf
 	
 	
