@@ -16,4 +16,4 @@ psicc_LDFLAGS = @LDFLAGS@
 psicc_SOURCES = psicc.c ../common/xgetopt.c ../common/vprf.c ../common/utils.h
 man_MANS = psicc.1
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = $(man_MANS) meson.build

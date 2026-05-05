@@ -14,10 +14,10 @@ fast_float_testbed_LDADD =  $(builddir)/../src/liblcms2_fast_float.la $(LCMS_LIB
 fast_float_testbed_LDFLAGS = -static @LDFLAGS@
 fast_float_testbed_SOURCES = fast_float_testbed.c
 
-EXTRA_DIST = test0.icc test1.icc test2.icc test3.icc test5.icc
+EXTRA_DIST = meson.build
 
 check:
 	if [ "x$(srcdir)" != "x$(builddir)" ]; then \
-		cp $(srcdir)/test?.icc . ; \
+		cp $(top_srcdir)/plugins/test_profiles/test?.icc . ; \
 	fi
 	./fast_float_testbed

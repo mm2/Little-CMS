@@ -4,4 +4,4 @@
 
 include_HEADERS = lcms2.h lcms2_plugin.h
 
-EXTRA_DIST = lcms2.h lcms2_plugin.h
+EXTRA_DIST = lcms2.h lcms2_plugin.h meson.build

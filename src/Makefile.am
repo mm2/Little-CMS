@@ -29,3 +29,5 @@ liblcms2_la_SOURCES = \
   cmssamp.c cmsnamed.c cmscam02.c cmsvirt.c cmstypes.c cmscgats.c cmsps2.c cmsopt.c \
   cmshalf.c cmsalpha.c lcms2_internal.h
 
+EXTRA_DIST = meson.build
+

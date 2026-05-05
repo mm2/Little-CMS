@@ -16,4 +16,4 @@ transicc_LDFLAGS = @LDFLAGS@
 transicc_SOURCES = transicc.c ../common/xgetopt.c ../common/vprf.c  ../common/utils.h
 man_MANS = transicc.1
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = $(man_MANS) meson.build

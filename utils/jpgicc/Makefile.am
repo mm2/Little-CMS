@@ -19,4 +19,4 @@ jpgicc_LDFLAGS = @LDFLAGS@
 jpgicc_SOURCES = jpgicc.c iccjpeg.c ../common/xgetopt.c ../common/vprf.c ../common/utils.h
 man_MANS = jpgicc.1
 
-EXTRA_DIST = iccjpeg.h $(man_MANS)
+EXTRA_DIST = iccjpeg.h $(man_MANS) meson.build

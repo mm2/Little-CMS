@@ -16,4 +16,4 @@ wtpt_LDFLAGS = @LDFLAGS@
 wtpt_SOURCES = wtpt.c ../common/xgetopt.c ../common/vprf.c ../common/utils.h
 man_MANS = wtpt.1
 
-EXTRA_DIST = $(man_MANS) roundtrip.c mktiff8.c mkgrayer.c mkcmy.c itufax.c
+EXTRA_DIST = $(man_MANS) roundtrip.c mktiff8.c mkgrayer.c mkcmy.c itufax.c vericc.c

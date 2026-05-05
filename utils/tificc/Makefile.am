@@ -22,4 +22,4 @@ tificc_SOURCES = tificc.c ../common/xgetopt.c ../common/vprf.c ../common/utils.h
 man_MANS = tificc.1
 
 
-EXTRA_DIST = $(man_MANS)
+EXTRA_DIST = $(man_MANS) meson.build

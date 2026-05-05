@@ -20,10 +20,12 @@ if COND_THREADED
 endif
 
 # Directories containing Makefiles to 'make'
-SUBDIRS = src include utils/tificc utils/transicc utils/linkicc utils/jpgicc utils/psicc testbed $(USER_PLUGINS)
+SUBDIRS = src include utils/tificc utils/transicc utils/linkicc utils/jpgicc utils/psicc utils/samples testbed $(USER_PLUGINS)
 
 # Additional files to distribute
-EXTRA_DIST = AUTHORS COPYING ChangeLog doc Projects include bin Lib INSTALL README.md autogen.sh lcms2.pc.in plugins 
+EXTRA_DIST = AUTHORS LICENSE ChangeLog doc Projects include bin Lib INSTALL README.md SECURITY.md autogen.sh \
+             lcms2.pc.in plugins CMakeLists.txt cmake meson.build meson_options.txt fuzzers \
+             utils/delphi utils/matlab utils/common utils/meson.build
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = lcms2.pc
