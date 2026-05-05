@@ -43,5 +43,3 @@ clean-local:
 	-find Projects -name "*.sdf" | xargs rm -rf
 	-find Projects -name "*.opensdf" | xargs rm -rf
 	-find Projects -name "ipch" | xargs rm -rf
-	
-	
