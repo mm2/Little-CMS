@@ -1,5 +1,9 @@
 # Security Policy
 
+## Using GitHub security advisory
+
+**Please contact me instead. Security advisories are immediatly deleted without checking due to high level of SPAM received.**
+
 ## Supported Versions
 
 Security updates are applied only to the latest release.
@@ -21,7 +25,5 @@ That is, you got a patch from upstream that upstream claims to be reasonably tes
 Please understand that this is a lot of work, and obviously it can fail as well, so the “no guarantee” clause of MIT license applies. If you choose to 
 redistribute such patches, please make sure to include the mail, or at least the MIT license. By including the MIT license you prevent to get in legal trouble.
 
-## Using GitHub security advisory
 
-Please contact me instead. Security advisories are immediatly deleted without checking due to high level of SPAM received.
 
