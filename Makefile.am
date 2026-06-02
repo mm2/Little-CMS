@@ -23,7 +23,7 @@ endif
 SUBDIRS = src include utils/tificc utils/transicc utils/linkicc utils/jpgicc utils/psicc testbed $(USER_PLUGINS)
 
 # Additional files to distribute
-EXTRA_DIST = AUTHORS COPYING ChangeLog doc Projects include bin Lib INSTALL README.md autogen.sh lcms2.pc.in plugins 
+EXTRA_DIST = AUTHORS LICENSE ChangeLog doc Projects include bin Lib plugins INSTALL README.md autogen.sh lcms2.pc.in fuzzers meson_options.txt Projects setup cmake CMakeLists.txt SECURITY.md
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = lcms2.pc
@@ -32,6 +32,7 @@ pkgconfig_DATA = lcms2.pc
 # Make sure get rid of VC stuff...
 clean-local:
 	rm -rf autom4te.cache
+	rm -rf plugins/Makefile
 	find Projects -name "*.user" | xargs rm -rf
 	find Projects -name "Release" | xargs rm -rf
 	find Projects -name "Debug" | xargs rm -rf
