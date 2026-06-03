@@ -242,7 +242,10 @@ cmsBool  MemoryClose(struct _cms_io_handler* iohandler)
 
     if (ResData ->FreeBlockOnClose) {
 
-        if (ResData ->Block) _cmsFree(iohandler ->ContextID, ResData ->Block);
+        if (ResData->Block) {
+            _cmsFree(iohandler->ContextID, ResData->Block);
+            ResData->Block = NULL;
+        }
     }
 
     _cmsFree(iohandler ->ContextID, ResData);
@@ -729,6 +732,7 @@ void _cmsDeleteTagByPos(_cmsICCPROFILE* Icc, int i)
         // Free previous version
         if (Icc ->TagSaveAsRaw[i]) {
             _cmsFree(Icc ->ContextID, Icc ->TagPtrs[i]);
+            Icc->TagPtrs[i] = NULL;            
             Icc->TagSaveAsRaw[i] = FALSE;
         }
         else {
@@ -1430,8 +1434,16 @@ cmsBool SaveTags(_cmsICCPROFILE* Icc, _cmsICCPROFILE* FileOrig)
                     Mem = _cmsMalloc(Icc->ContextID, TagSize);
                     if (Mem == NULL) return FALSE;
 
-                    if (FileOrig->IOhandler->Read(FileOrig->IOhandler, Mem, TagSize, 1) != 1) return FALSE;
-                    if (!io->Write(io, TagSize, Mem)) return FALSE;
+                    if (FileOrig->IOhandler->Read(FileOrig->IOhandler, Mem, TagSize, 1) != 1) {
+                        _cmsFree(Icc->ContextID, Mem);
+                        return FALSE;
+                    }
+
+                    if (!io->Write(io, TagSize, Mem)) {
+                        _cmsFree(Icc->ContextID, Mem);
+                        return FALSE;
+                    }
+
                     _cmsFree(Icc->ContextID, Mem);
 
                     Icc->TagSizes[i] = (io->UsedSpace - Begin);

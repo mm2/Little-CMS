@@ -639,7 +639,7 @@ cmsPipeline* DefaultICCintents(cmsContext       ContextID,
 
     }
 
-    if (cmsChannelsOfColorSpace(ColorSpaceOut) != cmsPipelineOutputChannels(Result))
+    if (cmsChannelsOfColorSpace(ColorSpaceOut) != (cmsInt32Number) cmsPipelineOutputChannels(Result))
         goto Error;
 
     return Result;
