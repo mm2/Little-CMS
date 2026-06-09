@@ -408,7 +408,7 @@ cmsBool OptimizeCLUTLabTransform(_cmsTransform2Fn* TransformFn,
 
     // Allocate data
     pfloat = LabCLUTAlloc(ContextID, data ->Params);
-    if (pfloat == NULL) return FALSE;   
+    if (pfloat == NULL) goto Error;   
 
     container.data = pfloat;
     container.original = OriginalLut;

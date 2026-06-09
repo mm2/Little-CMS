@@ -1152,6 +1152,7 @@ void *Type_Text_Description_Read(struct _cms_typehandler_struct* self, cmsIOHAND
 
     if (!_cmsReadWCharArray(io, UnicodeCount, UnicodeString)) {
         _cmsFree(self->ContextID, (void*)UnicodeString);
+        UnicodeString = NULL;
         goto Done;
     }
 
@@ -1159,6 +1160,7 @@ void *Type_Text_Description_Read(struct _cms_typehandler_struct* self, cmsIOHAND
 
     if (!cmsMLUsetWide(mlu, cmsV2Unicode, cmsV2Unicode, UnicodeString)) {
         _cmsFree(self->ContextID, (void*)UnicodeString);
+        UnicodeString = NULL;
         goto Done;
     }
 
@@ -5181,6 +5183,7 @@ cmsBool AllocElem(cmsContext ContextID, _cmsDICelem* e,  cmsUInt32Number Count)
     if (e->Sizes == NULL) {
 
         _cmsFree(ContextID, e -> Offsets);
+        e->Offsets = NULL;
         return FALSE;
     }
 
@@ -5498,10 +5501,25 @@ void *Type_Dictionary_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* i
             rc = cmsDictAddEntry(hDict, NameWCS, ValueWCS, DisplayNameMLU, DisplayValueMLU);
         }
 
-        if (NameWCS != NULL) _cmsFree(self ->ContextID, NameWCS);
-        if (ValueWCS != NULL) _cmsFree(self ->ContextID, ValueWCS);
-        if (DisplayNameMLU != NULL) cmsMLUfree(DisplayNameMLU);
-        if (DisplayValueMLU != NULL) cmsMLUfree(DisplayValueMLU);
+        if (NameWCS != NULL) {
+            _cmsFree(self->ContextID, NameWCS);
+            NameWCS = NULL;
+        }
+
+        if (ValueWCS != NULL) {
+            _cmsFree(self->ContextID, ValueWCS);
+            ValueWCS = NULL;
+        }
+
+        if (DisplayNameMLU != NULL) {
+            cmsMLUfree(DisplayNameMLU);
+            DisplayNameMLU = NULL;
+        }
+
+        if (DisplayValueMLU != NULL) {
+            cmsMLUfree(DisplayValueMLU);
+            DisplayValueMLU = NULL;
+        }
 
         if (!rc) goto Error;
     }
@@ -5513,6 +5531,10 @@ void *Type_Dictionary_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* i
 Error:
    FreeArray(&a);
    if (hDict != NULL) cmsDictFree(hDict);
+   if (NameWCS != NULL) _cmsFree(self->ContextID, NameWCS);
+   if (ValueWCS != NULL) _cmsFree(self->ContextID, ValueWCS);
+   if (DisplayNameMLU != NULL) cmsMLUfree(DisplayNameMLU);
+   if (DisplayValueMLU != NULL) cmsMLUfree(DisplayValueMLU);
    return NULL;
 }
 

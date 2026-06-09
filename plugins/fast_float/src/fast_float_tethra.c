@@ -341,7 +341,7 @@ cmsBool OptimizeCLUTRGBTransform(_cmsTransform2Fn* TransformFn,
     data = (_cmsStageCLutData*) cmsStageData(OptimizedCLUTmpe);
 
     pfloat = FloatCLUTAlloc(ContextID, data ->Params);
-    if (pfloat == NULL) return FALSE;   
+    if (pfloat == NULL) goto Error;   
 
     // And return the obtained LUT
     cmsPipelineFree(OriginalLut);

@@ -372,7 +372,7 @@ cmsBool OptimizeCLUTCMYKTransform(_cmsTransform2Fn* TransformFn,
     data = (_cmsStageCLutData*) cmsStageData(OptimizedCLUTmpe);
 
     pcmyk = FloatCMYKAlloc(ContextID, data ->Params);
-    if (pcmyk == NULL) return FALSE;   
+    if (pcmyk == NULL) goto Error;   
 
     // And return the obtained LUT
     cmsPipelineFree(OriginalLut);
