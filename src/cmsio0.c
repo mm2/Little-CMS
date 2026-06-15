@@ -914,8 +914,8 @@ cmsBool _cmsReadHeader(_cmsICCPROFILE* Icc)
     // Get size as reported in header
     HeaderSize = _cmsAdjustEndianess32(Header.size);
 
-    // Make sure HeaderSize is lower than profile size
-    if (HeaderSize >= Icc ->IOhandler ->ReportedSize)
+    // Make sure HeaderSize is at least same as reported size
+    if (HeaderSize < Icc ->IOhandler ->ReportedSize)
             HeaderSize = Icc ->IOhandler ->ReportedSize;
 
 
