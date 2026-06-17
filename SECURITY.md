@@ -2,7 +2,7 @@
 
 ## Using GitHub security advisory
 
-**Please contact me instead. Security advisories are immediatly deleted without checking due to high level of SPAM received.**
+**Please contact me instead www.littlecms.com/contact. Security advisories are immediately deleted without checking due to high level of SPAM received.**
 
 ## Supported Versions
 
