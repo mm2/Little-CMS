@@ -573,7 +573,8 @@ cmsUInt8Number* UnrollAnyWordsPremul(CMSREGISTER _cmsTRANSFORM* info,
    cmsUInt32Number SwapEndian  = T_ENDIAN16(info -> InputFormat);
    cmsUInt32Number DoSwap      = T_DOSWAP(info ->InputFormat);
    cmsUInt32Number Reverse     = T_FLAVOR(info ->InputFormat);
-   cmsUInt32Number SwapFirst   = T_SWAPFIRST(info -> InputFormat);   
+   cmsUInt32Number SwapFirst   = T_SWAPFIRST(info -> InputFormat);
+   cmsUInt32Number Extra       = T_EXTRA(info -> InputFormat);
    cmsUInt32Number ExtraFirst  = DoSwap ^ SwapFirst;
    cmsUInt32Number i;
 
@@ -581,7 +582,7 @@ cmsUInt8Number* UnrollAnyWordsPremul(CMSREGISTER _cmsTRANSFORM* info,
    cmsUInt32Number alpha_factor = _cmsToFixedDomain(alpha);
 
     if (ExtraFirst) {
-        accum += sizeof(cmsUInt16Number);
+        accum += Extra * sizeof(cmsUInt16Number);
     }
 
     for (i=0; i < nChan; i++) {
@@ -604,7 +605,7 @@ cmsUInt8Number* UnrollAnyWordsPremul(CMSREGISTER _cmsTRANSFORM* info,
     }
 
     if (!ExtraFirst) {
-        accum += sizeof(cmsUInt16Number);
+        accum += Extra * sizeof(cmsUInt16Number);
     }
 
     return accum;
