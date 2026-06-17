@@ -872,6 +872,7 @@ cmsBool _cmsReadHeader(_cmsICCPROFILE* Icc)
     cmsUInt32Number HeaderSize;
     cmsIOHANDLER* io = Icc ->IOhandler;
     cmsUInt32Number TagCount;
+    cmsBool corruptedTagPos = FALSE;
 
 
     // Read the header
@@ -946,8 +947,10 @@ cmsBool _cmsReadHeader(_cmsICCPROFILE* Icc)
         // Perform some sanity check. Offset + size should fall inside file.
         if (Tag.size == 0 || Tag.offset == 0) continue;
         if (Tag.offset + Tag.size > HeaderSize ||
-            Tag.offset + Tag.size < Tag.offset)
-                  continue;
+            Tag.offset + Tag.size < Tag.offset) {
+            corruptedTagPos = TRUE;
+            continue;
+        }
 
         Icc -> TagNames[Icc ->TagCount]   = Tag.sig;
         Icc -> TagOffsets[Icc ->TagCount] = Tag.offset;
@@ -983,6 +986,14 @@ cmsBool _cmsReadHeader(_cmsICCPROFILE* Icc)
             }
 
         }
+    }
+
+    // This is a small aid to diagnose malformed profiles. Please note that execution
+    // continues even if an error message is raised. This situation should NEVER occur
+    // with valid profiles and may indicate an attempted exploit.
+    if (corruptedTagPos) {
+        cmsSignalError(Icc->ContextID, cmsERROR_CORRUPTION_DETECTED, 
+            "'size' field in header seems incorrect.");
     }
 
     return TRUE;
@@ -2158,9 +2169,10 @@ cmsBool CMSEXPORT cmsWriteRawTag(cmsHPROFILE hProfile, cmsTagSignature sig, cons
     }
 
     // Mark the tag as being written as RAW
-    Icc ->TagSaveAsRaw[i] = TRUE;
-    Icc ->TagNames[i]     = sig;
-    Icc ->TagLinked[i]    = (cmsTagSignature) 0;
+    Icc ->TagSaveAsRaw[i]    = TRUE;
+    Icc ->TagNames[i]        = sig;
+    Icc ->TagLinked[i]       = (cmsTagSignature) 0;
+    Icc ->TagTypeHandlers[i] = NULL;
 
     // Keep a copy of the block
     Icc ->TagPtrs[i]  = _cmsDupMem(Icc ->ContextID, data, Size);
