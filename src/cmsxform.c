@@ -1457,6 +1457,14 @@ cmsPipeline* CMSEXPORT cmsGetTransformGamutCheckPipeline(cmsHTRANSFORM hTransfor
     return xform->GamutCheck;
 }
 
+// Undocumented: Internal use only
+void CMSEXPORT _cmsSetTransformGamutCheckPipeline(cmsHTRANSFORM hTransform, cmsPipeline* pipeline)
+{
+    _cmsTRANSFORM* xform = (_cmsTRANSFORM*)hTransform;
+    if (xform != NULL) 
+        xform->GamutCheck = pipeline;
+}
+
 // For backwards compatibility
 cmsBool CMSEXPORT cmsChangeBuffersFormat(cmsHTRANSFORM hTransform,
                                          cmsUInt32Number InputFormat,
