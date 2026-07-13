@@ -16,7 +16,7 @@ jobs:
         runner: [ ubuntu-latest ]
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
       - name: Build Ubuntu
         run: |
           ./configure --with-fastfloat --with-threaded
@@ -29,7 +29,7 @@ jobs:
         runner: [ macos-14, macos-latest ]
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
       - name: Build macOS
         run: |
           ./configure --with-fastfloat --with-threaded
@@ -50,7 +50,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.0
       
       - name: Setup MSVC Build Environment
         uses: ilammy/msvc-dev-cmd@v1   
@@ -66,7 +66,7 @@ jobs:
   Ubuntu-meson:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
 
       - name: Install packages
         run: |
@@ -84,7 +84,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
 
       - name: Install packages
         run: |
@@ -104,7 +104,7 @@ jobs:
         runner: [ ubuntu-latest ]
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
 
       - name: Install packages
         run: sudo apt-get -y install build-essential cmake ninja-build
@@ -130,7 +130,7 @@ jobs:
         runner: [ macos-14, macos-latest ]
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
 
       - name: Configure
         run: |
@@ -161,7 +161,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.0
 
       - name: Configure
         run: |
@@ -185,7 +185,7 @@ jobs:
       run:
         shell: msys2 {0}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
 
       - uses: msys2/setup-msys2@v2
         with:
@@ -216,7 +216,7 @@ jobs:
       run:
         shell: C:\cygwin64\bin\bash.exe --login -eo pipefail -o igncr '{0}'
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
 
       - uses: cygwin/cygwin-install-action@v6
         with:
