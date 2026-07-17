@@ -681,7 +681,7 @@ void CMSEXPORT _cmsDestroyMutex(cmsContext ContextID, void* mtx)
 {
     _cmsMutexPluginChunkType* ptr = (_cmsMutexPluginChunkType*) _cmsContextGetClientChunk(ContextID, MutexPlugin);
 
-    if (ptr ->DestroyMutexPtr != NULL) {
+    if (ptr ->DestroyMutexPtr != NULL && mtx != NULL) {
 
         ptr ->DestroyMutexPtr(ContextID, mtx);
     }
@@ -691,7 +691,7 @@ cmsBool CMSEXPORT _cmsLockMutex(cmsContext ContextID, void* mtx)
 {
     _cmsMutexPluginChunkType* ptr = (_cmsMutexPluginChunkType*) _cmsContextGetClientChunk(ContextID, MutexPlugin);
 
-    if (ptr ->LockMutexPtr == NULL) return TRUE;
+    if (ptr ->LockMutexPtr == NULL || mtx == NULL) return TRUE;
 
     return ptr ->LockMutexPtr(ContextID, mtx);
 }
@@ -700,7 +700,7 @@ void CMSEXPORT _cmsUnlockMutex(cmsContext ContextID, void* mtx)
 {
     _cmsMutexPluginChunkType* ptr = (_cmsMutexPluginChunkType*) _cmsContextGetClientChunk(ContextID, MutexPlugin);
 
-    if (ptr ->UnlockMutexPtr != NULL) {
+    if (ptr ->UnlockMutexPtr != NULL && mtx != NULL) {
 
         ptr ->UnlockMutexPtr(ContextID, mtx);
     }
