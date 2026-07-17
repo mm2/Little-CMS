@@ -590,6 +590,7 @@ static
 void* defMtxCreate(cmsContext id)
 {
     _cmsMutex* ptr_mutex = (_cmsMutex*) _cmsMalloc(id, sizeof(_cmsMutex));
+    if (ptr_mutex == NULL) return NULL;
     _cmsInitMutexPrimitive(ptr_mutex);
     return (void*) ptr_mutex;   
 }
