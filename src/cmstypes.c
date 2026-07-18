@@ -1936,9 +1936,11 @@ cmsBool  Type_MLU_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
 {
     cmsMLU* mlu =(cmsMLU*) Ptr;
     cmsUInt32Number HeaderSize;
-    cmsUInt32Number  Len, Offset, DiskOffset;
+    cmsUInt32Number  Len, Offset;
     cmsUInt32Number i;
-    const cmsUInt8Number* Pool;
+    cmsUInt32Number  PoolWChars;
+    cmsUInt32Number* WCharToUnit = NULL;
+    cmsBool rc = FALSE;
 
     if (Ptr == NULL) {
 
@@ -1952,32 +1954,59 @@ cmsBool  Type_MLU_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
     if (!_cmsWriteUInt32Number(io, 12)) return FALSE;
 
     HeaderSize = 12 * mlu ->UsedEntries + sizeof(_cmsTagBase);
-    Pool = (const cmsUInt8Number*) mlu ->MemPool;
-    DiskOffset = 0;
+    PoolWChars = mlu ->PoolUsed / sizeof(wchar_t);
 
-    // Entries are appended to the pool in order, so StrW is monotonically
-    // increasing with i and each entry's on-disk slice can be measured in turn.
-    for (i=0; i < mlu ->UsedEntries; i++) {
+    // Map every decoded wchar_t position in the shared pool to the on-disk UTF-16 unit
+    // offset it will be written at (mirroring, in reverse, the map Type_MLU_Read builds).
+    // Entries are NOT guaranteed to occupy distinct, sequentially increasing pool ranges:
+    // some encoders legitimately point two entries at the same StrW to share identical
+    // string data, a pattern this has to preserve rather than assume away. Since the map
+    // is purely a function of pool position, two entries with the same StrW naturally end
+    // up with the same on-disk Offset, exactly like the original fixed-scale code did
+    // before code points above 0xffff needed variable-width on-disk encoding.
+    if (PoolWChars > 0) {
 
-        const wchar_t* StrW = (const wchar_t*) (Pool + mlu ->Entries[i].StrW);
-        cmsUInt32Number LenInWChars = mlu ->Entries[i].Len / sizeof(wchar_t);
+        const wchar_t* WPool = (const wchar_t*) mlu ->MemPool;
+        cmsUInt32Number k, Units;
 
-        // On-disk length may exceed the in-memory wchar_t count whenever this
-        // string holds code points above 0xffff, encoded as UTF-16 surrogate pairs.
-        Len    = _cmsCountUtf16Units(StrW, LenInWChars) * sizeof(cmsUInt16Number);
-        Offset = DiskOffset + HeaderSize + 8;
+        WCharToUnit = (cmsUInt32Number*) _cmsMalloc(self ->ContextID, (PoolWChars + 1) * sizeof(cmsUInt32Number));
+        if (WCharToUnit == NULL) return FALSE;
 
-        if (!_cmsWriteUInt16Number(io, mlu ->Entries[i].Language)) return FALSE;
-        if (!_cmsWriteUInt16Number(io, mlu ->Entries[i].Country))  return FALSE;
-        if (!_cmsWriteUInt32Number(io, Len)) return FALSE;
-        if (!_cmsWriteUInt32Number(io, Offset)) return FALSE;
-
-        DiskOffset += Len;
+        for (k = 0, Units = 0; k < PoolWChars; k++) {
+            WCharToUnit[k] = Units;
+            Units += ((cmsUInt32Number) WPool[k] > 0xffff) ? 2 : 1;
+        }
+        WCharToUnit[PoolWChars] = Units;
     }
 
-    if (!_cmsWriteWCharArray(io, mlu ->PoolUsed / sizeof(wchar_t), (wchar_t*)  mlu ->MemPool)) return FALSE;
+    for (i=0; i < mlu ->UsedEntries; i++) {
 
-    return TRUE;
+        cmsUInt32Number StrWChar = mlu ->Entries[i].StrW / sizeof(wchar_t);
+        cmsUInt32Number EndWChar = StrWChar + (mlu ->Entries[i].Len / sizeof(wchar_t));
+
+        if (WCharToUnit == NULL) {
+            // No pool at all; only reachable if every entry is zero-length.
+            Len = 0;
+            Offset = HeaderSize + 8;
+        }
+        else {
+            Len    = (WCharToUnit[EndWChar] - WCharToUnit[StrWChar]) * sizeof(cmsUInt16Number);
+            Offset = WCharToUnit[StrWChar] * sizeof(cmsUInt16Number) + HeaderSize + 8;
+        }
+
+        if (!_cmsWriteUInt16Number(io, mlu ->Entries[i].Language)) goto Error;
+        if (!_cmsWriteUInt16Number(io, mlu ->Entries[i].Country))  goto Error;
+        if (!_cmsWriteUInt32Number(io, Len)) goto Error;
+        if (!_cmsWriteUInt32Number(io, Offset)) goto Error;
+    }
+
+    if (!_cmsWriteWCharArray(io, PoolWChars, (wchar_t*) mlu ->MemPool)) goto Error;
+
+    rc = TRUE;
+
+Error:
+    if (WCharToUnit) _cmsFree(self ->ContextID, WCharToUnit);
+    return rc;
 
     cmsUNUSED_PARAMETER(nItems);
     cmsUNUSED_PARAMETER(self);

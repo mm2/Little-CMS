@@ -3857,6 +3857,86 @@ Error:
 }
 
 
+// Regression test for an interop bug found by review: two mluc entries can
+// legitimately share the same on-disk position (some encoders dedup repeated
+// string data this way), which Type_MLU_Write must preserve rather than assume
+// every entry occupies a distinct, sequentially increasing pool range.
+static
+cmsInt32Number CheckMLU_SharedEntryRoundtrip(void)
+{
+    // A hand-built 'mluc' tag: 2 entries ("en/US", "fr/FR") both pointing at the
+    // exact same on-disk position/length -- one shared copy of the string "AB".
+    static const cmsUInt8Number RawTag[] = {
+        'm','l','u','c',               // type signature
+        0,0,0,0,                       // reserved
+        0,0,0,2,                       // Count = 2
+        0,0,0,12,                      // RecLen = 12
+        'e','n','U','S', 0,0,0,4, 0,0,0,40,   // entry 0: Len=4, Offset=40 (shared)
+        'f','r','F','R', 0,0,0,4, 0,0,0,40,   // entry 1: Len=4, Offset=40 (same as entry 0)
+        0,'A', 0,'B'                    // pool: "AB", one copy only
+    };
+    cmsHPROFILE h1 = NULL, h2 = NULL;
+    cmsMLU* mlu1;
+    cmsMLU* mlu2;
+    cmsUInt32Number clen;
+    void* data = NULL;
+    char Buffer[8];
+    cmsInt32Number rc = 1;
+
+    h1 = cmsCreate_sRGBProfile();
+    cmsWriteRawTag(h1, cmsSigProfileDescriptionTag, RawTag, sizeof(RawTag));
+
+    if (!cmsSaveProfileToMem(h1, NULL, &clen)) { rc = 0; goto Error; }
+    data = malloc(clen);
+    if (data == NULL) { rc = 0; goto Error; }
+    if (!cmsSaveProfileToMem(h1, data, &clen)) { rc = 0; goto Error; }
+    cmsCloseProfile(h1);
+
+    h1 = cmsOpenProfileFromMemTHR(DbgThread(), data, clen);
+    free(data); data = NULL;
+    if (h1 == NULL) { Fail("shared-entry mluc: profile didn't reopen"); rc = 0; goto Error; }
+
+    mlu1 = (cmsMLU*) cmsReadTag(h1, cmsSigProfileDescriptionTag);
+    if (mlu1 == NULL) { Fail("shared-entry mluc: profile didn't get the MLU back"); rc = 0; goto Error; }
+
+    cmsMLUgetASCII(mlu1, "en", "US", Buffer, sizeof(Buffer));
+    if (strcmp(Buffer, "AB") != 0) { Fail("shared-entry mluc: 'en' entry wrong before re-write"); rc = 0; }
+
+    cmsMLUgetASCII(mlu1, "fr", "FR", Buffer, sizeof(Buffer));
+    if (strcmp(Buffer, "AB") != 0) { Fail("shared-entry mluc: 'fr' entry wrong before re-write"); rc = 0; }
+
+    if (rc == 0) goto Error;
+
+    // The actual regression: re-serialize this MLU through the normal write path
+    // (not hand-built bytes) and read it back. A write side that assumes entries
+    // never share a position desyncs the second entry's offset from what's
+    // actually written, corrupting or losing that entry on the round trip.
+    h2 = cmsOpenProfileFromFileTHR(DbgThread(), "mlushared.icc", "w");
+    cmsSetProfileVersion(h2, 4.3);
+    cmsWriteTag(h2, cmsSigProfileDescriptionTag, mlu1);
+    cmsCloseProfile(h2); h2 = NULL;
+    cmsCloseProfile(h1); h1 = NULL;
+
+    h2 = cmsOpenProfileFromFileTHR(DbgThread(), "mlushared.icc", "r");
+    mlu2 = (cmsMLU*) cmsReadTag(h2, cmsSigProfileDescriptionTag);
+    if (mlu2 == NULL) { Fail("shared-entry mluc: re-written profile didn't get the MLU back"); rc = 0; goto Error; }
+
+    cmsMLUgetASCII(mlu2, "en", "US", Buffer, sizeof(Buffer));
+    if (strcmp(Buffer, "AB") != 0) { Fail("shared-entry mluc: 'en' entry corrupted after re-write"); rc = 0; }
+
+    cmsMLUgetASCII(mlu2, "fr", "FR", Buffer, sizeof(Buffer));
+    if (strcmp(Buffer, "AB") != 0) { Fail("shared-entry mluc: 'fr' entry corrupted after re-write"); rc = 0; }
+
+Error:
+    if (h1 != NULL) cmsCloseProfile(h1);
+    if (h2 != NULL) cmsCloseProfile(h2);
+    if (data != NULL) free(data);
+    remove("mlushared.icc");
+
+    return rc;
+}
+
+
 
 // A lightweight test of named color structures.
 static
@@ -9952,6 +10032,7 @@ int main(int argc, char* argv[])
     Check("Multilocalized Unicode (II)", CheckMLU_UTF8);
     Check("Multilocalized Unicode Supplementary Plane", CheckMLU_SupplementaryPlane);
     Check("Multilocalized Unicode Malformed Surrogate Offset", CheckMLU_MalformedSurrogateOffset);
+    Check("Multilocalized Unicode Shared Entry Roundtrip", CheckMLU_SharedEntryRoundtrip);
 
     // Named color
     Check("Named color lists", CheckNamedColorList);
