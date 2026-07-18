@@ -1811,7 +1811,9 @@ static
 void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag)
 {
     cmsMLU* mlu;
-    cmsUInt32Number Count, RecLen, NumOfWchar;
+    cmsUInt32Number Count, RecLen;
+    cmsUInt32Number PoolBytes;          // Byte size of the decoded (wchar_t) pool allocation
+    cmsUInt32Number PoolUnits;          // Count of on-disk UTF-16 code units in the pool
     cmsUInt32Number SizeOfHeader;
     cmsUInt32Number  Len, Offset;
     cmsUInt32Number  i;
@@ -1880,34 +1882,39 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
             LargestPosition = EndOfThisString;
     }
 
-    // Now read the remaining of tag and fill all strings. Subtract the directory
-    SizeOfTag   = (LargestPosition * sizeof(wchar_t)) / sizeof(cmsUInt16Number);
-    if (SizeOfTag == 0)
+    // Now read the remaining of tag and fill all strings. Subtract the directory.
+    // LargestPosition is in on-disk bytes; each 2-byte on-disk UTF-16 unit decodes to
+    // at most one wchar_t, so scaling by sizeof(wchar_t)/sizeof(cmsUInt16Number) gives
+    // an allocation size that always fits the decoded pool.
+    PoolBytes = (LargestPosition * sizeof(wchar_t)) / sizeof(cmsUInt16Number);
+    if (PoolBytes == 0)
     {
         Block = NULL;
-        NumOfWchar = 0;
+        PoolUnits = 0;
     }
     else
     {
         // Make sure this is an even utf16 size.
-        if (SizeOfTag & 1) goto Error;
+        if (PoolBytes & 1) goto Error;
 
-        Block = (wchar_t*) _cmsCalloc(self ->ContextID, 1, SizeOfTag);
+        Block = (wchar_t*) _cmsCalloc(self ->ContextID, 1, PoolBytes);
         if (Block == NULL) goto Error;
 
-        NumOfWchar = SizeOfTag / sizeof(wchar_t);
+        // The sizeof(wchar_t) factors cancel: this is LargestPosition / sizeof(cmsUInt16Number),
+        // i.e. exactly the number of 2-byte UTF-16 code units the pool occupies on disk.
+        PoolUnits = PoolBytes / sizeof(wchar_t);
 
         // Sentinel-fill: convert_utf16_to_utf32_indexed only writes a unit index once
         // the decoded element it belongs to is complete, so the unit index that falls
         // strictly between the two halves of a surrogate pair is left untouched. Filling
         // with an invalid marker up front (instead of calloc's 0) makes that gap
         // distinguishable from a real, valid index 0 below.
-        UnitToWChar = (cmsUInt32Number*) _cmsMalloc(self ->ContextID, (NumOfWchar + 1) * sizeof(cmsUInt32Number));
+        UnitToWChar = (cmsUInt32Number*) _cmsMalloc(self ->ContextID, (PoolUnits + 1) * sizeof(cmsUInt32Number));
         if (UnitToWChar == NULL) goto Error;
 
-        memset(UnitToWChar, 0xff, (NumOfWchar + 1) * sizeof(cmsUInt32Number));
+        memset(UnitToWChar, 0xff, (PoolUnits + 1) * sizeof(cmsUInt32Number));
 
-        if (!convert_utf16_to_utf32_indexed(io, NumOfWchar, Block, UnitToWChar)) goto Error;
+        if (!convert_utf16_to_utf32_indexed(io, PoolUnits, Block, UnitToWChar)) goto Error;
     }
 
     // Translate each entry's on-disk position into indices into the decoded Block,
@@ -1943,8 +1950,8 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
     }
 
     mlu ->MemPool  = Block;
-    mlu ->PoolSize = SizeOfTag;
-    mlu ->PoolUsed = SizeOfTag;
+    mlu ->PoolSize = PoolBytes;
+    mlu ->PoolUsed = PoolBytes;
 
     if (RawBegin) _cmsFree(self ->ContextID, RawBegin);
     if (RawLen) _cmsFree(self ->ContextID, RawLen);
@@ -2021,6 +2028,14 @@ cmsBool  Type_MLU_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
 
         cmsUInt32Number StrWChar = mlu ->Entries[i].StrW / sizeof(wchar_t);
         cmsUInt32Number EndWChar = StrWChar + (mlu ->Entries[i].Len / sizeof(wchar_t));
+
+        // Defensive: the MLU being written is an in-memory object that need not have
+        // come from Type_MLU_Read, so its per-entry StrW/Len cannot be trusted to
+        // describe a valid range inside the pool. Reject any entry that would index
+        // the position map out of bounds (or whose end wrapped around below its start)
+        // instead of over-reading WCharToUnit.
+        if (StrWChar > PoolWChars || EndWChar > PoolWChars || EndWChar < StrWChar)
+            goto Error;
 
         if (WCharToUnit == NULL) {
             // No pool at all; only reachable if every entry is zero-length.
