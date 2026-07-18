@@ -128,10 +128,31 @@ cmsINLINE cmsUInt32Number surrogate_to_utf32(cmsUInt32Number high, cmsUInt32Numb
     return (high << 10) + low - 0x35fdc00;
 }
 
-// Number of on-disk UTF-16 code units required to encode n wchar_t elements.
-// On platforms where wchar_t is already 16 bits this is always n. On 32-bit
-// wchar_t platforms, any code point above 0xffff needs a UTF-16 surrogate
-// pair (two 16-bit units) to be represented on disk.
+// Sentinel returned by _cmsUtf16UnitsForScalar for a value that cannot be encoded as
+// a single valid UTF-16 scalar value on disk.
+#define _cmsUTF16_INVALID_SCALAR ((cmsUInt32Number) 0xffffffffu)
+
+// Classify a single code point for on-disk UTF-16 encoding: returns the number of
+// UTF-16 code units it needs (1 for the BMP, 2 for a surrogate pair), or the sentinel
+// above if the value is not representable at all -- either above the maximum valid
+// Unicode scalar value (U+10FFFF), or itself a surrogate code point (U+D800-U+DFFF),
+// which can only appear as one half of an on-disk pair, never as a scalar value in its
+// own right. Both counting and encoding go through this single classification so they
+// can never disagree with each other about how many units a given value takes.
+cmsINLINE cmsUInt32Number _cmsUtf16UnitsForScalar(cmsUInt32Number uc)
+{
+    if (uc > 0x10ffff) return _cmsUTF16_INVALID_SCALAR;
+    if (uc >= 0xd800 && uc <= 0xdfff) return _cmsUTF16_INVALID_SCALAR;
+    return (uc > 0xffff) ? 2 : 1;
+}
+
+// Number of on-disk UTF-16 code units required to encode n wchar_t elements, or
+// _cmsUTF16_INVALID_SCALAR if any of them isn't representable (see
+// _cmsUtf16UnitsForScalar). On platforms where wchar_t is already 16 bits this is
+// always n (no caller should be relying on validation happening on those platforms,
+// since there every code point already has to be pre-encoded as a surrogate pair by
+// whoever built the string). On 32-bit wchar_t platforms, any code point above 0xffff
+// needs a UTF-16 surrogate pair (two 16-bit units) to be represented on disk.
 cmsINLINE cmsUInt32Number _cmsCountUtf16Units(const wchar_t* Array, cmsUInt32Number n)
 {
     cmsUInt32Number i, count;
@@ -140,7 +161,10 @@ cmsINLINE cmsUInt32Number _cmsCountUtf16Units(const wchar_t* Array, cmsUInt32Num
         return n;
 
     for (count = 0, i = 0; i < n; i++) {
-        count += ((cmsUInt32Number) Array[i] > 0xffff) ? 2 : 1;
+
+        cmsUInt32Number Units = _cmsUtf16UnitsForScalar((cmsUInt32Number) Array[i]);
+        if (Units == _cmsUTF16_INVALID_SCALAR) return _cmsUTF16_INVALID_SCALAR;
+        count += Units;
     }
 
     return count;
@@ -148,7 +172,10 @@ cmsINLINE cmsUInt32Number _cmsCountUtf16Units(const wchar_t* Array, cmsUInt32Num
 
 // Reverse operation of convert_utf16_to_utf32 below: encode each of the n wchar_t
 // code points in Array as one or two UTF-16 code units, writing surrogate pairs
-// for anything above 0xffff (only reachable when wchar_t is 32 bits).
+// for anything above 0xffff (only reachable when wchar_t is 32 bits). Fails cleanly
+// (matching convert_utf16_to_utf32's "corrupted string" convention on the read side)
+// rather than emitting a structurally invalid surrogate pair or a lone unpaired
+// surrogate unit for a value _cmsUtf16UnitsForScalar rejects.
 cmsINLINE cmsBool convert_utf32_to_utf16(cmsIOHANDLER* io, cmsUInt32Number n, const wchar_t* Array)
 {
     cmsUInt32Number i;
@@ -156,8 +183,11 @@ cmsINLINE cmsBool convert_utf32_to_utf16(cmsIOHANDLER* io, cmsUInt32Number n, co
     for (i = 0; i < n; i++) {
 
         cmsUInt32Number uc = (cmsUInt32Number) Array[i];
+        cmsUInt32Number Units = _cmsUtf16UnitsForScalar(uc);
 
-        if (uc > 0xffff) {
+        if (Units == _cmsUTF16_INVALID_SCALAR) return FALSE;
+
+        if (Units == 2) {
 
             cmsUInt32Number v = uc - 0x10000;
             cmsUInt16Number high = (cmsUInt16Number) (0xd800 + (v >> 10));
@@ -1348,6 +1378,7 @@ cmsBool  Type_Text_Description_Write(struct _cms_typehandler_struct* self, cmsIO
     // elements whenever a code point above 0xffff needs to be encoded as a UTF-16
     // surrogate pair (only reachable on 32-bit wchar_t platforms).
     ucCount = _cmsCountUtf16Units(Wide, len_text);
+    if (ucCount == _cmsUTF16_INVALID_SCALAR) goto Error;
     // Compute an total tag size requirement
     len_tag_requirement = (8+4+len_text+4+4+2*ucCount+2+1+67);
     len_aligned = _cmsALIGNLONG(len_tag_requirement);
@@ -1973,8 +2004,15 @@ cmsBool  Type_MLU_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
         if (WCharToUnit == NULL) return FALSE;
 
         for (k = 0, Units = 0; k < PoolWChars; k++) {
+
+            cmsUInt32Number ThisUnits = _cmsUtf16UnitsForScalar((cmsUInt32Number) WPool[k]);
+            if (ThisUnits == _cmsUTF16_INVALID_SCALAR) {
+                _cmsFree(self ->ContextID, WCharToUnit);
+                return FALSE;
+            }
+
             WCharToUnit[k] = Units;
-            Units += ((cmsUInt32Number) WPool[k] > 0xffff) ? 2 : 1;
+            Units += ThisUnits;
         }
         WCharToUnit[PoolWChars] = Units;
     }

@@ -3937,6 +3937,110 @@ Error:
 }
 
 
+// Boundary and invalid wchar_t scalar values on the write path: the largest BMP
+// value (U+FFFF), the first and last supplementary-plane values (U+10000,
+// U+10FFFF) must all round-trip correctly, while a value that isn't a valid
+// Unicode scalar at all -- a lone UTF-16 surrogate code point (U+D800), or
+// anything above the maximum scalar value U+10FFFF -- must make the write fail
+// cleanly instead of emitting structurally invalid UTF-16.
+static
+cmsInt32Number CheckMLU_ScalarValidation(void)
+{
+    static const cmsUInt32Number Valid[]   = { 0xffff, 0x10000, 0x10ffff };
+    static const cmsUInt32Number Invalid[] = { 0xd800, 0x110000 };
+
+    cmsHPROFILE h = NULL;
+    cmsMLU* mlu = NULL;
+    wchar_t Str[2];
+    cmsUInt32Number vi, clen;
+    cmsInt32Number rc = 1;
+
+    if (sizeof(wchar_t) < 4) return 1;
+
+    cmsSetLogErrorHandler(NULL);
+
+    for (vi = 0; vi < 3; vi++) {
+
+        wchar_t Buffer[4];
+
+        Str[0] = (wchar_t) Valid[vi];
+        Str[1] = 0;
+
+        mlu = cmsMLUalloc(DbgThread(), 0);
+        cmsMLUsetWide(mlu, "en", "US", Str);
+
+        h = cmsOpenProfileFromFileTHR(DbgThread(), "mluvalidscalar.icc", "w");
+        cmsSetProfileVersion(h, 4.3);
+        cmsWriteTag(h, cmsSigProfileDescriptionTag, mlu);
+        cmsCloseProfile(h); h = NULL;
+        cmsMLUfree(mlu); mlu = NULL;
+
+        h = cmsOpenProfileFromFileTHR(DbgThread(), "mluvalidscalar.icc", "r");
+        mlu = (cmsMLU*) cmsReadTag(h, cmsSigProfileDescriptionTag);
+        if (mlu == NULL) { Fail("scalar validation: valid boundary scalar 0x%x rejected", Valid[vi]); rc = 0; }
+        else {
+            cmsMLUgetWide(mlu, "en", "US", Buffer, sizeof(Buffer));
+            if (memcmp(Buffer, Str, sizeof(Str)) != 0) { Fail("scalar validation: valid boundary scalar 0x%x corrupted", Valid[vi]); rc = 0; }
+        }
+        cmsCloseProfile(h); h = NULL;
+        mlu = NULL; // owned by the now-closed profile
+        remove("mluvalidscalar.icc");
+
+        if (rc == 0) goto Error;
+    }
+
+    // mluc (v4) path: Type_MLU_Write's pool scan must reject these before writing.
+    for (vi = 0; vi < 2; vi++) {
+
+        Str[0] = (wchar_t) Invalid[vi];
+        Str[1] = 0;
+
+        mlu = cmsMLUalloc(DbgThread(), 0);
+        cmsMLUsetWide(mlu, "en", "US", Str);
+
+        h = cmsCreate_sRGBProfile();
+        cmsSetProfileVersion(h, 4.3);
+        cmsWriteTag(h, cmsSigProfileDescriptionTag, mlu);
+        cmsMLUfree(mlu); mlu = NULL;
+
+        if (cmsSaveProfileToMem(h, NULL, &clen)) { Fail("scalar validation: invalid mluc scalar 0x%x was accepted", Invalid[vi]); rc = 0; }
+
+        cmsCloseProfile(h); h = NULL;
+
+        if (rc == 0) goto Error;
+    }
+
+    // desc (v2) path: Type_Text_Description_Write must reject these too.
+    for (vi = 0; vi < 2; vi++) {
+
+        Str[0] = (wchar_t) Invalid[vi];
+        Str[1] = 0;
+
+        mlu = cmsMLUalloc(DbgThread(), 0);
+        cmsMLUsetWide(mlu, "en", "US", Str);
+
+        h = cmsCreate_sRGBProfile();
+        cmsSetProfileVersion(h, 2.1);
+        cmsWriteTag(h, cmsSigProfileDescriptionTag, mlu);
+        cmsMLUfree(mlu); mlu = NULL;
+
+        if (cmsSaveProfileToMem(h, NULL, &clen)) { Fail("scalar validation: invalid desc scalar 0x%x was accepted", Invalid[vi]); rc = 0; }
+
+        cmsCloseProfile(h); h = NULL;
+
+        if (rc == 0) goto Error;
+    }
+
+Error:
+    if (h != NULL) cmsCloseProfile(h);
+    if (mlu != NULL) cmsMLUfree(mlu);
+    remove("mluvalidscalar.icc");
+    ResetFatalError();
+
+    return rc;
+}
+
+
 
 // A lightweight test of named color structures.
 static
@@ -10033,6 +10137,7 @@ int main(int argc, char* argv[])
     Check("Multilocalized Unicode Supplementary Plane", CheckMLU_SupplementaryPlane);
     Check("Multilocalized Unicode Malformed Surrogate Offset", CheckMLU_MalformedSurrogateOffset);
     Check("Multilocalized Unicode Shared Entry Roundtrip", CheckMLU_SharedEntryRoundtrip);
+    Check("Multilocalized Unicode Scalar Validation", CheckMLU_ScalarValidation);
 
     // Named color
     Check("Named color lists", CheckNamedColorList);
