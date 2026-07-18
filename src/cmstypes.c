@@ -1784,7 +1784,7 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
     cmsUInt32Number SizeOfHeader;
     cmsUInt32Number  Len, Offset;
     cmsUInt32Number  i;
-    wchar_t*         Block;
+    wchar_t*         Block = NULL;
     cmsUInt32Number  BeginOfThisString, EndOfThisString, LargestPosition;
     cmsUInt32Number* RawBegin = NULL;   // Per-entry on-disk begin, in UTF-16 code units
     cmsUInt32Number* RawLen = NULL;     // Per-entry on-disk length, in UTF-16 code units
@@ -1872,16 +1872,11 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
         // with an invalid marker up front (instead of calloc's 0) makes that gap
         // distinguishable from a real, valid index 0 below.
         UnitToWChar = (cmsUInt32Number*) _cmsMalloc(self ->ContextID, (NumOfWchar + 1) * sizeof(cmsUInt32Number));
-        if (UnitToWChar == NULL) {
-            _cmsFree(self->ContextID, Block);
-            goto Error;
-        }
+        if (UnitToWChar == NULL) goto Error;
+
         memset(UnitToWChar, 0xff, (NumOfWchar + 1) * sizeof(cmsUInt32Number));
 
-        if (!convert_utf16_to_utf32_indexed(io, NumOfWchar, Block, UnitToWChar)) {
-            _cmsFree(self->ContextID, Block);
-            goto Error;
-        }
+        if (!convert_utf16_to_utf32_indexed(io, NumOfWchar, Block, UnitToWChar)) goto Error;
     }
 
     // Translate each entry's on-disk position into indices into the decoded Block,
@@ -1928,6 +1923,7 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
     return (void*) mlu;
 
 Error:
+    if (Block) _cmsFree(self ->ContextID, Block);
     if (RawBegin) _cmsFree(self ->ContextID, RawBegin);
     if (RawLen) _cmsFree(self ->ContextID, RawLen);
     if (UnitToWChar) _cmsFree(self ->ContextID, UnitToWChar);
