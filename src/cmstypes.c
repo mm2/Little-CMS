@@ -118,6 +118,62 @@ cmsTagTypeHandler* GetHandler(cmsTagTypeSignature sig, _cmsTagTypeLinkedList* Pl
 }
 
 
+// Try to promote correctly to wchar_t when 32 bits
+cmsINLINE cmsBool is_surrogate(cmsUInt32Number uc) { return (uc - 0xd800u) < 2048u; }
+cmsINLINE cmsBool is_high_surrogate(cmsUInt32Number uc) { return (uc & 0xfffffc00) == 0xd800; }
+cmsINLINE cmsBool is_low_surrogate(cmsUInt32Number uc)  { return (uc & 0xfffffc00) == 0xdc00; }
+
+cmsINLINE cmsUInt32Number surrogate_to_utf32(cmsUInt32Number high, cmsUInt32Number low)
+{
+    return (high << 10) + low - 0x35fdc00;
+}
+
+// Number of on-disk UTF-16 code units required to encode n wchar_t elements.
+// On platforms where wchar_t is already 16 bits this is always n. On 32-bit
+// wchar_t platforms, any code point above 0xffff needs a UTF-16 surrogate
+// pair (two 16-bit units) to be represented on disk.
+cmsINLINE cmsUInt32Number _cmsCountUtf16Units(const wchar_t* Array, cmsUInt32Number n)
+{
+    cmsUInt32Number i, count;
+
+    if (sizeof(wchar_t) <= sizeof(cmsUInt16Number) || Array == NULL)
+        return n;
+
+    for (count = 0, i = 0; i < n; i++) {
+        count += ((cmsUInt32Number) Array[i] > 0xffff) ? 2 : 1;
+    }
+
+    return count;
+}
+
+// Reverse operation of convert_utf16_to_utf32 below: encode each of the n wchar_t
+// code points in Array as one or two UTF-16 code units, writing surrogate pairs
+// for anything above 0xffff (only reachable when wchar_t is 32 bits).
+cmsINLINE cmsBool convert_utf32_to_utf16(cmsIOHANDLER* io, cmsUInt32Number n, const wchar_t* Array)
+{
+    cmsUInt32Number i;
+
+    for (i = 0; i < n; i++) {
+
+        cmsUInt32Number uc = (cmsUInt32Number) Array[i];
+
+        if (uc > 0xffff) {
+
+            cmsUInt32Number v = uc - 0x10000;
+            cmsUInt16Number high = (cmsUInt16Number) (0xd800 + (v >> 10));
+            cmsUInt16Number low  = (cmsUInt16Number) (0xdc00 + (v & 0x3ff));
+
+            if (!_cmsWriteUInt16Number(io, high)) return FALSE;
+            if (!_cmsWriteUInt16Number(io, low))  return FALSE;
+        }
+        else {
+            if (!_cmsWriteUInt16Number(io, (cmsUInt16Number) uc)) return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
 // Auxiliary to convert UTF-32 to UTF-16 in some cases
 static
 cmsBool _cmsWriteWCharArray(cmsIOHANDLER* io, cmsUInt32Number n, const wchar_t* Array)
@@ -127,21 +183,14 @@ cmsBool _cmsWriteWCharArray(cmsIOHANDLER* io, cmsUInt32Number n, const wchar_t* 
     _cmsAssert(io != NULL);
     _cmsAssert(!(Array == NULL && n > 0));
 
+    if (sizeof(wchar_t) > sizeof(cmsUInt16Number) && Array != NULL)
+        return convert_utf32_to_utf16(io, n, Array);
+
     for (i=0; i < n; i++) {
         if (!_cmsWriteUInt16Number(io, (cmsUInt16Number) Array[i])) return FALSE;
     }
 
     return TRUE;
-}
-
-// Try to promote correctly to wchar_t when 32 bits
-cmsINLINE cmsBool is_surrogate(cmsUInt32Number uc) { return (uc - 0xd800u) < 2048u; }
-cmsINLINE cmsBool is_high_surrogate(cmsUInt32Number uc) { return (uc & 0xfffffc00) == 0xd800; }
-cmsINLINE cmsBool is_low_surrogate(cmsUInt32Number uc)  { return (uc & 0xfffffc00) == 0xdc00; }
-
-cmsINLINE cmsUInt32Number surrogate_to_utf32(cmsUInt32Number high, cmsUInt32Number low)
-{
-    return (high << 10) + low - 0x35fdc00;
 }
 
 cmsINLINE cmsBool convert_utf16_to_utf32(cmsIOHANDLER* io, cmsInt32Number n, wchar_t* output)
@@ -169,6 +218,53 @@ cmsINLINE cmsBool convert_utf16_to_utf32(cmsIOHANDLER* io, cmsInt32Number n, wch
             else
                 return FALSE;   // Corrupted string, just ignore
         }
+    }
+
+    return TRUE;
+}
+
+// Same decode as convert_utf16_to_utf32, but also records, for every on-disk UTF-16
+// code unit position consumed, the corresponding index into the decoded 'output' array
+// (UnitToOutputIndex must have room for nUnits + 1 elements). This lets a position table
+// expressed in on-disk UTF-16 unit offsets (as used by the MLU tag directory) be translated
+// into correct indices into 'output', even where a UTF-16 surrogate pair collapses two
+// on-disk units into a single decoded wchar_t (32-bit wchar_t platforms only; on platforms
+// where wchar_t already matches the on-disk unit size this is just the identity mapping).
+cmsINLINE cmsBool convert_utf16_to_utf32_indexed(cmsIOHANDLER* io, cmsUInt32Number nUnits, wchar_t* output, cmsUInt32Number* UnitToOutputIndex)
+{
+    cmsUInt32Number unitIdx = 0, outIdx = 0;
+
+    UnitToOutputIndex[0] = 0;
+
+    while (unitIdx < nUnits)
+    {
+        cmsUInt16Number uc;
+
+        if (!_cmsReadUInt16Number(io, &uc)) return FALSE;
+        unitIdx++;
+
+        if (!is_surrogate(uc))
+        {
+            output[outIdx++] = (wchar_t) uc;
+        }
+        else {
+
+            cmsUInt16Number low;
+
+            // A dangling high surrogate as the very last unit in budget has no room
+            // for its pair; bail out rather than reading past nUnits.
+            if (unitIdx >= nUnits) return FALSE;
+
+            if (!_cmsReadUInt16Number(io, &low)) return FALSE;
+            unitIdx++;
+
+            if (is_high_surrogate(uc) && is_low_surrogate(low))
+                output[outIdx++] = (wchar_t) surrogate_to_utf32(uc, low);
+            else
+                return FALSE;   // Corrupted string, just ignore
+        }
+
+        UnitToOutputIndex[unitIdx] = outIdx;
     }
 
     return TRUE;
@@ -1204,7 +1300,7 @@ cmsBool  Type_Text_Description_Write(struct _cms_typehandler_struct* self, cmsIO
     cmsMLU* mlu = (cmsMLU*) Ptr;
     char *Text = NULL;
     wchar_t *Wide = NULL;
-    cmsUInt32Number len, len_text, len_tag_requirement, len_aligned;
+    cmsUInt32Number len, len_text, ucCount, len_tag_requirement, len_aligned;
     cmsBool  rc = FALSE;
     char Filler[68];
 
@@ -1248,8 +1344,12 @@ cmsBool  Type_Text_Description_Write(struct _cms_typehandler_struct* self, cmsIO
 
     // Tell the real text len including the null terminator and padding
     len_text = (cmsUInt32Number) strlen(Text) + 1;
+    // Unicode representation may need more on-disk UTF-16 units than len_text wchar_t
+    // elements whenever a code point above 0xffff needs to be encoded as a UTF-16
+    // surrogate pair (only reachable on 32-bit wchar_t platforms).
+    ucCount = _cmsCountUtf16Units(Wide, len_text);
     // Compute an total tag size requirement
-    len_tag_requirement = (8+4+len_text+4+4+2*len_text+2+1+67);
+    len_tag_requirement = (8+4+len_text+4+4+2*ucCount+2+1+67);
     len_aligned = _cmsALIGNLONG(len_tag_requirement);
 
   // * cmsUInt32Number       count;          * Description length
@@ -1266,7 +1366,7 @@ cmsBool  Type_Text_Description_Write(struct _cms_typehandler_struct* self, cmsIO
 
     if (!_cmsWriteUInt32Number(io, 0)) goto Error;  // ucLanguageCode
 
-    if (!_cmsWriteUInt32Number(io, len_text)) goto Error;
+    if (!_cmsWriteUInt32Number(io, ucCount)) goto Error;
     // Note that in some compilers sizeof(cmsUInt16Number) != sizeof(wchar_t)
     if (!_cmsWriteWCharArray(io, len_text, Wide)) goto Error;
 
@@ -1686,6 +1786,9 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
     cmsUInt32Number  i;
     wchar_t*         Block;
     cmsUInt32Number  BeginOfThisString, EndOfThisString, LargestPosition;
+    cmsUInt32Number* RawBegin = NULL;   // Per-entry on-disk begin, in UTF-16 code units
+    cmsUInt32Number* RawLen = NULL;     // Per-entry on-disk length, in UTF-16 code units
+    cmsUInt32Number* UnitToWChar = NULL; // Maps an on-disk UTF-16 unit index to its decoded wchar_t index
 
     *nItems = 0;
     if (!_cmsReadUInt32Number(io, &Count)) return NULL;
@@ -1705,6 +1808,13 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
     SizeOfHeader = 12 * Count + sizeof(_cmsTagBase);
     LargestPosition = 0;
 
+    if (Count > 0) {
+
+        RawBegin = (cmsUInt32Number*) _cmsCalloc(self ->ContextID, Count, sizeof(cmsUInt32Number));
+        RawLen   = (cmsUInt32Number*) _cmsCalloc(self ->ContextID, Count, sizeof(cmsUInt32Number));
+        if (RawBegin == NULL || RawLen == NULL) goto Error;
+    }
+
     for (i=0; i < Count; i++) {
 
         if (!_cmsReadUInt16Number(io, &mlu ->Entries[i].Language)) goto Error;
@@ -1714,22 +1824,24 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
         if (!_cmsReadUInt32Number(io, &Len)) goto Error;
         if (!_cmsReadUInt32Number(io, &Offset)) goto Error;
 
-        // Offset MUST be even because it indexes a block of utf16 chars. 
+        // Offset MUST be even because it indexes a block of utf16 chars.
         // Tricky profiles that uses odd positions will not work anyway
-        // because the whole utf16 block is previously converted to wchar_t 
+        // because the whole utf16 block is previously converted to wchar_t
         // and sizeof this type may be of 4 bytes. On Linux systems, for example.
         if (Offset & 1) goto Error;
 
         // Check for overflow
-        if (Offset < (SizeOfHeader + 8)) goto Error;        
+        if (Offset < (SizeOfHeader + 8)) goto Error;
         if (((Offset + Len) < Len) || ((Offset + Len) > SizeOfTag + 8)) goto Error;
 
-        // True begin of the string
+        // True begin of the string, still in on-disk UTF-16 byte terms
         BeginOfThisString = Offset - SizeOfHeader - 8;
 
-        // Adjust to wchar_t elements
-        mlu ->Entries[i].Len = (Len * sizeof(wchar_t)) / sizeof(cmsUInt16Number);
-        mlu ->Entries[i].StrW = (BeginOfThisString * sizeof(wchar_t)) / sizeof(cmsUInt16Number);
+        // Final StrW/Len (in decoded wchar_t terms) are resolved below, once the pool has
+        // been decoded, since a UTF-16 surrogate pair collapses two on-disk code units into
+        // a single wchar_t on 32-bit wchar_t platforms and a fixed scale can't account for that.
+        RawBegin[i] = BeginOfThisString;
+        RawLen[i]   = Len;
 
         // To guess maximum size, add offset + len
         EndOfThisString = BeginOfThisString + Len;
@@ -1742,6 +1854,7 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
     if (SizeOfTag == 0)
     {
         Block = NULL;
+        NumOfWchar = 0;
     }
     else
     {
@@ -1750,22 +1863,74 @@ void *Type_MLU_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
 
         Block = (wchar_t*) _cmsCalloc(self ->ContextID, 1, SizeOfTag);
         if (Block == NULL) goto Error;
-       
+
         NumOfWchar = SizeOfTag / sizeof(wchar_t);
-        if (!_cmsReadWCharArray(io, NumOfWchar, Block)) {
+
+        // Sentinel-fill: convert_utf16_to_utf32_indexed only writes a unit index once
+        // the decoded element it belongs to is complete, so the unit index that falls
+        // strictly between the two halves of a surrogate pair is left untouched. Filling
+        // with an invalid marker up front (instead of calloc's 0) makes that gap
+        // distinguishable from a real, valid index 0 below.
+        UnitToWChar = (cmsUInt32Number*) _cmsMalloc(self ->ContextID, (NumOfWchar + 1) * sizeof(cmsUInt32Number));
+        if (UnitToWChar == NULL) {
             _cmsFree(self->ContextID, Block);
             goto Error;
         }
+        memset(UnitToWChar, 0xff, (NumOfWchar + 1) * sizeof(cmsUInt32Number));
+
+        if (!convert_utf16_to_utf32_indexed(io, NumOfWchar, Block, UnitToWChar)) {
+            _cmsFree(self->ContextID, Block);
+            goto Error;
+        }
+    }
+
+    // Translate each entry's on-disk position into indices into the decoded Block,
+    // via the unit->wchar map built above (BeginOfThisString/Len are byte offsets;
+    // sizeof(cmsUInt16Number) converts them to on-disk UTF-16 unit indices). A position
+    // that doesn't land on a valid decoded-character boundary (e.g. a crafted profile
+    // pointing an entry's offset into the middle of another entry's surrogate pair)
+    // reads back as the 0xff...ff sentinel and is rejected outright, rather than risking
+    // an unsigned underflow of Len if it were silently treated as index 0.
+    for (i=0; i < Count; i++) {
+
+        cmsUInt32Number BeginUnit = RawBegin[i] / sizeof(cmsUInt16Number);
+        cmsUInt32Number EndUnit   = (RawBegin[i] + RawLen[i]) / sizeof(cmsUInt16Number);
+        cmsUInt32Number StrWIndex, EndIndex;
+
+        if (UnitToWChar == NULL) {
+
+            // Empty pool: only zero-length entries are valid.
+            if (RawLen[i] != 0) goto Error;
+            mlu ->Entries[i].StrW = 0;
+            mlu ->Entries[i].Len  = 0;
+            continue;
+        }
+
+        StrWIndex = UnitToWChar[BeginUnit];
+        EndIndex  = UnitToWChar[EndUnit];
+
+        if (StrWIndex == 0xffffffffu || EndIndex == 0xffffffffu || EndIndex < StrWIndex)
+            goto Error;
+
+        mlu ->Entries[i].StrW = StrWIndex * sizeof(wchar_t);
+        mlu ->Entries[i].Len  = (EndIndex - StrWIndex) * sizeof(wchar_t);
     }
 
     mlu ->MemPool  = Block;
     mlu ->PoolSize = SizeOfTag;
     mlu ->PoolUsed = SizeOfTag;
 
+    if (RawBegin) _cmsFree(self ->ContextID, RawBegin);
+    if (RawLen) _cmsFree(self ->ContextID, RawLen);
+    if (UnitToWChar) _cmsFree(self ->ContextID, UnitToWChar);
+
     *nItems = 1;
     return (void*) mlu;
 
 Error:
+    if (RawBegin) _cmsFree(self ->ContextID, RawBegin);
+    if (RawLen) _cmsFree(self ->ContextID, RawLen);
+    if (UnitToWChar) _cmsFree(self ->ContextID, UnitToWChar);
     if (mlu) cmsMLUfree(mlu);
     return NULL;
 }
@@ -1775,8 +1940,9 @@ cmsBool  Type_MLU_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
 {
     cmsMLU* mlu =(cmsMLU*) Ptr;
     cmsUInt32Number HeaderSize;
-    cmsUInt32Number  Len, Offset;
+    cmsUInt32Number  Len, Offset, DiskOffset;
     cmsUInt32Number i;
+    const cmsUInt8Number* Pool;
 
     if (Ptr == NULL) {
 
@@ -1790,19 +1956,27 @@ cmsBool  Type_MLU_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
     if (!_cmsWriteUInt32Number(io, 12)) return FALSE;
 
     HeaderSize = 12 * mlu ->UsedEntries + sizeof(_cmsTagBase);
+    Pool = (const cmsUInt8Number*) mlu ->MemPool;
+    DiskOffset = 0;
 
+    // Entries are appended to the pool in order, so StrW is monotonically
+    // increasing with i and each entry's on-disk slice can be measured in turn.
     for (i=0; i < mlu ->UsedEntries; i++) {
 
-        Len    =  mlu ->Entries[i].Len;
-        Offset =  mlu ->Entries[i].StrW;
+        const wchar_t* StrW = (const wchar_t*) (Pool + mlu ->Entries[i].StrW);
+        cmsUInt32Number LenInWChars = mlu ->Entries[i].Len / sizeof(wchar_t);
 
-        Len    = (Len * sizeof(cmsUInt16Number)) / sizeof(wchar_t);
-        Offset = (Offset * sizeof(cmsUInt16Number)) / sizeof(wchar_t) + HeaderSize + 8;
+        // On-disk length may exceed the in-memory wchar_t count whenever this
+        // string holds code points above 0xffff, encoded as UTF-16 surrogate pairs.
+        Len    = _cmsCountUtf16Units(StrW, LenInWChars) * sizeof(cmsUInt16Number);
+        Offset = DiskOffset + HeaderSize + 8;
 
         if (!_cmsWriteUInt16Number(io, mlu ->Entries[i].Language)) return FALSE;
         if (!_cmsWriteUInt16Number(io, mlu ->Entries[i].Country))  return FALSE;
         if (!_cmsWriteUInt32Number(io, Len)) return FALSE;
         if (!_cmsWriteUInt32Number(io, Offset)) return FALSE;
+
+        DiskOffset += Len;
     }
 
     if (!_cmsWriteWCharArray(io, mlu ->PoolUsed / sizeof(wchar_t), (wchar_t*)  mlu ->MemPool)) return FALSE;

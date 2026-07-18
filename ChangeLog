@@ -1,6 +1,7 @@
 -----------------------
 2.20 Ongoing
 -----------------------
+Fix write side of wchar_t <-> UTF-16 conversion on platforms with 32-bit wchar_t, issue #180
 
 -----------------------
 2.19.1 hot fix

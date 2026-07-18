@@ -3699,6 +3699,164 @@ cmsInt32Number CheckMLU_UTF8(void)
 }
 
 
+// Check that code points above U+FFFF (which require a UTF-16 surrogate pair on disk)
+// round-trip correctly through both the legacy 'desc' tag (ICC < v4) and the modern
+// 'mluc' tag (ICC >= v4). On platforms where wchar_t is 32 bits (Linux/macOS) each such
+// code point is stored as a single wchar_t internally, but the on-disk encoding is
+// always UTF-16, so the write side has to expand it into a surrogate pair and the read
+// side (together with the mluc position table) has to account for that expansion.
+// See Little-CMS issue #180.
+static
+cmsInt32Number CheckMLU_SupplementaryPlane(void)
+{
+    cmsHPROFILE h = NULL;
+    cmsMLU *mlu = NULL, *mlu2, *mlu3;
+    wchar_t Emoji[2];
+    wchar_t Buffer[256];
+    cmsInt32Number rc = 1;
+
+    // Nothing extra to exercise on platforms where wchar_t itself is only 16 bits:
+    // there the caller already has to pre-encode supplementary-plane text as a
+    // surrogate pair, so _cmsWriteWCharArray/_cmsReadWCharArray never see a raw
+    // code point above 0xffff in the first place.
+    if (sizeof(wchar_t) < 4) return 1;
+
+    Emoji[0] = (wchar_t) 0x1F600;  // U+1F600 GRINNING FACE
+    Emoji[1] = 0;
+
+    // --- mluc tag (ICC v4): several entries sharing one on-disk pool. The
+    // supplementary-plane entry sits in the middle so that the later "fr"/"FR" entry
+    // only reads back correctly if both the write-side position table and the
+    // read-side decode-offset math correctly account for the extra on-disk UTF-16
+    // unit the surrogate pair needs.
+    mlu = cmsMLUalloc(DbgThread(), 0);
+    cmsMLUsetWide(mlu, "en", "US", L"Hello, world");
+    cmsMLUsetWide(mlu, "ja", "JP", Emoji);
+    cmsMLUsetWide(mlu, "fr", "FR", L"Bonjour, le monde");
+
+    h = cmsOpenProfileFromFileTHR(DbgThread(), "mlusurrogate.icc", "w");
+    cmsSetProfileVersion(h, 4.3);
+    cmsWriteTag(h, cmsSigProfileDescriptionTag, mlu);
+    cmsCloseProfile(h);
+    cmsMLUfree(mlu); mlu = NULL;
+
+    h = cmsOpenProfileFromFileTHR(DbgThread(), "mlusurrogate.icc", "r");
+    // mlu2 is owned by the profile (cmsReadTag caches it internally); it must NOT be
+    // freed separately, only via the cmsCloseProfile(h) below.
+    mlu2 = (cmsMLU*) cmsReadTag(h, cmsSigProfileDescriptionTag);
+    if (mlu2 == NULL) { Fail("mluc: profile didn't get the MLU back"); rc = 0; goto Error; }
+
+    cmsMLUgetWide(mlu2, "en", "US", Buffer, sizeof(Buffer));
+    if (memcmp(Buffer, L"Hello, world", sizeof(L"Hello, world")) != 0) { Fail("mluc: 'en' entry corrupted"); rc = 0; }
+
+    cmsMLUgetWide(mlu2, "ja", "JP", Buffer, sizeof(Buffer));
+    if (memcmp(Buffer, Emoji, sizeof(Emoji)) != 0) { Fail("mluc: supplementary-plane entry corrupted"); rc = 0; }
+
+    // This is the entry that actually exercises the position-table fix: a broken
+    // offset here would decode garbage or truncated content, not crash.
+    cmsMLUgetWide(mlu2, "fr", "FR", Buffer, sizeof(Buffer));
+    if (memcmp(Buffer, L"Bonjour, le monde", sizeof(L"Bonjour, le monde")) != 0) { Fail("mluc: entry after supplementary-plane entry corrupted"); rc = 0; }
+
+    cmsCloseProfile(h); h = NULL;
+    remove("mlusurrogate.icc");
+
+    if (rc == 0) goto Error;
+
+    // --- desc tag (legacy, ICC v2): single entry, exercises the ucCount/size fix.
+    mlu = cmsMLUalloc(DbgThread(), 0);
+    cmsMLUsetWide(mlu, "en", "US", Emoji);
+
+    h = cmsOpenProfileFromFileTHR(DbgThread(), "descsurrogate.icc", "w");
+    cmsSetProfileVersion(h, 2.1);
+    cmsWriteTag(h, cmsSigProfileDescriptionTag, mlu);
+    cmsCloseProfile(h);
+    cmsMLUfree(mlu); mlu = NULL;
+
+    h = cmsOpenProfileFromFileTHR(DbgThread(), "descsurrogate.icc", "r");
+    // mlu3, likewise, is owned by the profile.
+    mlu3 = (cmsMLU*) cmsReadTag(h, cmsSigProfileDescriptionTag);
+    if (mlu3 == NULL) { Fail("desc: profile didn't get the MLU back"); rc = 0; goto Error; }
+
+    cmsMLUgetWide(mlu3, cmsV2Unicode, cmsV2Unicode, Buffer, sizeof(Buffer));
+    if (memcmp(Buffer, Emoji, sizeof(Emoji)) != 0) { Fail("desc: supplementary-plane entry corrupted"); rc = 0; }
+
+Error:
+    if (h != NULL) cmsCloseProfile(h);
+    if (mlu != NULL) cmsMLUfree(mlu);
+    remove("mlusurrogate.icc");
+    remove("descsurrogate.icc");
+
+    return rc;
+}
+
+
+// Regression test for a crafted mluc tag whose second entry's on-disk offset points
+// squarely between the two halves of the first entry's UTF-16 surrogate pair (a
+// position no well-formed writer would ever produce, but a hostile one could). Reading
+// this must fail cleanly rather than compute an out-of-range entry length: earlier,
+// before the read side tracked which on-disk positions are valid decoded-character
+// boundaries, this triggered an unsigned-integer underflow of the entry's Len (End
+// index < Start index), leading to a huge bogus length and a heap over-read in
+// cmsMLUgetWide/getASCII/getUTF8.
+static
+cmsInt32Number CheckMLU_MalformedSurrogateOffset(void)
+{
+    // A hand-built 'mluc' tag: 2 entries, pool = two valid UTF-16 surrogate pairs
+    // for U+1F600 (D8 3D DE 00) back to back. Entry 0 spans the whole pool (benign).
+    // Entry 1's on-disk range is units [2,3) -- starting exactly at the second pair's
+    // high surrogate, but ending one unit later, squarely between that pair's two
+    // halves, a position convert_utf16_to_utf32_indexed never assigns a decoded index to.
+    static const cmsUInt8Number RawTag[] = {
+        'm','l','u','c',               // type signature
+        0,0,0,0,                       // reserved
+        0,0,0,2,                       // Count = 2
+        0,0,0,12,                      // RecLen = 12
+        'e','n','U','S', 0,0,0,8,  0,0,0,40,   // entry 0: Len=8, Offset=40
+        'j','a','J','P', 0,0,0,2,  0,0,0,44,   // entry 1: Len=2, Offset=44 (malicious)
+        0xD8,0x3D, 0xDE,0x00, 0xD8,0x3D, 0xDE,0x00  // pool: two surrogate pairs
+    };
+    cmsHPROFILE h;
+    cmsMLU* mlu;
+    cmsUInt32Number clen;
+    void* data;
+    cmsInt32Number rc = 1;
+
+    if (sizeof(wchar_t) < 4) return 1;
+
+    h = cmsCreate_sRGBProfile();
+    cmsSetLogErrorHandler(NULL);
+
+    cmsWriteRawTag(h, cmsSigProfileDescriptionTag, RawTag, sizeof(RawTag));
+
+    if (!cmsSaveProfileToMem(h, NULL, &clen)) { rc = 0; goto Error; }
+    data = malloc(clen);
+    if (data == NULL) { rc = 0; goto Error; }
+    if (!cmsSaveProfileToMem(h, data, &clen)) { free(data); rc = 0; goto Error; }
+    cmsCloseProfile(h);
+
+    h = cmsOpenProfileFromMemTHR(DbgThread(), data, clen);
+    free(data);
+    if (h == NULL) goto Error;  // Whole profile rejected outright is fine too.
+
+    // The point of this test: this must NOT crash / over-read, and must NOT
+    // report success with a garbage length. Either a clean rejection (NULL) or,
+    // if some other constraint made this pass, valid Entries are both acceptable;
+    // what would indicate the bug is back is a crash (caught by running under
+    // ASan/valgrind) or a wildly-out-of-range reported length.
+    mlu = (cmsMLU*) cmsReadTag(h, cmsSigProfileDescriptionTag);
+    if (mlu != NULL) {
+
+        cmsUInt32Number Needed = cmsMLUgetWide(mlu, "ja", "JP", NULL, 0);
+        if (Needed > sizeof(RawTag)) { Fail("Malformed mluc: bogus oversized length not rejected"); rc = 0; }
+    }
+
+Error:
+    if (h != NULL) cmsCloseProfile(h);
+    ResetFatalError();
+    return rc;
+}
+
+
 
 // A lightweight test of named color structures.
 static
@@ -9792,6 +9950,8 @@ int main(int argc, char* argv[])
     // MLU
     Check("Multilocalized Unicode", CheckMLU);
     Check("Multilocalized Unicode (II)", CheckMLU_UTF8);
+    Check("Multilocalized Unicode Supplementary Plane", CheckMLU_SupplementaryPlane);
+    Check("Multilocalized Unicode Malformed Surrogate Offset", CheckMLU_MalformedSurrogateOffset);
 
     // Named color
     Check("Named color lists", CheckNamedColorList);
