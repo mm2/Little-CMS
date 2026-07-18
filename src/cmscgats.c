@@ -3187,6 +3187,7 @@ cmsBool ParseCube(cmsIT8* cube, cmsStage** Shaper, cmsStage** CLUT, char title[]
                 *Shaper = cmsStageAllocToneCurves(cube->ContextID, 3, curves);
 
                 cmsFreeToneCurveTriple(curves);
+                _cmsFree(cube->ContextID, shapers);
             }
 
             if (lut_size > 0) {
