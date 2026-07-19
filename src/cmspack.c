@@ -659,15 +659,16 @@ cmsUInt8Number* UnrollPlanarWordsPremul(CMSREGISTER _cmsTRANSFORM* info,
     cmsUInt32Number SwapFirst = T_SWAPFIRST(info->InputFormat);
     cmsUInt32Number Reverse= T_FLAVOR(info ->InputFormat);
     cmsUInt32Number SwapEndian = T_ENDIAN16(info -> InputFormat);
+    cmsUInt32Number Extra = T_EXTRA(info -> InputFormat);
     cmsUInt32Number i;
     cmsUInt32Number ExtraFirst = DoSwap ^ SwapFirst;
     cmsUInt8Number* Init = accum;
-    
+
     cmsUInt16Number alpha = (ExtraFirst ? ((cmsUInt16Number*)accum)[0] : ((cmsUInt16Number*)accum)[nChan * Stride / 2]);
     cmsUInt32Number alpha_factor = _cmsToFixedDomain(alpha);
 
     if (ExtraFirst) {
-        accum += Stride;
+        accum += Extra * Stride;
     }
 
     for (i=0; i < nChan; i++) {
