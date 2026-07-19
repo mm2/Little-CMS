@@ -127,8 +127,30 @@ cmsBool _cmsWriteWCharArray(cmsIOHANDLER* io, cmsUInt32Number n, const wchar_t* 
     _cmsAssert(io != NULL);
     _cmsAssert(!(Array == NULL && n > 0));
 
-    for (i=0; i < n; i++) {
-        if (!_cmsWriteUInt16Number(io, (cmsUInt16Number) Array[i])) return FALSE;
+    for (i = 0; i < n; i++) {
+
+        wchar_t v = Array[i];
+        cmsUInt16Number out;
+
+        if (sizeof(wchar_t) > 2) {
+
+            // UTF-32 wchar_t platforms
+            if (v >= 0 &&
+                v <= 0xFFFF &&
+                !(v >= 0xD800 && v <= 0xDFFF))
+                out = (cmsUInt16Number)v;
+            else
+                out = (cmsUInt16Number)'?';
+        }
+        else {
+
+            // UTF-16 wchar_t platforms:
+            // preserve code units exactly, including surrogates.
+            out = (cmsUInt16Number)v;
+        }
+
+        if (!_cmsWriteUInt16Number(io, out))
+            return FALSE;
     }
 
     return TRUE;
