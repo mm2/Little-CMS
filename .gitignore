@@ -46,6 +46,7 @@ packages/
 /testbed/.libs/lt-testcms
 /testbed/.libs/testcms
 /testbed/testcms
+/testbed/new.icc
 #Xcode
 libtool
 Build
