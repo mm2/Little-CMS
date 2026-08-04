@@ -8002,11 +8002,13 @@ cmsInt32Number CheckMeta(void)
     //ERROR: Bad dictionary Name/Value
     //ERROR: Corrupted tag 'meta'
     //test: test.c:59: main: Assertion `dict' failed.
+    rc = 1;
     dict = cmsReadTag(p, cmsSigMetaTag);
-   if (dict == NULL) return 0;
-
-   cmsCloseProfile(p);
-    return 1;
+    if (dict == NULL) rc = 0;
+   
+    cmsCloseProfile(p);
+    remove("new.icc");
+    return rc;
 }
 
 
@@ -9663,7 +9665,7 @@ int main(int argc, char* argv[])
     printf("Installing error logger ... ");
     cmsSetLogErrorHandler(FatalErrorQuit);
     printf("done.\n");
-           
+
     PrintSupportedIntents();
 
     Check("Base types", CheckBaseTypes);

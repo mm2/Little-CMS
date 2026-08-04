@@ -3297,6 +3297,9 @@ cmsHPROFILE CMSEXPORT cmsCreateDeviceLinkFromCubeFileTHR(cmsContext ContextID, c
 
 Done:
 
+    if (cube->FileStack[0]->Stream != NULL)
+        fclose(cube->FileStack[0]->Stream);
+
     if (DescriptionMLU != NULL)
         cmsMLUfree(DescriptionMLU);
 
