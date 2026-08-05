@@ -3238,7 +3238,7 @@ cmsHPROFILE CMSEXPORT cmsCreateDeviceLinkFromCubeFileTHR(cmsContext ContextID, c
     cmsStage* CLUT = NULL;
     cmsStage* Shaper = NULL;
     cmsMLU* DescriptionMLU = NULL;
-    char title[MAXSTR];
+    char title[MAXSTR] = { 0 };
 
     _cmsAssert(cFileName != NULL);
     
