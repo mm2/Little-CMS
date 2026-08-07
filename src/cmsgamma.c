@@ -54,14 +54,39 @@ typedef struct _cmsParametricCurvesCollection_st {
 
 } _cmsParametricCurvesCollection;
 
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+
+// Exponentiation guarded against a non-positive base, which pow() would turn into
+// NaN for a fractional exponent. Mirrors clipPow in the iccMAX reference
+// implementation, and is used for every power in the ICC.2 formula segment types,
+// including each X^gamma: a segmented curve's outer segments extend to +/-infinity,
+// so a negative X is reachable.
+static
+cmsFloat64Number clipPow(cmsFloat64Number v, cmsFloat64Number g)
+{
+    if (v <= 0) return 0.0;
+
+    return pow(v, g);
+}
+
+#endif
+
 // This is the default (built-in) evaluator
 static cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Number Params[], cmsFloat64Number R);
 
-// The built-in list
+// The built-in list. The iccMAX types 9..13 are appended rather than inserted in
+// numeric order: IsInSet returns a positional index that callers use against
+// ParameterCount[], so existing positions must not shift.
 static _cmsParametricCurvesCollection DefaultCurves = {
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+    15,                                                     // # of curve types
+    { 1, 2, 3, 4, 5, 6, 7, 8, 108, 109,  9, 10, 11, 12, 13 },  // Parametric curve ID
+    { 1, 3, 4, 5, 7, 4, 5, 5,   1,   1,  5,  5,  6,  7,  6 },  // Parameters by type
+#else
     10,                                      // # of curve types
     { 1, 2, 3, 4, 5, 6, 7, 8, 108, 109 },    // Parametric curve ID
     { 1, 3, 4, 5, 7, 4, 5, 5,   1,   1 },    // Parameters by type
+#endif
     DefaultEvalParametricFn,                 // Evaluator
     NULL                                     // Next in chain
 };
@@ -227,6 +252,30 @@ cmsToneCurve* AllocateToneCurveStruct(cmsContext ContextID, cmsUInt32Number nEnt
         cmsSignalError(ContextID, cmsERROR_RANGE, "Couldn't create tone curve with zero segments and no table");
         return NULL;
     }
+
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+    // IsInSet matches on abs(Type), so a negative type is accepted whenever the
+    // positive one is registered, on the understanding that the evaluator implements
+    // the analytic inverse. For the ICC.2 formula segment types 9..13 it deliberately
+    // does not, so a curve built with -9..-13 would evaluate to 0 everywhere. Reject
+    // it here -- the common path for both cmsBuildParametricToneCurve and
+    // cmsBuildSegmentedToneCurve -- rather than hand back a silently useless curve.
+    if (Segments != NULL) {
+
+        for (i = 0; i < nSegments; i++) {
+
+            if (Segments[i].Type <= -9 && Segments[i].Type >= -13) {
+
+                cmsSignalError(ContextID, cmsERROR_RANGE,
+                    "Parametric curve type %d has no analytic inverse in Little-CMS: the ICC.2 "
+                    "formula segment types 9 to 13 are forward-only. Build the forward curve with "
+                    "type %d and reverse it numerically with cmsReverseToneCurveEx.",
+                    Segments[i].Type, -Segments[i].Type);
+                return NULL;
+            }
+        }
+    }
+#endif // CMS_USE_ICCMAX_SPECTRAL
 
     // Allocate all required pointers, etc.
     p = (cmsToneCurve*) _cmsMallocZero(ContextID, sizeof(cmsToneCurve));
@@ -685,6 +734,70 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
        break;
 
 
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+
+    // ICC.2 formulaCurveSegment function types 0003h..0007h, which ICC.1 does not
+    // define. Parameter order follows ICC.2:2023 Table 111; note that omega precedes
+    // gamma in types 12 and 13. Degenerate cases return a finite value rather than
+    // NaN or an infinity, matching how types 6 and 7 above behave: a NaN reaching a
+    // CLUT index is far worse than a clamped number. The analytic inverses (-9..-13)
+    // are deliberately not implemented -- curve reversal in lcms is numerical, so no
+    // profile path needs them, and a caller asking for a negative type here falls
+    // through to the default arm and receives 0.
+
+    // Y = a * (b * X + c)^g + d          : g a b c d
+    case 9:
+        Val = Params[1] * clipPow(Params[2] * R + Params[3], Params[0]) + Params[4];
+        break;
+
+    // Y = a * ln(d * X^g - b) + c        : g a b c d
+    case 10:
+        e = Params[4] * clipPow(R, Params[0]) - Params[2];
+        if (e <= 0)
+            Val = Params[3];
+        else
+            Val = Params[1] * log(e) + Params[3];
+        break;
+
+    // Y = e * exp((d * X^g - c) / a) + b : g a b c d e
+    case 11:
+        if (fabs(Params[1]) < MATRIX_DET_TOLERANCE)
+            Val = Params[2];
+        else
+            Val = Params[5] * exp((Params[4] * clipPow(R, Params[0]) - Params[3]) / Params[1]) + Params[2];
+        break;
+
+    // Y = d * (max(e * X^g - a, 0) / (b - c * X^g))^w    : w g a b c d e
+    case 12:
+        {
+            cmsFloat64Number u = clipPow(R, Params[1]);
+            cmsFloat64Number den = Params[3] - Params[4] * u;
+            cmsFloat64Number num = Params[6] * u - Params[2];
+
+            if (num < 0) num = 0;
+
+            if (fabs(den) < MATRIX_DET_TOLERANCE)
+                Val = 0;
+            else
+                Val = Params[5] * clipPow(num / den, Params[0]);
+        }
+        break;
+
+    // Y = d * ((a + b * X^g) / (1 + c * X^g))^w          : w g a b c d
+    case 13:
+        {
+            cmsFloat64Number u = clipPow(R, Params[1]);
+            cmsFloat64Number den = 1.0 + Params[4] * u;
+
+            if (fabs(den) < MATRIX_DET_TOLERANCE)
+                Val = 0;
+            else
+                Val = Params[5] * clipPow((Params[2] + Params[3] * u) / den, Params[0]);
+        }
+        break;
+
+#endif
+
    // S-Shaped: (1 - (1-x)^1/g)^1/g
    case 108:
        if (fabs(Params[0]) < MATRIX_DET_TOLERANCE)
@@ -967,9 +1080,19 @@ void CMSEXPORT cmsFreeToneCurveTriple(cmsToneCurve* Curve[3])
 // Duplicate a gamma table
 cmsToneCurve* CMSEXPORT cmsDupToneCurve(const cmsToneCurve* In)
 {
+    cmsToneCurve* Out;
+
     if (In == NULL) return NULL;
 
-    return  AllocateToneCurveStruct(In ->InterpParams ->ContextID, In ->nEntries, In ->nSegments, In ->Segments, In ->Table16);
+    Out = AllocateToneCurveStruct(In ->InterpParams ->ContextID, In ->nEntries, In ->nSegments, In ->Segments, In ->Table16);
+
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+    // Carry the encoding across, so a duplicated curve is still written back in the
+    // form it arrived in. AllocateToneCurveStruct does not know about it.
+    if (Out != NULL) Out ->CurveType = In ->CurveType;
+#endif
+
+    return Out;
 }
 
 // Joins two curves for X and Y. Curves should be monotonic.

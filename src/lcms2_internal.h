@@ -830,6 +830,24 @@ typedef struct _cms_iccprofile_struct {
 
     cmsProfileID             ProfileID;
 
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+    // Guarded so a default build keeps master's layout of this struct byte for byte.
+    // These sit mid-struct, so without the guard every member below would shift and
+    // sizeof would grow -- and lcms2_internal.h is included by plugins/fast_float and
+    // plugins/threaded, which ship as separate libraries and would then disagree with
+    // liblcms2 about where TagCount and everything after it live.
+    //
+    // Spectral PCS, from the ICC.2 header fields that ICC.1 leaves reserved.
+    // Bytes 100-103, a spectral colour space signature (ICC.2:2023 7.2.21, Table 21)
+    cmsUInt32Number          SpectralPCS;
+
+    // Bytes 104-109, the spectral PCS wavelength range as a spectralRange
+    // (ICC.2:2023 7.2.22 and 4.2.8): start and end as float16, steps as uInt16
+    cmsFloat32Number         SpectralPCSStart;
+    cmsFloat32Number         SpectralPCSEnd;
+    cmsUInt16Number          SpectralPCSSteps;
+#endif // CMS_USE_ICCMAX_SPECTRAL
+
     // Dictionary
     cmsUInt32Number          TagCount;
     cmsTagSignature          TagNames[MAX_TABLE_TAG];
@@ -890,6 +908,18 @@ struct _cms_curve_struct {
     // 16 bit Table-based representation follows
     cmsUInt32Number    nEntries;      // Number of table elements
     cmsUInt16Number*   Table16;       // The table itself.
+
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+    // Appended at the end so every member above keeps master's offset, and guarded so a
+    // default build keeps master's sizeof as well -- plugins/fast_float and
+    // plugins/threaded include this header and allocate no curves themselves, but a
+    // mismatched sizeof between a plugin and liblcms2 is a trap worth not setting.
+    //
+    // How the curve was encoded, so a curve read from an iccMAX singleSampledCurve is
+    // written back as one instead of being promoted to a segmentedCurve. Zero, the
+    // default from the zeroing allocator, means segmentedCurve.
+    cmsCurveSegSignature CurveType;
+#endif // CMS_USE_ICCMAX_SPECTRAL
 };
 
 
@@ -1037,6 +1067,13 @@ CMSCHECKPOINT cmsFormatter CMSEXPORT _cmsGetFormatter(cmsContext ContextID,
 // Half float
 CMSCHECKPOINT cmsFloat32Number CMSEXPORT _cmsHalf2Float(cmsUInt16Number h);
 CMSCHECKPOINT cmsUInt16Number  CMSEXPORT _cmsFloat2Half(cmsFloat32Number flt);
+
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+// float16Number IO, as used by iccMAX spectralRange, extendedCLUTElement and
+// singleSampledCurve. Conversion is done by the two functions above.
+cmsBool                        CMSEXPORT _cmsReadFloat16Number(cmsIOHANDLER* io, cmsFloat32Number* n);
+cmsBool                        CMSEXPORT _cmsWriteFloat16Number(cmsIOHANDLER* io, cmsFloat32Number n);
+#endif
 
 #endif
 

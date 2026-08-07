@@ -4238,7 +4238,8 @@ void GenericMPEfree(struct _cms_typehandler_struct* self, void *Ptr)
 // specified either in terms of a formula, or by a sampled curve.
 
 
-// Read an embedded segmented curve
+// Read an embedded segmented curve. The type signature has already been consumed by
+// ReadMPEEmbeddedCurve, which dispatched here.
 static
 cmsToneCurve* ReadSegmentedCurve(struct _cms_typehandler_struct* self, cmsIOHANDLER* io)
 {
@@ -4248,12 +4249,6 @@ cmsToneCurve* ReadSegmentedCurve(struct _cms_typehandler_struct* self, cmsIOHAND
     cmsCurveSegment*  Segments;
     cmsToneCurve* Curve;
     cmsFloat32Number PrevBreak = MINUS_INF;    // - infinite
-
-    // Take signature and channels for each element.
-     if (!_cmsReadUInt32Number(io, (cmsUInt32Number*) &ElementSig)) return NULL;
-
-     // That should be a segmented curve
-     if (ElementSig != cmsSigSegmentedCurve) return NULL;
 
      if (!_cmsReadUInt32Number(io, NULL)) return NULL;
      if (!_cmsReadUInt16Number(io, &nSegments)) return NULL;
@@ -4284,14 +4279,23 @@ cmsToneCurve* ReadSegmentedCurve(struct _cms_typehandler_struct* self, cmsIOHAND
 
            case cmsSigFormulaCurveSeg: {
 
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+               // ICC.2 Table 111 defines eight function types; ICC.1 defines only the
+               // first three. Parameter counts per CIccFormulaCurveSegment::Read.
+               cmsUInt16Number Type;
+               cmsUInt32Number ParamsByType[] = { 4, 5, 5, 5, 5, 6, 7, 6 };
+               cmsUInt16Number MaxType = 7;
+#else
                cmsUInt16Number Type;
                cmsUInt32Number ParamsByType[] = { 4, 5, 5 };
+               cmsUInt16Number MaxType = 2;
+#endif
 
                if (!_cmsReadUInt16Number(io, &Type)) goto Error;
                if (!_cmsReadUInt16Number(io, NULL)) goto Error;
 
                Segments[i].Type = Type + 6;
-               if (Type > 2) goto Error;
+               if (Type > MaxType) goto Error;
 
                for (j = 0; j < ParamsByType[Type]; j++) {
 
@@ -4363,6 +4367,266 @@ Error:
 }
 
 
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+// Read an embedded singleSampledCurve (iccMAX 'sngf', ICC.2:2023 11.2.2.2, Table 108).
+// The type signature has already been consumed by ReadMPEEmbeddedCurve.
+//
+//     0..3   'sngf' signature      ] consumed by the caller
+//     4..7   reserved, shall be 0
+//     8..11  number of entries (N) uInt32Number, at least 2
+//     12..15 input of first entry(F) float32Number
+//     16..19 input of last entry (L) float32Number, greater than F
+//     20..21 lookup extension type uInt16Number, 0 clips and 1 extrapolates
+//     22..23 data encoding type    uInt16Number as valueEncodingType
+//     24..   N entries             per the encoding type
+//
+// This maps onto a three segment cmsToneCurve: the middle segment is the sampled data
+// over [F, L], and the outer two implement the extension behaviour as type 6 formulas
+// with Gamma 1, which cmsgamma.c evaluates as a plain unclamped line. The formulas
+// match CIccSingleSampledCurve::Begin in the reference implementation, and are
+// continuous with the sampled segment at F and L, so it does not matter which side of
+// the boundary EvalSegmentedFn happens to pick.
+static
+cmsToneCurve* ReadSingleSampledCurve(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number SizeOfTag)
+{
+    cmsUInt32Number nEntries, i, BytesPerSample;
+    cmsFloat32Number FirstEntry, LastEntry, StepSize, Slope;
+    cmsUInt16Number ExtensionType, EncodingType;
+    cmsFloat32Number* SampledPoints = NULL;
+    cmsCurveSegment Seg[3];
+    cmsToneCurve* Curve;
+
+    // Bytes consumed before the samples start: the 'sngf' signature, read by
+    // ReadMPEEmbeddedCurve, plus Table 108's own 20 byte header read below.
+#define SNGF_HEADER_BYTES  24
+
+    if (!_cmsReadUInt32Number(io, NULL)) return NULL;            // reserved
+
+    if (!_cmsReadUInt32Number(io, &nEntries)) return NULL;
+
+    // At least two entries, and keep the allocation sane
+    if (nEntries < 2) return NULL;
+    if (nEntries > 0x10000) return NULL;
+
+    if (!_cmsReadFloat32Number(io, &FirstEntry)) return NULL;
+    if (!_cmsReadFloat32Number(io, &LastEntry)) return NULL;
+
+    // F shall be less than L. This also rejects a NaN in either, since every
+    // comparison against NaN is false.
+    if (!(LastEntry > FirstEntry)) return NULL;
+
+    // An infinite endpoint would make StepSize infinite and the extension slopes zero,
+    // which is not a curve anyone can have meant
+    if (isinf(FirstEntry) || isinf(LastEntry)) {
+
+        cmsSignalError(self ->ContextID, cmsERROR_RANGE,
+            "singleSampledCurve has a non-finite endpoint");
+        return NULL;
+    }
+
+    if (!_cmsReadUInt16Number(io, &ExtensionType)) return NULL;
+    if (!_cmsReadUInt16Number(io, &EncodingType)) return NULL;
+
+    if (ExtensionType > 1) {
+
+        cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION,
+            "Unknown singleSampledCurve lookup extension type '%d'", ExtensionType);
+        return NULL;
+    }
+
+    // How many bytes each sample takes, per ICC.2:2023 Table 8
+    switch (EncodingType) {
+
+    case 0: BytesPerSample = 4; break;       // float32Number
+    case 1: BytesPerSample = 2; break;       // float16Number
+    case 2: BytesPerSample = 2; break;       // uInt16Number
+    case 3: BytesPerSample = 1; break;       // uInt8Number
+
+    default:
+        cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION,
+            "Unknown singleSampledCurve value encoding type '%d'", EncodingType);
+        return NULL;
+    }
+
+    // The samples the header declares must fit in the bytes the position table gave
+    // this curve, otherwise the reads below would run off the end of the profile
+    if (SizeOfTag < SNGF_HEADER_BYTES) return NULL;
+    if (nEntries > (SizeOfTag - SNGF_HEADER_BYTES) / BytesPerSample) return NULL;
+
+    SampledPoints = (cmsFloat32Number*) _cmsCalloc(self ->ContextID, nEntries, sizeof(cmsFloat32Number));
+    if (SampledPoints == NULL) return NULL;
+
+    switch (EncodingType) {
+
+    case 0: // float32Number
+        for (i = 0; i < nEntries; i++) {
+
+            if (!_cmsReadFloat32Number(io, &SampledPoints[i])) goto Error;
+        }
+        break;
+
+    case 1: // float16Number
+        for (i = 0; i < nEntries; i++) {
+
+            if (!_cmsReadFloat16Number(io, &SampledPoints[i])) goto Error;
+        }
+        break;
+
+    case 2: // uInt16Number, encoding 0.0 to 1.0
+        for (i = 0; i < nEntries; i++) {
+
+            cmsUInt16Number v;
+
+            if (!_cmsReadUInt16Number(io, &v)) goto Error;
+            SampledPoints[i] = (cmsFloat32Number) v / 65535.0f;
+        }
+        break;
+
+    case 3: // uInt8Number, encoding 0.0 to 1.0
+        for (i = 0; i < nEntries; i++) {
+
+            cmsUInt8Number v;
+
+            if (!_cmsReadUInt8Number(io, &v)) goto Error;
+            SampledPoints[i] = (cmsFloat32Number) v / 255.0f;
+        }
+        break;
+
+    default:
+        cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION,
+            "Unknown singleSampledCurve value encoding type '%d'", EncodingType);
+        goto Error;
+    }
+
+    memset(Seg, 0, sizeof(Seg));
+
+    StepSize = (LastEntry - FirstEntry) / (cmsFloat32Number) (nEntries - 1);
+
+    // L > F and both are finite, yet the quotient can still underflow to zero for a
+    // denormal L - F divided by a large nEntries. The extension slopes below divide by
+    // StepSize, so a zero would make them infinite -- or NaN, when the two end samples
+    // are equal and the division is 0/0 -- and cmsEvalToneCurveFloat would then hand
+    // back NaN for any input outside [F, L].
+    if (!(StepSize > 0.0f)) {
+
+        cmsSignalError(self ->ContextID, cmsERROR_RANGE,
+            "singleSampledCurve step size underflowed to zero: %u entries over [%g, %g]",
+            nEntries, (cmsFloat64Number) FirstEntry, (cmsFloat64Number) LastEntry);
+        goto Error;
+    }
+
+    // Below F
+    Seg[0].x0 = MINUS_INF;
+    Seg[0].x1 = FirstEntry;
+    Seg[0].Type = 6;
+    Seg[0].Params[0] = 1.0;                 // Gamma 1, so this is just a*X + b + c
+
+    if (ExtensionType == 0) {
+
+        // Clip to the first entry
+        Seg[0].Params[1] = 0.0;
+        Seg[0].Params[2] = 0.0;
+        Seg[0].Params[3] = SampledPoints[0];
+    }
+    else {
+        // Extrapolate along the line through the first two entries
+        Slope = (SampledPoints[1] - SampledPoints[0]) / StepSize;
+
+        Seg[0].Params[1] = Slope;
+        Seg[0].Params[2] = SampledPoints[0] - Slope * FirstEntry;
+        Seg[0].Params[3] = 0.0;
+    }
+
+    // The sampled data itself, over [F, L]
+    Seg[1].x0 = FirstEntry;
+    Seg[1].x1 = LastEntry;
+    Seg[1].Type = 0;
+    Seg[1].nGridPoints = nEntries;
+    Seg[1].SampledPoints = SampledPoints;
+
+    // Above L
+    Seg[2].x0 = LastEntry;
+    Seg[2].x1 = PLUS_INF;
+    Seg[2].Type = 6;
+    Seg[2].Params[0] = 1.0;
+
+    if (ExtensionType == 0) {
+
+        Seg[2].Params[1] = 0.0;
+        Seg[2].Params[2] = 0.0;
+        Seg[2].Params[3] = SampledPoints[nEntries - 1];
+    }
+    else {
+        Slope = (SampledPoints[nEntries - 1] - SampledPoints[nEntries - 2]) / StepSize;
+
+        Seg[2].Params[1] = Slope;
+        Seg[2].Params[2] = SampledPoints[nEntries - 1] - Slope * LastEntry;
+        Seg[2].Params[3] = 0.0;
+    }
+
+    // cmsBuildSegmentedToneCurve duplicates the sampled points, so ours can go
+    Curve = cmsBuildSegmentedToneCurve(self ->ContextID, 3, Seg);
+    _cmsFree(self ->ContextID, SampledPoints);
+
+    if (Curve == NULL) return NULL;
+
+    Curve ->CurveType = cmsSigSingleSampledCurve;
+
+    return Curve;
+
+Error:
+    if (SampledPoints != NULL) _cmsFree(self ->ContextID, SampledPoints);
+    return NULL;
+}
+
+#undef SNGF_HEADER_BYTES
+#endif // CMS_USE_ICCMAX_SPECTRAL
+
+
+// Read one curve of a curveSetElement, dispatching on its type signature. ICC.1 only
+// defines the segmentedCurve; ICC.2 adds singleSampledCurve and, not supported here,
+// sampledCalculatorCurve. Not to be confused with ReadEmbeddedCurve above, which reads
+// the wholly different curveType/parametricCurveType pair used by lut8/lut16/mAB/mBA.
+static
+cmsToneCurve* ReadMPEEmbeddedCurve(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number SizeOfTag)
+{
+    cmsCurveSegSignature CurveSig;
+
+#ifndef CMS_USE_ICCMAX_SPECTRAL
+    // Only ReadSingleSampledCurve needs the size, and it is not compiled in
+    cmsUNUSED_PARAMETER(SizeOfTag);
+#endif
+
+    if (!_cmsReadUInt32Number(io, (cmsUInt32Number*) &CurveSig)) return NULL;
+
+    switch (CurveSig) {
+
+    case cmsSigSegmentedCurve:
+        return ReadSegmentedCurve(self, io);
+
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+    case cmsSigSingleSampledCurve:
+        return ReadSingleSampledCurve(self, io, SizeOfTag);
+
+    default:
+        {
+            char String[5];
+
+            _cmsTagSignature2String(String, (cmsTagSignature) CurveSig);
+            cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unknown MPE curve type '%s'", String);
+        }
+        return NULL;
+#else
+    default:
+        // Master returned NULL here without signalling. Signalling would turn a
+        // failed tag read into exit(1) under a fatal error handler, so the quiet
+        // behaviour is preserved when the feature is off.
+        return NULL;
+#endif
+    }
+}
+
+
 static
 cmsBool ReadMPECurve(struct _cms_typehandler_struct* self,
                      cmsIOHANDLER* io,
@@ -4372,10 +4636,9 @@ cmsBool ReadMPECurve(struct _cms_typehandler_struct* self,
 {
       cmsToneCurve** GammaTables = ( cmsToneCurve**) Cargo;
 
-      GammaTables[n] = ReadSegmentedCurve(self, io);
+      // SizeOfTag is this curve's own size, from the curveSetElement position table
+      GammaTables[n] = ReadMPEEmbeddedCurve(self, io, SizeOfTag);
       return (GammaTables[n] != NULL);
-
-      cmsUNUSED_PARAMETER(SizeOfTag);
 }
 
 static
@@ -4456,15 +4719,25 @@ cmsBool WriteSegmentedCurve(cmsIOHANDLER* io, cmsToneCurve* g)
         }
         else {
             int Type;
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+            cmsUInt32Number ParamsByType[] = { 4, 5, 5, 5, 5, 6, 7, 6 };
+#else
             cmsUInt32Number ParamsByType[] = { 4, 5, 5 };
+#endif
 
             // This is a formula-based
             if (!_cmsWriteUInt32Number(io, (cmsUInt32Number) cmsSigFormulaCurveSeg)) goto Error;
             if (!_cmsWriteUInt32Number(io, 0)) goto Error;
 
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+            // ICC.2 Table 111 function types 0..7
+            Type = ActualSeg ->Type - 6;
+            if (Type > 7 || Type < 0) goto Error;
+#else
             // We only allow 1, 2 and 3 as types
             Type = ActualSeg ->Type - 6;
             if (Type > 2 || Type < 0) goto Error;
+#endif
 
             if (!_cmsWriteUInt16Number(io, (cmsUInt16Number) Type)) goto Error;
             if (!_cmsWriteUInt16Number(io, 0)) goto Error;
@@ -4485,6 +4758,66 @@ Error:
 }
 
 
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+// TRUE when the curve still has the exact three segment shape ReadSingleSampledCurve
+// builds, which is the only shape the 'sngf' encoding can hold: the middle segment
+// holds the samples over [F, L] and the outer two carry the extension. CurveType
+// survives cmsDupToneCurve, so a curve can carry the flag and yet have been reshaped
+// since; WriteMPECurve consults this before committing to the 'sngf' form.
+static
+cmsBool IsSingleSampledShape(const cmsToneCurve* g)
+{
+    if (g ->nSegments != 3) return FALSE;
+
+    if (g ->Segments[1].Type != 0 || g ->Segments[1].SampledPoints == NULL) return FALSE;
+    if (g ->Segments[1].nGridPoints < 2) return FALSE;
+
+    // The outer two must still be the formula type 6 extensions ReadSingleSampledCurve
+    // built. WriteSingleSampledCurve reads Segments[0].Params[1] as the extension slope
+    // to decide the extensionType flag, and Params[1] means something else entirely for
+    // any other segment type -- so without this the flag would be derived from an
+    // unrelated parameter of an unrelated formula.
+    if (g ->Segments[0].Type != 6 || g ->Segments[2].Type != 6) return FALSE;
+
+    return TRUE;
+}
+
+// Write a curve that came in as an iccMAX singleSampledCurve back in that form
+// (ICC.2:2023 Table 108). Always emitted as float32Number, which is lossless whatever
+// it was read as.
+static
+cmsBool WriteSingleSampledCurve(cmsIOHANDLER* io, cmsToneCurve* g)
+{
+    cmsUInt32Number i;
+    cmsCurveSegment* Sampled;
+    cmsUInt16Number ExtensionType;
+
+    if (!IsSingleSampledShape(g)) return FALSE;
+
+    Sampled = &g ->Segments[1];
+
+    // A zero slope on the lower extension means it clips, anything else extrapolates.
+    // ReadSingleSampledCurve only ever writes those two shapes.
+    ExtensionType = (g ->Segments[0].Params[1] == 0.0) ? 0U : 1U;
+
+    if (!_cmsWriteUInt32Number(io, (cmsUInt32Number) cmsSigSingleSampledCurve)) return FALSE;
+    if (!_cmsWriteUInt32Number(io, 0)) return FALSE;
+    if (!_cmsWriteUInt32Number(io, Sampled ->nGridPoints)) return FALSE;
+    if (!_cmsWriteFloat32Number(io, Sampled ->x0)) return FALSE;
+    if (!_cmsWriteFloat32Number(io, Sampled ->x1)) return FALSE;
+    if (!_cmsWriteUInt16Number(io, ExtensionType)) return FALSE;
+    if (!_cmsWriteUInt16Number(io, 0)) return FALSE;    // valueEncodingType float32Number
+
+    for (i = 0; i < Sampled ->nGridPoints; i++) {
+
+        if (!_cmsWriteFloat32Number(io, Sampled ->SampledPoints[i])) return FALSE;
+    }
+
+    return TRUE;
+}
+#endif // CMS_USE_ICCMAX_SPECTRAL
+
+
 static
 cmsBool WriteMPECurve(struct _cms_typehandler_struct* self,
                       cmsIOHANDLER* io,
@@ -4493,6 +4826,16 @@ cmsBool WriteMPECurve(struct _cms_typehandler_struct* self,
                       cmsUInt32Number SizeOfTag)
 {
     _cmsStageToneCurvesData* Curves  = (_cmsStageToneCurvesData*) Cargo;
+
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+    // Preserve the encoding the curve arrived in, but only while the curve still has a
+    // shape the 'sngf' form can express. Anything that reshaped the segments while
+    // keeping CurveType falls back to a segmented curve, which encodes the same
+    // function, rather than failing the whole profile write.
+    if (Curves ->TheCurves[n] ->CurveType == cmsSigSingleSampledCurve &&
+        IsSingleSampledShape(Curves ->TheCurves[n]))
+        return WriteSingleSampledCurve(io, Curves ->TheCurves[n]);
+#endif
 
     return WriteSegmentedCurve(io, Curves ->TheCurves[n]);
 
@@ -4543,10 +4886,20 @@ void *Type_MPEmatrix_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io
     if (!_cmsReadUInt16Number(io, &OutputChans)) return NULL;
 
 
-    // Input and output chans may be ANY (up to 0xffff), 
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+    // Input and output chans may be ANY (up to 0xffff), but we choose to limit to
+    // MAX_STAGE_CHANNELS. That is higher than cmsMAXCHANNELS because an iccMAX
+    // spectral pipeline typically ends in a matrix that expands a handful of basis
+    // coefficients out to the full spectrum, e.g. 6 to 36. Both the storage and
+    // EvaluateMatrix are fully dynamic, so only the pipeline buffers set the ceiling.
+    if (InputChans >= MAX_STAGE_CHANNELS) return NULL;
+    if (OutputChans >= MAX_STAGE_CHANNELS) return NULL;
+#else
+    // Input and output chans may be ANY (up to 0xffff),
     // but we choose to limit to 16 channels for now
     if (InputChans >= cmsMAXCHANNELS) return NULL;
     if (OutputChans >= cmsMAXCHANNELS) return NULL;
+#endif
 
     nElems = (cmsUInt32Number) InputChans * OutputChans;
 
@@ -4645,8 +4998,24 @@ void *Type_MPEclut_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, 
     if (!_cmsReadUInt16Number(io, &InputChans)) return NULL;
     if (!_cmsReadUInt16Number(io, &OutputChans)) return NULL;
 
+    // Input: ICC.2 Table 113 requires 1 <= P <= 16, the same bound extendedCLUTElement
+    // carries in Table 117. Little-CMS stops one short of it, because MAX_INPUT_DIMENSIONS
+    // is 15 and GridPoints[] below is sized by it. That is a pre-existing structural limit
+    // of this reader, identical in the xclt reader, and not specific to iccMAX.
     if (InputChans == 0 || InputChans >= cmsMAXCHANNELS) goto Error;
+
+    // Output: Table 113 places no bound on Q at all -- the spec pins an element's output
+    // count only where it carries meaning, as in emissionCLUTElement and
+    // reflectanceCLUTElement, which both require Q = 3. Multi process elements are not
+    // constrained by the 16 channel ceiling that applies to a profile's colour spaces,
+    // in v4 or in v5, so a spectral transform may legitimately be built from a plain
+    // clutElement rather than the extended xclt form. Accept the same ceiling the xclt
+    // reader uses. The default build keeps master's bound exactly.
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+    if (OutputChans == 0 || OutputChans >= MAX_STAGE_CHANNELS) goto Error;
+#else
     if (OutputChans == 0 || OutputChans >= cmsMAXCHANNELS) goto Error;
+#endif
 
     if (io ->Read(io, Dimensions8, sizeof(cmsUInt8Number), 16) != 16)
         goto Error;
@@ -4719,6 +5088,220 @@ cmsBool  Type_MPEclut_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* 
 
 
 
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+// ********************************************************************************
+// Type cmsSigExtCLutElemType ('xclt')
+//
+// The iccMAX extendedCLUTElement (ICC.2:2023 11.2.7, Table 117). Same grid layout
+// and interpolation as the ICC.1 clutElement, but the samples may be encoded as
+// float32Number, float16Number, uInt16Number or uInt8Number, selected by a
+// valueEncodingType field (ICC.2:2023 4.2.10, Table 8).
+//
+// Table 117 is:
+//     0..3   'xclt' signature       ] consumed by ReadMPEElem/Type_MPE_Write,
+//     4..6   reserved, shall be 0   ] which read/write the signature plus 4 bytes
+//     7      interpolation hint     ] so this handler starts at byte 8. The hint
+//                                     is advisory and is not retained.
+//     8..9   input channels  (P)    uInt16Number
+//     10..11 output channels (Q)    uInt16Number
+//     12..13 CLUT encoding type     uInt16Number as valueEncodingType
+//     14..15 reserved, shall be 0
+//     16..31 grid points per channel uInt8Number[16]
+//     32..   CLUT data              per encoding type
+//
+// Table 117 describes bytes 12 to 15 as a single uInt32Number, but 4.2.10 permits a
+// valueEncodingType to be encoded as either a uInt16Number or a uInt32Number, and
+// real iccMAX profiles put a uInt16Number in bytes 12 and 13 followed by two
+// reserved bytes. So does the reference implementation, CIccMpeExtCLUT::Read and
+// ::Write, which does Read16(storageType) then Read16(reserved). That is the layout
+// written here. Both spellings are accepted on read, which is unambiguous: the
+// uInt16 form always leaves bytes 14 and 15 zero, and the two only coincide for
+// float32Number, where either way all four bytes are zero.
+//
+// Table 117 permits P up to 16, but MAX_INPUT_DIMENSIONS is 15, so 16 is rejected
+// rather than silently truncated.
+// ********************************************************************************
+
+static
+void *Type_MPEextclut_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag)
+{
+    cmsStage* mpe = NULL;
+    cmsUInt16Number InputChans, OutputChans;
+    cmsUInt8Number Dimensions8[16];
+    cmsUInt32Number i, nMaxGrids, GridPoints[MAX_INPUT_DIMENSIONS];
+    cmsUInt16Number EncodingType, Reserved2;
+    cmsUInt32Number nEntries, BytesPerSample;
+    _cmsStageCLutData* clut;
+
+    // Bytes of the element consumed before the CLUT data starts: the 'xclt' signature
+    // and the reserved word read by ReadMPEElem, plus Table 117's own 24 byte header
+    // (channels, encoding type, reserved and the 16 grid point bytes) read below.
+#define EXTCLUT_HEADER_BYTES  32
+
+    *nItems = 0;
+
+    if (!_cmsReadUInt16Number(io, &InputChans)) goto Error;
+    if (!_cmsReadUInt16Number(io, &OutputChans)) goto Error;
+
+    if (InputChans == 0 || InputChans >= cmsMAXCHANNELS) goto Error;
+    if (OutputChans == 0 || OutputChans >= MAX_STAGE_CHANNELS) goto Error;
+
+    if (!_cmsReadUInt16Number(io, &EncodingType)) goto Error;
+    if (!_cmsReadUInt16Number(io, &Reserved2)) goto Error;
+
+    // Tolerate the field written as a uInt32Number. Reserved bytes shall be zero, so
+    // a non zero low half with a zero high half can only be the uInt32 spelling.
+    if (EncodingType == 0 && Reserved2 != 0) EncodingType = Reserved2;
+
+    if (io ->Read(io, Dimensions8, sizeof(cmsUInt8Number), 16) != 16)
+        goto Error;
+
+    // Copy MAX_INPUT_DIMENSIONS at most. Expand to cmsUInt32Number
+    nMaxGrids = InputChans > MAX_INPUT_DIMENSIONS ? (cmsUInt32Number) MAX_INPUT_DIMENSIONS : InputChans;
+
+    for (i = 0; i < nMaxGrids; i++) {
+        if (Dimensions8[i] == 1) goto Error; // Impossible value, 0 for no CLUT and then 2 at least
+        GridPoints[i] = (cmsUInt32Number)Dimensions8[i];
+    }
+
+    // How many bytes each sample takes, per ICC.2:2023 Table 8
+    switch (EncodingType) {
+
+    case 0: BytesPerSample = 4; break;       // float32Number
+    case 1: BytesPerSample = 2; break;       // float16Number
+    case 2: BytesPerSample = 2; break;       // uInt16Number
+    case 3: BytesPerSample = 1; break;       // uInt8Number
+
+    default:
+        cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION,
+            "Unknown extendedCLUT value encoding type '%d'", EncodingType);
+        goto Error;
+    }
+
+    // Work out how many samples the declared grid implies, and refuse the element if
+    // the data it claims to hold does not fit in the bytes the position table gave it.
+    // Without this a small element can declare a huge grid, and the parser would only
+    // notice once the reads below ran off the end of the profile.
+    nEntries = OutputChans;
+
+    for (i = 0; i < nMaxGrids; i++) {
+
+        if (GridPoints[i] == 0 || nEntries > UINT_MAX / GridPoints[i]) goto Error;
+        nEntries *= GridPoints[i];
+    }
+
+    if (SizeOfTag < EXTCLUT_HEADER_BYTES) goto Error;
+    if (nEntries > (SizeOfTag - EXTCLUT_HEADER_BYTES) / BytesPerSample) goto Error;
+
+    // Allocate the true CLUT
+    mpe = cmsStageAllocCLutFloatGranular(self ->ContextID, GridPoints, InputChans, OutputChans, NULL);
+    if (mpe == NULL) goto Error;
+
+    // Remember that this element came in as an extendedCLUT, so it is written back
+    // as one. Implements stays at cmsSigCLutElemType: it *is* a CLUT, it is merely
+    // encoded differently.
+    mpe ->Type = (cmsStageSignature) cmsSigExtCLutElemType;
+
+    clut = (_cmsStageCLutData*) mpe ->Data;
+
+    // Read the data in whichever encoding the element declares
+    switch (EncodingType) {
+
+    case 0: // float32Number
+        for (i = 0; i < clut ->nEntries; i++) {
+
+            if (!_cmsReadFloat32Number(io, &clut->Tab.TFloat[i])) goto Error;
+        }
+        break;
+
+    case 1: // float16Number
+        for (i = 0; i < clut ->nEntries; i++) {
+
+            if (!_cmsReadFloat16Number(io, &clut->Tab.TFloat[i])) goto Error;
+        }
+        break;
+
+    case 2: // uInt16Number, encoding 0.0 to 1.0
+        for (i = 0; i < clut ->nEntries; i++) {
+
+            cmsUInt16Number v;
+
+            if (!_cmsReadUInt16Number(io, &v)) goto Error;
+            clut->Tab.TFloat[i] = (cmsFloat32Number) v / 65535.0f;
+        }
+        break;
+
+    case 3: // uInt8Number, encoding 0.0 to 1.0
+        for (i = 0; i < clut ->nEntries; i++) {
+
+            cmsUInt8Number v;
+
+            if (!_cmsReadUInt8Number(io, &v)) goto Error;
+            clut->Tab.TFloat[i] = (cmsFloat32Number) v / 255.0f;
+        }
+        break;
+
+    default:
+        cmsSignalError(self ->ContextID, cmsERROR_UNKNOWN_EXTENSION,
+            "Unknown extendedCLUT value encoding type '%d'", EncodingType);
+        goto Error;
+    }
+
+    *nItems = 1;
+    return mpe;
+
+Error:
+    *nItems = 0;
+    if (mpe != NULL) cmsStageFree(mpe);
+    return NULL;
+}
+
+#undef EXTCLUT_HEADER_BYTES
+
+// Write an extended CLUT. Always emitted as float32Number, which is lossless for
+// whatever encoding it was read from.
+static
+cmsBool  Type_MPEextclut_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, void* Ptr, cmsUInt32Number nItems)
+{
+    cmsUInt8Number Dimensions8[16];  // 16 because the spec says 16 and not max number of channels
+    cmsUInt32Number i;
+    cmsStage* mpe = (cmsStage*) Ptr;
+    _cmsStageCLutData* clut = (_cmsStageCLutData*) mpe ->Data;
+
+    // Check for maximum number of channels supported by lcms
+    if (mpe -> InputChannels > MAX_INPUT_DIMENSIONS) return FALSE;
+
+    // Only floats are supported in MPE
+    if (clut ->HasFloatValues == FALSE) return FALSE;
+
+    if (!_cmsWriteUInt16Number(io, (cmsUInt16Number) mpe ->InputChannels)) return FALSE;
+    if (!_cmsWriteUInt16Number(io, (cmsUInt16Number) mpe ->OutputChannels)) return FALSE;
+
+    // valueEncodingType 0, float32Number, as a uInt16Number plus 2 reserved bytes
+    if (!_cmsWriteUInt16Number(io, 0)) return FALSE;
+    if (!_cmsWriteUInt16Number(io, 0)) return FALSE;
+
+    memset(Dimensions8, 0, sizeof(Dimensions8));
+
+    for (i=0; i < mpe ->InputChannels; i++)
+        Dimensions8[i] = (cmsUInt8Number) clut ->Params ->nSamples[i];
+
+    if (!io ->Write(io, 16, Dimensions8)) return FALSE;
+
+    for (i=0; i < clut ->nEntries; i++) {
+
+        if (!_cmsWriteFloat32Number(io, clut ->Tab.TFloat[i])) return FALSE;
+    }
+
+    return TRUE;
+
+    cmsUNUSED_PARAMETER(nItems);
+    cmsUNUSED_PARAMETER(self);
+}
+#endif // CMS_USE_ICCMAX_SPECTRAL
+
+
+
 // This is the list of built-in MPE types
 static _cmsTagTypeLinkedList SupportedMPEtypes[] = {
 
@@ -4727,7 +5310,13 @@ static _cmsTagTypeLinkedList SupportedMPEtypes[] = {
 
 {TYPE_MPE_HANDLER((cmsTagTypeSignature) cmsSigCurveSetElemType,     MPEcurve),      &SupportedMPEtypes[3] },
 {TYPE_MPE_HANDLER((cmsTagTypeSignature) cmsSigMatrixElemType,       MPEmatrix),     &SupportedMPEtypes[4] },
-{TYPE_MPE_HANDLER((cmsTagTypeSignature) cmsSigCLutElemType,         MPEclut),        NULL },
+{TYPE_MPE_HANDLER((cmsTagTypeSignature) cmsSigCLutElemType,         MPEclut),
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+                                                                    &SupportedMPEtypes[5] },
+{TYPE_MPE_HANDLER((cmsTagTypeSignature) cmsSigExtCLutElemType,      MPEextclut),     NULL },
+#else
+                                                                    NULL },
+#endif
 };
 
 _cmsTagTypePluginChunkType _cmsMPETypePluginChunk = { NULL };
@@ -4796,8 +5385,15 @@ void *Type_MPE_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsU
     if (!_cmsReadUInt16Number(io, &InputChans)) return NULL;
     if (!_cmsReadUInt16Number(io, &OutputChans)) return NULL;
 
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+    // MAX_STAGE_CHANNELS, not cmsMAXCHANNELS: an iccMAX DToBx pipeline may output
+    // a spectral vector of 37 or more channels
+    if (InputChans == 0 || InputChans >= MAX_STAGE_CHANNELS) return NULL;
+    if (OutputChans == 0 || OutputChans >= MAX_STAGE_CHANNELS) return NULL;
+#else
     if (InputChans == 0 || InputChans >= cmsMAXCHANNELS) return NULL;
     if (OutputChans == 0 || OutputChans >= cmsMAXCHANNELS) return NULL;
+#endif
 
     // Allocates an empty LUT
     NewLUT = cmsPipelineAlloc(self ->ContextID, InputChans, OutputChans);
@@ -5923,6 +6519,436 @@ Error:
 
 
 
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+// ********************************************************************************
+// Type cmsSigEmbeddedProfileType ('ICCp')
+//
+// Holds an embedded ICC.2 (iccMAX) profile, per the ICC technical note "Embedding
+// an ICC.2 (iccMAX) profile in an ICC.1 profile", Table 1:
+//
+//     0..3   'ICCp' type signature   ] this is exactly the standard tag base, which
+//     4..7   reserved, shall be 0    ] _cmsReadTypeBase already consumed
+//     8..    the ICC.2 profile, in its entirety
+//
+// so SizeOfTag is the length of the embedded profile and no offset maths is needed.
+// Returned as a cmsICCData whose data can be handed straight to
+// cmsOpenProfileFromMem; len must live in the object because DupPtr is called with
+// the tag descriptor's ElemCount, not a byte count. The bytes are passed through
+// verbatim on write: nothing here authors or rewrites ICC.2 content.
+// ********************************************************************************
+
+static
+void *Type_EmbeddedProfile_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag)
+{
+    cmsICCData* Embedded;
+
+    *nItems = 0;
+
+    // A profile is at least a 128 byte header plus a 4 byte tag count
+    if (SizeOfTag < 132) return NULL;
+    if (SizeOfTag > INT_MAX) return NULL;
+
+    Embedded = (cmsICCData*) _cmsMalloc(self ->ContextID, sizeof(cmsICCData) + SizeOfTag - 1);
+    if (Embedded == NULL) return NULL;
+
+    Embedded ->len  = SizeOfTag;
+    Embedded ->flag = 0;
+
+    if (io ->Read(io, Embedded ->data, sizeof(cmsUInt8Number), SizeOfTag) != SizeOfTag) {
+
+        _cmsFree(self ->ContextID, Embedded);
+        return NULL;
+    }
+
+    *nItems = 1;
+    return (void*) Embedded;
+}
+
+static
+cmsBool Type_EmbeddedProfile_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, void* Ptr, cmsUInt32Number nItems)
+{
+    cmsICCData* Embedded = (cmsICCData*) Ptr;
+
+    return io ->Write(io, Embedded ->len, Embedded ->data);
+
+    cmsUNUSED_PARAMETER(nItems);
+    cmsUNUSED_PARAMETER(self);
+}
+
+static
+void* Type_EmbeddedProfile_Dup(struct _cms_typehandler_struct* self, const void *Ptr, cmsUInt32Number n)
+{
+    cmsICCData* Embedded = (cmsICCData*) Ptr;
+
+    return _cmsDupMem(self ->ContextID, Ptr, sizeof(cmsICCData) + Embedded ->len - 1);
+
+    cmsUNUSED_PARAMETER(n);
+}
+
+static
+void Type_EmbeddedProfile_Free(struct _cms_typehandler_struct* self, void* Ptr)
+{
+    _cmsFree(self ->ContextID, Ptr);
+}
+#endif // CMS_USE_ICCMAX_SPECTRAL
+
+
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+
+// ********************************************************************************
+// Type float16ArrayType and float32ArrayType (ICC.2:2023 10.2.9 and 10.2.10)
+// ********************************************************************************
+//
+// Both are the type signature, four reserved bytes, then a bare vector of values;
+// ICC.2 derives the count from the tag size. The framework has already consumed
+// the signature and the reserved bytes by the time a reader is called, so
+// SizeOfTag counts the values only. Both encodings are presented to callers as one
+// cmsFloatArray, tagged with the encoding it came from, so that a profile authored
+// in half precision does not silently get rewritten as single precision.
+
+static
+void* ReadFloatArray(struct _cms_typehandler_struct* self, cmsIOHANDLER* io,
+                     cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag,
+                     cmsUInt32Number BytesPerValue)
+{
+    cmsFloatArray* v;
+    cmsUInt32Number i, n;
+
+    *nItems = 0;
+
+    n = SizeOfTag / BytesPerValue;
+    if (n == 0) return NULL;
+
+    v = cmsAllocFloatArray(self ->ContextID, n);
+    if (v == NULL) return NULL;
+
+    for (i = 0; i < n; i++) {
+
+        if (BytesPerValue == 2) {
+
+            if (!_cmsReadFloat16Number(io, &v ->Values[i])) goto Error;
+        }
+        else {
+
+            if (!_cmsReadFloat32Number(io, &v ->Values[i])) goto Error;
+        }
+    }
+
+    *nItems = 1;
+    return (void*) v;
+
+Error:
+    cmsFreeFloatArray(v);
+    return NULL;
+}
+
+static
+cmsBool WriteFloatArray(cmsIOHANDLER* io, void* Ptr, cmsUInt32Number BytesPerValue)
+{
+    cmsFloatArray* v = (cmsFloatArray*) Ptr;
+    cmsUInt32Number i;
+
+    if (v == NULL || v ->Values == NULL) return FALSE;
+
+    // The length comes from the object. nItems is TagDescriptor->ElemCount, which
+    // for swpt is the constant 1 and has nothing to do with the value count.
+    for (i = 0; i < v ->nValues; i++) {
+
+        if (BytesPerValue == 2) {
+
+            if (!_cmsWriteFloat16Number(io, v ->Values[i])) return FALSE;
+        }
+        else {
+
+            if (!_cmsWriteFloat32Number(io, v ->Values[i])) return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+static
+void* Type_FloatArray_Dup(struct _cms_typehandler_struct* self, const void* Ptr, cmsUInt32Number n)
+{
+    const cmsFloatArray* v = (const cmsFloatArray*) Ptr;
+    cmsFloatArray* NewArray;
+
+    if (v == NULL) return NULL;
+
+    // Again, the length is v->nValues and not n
+    NewArray = cmsAllocFloatArray(self ->ContextID, v ->nValues);
+    if (NewArray == NULL) return NULL;
+
+    memcpy(NewArray ->Values, v ->Values, v ->nValues * sizeof(cmsFloat32Number));
+
+    return (void*) NewArray;
+
+    cmsUNUSED_PARAMETER(n);
+}
+
+static
+void Type_FloatArray_Free(struct _cms_typehandler_struct* self, void* Ptr)
+{
+    cmsFreeFloatArray((cmsFloatArray*) Ptr);
+
+    cmsUNUSED_PARAMETER(self);
+}
+
+#define Type_Float16Array_Dup  Type_FloatArray_Dup
+#define Type_Float16Array_Free Type_FloatArray_Free
+#define Type_Float32Array_Dup  Type_FloatArray_Dup
+#define Type_Float32Array_Free Type_FloatArray_Free
+
+static
+void* Type_Float16Array_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag)
+{
+    return ReadFloatArray(self, io, nItems, SizeOfTag, 2);
+}
+
+static
+cmsBool Type_Float16Array_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, void* Ptr, cmsUInt32Number nItems)
+{
+    return WriteFloatArray(io, Ptr, 2);
+
+    cmsUNUSED_PARAMETER(self);
+    cmsUNUSED_PARAMETER(nItems);
+}
+
+static
+void* Type_Float32Array_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag)
+{
+    return ReadFloatArray(self, io, nItems, SizeOfTag, 4);
+}
+
+static
+cmsBool Type_Float32Array_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io, void* Ptr, cmsUInt32Number nItems)
+{
+    return WriteFloatArray(io, Ptr, 4);
+
+    cmsUNUSED_PARAMETER(self);
+    cmsUNUSED_PARAMETER(nItems);
+}
+
+// swpt may be encoded as fl16, fl32 or ui16 (ICC.2 9.2.112). Only the two float
+// encodings are registered here -- see cmsWriteSpectralWhitePoint for ui16, which
+// cannot be a registered handler without imposing swpt's 1/65535 scaling on every
+// future user of the generic ui16 signature. With no DecideType hook, both
+// cmsWriteTag and SaveTags fall back to SupportedTypes[0] (fl32), which is
+// lossless from fl16 -- Little-CMS does not preserve tag encodings elsewhere
+// either, so a tag read as fl16 is always written back as fl32.
+
+// ********************************************************************************
+// Type spectralViewingConditionsType (ICC.2:2023 Table 69)
+// ********************************************************************************
+
+static
+void* Type_SpectralViewingConditions_Read(struct _cms_typehandler_struct* self, cmsIOHANDLER* io,
+                                          cmsUInt32Number* nItems, cmsUInt32Number SizeOfTag)
+{
+    cmsSpectralViewingConditions* sv = NULL;
+    cmsFloat32Number* Observer = NULL;
+    cmsUInt32Number ObserverType, IlluminantType;
+    cmsFloat32Number ObserverStart, ObserverEnd, IlluminantStart, IlluminantEnd, CCT;
+    cmsUInt16Number N, M, Reserved;
+    cmsUInt32Number i, n3;
+    cmsFloat32Number fx, fy, fz;
+
+    *nItems = 0;
+
+    // Observer: type, spectral range, two reserved bytes. Twelve bytes so far.
+    if (SizeOfTag < 12) return NULL;
+
+    if (!_cmsReadUInt32Number(io, &ObserverType)) return NULL;
+    if (!_cmsReadFloat16Number(io, &ObserverStart)) return NULL;
+    if (!_cmsReadFloat16Number(io, &ObserverEnd)) return NULL;
+    if (!_cmsReadUInt16Number(io, &N)) return NULL;
+    if (!_cmsReadUInt16Number(io, &Reserved)) return NULL;
+
+    // ICC.2 10.2.22 permits N == 0 when the observer type is non-zero and one of
+    // the Table 70 standard observers: the range then defaults to 380-780 nm in
+    // 81 steps of the standard CMF data, and the matrix is simply absent from the
+    // wire. This is a known, deliberate limitation, not an oversight: Little-CMS
+    // does not carry the standard CIE 1931 / 1964 CMF tables needed to populate
+    // Observer in that case, so rather than half-read the tag (leaving Observer
+    // NULL while claiming success) this rejects it outright. A future change
+    // that ships the standard tables could implement the fallback here.
+    if (N == 0) return NULL;
+
+    // The observer matrix plus the illuminant's own 16 byte header must fit. N is a
+    // uInt16 so 12*N cannot overflow 32 bits.
+    n3 = 3 * (cmsUInt32Number) N;
+
+    if (SizeOfTag < 12 + 4 * n3 + 16) return NULL;
+
+    Observer = (cmsFloat32Number*) _cmsCalloc(self ->ContextID, n3, sizeof(cmsFloat32Number));
+    if (Observer == NULL) return NULL;
+
+    for (i = 0; i < n3; i++)
+        if (!_cmsReadFloat32Number(io, &Observer[i])) goto Error;
+
+    // Illuminant: type, CCT, spectral range, two reserved bytes
+    if (!_cmsReadUInt32Number(io, &IlluminantType)) goto Error;
+    if (!_cmsReadFloat32Number(io, &CCT)) goto Error;
+    if (!_cmsReadFloat16Number(io, &IlluminantStart)) goto Error;
+    if (!_cmsReadFloat16Number(io, &IlluminantEnd)) goto Error;
+    if (!_cmsReadUInt16Number(io, &M)) goto Error;
+    if (!_cmsReadUInt16Number(io, &Reserved)) goto Error;
+
+    if (M == 0) goto Error;
+
+    // The illuminant vector plus the two trailing XYZ triples (24 bytes total,
+    // float32 -- see the comment further down) must fit
+    if (SizeOfTag < 12 + 4 * n3 + 16 + 4 * (cmsUInt32Number) M + 24) goto Error;
+
+    sv = cmsAllocSpectralViewingConditions(self ->ContextID, N, M);
+    if (sv == NULL) goto Error;
+
+    memcpy(sv ->Observer, Observer, n3 * sizeof(cmsFloat32Number));
+    _cmsFree(self ->ContextID, Observer);
+    Observer = NULL;
+
+    sv ->ObserverType    = ObserverType;
+    sv ->ObserverStart   = ObserverStart;
+    sv ->ObserverEnd     = ObserverEnd;
+    sv ->IlluminantType  = IlluminantType;
+    sv ->CCT             = CCT;
+    sv ->IlluminantStart = IlluminantStart;
+    sv ->IlluminantEnd   = IlluminantEnd;
+
+    for (i = 0; i < (cmsUInt32Number) M; i++)
+        if (!_cmsReadFloat32Number(io, &sv ->Illuminant[i])) goto Error;
+
+    // ICC.2:2023 Table 69 lists both trailing triples as XYZNumber (s15Fixed16),
+    // but that is a spec-table error: the reference implementation
+    // (IccProfLib icProfileHeader.h icFloatXYZNumber, three icFloat32Number) and
+    // CIccTagSpectralViewingConditions read/write these with float32, and every
+    // real profile -- including this branch's own committed fixture -- carries
+    // them that way. lcms follows the reference rather than the spec table, so
+    // an s15Fixed16 read here would return physically nonsensical values (e.g.
+    // the fixture's D50-at-160cd/m2 illuminant would come back as ~17184 cd/m2,
+    // a near equal-energy white at an absurd luminance).
+    if (!_cmsReadFloat32Number(io, &fx)) goto Error;
+    if (!_cmsReadFloat32Number(io, &fy)) goto Error;
+    if (!_cmsReadFloat32Number(io, &fz)) goto Error;
+    sv ->IlluminantXYZ.X = fx;
+    sv ->IlluminantXYZ.Y = fy;
+    sv ->IlluminantXYZ.Z = fz;
+
+    if (!_cmsReadFloat32Number(io, &fx)) goto Error;
+    if (!_cmsReadFloat32Number(io, &fy)) goto Error;
+    if (!_cmsReadFloat32Number(io, &fz)) goto Error;
+    sv ->SurroundXYZ.X = fx;
+    sv ->SurroundXYZ.Y = fy;
+    sv ->SurroundXYZ.Z = fz;
+
+    *nItems = 1;
+    return (void*) sv;
+
+Error:
+    if (Observer != NULL) _cmsFree(self ->ContextID, Observer);
+    if (sv != NULL) cmsFreeSpectralViewingConditions(sv);
+    return NULL;
+}
+
+static
+cmsBool Type_SpectralViewingConditions_Write(struct _cms_typehandler_struct* self, cmsIOHANDLER* io,
+                                             void* Ptr, cmsUInt32Number nItems)
+{
+    cmsSpectralViewingConditions* sv = (cmsSpectralViewingConditions*) Ptr;
+    cmsUInt32Number i, n3, m;
+    cmsFloat32Number fx, fy, fz;
+
+    if (sv == NULL || sv ->Observer == NULL || sv ->Illuminant == NULL) return FALSE;
+    if (sv ->ObserverSteps == 0 || sv ->IlluminantSteps == 0) return FALSE;
+
+    n3 = 3 * (cmsUInt32Number) sv ->ObserverSteps;
+    m  = (cmsUInt32Number) sv ->IlluminantSteps;
+
+    if (!_cmsWriteUInt32Number(io, sv ->ObserverType)) return FALSE;
+    if (!_cmsWriteFloat16Number(io, sv ->ObserverStart)) return FALSE;
+    if (!_cmsWriteFloat16Number(io, sv ->ObserverEnd)) return FALSE;
+    if (!_cmsWriteUInt16Number(io, sv ->ObserverSteps)) return FALSE;
+    if (!_cmsWriteUInt16Number(io, 0)) return FALSE;                    // reserved
+
+    for (i = 0; i < n3; i++)
+        if (!_cmsWriteFloat32Number(io, sv ->Observer[i])) return FALSE;
+
+    if (!_cmsWriteUInt32Number(io, sv ->IlluminantType)) return FALSE;
+    if (!_cmsWriteFloat32Number(io, sv ->CCT)) return FALSE;
+    if (!_cmsWriteFloat16Number(io, sv ->IlluminantStart)) return FALSE;
+    if (!_cmsWriteFloat16Number(io, sv ->IlluminantEnd)) return FALSE;
+    if (!_cmsWriteUInt16Number(io, sv ->IlluminantSteps)) return FALSE;
+    if (!_cmsWriteUInt16Number(io, 0)) return FALSE;                    // reserved
+
+    for (i = 0; i < m; i++)
+        if (!_cmsWriteFloat32Number(io, sv ->Illuminant[i])) return FALSE;
+
+    // See the matching comment in Type_SpectralViewingConditions_Read: ICC.2
+    // Table 69 says XYZNumber for both trailing triples, but that is a spec-table
+    // error -- the reference implementation and every real profile use float32,
+    // so lcms writes float32 here rather than s15Fixed16.
+    fx = (cmsFloat32Number) sv ->IlluminantXYZ.X;
+    fy = (cmsFloat32Number) sv ->IlluminantXYZ.Y;
+    fz = (cmsFloat32Number) sv ->IlluminantXYZ.Z;
+    if (!_cmsWriteFloat32Number(io, fx)) return FALSE;
+    if (!_cmsWriteFloat32Number(io, fy)) return FALSE;
+    if (!_cmsWriteFloat32Number(io, fz)) return FALSE;
+
+    fx = (cmsFloat32Number) sv ->SurroundXYZ.X;
+    fy = (cmsFloat32Number) sv ->SurroundXYZ.Y;
+    fz = (cmsFloat32Number) sv ->SurroundXYZ.Z;
+    if (!_cmsWriteFloat32Number(io, fx)) return FALSE;
+    if (!_cmsWriteFloat32Number(io, fy)) return FALSE;
+    if (!_cmsWriteFloat32Number(io, fz)) return FALSE;
+
+    return TRUE;
+
+    cmsUNUSED_PARAMETER(self);
+    cmsUNUSED_PARAMETER(nItems);
+}
+
+static
+void* Type_SpectralViewingConditions_Dup(struct _cms_typehandler_struct* self, const void* Ptr, cmsUInt32Number n)
+{
+    const cmsSpectralViewingConditions* sv = (const cmsSpectralViewingConditions*) Ptr;
+    cmsSpectralViewingConditions* New;
+
+    if (sv == NULL) return NULL;
+
+    // Lengths come from the object, not from n, which is TagDescriptor->ElemCount
+    New = cmsAllocSpectralViewingConditions(self ->ContextID, sv ->ObserverSteps, sv ->IlluminantSteps);
+    if (New == NULL) return NULL;
+
+    memcpy(New ->Observer, sv ->Observer,
+           3 * (cmsUInt32Number) sv ->ObserverSteps * sizeof(cmsFloat32Number));
+    memcpy(New ->Illuminant, sv ->Illuminant,
+           (cmsUInt32Number) sv ->IlluminantSteps * sizeof(cmsFloat32Number));
+
+    New ->ObserverType    = sv ->ObserverType;
+    New ->ObserverStart   = sv ->ObserverStart;
+    New ->ObserverEnd     = sv ->ObserverEnd;
+    New ->IlluminantType  = sv ->IlluminantType;
+    New ->CCT             = sv ->CCT;
+    New ->IlluminantStart = sv ->IlluminantStart;
+    New ->IlluminantEnd   = sv ->IlluminantEnd;
+    New ->IlluminantXYZ   = sv ->IlluminantXYZ;
+    New ->SurroundXYZ     = sv ->SurroundXYZ;
+
+    return (void*) New;
+
+    cmsUNUSED_PARAMETER(n);
+}
+
+static
+void Type_SpectralViewingConditions_Free(struct _cms_typehandler_struct* self, void* Ptr)
+{
+    cmsFreeSpectralViewingConditions((cmsSpectralViewingConditions*) Ptr);
+
+    cmsUNUSED_PARAMETER(self);
+}
+
+#endif // CMS_USE_ICCMAX_SPECTRAL
+
 // ********************************************************************************
 // Type support main routines
 // ********************************************************************************
@@ -5966,7 +6992,16 @@ static const _cmsTagTypeLinkedList SupportedTagTypes[] = {
 {TYPE_HANDLER(cmsSigMHC2Type,                  MHC2),               (_cmsTagTypeLinkedList*) &SupportedTagTypes[33] },
 {TYPE_HANDLER(cmsSigUInt8ArrayType,            UInt8),              (_cmsTagTypeLinkedList*) &SupportedTagTypes[34] },
 {TYPE_HANDLER(cmsSigUInt32ArrayType,           UInt32),             (_cmsTagTypeLinkedList*) &SupportedTagTypes[35] },
-{TYPE_HANDLER(cmsSigUInt64ArrayType,           UInt64),             NULL }
+{TYPE_HANDLER(cmsSigUInt64ArrayType,           UInt64),
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+                                                                    (_cmsTagTypeLinkedList*) &SupportedTagTypes[36] },
+{TYPE_HANDLER(cmsSigEmbeddedProfileType,       EmbeddedProfile),    (_cmsTagTypeLinkedList*) &SupportedTagTypes[37] },
+{TYPE_HANDLER(cmsSigFloat16ArrayType,          Float16Array),       (_cmsTagTypeLinkedList*) &SupportedTagTypes[38] },
+{TYPE_HANDLER(cmsSigFloat32ArrayType,          Float32Array),       (_cmsTagTypeLinkedList*) &SupportedTagTypes[39] },
+{TYPE_HANDLER(cmsSigSpectralViewingConditionsType, SpectralViewingConditions), NULL }
+#else
+                                                                    NULL }
+#endif
 };
 
 
@@ -6163,7 +7198,24 @@ static _cmsTagLinkedList SupportedTags[] = {
     { cmsSigcicpTag,                { 1, 1, { cmsSigcicpType},               NULL },   &SupportedTags[64]},
 
     { cmsSigArgyllArtsTag,          { 9, 1, { cmsSigS15Fixed16ArrayType},    NULL}, &SupportedTags[65]},
-    { cmsSigMHC2Tag,                { 1, 1, { cmsSigMHC2Type },              NULL}, NULL}
+    { cmsSigMHC2Tag,                { 1, 1, { cmsSigMHC2Type },              NULL},
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+                                                                                    &SupportedTags[66]},
+
+    // An embedded ICC.2 profile. A CMM that does not support iccMAX sees this as a
+    // private tag and just uses the containing ICC.1 profile's transforms.
+    { cmsSigEmbeddedV5ProfileTag,   { 1, 1, { cmsSigEmbeddedProfileType },   NULL}, &SupportedTags[67]},
+
+    // ICC.2 also permits uInt16ArrayType here; reach that through
+    // cmsReadSpectralWhitePoint / cmsWriteSpectralWhitePoint.
+    { cmsSigSpectralWhitePointTag,  { 1, 2, { cmsSigFloat32ArrayType, cmsSigFloat16ArrayType },
+                                      NULL }, &SupportedTags[68]},
+
+    { cmsSigSpectralViewingConditionsTag,
+                                    { 1, 1, { cmsSigSpectralViewingConditionsType }, NULL}, NULL}
+#else
+                                                                                    NULL}
+#endif
 
 };
 

@@ -62,6 +62,19 @@
 // Uncomment to get rid of the tables for "half" float support
 // #define CMS_NO_HALF_SUPPORT 1
 
+// Uncomment to enable reading iccMAX (ICC.2) spectral data embedded in ICC.1
+// profiles. Off by default: it widens the set of profiles, tags and processing
+// elements the parser accepts.
+// #define CMS_USE_ICCMAX_SPECTRAL 1
+
+// iccMAX support cannot be built without half float support: ICC.2 encodes the
+// header's spectralRange as float16Number (ICC.2:2023 4.2.8), so with the tables
+// gone a spectral PCS cannot be read or written at all, float16ArrayType is
+// unavailable, and the spectral white point tag cannot be parsed.
+#if defined(CMS_USE_ICCMAX_SPECTRAL) && defined(CMS_NO_HALF_SUPPORT)
+#  error "CMS_USE_ICCMAX_SPECTRAL requires half float support: ICC.2 encodes spectralRange as float16Number, so CMS_NO_HALF_SUPPORT and CMS_USE_ICCMAX_SPECTRAL are mutually exclusive. Undefine one of them."
+#endif
+
 // Uncomment to get rid of pthreads/windows dependency
 // #define CMS_NO_PTHREADS  1
 
@@ -345,6 +358,13 @@ typedef enum {
     cmsSigViewingConditionsType             = 0x76696577,  // 'view'
     cmsSigXYZType                           = 0x58595A20,  // 'XYZ '
     cmsSigMHC2Type                          = 0x4D484332   // 'MHC2'
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+                                            ,
+    cmsSigEmbeddedProfileType               = 0x49434370,  // 'ICCp', holds an embedded ICC.2 profile
+    cmsSigFloat16ArrayType                  = 0x666C3136,  // 'fl16', ICC.2 10.2.9 float16ArrayType
+    cmsSigFloat32ArrayType                  = 0x666C3332,  // 'fl32', ICC.2 10.2.10 float32ArrayType
+    cmsSigSpectralViewingConditionsType     = 0x7376636E   // 'svcn', ICC.2 10.2.22
+#endif
 
 
 } cmsTagTypeSignature;
@@ -424,6 +444,12 @@ typedef enum {
     cmsSigcicpTag                           = 0x63696370,  // 'cicp'
     cmsSigArgyllArtsTag                     = 0x61727473,  // 'arts'
     cmsSigMHC2Tag                           = 0x4D484332   // 'MHC2'
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+                                            ,
+    cmsSigEmbeddedV5ProfileTag              = 0x49434335,  // 'ICC5', an embedded ICC.2 profile
+    cmsSigSpectralWhitePointTag             = 0x73777074,  // 'swpt', ICC.2 9.2.112
+    cmsSigSpectralViewingConditionsTag      = 0x7376636E   // 'svcn', ICC.2 9.2.111
+#endif
 
 } cmsTagSignature;
 
@@ -552,6 +578,9 @@ typedef enum {
     cmsSigCurveSetElemType              = 0x63767374,  //'cvst'
     cmsSigMatrixElemType                = 0x6D617466,  //'matf'
     cmsSigCLutElemType                  = 0x636C7574,  //'clut'
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+    cmsSigExtCLutElemType               = 0x78636C74,  //'xclt' (ICC.2 extendedCLUTElement)
+#endif
 
     cmsSigBAcsElemType                  = 0x62414353,  // 'bACS'
     cmsSigEAcsElemType                  = 0x65414353,  // 'eACS'
@@ -581,6 +610,10 @@ typedef enum {
     cmsSigFormulaCurveSeg               = 0x70617266, // 'parf'
     cmsSigSampledCurveSeg               = 0x73616D66, // 'samf'
     cmsSigSegmentedCurve                = 0x63757266  // 'curf'
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+                                        ,
+    cmsSigSingleSampledCurve            = 0x736E6766  // 'sngf' (ICC.2 singleSampledCurve)
+#endif
 
 } cmsCurveSegSignature;
 
@@ -1564,6 +1597,82 @@ CMSAPI void              CMSEXPORT cmsSetHeaderRenderingIntent(cmsHPROFILE hProf
 CMSAPI cmsColorSpaceSignature
                          CMSEXPORT cmsGetPCS(cmsHPROFILE hProfile);
 CMSAPI void              CMSEXPORT cmsSetPCS(cmsHPROFILE hProfile, cmsColorSpaceSignature pcs);
+
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+// An array of spectral values, as carried by the ICC.2 float16ArrayType and
+// float32ArrayType tag types. The count lives here rather than in a tag
+// descriptor, because ICC.2 derives it from the tag size.
+typedef struct {
+    cmsContext        ContextID;
+    cmsUInt32Number   nValues;
+    cmsFloat32Number* Values;
+
+    // Both fl16 and fl32 are read; the tag is always written back as fl32,
+    // because fl32 is lossless from fl16 and Little-CMS does not preserve
+    // tag encodings.
+
+} cmsFloatArray;
+
+CMSAPI cmsFloatArray*    CMSEXPORT cmsAllocFloatArray(cmsContext ContextID, cmsUInt32Number nValues);
+CMSAPI void              CMSEXPORT cmsFreeFloatArray(cmsFloatArray* v);
+
+// Observer and illuminant for a spectrally-based PCS (ICC.2:2023 Table 69). The
+// observer step count N and the illuminant step count M are independent of each
+// other and of the spectral PCS channel count -- nothing here may assume they agree.
+typedef struct {
+    cmsContext        ContextID;
+
+    cmsUInt32Number   ObserverType;       // Table 70: 0 custom, 1 CIE 1931, 2 CIE 1964
+    cmsFloat32Number  ObserverStart;      // nm
+    cmsFloat32Number  ObserverEnd;        // nm
+    cmsUInt16Number   ObserverSteps;      // N
+    cmsFloat32Number* Observer;           // 3N values: all X, then all Y, then all Z
+
+    cmsUInt32Number   IlluminantType;     // Table 71: 1 D50, 2 D65, 9 black body by CCT, ...
+    cmsFloat32Number  CCT;                // only meaningful for types 9 and 0Ah
+    cmsFloat32Number  IlluminantStart;    // nm
+    cmsFloat32Number  IlluminantEnd;      // nm
+    cmsUInt16Number   IlluminantSteps;    // M
+    cmsFloat32Number* Illuminant;         // M values
+
+    cmsCIEXYZ         IlluminantXYZ;      // un-normalised, Y in cd/m2
+    cmsCIEXYZ         SurroundXYZ;        // un-normalised
+
+} cmsSpectralViewingConditions;
+
+CMSAPI cmsSpectralViewingConditions*
+                         CMSEXPORT cmsAllocSpectralViewingConditions(cmsContext ContextID,
+                                                                     cmsUInt16Number ObserverSteps,
+                                                                     cmsUInt16Number IlluminantSteps);
+CMSAPI void              CMSEXPORT cmsFreeSpectralViewingConditions(cmsSpectralViewingConditions* v);
+
+// Read or write spectralWhitePointTag in any of the three encodings ICC.2 9.2.112
+// permits, including uInt16ArrayType, which has no registered type handler because
+// its 1/65535 scaling belongs to this tag rather than to the generic ui16 signature.
+// These dispatch on the tag's own type signature. On success the caller owns *Out
+// and releases it with cmsFreeFloatArray.
+CMSAPI cmsBool           CMSEXPORT cmsReadSpectralWhitePoint(cmsHPROFILE hProfile,
+                                                             cmsFloatArray** Out);
+CMSAPI cmsBool           CMSEXPORT cmsWriteSpectralWhitePoint(cmsHPROFILE hProfile,
+                                                              const cmsFloatArray* In,
+                                                              cmsTagTypeSignature AsType);
+#endif
+
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+// Spectral PCS, from the ICC.2 (iccMAX) header. Zero when the profile does not
+// declare one, which is the case for every ICC.1 profile.
+CMSAPI cmsUInt32Number   CMSEXPORT cmsGetSpectralPCS(cmsHPROFILE hProfile);
+CMSAPI cmsBool           CMSEXPORT cmsSetSpectralPCS(cmsHPROFILE hProfile, cmsUInt32Number SpectralPCS);
+CMSAPI cmsUInt16Number   CMSEXPORT cmsGetSpectralPCSChannels(cmsHPROFILE hProfile);
+CMSAPI cmsBool           CMSEXPORT cmsGetSpectralPCSRange(cmsHPROFILE hProfile,
+                                                          cmsFloat32Number* Start,
+                                                          cmsFloat32Number* End,
+                                                          cmsUInt16Number* Steps);
+CMSAPI cmsBool           CMSEXPORT cmsSetSpectralPCSRange(cmsHPROFILE hProfile,
+                                                          cmsFloat32Number Start,
+                                                          cmsFloat32Number End,
+                                                          cmsUInt16Number Steps);
+#endif
 CMSAPI cmsColorSpaceSignature
                          CMSEXPORT cmsGetColorSpace(cmsHPROFILE hProfile);
 CMSAPI void              CMSEXPORT cmsSetColorSpace(cmsHPROFILE hProfile, cmsColorSpaceSignature sig);

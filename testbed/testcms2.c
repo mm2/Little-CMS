@@ -9603,6 +9603,2891 @@ void SpeedTest(void)
 }
 
 
+// A CLUT whose total sample count does not fit in 32 bits must be refused at
+// allocation time rather than allocated short. CubeSize() bounds only its own product,
+// so the multiply by the output channel count is where it overflows: the grid below is
+// 11*31*63*63*129 = 174592341 nodes, and times 123 output channels that wraps to
+// 21463. The allocation would be 84 kB while _cmsComputeInterpParamsEx computed full
+// width strides for it, so the first cmsPipelineEvalFloat read far out of bounds.
+//
+// Deliberately outside CMS_USE_ICCMAX_SPECTRAL: the allocator guard is unconditional.
+static
+cmsInt32Number CheckCLUTOverflowRejected(void)
+{
+    cmsUInt32Number Overflowing[5] = { 11, 31, 63, 63, 129 };
+    cmsUInt32Number Small[3] = { 2, 2, 2 };
+    cmsStage* mpe;
+
+    mpe = cmsStageAllocCLutFloatGranular(DbgThread(), Overflowing, 5, 123, NULL);
+    if (mpe != NULL) {
+
+        Fail("cmsStageAllocCLutFloatGranular accepted a grid whose sample count overflows");
+        cmsStageFree(mpe);
+        return 0;
+    }
+
+    // The same check must not turn away an ordinary table
+    mpe = cmsStageAllocCLutFloatGranular(DbgThread(), Small, 3, 3, NULL);
+    if (mpe == NULL) {
+
+        Fail("cmsStageAllocCLutFloatGranular refused a 2x2x2 to 3 CLUT");
+        return 0;
+    }
+
+    cmsStageFree(mpe);
+    return 1;
+}
+
+
+// -----------------------------------------------------------------------------------------------------
+// iccMAX (ICC.2) support: extendedCLUTElement, spectral PCS, embedded ICC.2 profiles
+// -----------------------------------------------------------------------------------------------------
+
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+
+
+// The conversion maths is already covered exhaustively by CheckFormattersHalf, which
+// walks all 65536 half patterns. What is checked here is the IO layer added for
+// iccMAX: byte order and handler plumbing. Wire bytes are given explicitly, since a
+// byte swapped reader and a byte swapped writer would cancel out in a round trip.
+static
+cmsInt32Number CheckFloat16IO(void)
+{
+    typedef struct { cmsUInt8Number hi, lo; cmsFloat32Number value; } f16case;
+
+    static const f16case cases[] = {
+        { 0x00, 0x00,  0.0f      },   // +0
+        { 0x80, 0x00, -0.0f      },   // -0
+        { 0x3C, 0x00,  1.0f      },
+        { 0xBC, 0x00, -1.0f      },
+        { 0x38, 0x00,  0.5f      },
+        { 0x7B, 0xFF,  65504.0f  },   // largest normal
+        { 0x5C, 0x00,  256.0f    },
+        { 0x5D, 0xF0,  380.0f    },   // wavelengths of the kind spectralRange carries
+        { 0x61, 0xB4,  730.0f    }
+    };
+
+    cmsIOHANDLER* io;
+    cmsUInt32Number i, n = sizeof(cases) / sizeof(cases[0]);
+    cmsFloat32Number v;
+    cmsUInt8Number buf[2];
+    cmsBool rc;
+
+    // Read path: exact bytes in, expected value out
+    for (i = 0; i < n; i++) {
+
+        buf[0] = cases[i].hi;
+        buf[1] = cases[i].lo;
+
+        io = cmsOpenIOhandlerFromMem(DbgThread(), buf, 2, "r");
+        if (io == NULL) { Fail("Cannot open mem IO for reading"); return 0; }
+
+        v = -12345.0f;
+        if (!_cmsReadFloat16Number(io, &v)) {
+            Fail("_cmsReadFloat16Number failed on case %d", i);
+            cmsCloseIOhandler(io);
+            return 0;
+        }
+        cmsCloseIOhandler(io);
+
+        if (v != cases[i].value) {
+            Fail("_cmsReadFloat16Number case %d: got %f, expected %f", i, v, cases[i].value);
+            return 0;
+        }
+    }
+
+    // Write path: value in, exact bytes out
+    for (i = 0; i < n; i++) {
+
+        memset(buf, 0xAA, sizeof(buf));
+
+        io = cmsOpenIOhandlerFromMem(DbgThread(), buf, 2, "w");
+        if (io == NULL) { Fail("Cannot open mem IO for writing"); return 0; }
+
+        if (!_cmsWriteFloat16Number(io, cases[i].value)) {
+            Fail("_cmsWriteFloat16Number failed on case %d", i);
+            cmsCloseIOhandler(io);
+            return 0;
+        }
+        cmsCloseIOhandler(io);
+
+        if (buf[0] != cases[i].hi || buf[1] != cases[i].lo) {
+            Fail("_cmsWriteFloat16Number case %d: got %02X %02X, expected %02X %02X",
+                 i, buf[0], buf[1], cases[i].hi, cases[i].lo);
+            return 0;
+        }
+    }
+
+    // A truncated buffer must fail rather than read past the end. This is expected to
+    // signal an IO error, so trap it instead of letting it fail the test.
+    io = cmsOpenIOhandlerFromMem(DbgThread(), buf, 1, "r");
+    if (io == NULL) { Fail("Cannot open mem IO for short read"); return 0; }
+
+    cmsSetLogErrorHandler(ErrorReportingFunction);
+    rc = _cmsReadFloat16Number(io, &v);
+    cmsSetLogErrorHandler(FatalErrorQuit);
+    TrappedError = FALSE;
+
+    cmsCloseIOhandler(io);
+
+    if (rc) {
+        Fail("_cmsReadFloat16Number should fail on a 1 byte buffer");
+        return 0;
+    }
+
+    return 1;
+}
+
+
+// Builds a CMYK to 37 channel spectral pipeline, stores it as a DToB3 tag in a
+// profile carrying a spectral PCS, then reads it back and evaluates it. Exercises
+// the extendedCLUT writer and reader together with the header fields.
+static
+cmsInt32Number CheckExtCLutElement(void)
+{
+    cmsHPROFILE h = NULL;
+    cmsPipeline* pipe = NULL;
+    cmsPipeline* ReadPipe;
+    cmsStage* clut;
+    cmsUInt32Number GridPoints[4] = { 3, 3, 3, 3 };
+    cmsUInt32Number i, clen = 0;
+    cmsUInt32Number rc = 0;
+    char* data = NULL;
+    cmsFloat32Number In[4], Out[37];
+    _cmsStageCLutData* ClutData;
+
+    pipe = cmsPipelineAlloc(DbgThread(), 4, 37);
+    if (pipe == NULL) { Fail("cmsPipelineAlloc 4->37 failed"); return 0; }
+
+    clut = cmsStageAllocCLutFloatGranular(DbgThread(), GridPoints, 4, 37, NULL);
+    if (clut == NULL) { Fail("cmsStageAllocCLutFloatGranular 4->37 failed"); goto Error; }
+
+    // Fill with a pattern that varies across the whole table
+    ClutData = (_cmsStageCLutData*) clut ->Data;
+    for (i = 0; i < ClutData ->nEntries; i++)
+        ClutData ->Tab.TFloat[i] = (cmsFloat32Number) i / (cmsFloat32Number) ClutData ->nEntries;
+
+    // Ask for it to be stored as an extendedCLUT rather than an ICC.1 clut
+    clut ->Type = (cmsStageSignature) cmsSigExtCLutElemType;
+
+    if (!cmsPipelineInsertStage(pipe, cmsAT_END, clut)) {
+        Fail("cmsPipelineInsertStage failed");
+        cmsStageFree(clut);
+        goto Error;
+    }
+
+    h = cmsCreateProfilePlaceholder(DbgThread());
+    if (h == NULL) { Fail("cmsCreateProfilePlaceholder failed"); goto Error; }
+
+    cmsSetProfileVersion(h, 5.0);
+    cmsSetDeviceClass(h, cmsSigOutputClass);
+    cmsSetColorSpace(h, cmsSigCmykData);
+    cmsSetPCS(h, cmsSigLabData);
+
+    // 'rs' with 37 channels, i.e. reflectance spectra, 380 to 730nm in 37 steps
+    if (!cmsSetSpectralPCS(h, 0x72730025)) {
+        Fail("cmsSetSpectralPCS failed");
+        goto Error;
+    }
+    if (!cmsSetSpectralPCSRange(h, 380.0f, 730.0f, 37)) {
+        Fail("cmsSetSpectralPCSRange failed");
+        goto Error;
+    }
+
+    if (!cmsWriteTag(h, cmsSigDToB3Tag, pipe)) { Fail("cmsWriteTag DToB3 failed"); goto Error; }
+
+    if (!cmsSaveProfileToMem(h, NULL, &clen)) { Fail("cmsSaveProfileToMem size failed"); goto Error; }
+
+    data = (char*) malloc(clen);
+    if (data == NULL) { Fail("malloc failed"); goto Error; }
+
+    if (!cmsSaveProfileToMem(h, data, &clen)) { Fail("cmsSaveProfileToMem failed"); goto Error; }
+
+    cmsCloseProfile(h); h = NULL;
+    cmsPipelineFree(pipe); pipe = NULL;
+
+    h = cmsOpenProfileFromMem(data, clen);
+    if (h == NULL) { Fail("cmsOpenProfileFromMem failed"); goto Error; }
+
+    if (cmsGetSpectralPCS(h) != 0x72730025) {
+        Fail("SpectralPCS: got 0x%x, expected 0x72730025", cmsGetSpectralPCS(h));
+        goto Error;
+    }
+
+    if (cmsGetSpectralPCSChannels(h) != 37) {
+        Fail("Spectral channels: got %d, expected 37", cmsGetSpectralPCSChannels(h));
+        goto Error;
+    }
+
+    ReadPipe = (cmsPipeline*) cmsReadTag(h, cmsSigDToB3Tag);
+    if (ReadPipe == NULL) { Fail("cmsReadTag DToB3 returned NULL"); goto Error; }
+
+    if (cmsPipelineInputChannels(ReadPipe) != 4) {
+        Fail("Input channels: got %d, expected 4", cmsPipelineInputChannels(ReadPipe));
+        goto Error;
+    }
+
+    if (cmsPipelineOutputChannels(ReadPipe) != 37) {
+        Fail("Output channels: got %d, expected 37", cmsPipelineOutputChannels(ReadPipe));
+        goto Error;
+    }
+
+    // The element must come back tagged as an extendedCLUT, not downgraded to 'clut'
+    if (cmsStageType(cmsPipelineGetPtrToFirstStage(ReadPipe)) != (cmsStageSignature) cmsSigExtCLutElemType) {
+        Fail("First stage is not an extendedCLUT after round trip");
+        goto Error;
+    }
+
+    // At the origin of the grid the output is the first 37 table entries
+    In[0] = 0.0f; In[1] = 0.0f; In[2] = 0.0f; In[3] = 0.0f;
+    cmsPipelineEvalFloat(In, Out, ReadPipe);
+
+    ClutData = (_cmsStageCLutData*) cmsPipelineGetPtrToFirstStage(ReadPipe) ->Data;
+
+    for (i = 0; i < 37; i++) {
+
+        cmsFloat32Number expected = (cmsFloat32Number) i / (cmsFloat32Number) ClutData ->nEntries;
+
+        if (fabs(Out[i] - expected) > 1e-5) {
+            Fail("extCLUT output[%d]: got %f, expected %f", i, Out[i], expected);
+            goto Error;
+        }
+    }
+
+    rc = 1;
+
+Error:
+    if (h != NULL) cmsCloseProfile(h);
+    if (pipe != NULL) cmsPipelineFree(pipe);
+    if (data != NULL) free(data);
+    return rc;
+}
+
+
+// Reads an extendedCLUT in a given valueEncodingType. Since the writer always emits
+// float32, the other three encodings can only be reached by handing the reader raw
+// wire bytes, which is what this does: a hand assembled multiProcessElementsType
+// holding one 1 in, 1 out, 2 grid point extendedCLUT.
+//
+// Returns 1 when the element read back and interpolated correctly. A refusal to read
+// returns 0 without reporting anything, since one caller wants exactly that; a value
+// that reads but comes back wrong always reports, since that is a bug either way.
+static
+cmsInt32Number TryExtCLutEncoding(cmsUInt32Number EncodingType,
+                                  cmsBool AsUInt32,
+                                  const cmsUInt8Number* ClutBytes,
+                                  cmsUInt32Number ClutBytesSize)
+{
+    cmsUInt8Number raw[128];
+    cmsUInt32Number pos = 0;
+    cmsUInt32Number ElemOffset, ElemSize;
+    cmsHPROFILE h;
+    cmsHPROFILE h2;
+    cmsPipeline* pipe;
+    cmsFloat32Number In[1], Out[1];
+    cmsUInt32Number clen = 0;
+    char* data;
+
+    memset(raw, 0, sizeof(raw));
+
+    // multiProcessElementsType header. The 'mpet' signature and its 4 reserved bytes
+    // are the tag base, which cmsWriteRawTag stores verbatim.
+    raw[pos++] = 'm'; raw[pos++] = 'p'; raw[pos++] = 'e'; raw[pos++] = 't';
+    pos += 4;                                       // reserved
+    raw[pos++] = 0; raw[pos++] = 1;                 // input channels
+    raw[pos++] = 0; raw[pos++] = 1;                 // output channels
+    raw[pos++] = 0; raw[pos++] = 0;
+    raw[pos++] = 0; raw[pos++] = 1;                 // element count
+
+    // Position table, one entry: offset from the start of the tag, then size
+    ElemOffset = pos + 8;
+    ElemSize   = 4 + 4 + 2 + 2 + 4 + 16 + ClutBytesSize;
+
+    raw[pos++] = (cmsUInt8Number)(ElemOffset >> 24); raw[pos++] = (cmsUInt8Number)(ElemOffset >> 16);
+    raw[pos++] = (cmsUInt8Number)(ElemOffset >> 8);  raw[pos++] = (cmsUInt8Number)(ElemOffset);
+    raw[pos++] = (cmsUInt8Number)(ElemSize >> 24);   raw[pos++] = (cmsUInt8Number)(ElemSize >> 16);
+    raw[pos++] = (cmsUInt8Number)(ElemSize >> 8);    raw[pos++] = (cmsUInt8Number)(ElemSize);
+
+    // The extendedCLUT element itself, ICC.2:2023 Table 117
+    raw[pos++] = 'x'; raw[pos++] = 'c'; raw[pos++] = 'l'; raw[pos++] = 't';
+    pos += 4;                                       // reserved(3) + interpolation hint(1)
+    raw[pos++] = 0; raw[pos++] = 1;                 // input channels  (P)
+    raw[pos++] = 0; raw[pos++] = 1;                 // output channels (Q)
+
+    // The encoding type. Real profiles and the reference implementation write a
+    // uInt16Number here plus 2 reserved bytes; AsUInt32 asks for the literal reading
+    // of Table 117 instead, which the reader also has to accept.
+    if (AsUInt32) {
+        raw[pos++] = (cmsUInt8Number)(EncodingType >> 24); raw[pos++] = (cmsUInt8Number)(EncodingType >> 16);
+        raw[pos++] = (cmsUInt8Number)(EncodingType >> 8);  raw[pos++] = (cmsUInt8Number)(EncodingType);
+    }
+    else {
+        raw[pos++] = (cmsUInt8Number)(EncodingType >> 8);  raw[pos++] = (cmsUInt8Number)(EncodingType);
+        raw[pos++] = 0; raw[pos++] = 0;             // reserved
+    }
+
+    raw[pos++] = 2;                                 // 2 grid points on the first axis
+    pos += 15;                                      // the other 15 stay zero
+
+    if (pos + ClutBytesSize > sizeof(raw)) { Fail("raw buffer too small"); return 0; }
+    memmove(raw + pos, ClutBytes, ClutBytesSize);
+    pos += ClutBytesSize;
+
+    h = cmsCreateProfilePlaceholder(DbgThread());
+    if (h == NULL) { Fail("cmsCreateProfilePlaceholder failed"); return 0; }
+
+    cmsSetProfileVersion(h, 5.0);
+    cmsSetDeviceClass(h, cmsSigOutputClass);
+    cmsSetColorSpace(h, cmsSigGrayData);
+    cmsSetPCS(h, cmsSigLabData);
+
+    if (!cmsWriteRawTag(h, cmsSigDToB3Tag, raw, pos)) {
+        Fail("cmsWriteRawTag failed for encoding %d", EncodingType);
+        cmsCloseProfile(h);
+        return 0;
+    }
+
+    if (!cmsSaveProfileToMem(h, NULL, &clen)) {
+        Fail("cmsSaveProfileToMem size failed for encoding %d", EncodingType);
+        cmsCloseProfile(h);
+        return 0;
+    }
+
+    data = (char*) malloc(clen);
+    if (data == NULL) { Fail("malloc failed"); cmsCloseProfile(h); return 0; }
+
+    if (!cmsSaveProfileToMem(h, data, &clen)) {
+        Fail("cmsSaveProfileToMem failed for encoding %d", EncodingType);
+        cmsCloseProfile(h);
+        free(data);
+        return 0;
+    }
+    cmsCloseProfile(h);
+
+    h2 = cmsOpenProfileFromMem(data, clen);
+    free(data);
+    if (h2 == NULL) { Fail("Cannot reopen profile for encoding %d", EncodingType); return 0; }
+
+    // Not reported: the caller decides whether a refusal is the right answer
+    pipe = (cmsPipeline*) cmsReadTag(h2, cmsSigDToB3Tag);
+    if (pipe == NULL) { cmsCloseProfile(h2); return 0; }
+
+    // The two grid points hold 0.0 and 1.0, so the ends of the input range read them back
+    In[0] = 0.0f;
+    cmsPipelineEvalFloat(In, Out, pipe);
+    if (fabs(Out[0]) > 1e-5) {
+        Fail("Encoding %d at input 0.0: got %f, expected 0.0", EncodingType, Out[0]);
+        cmsCloseProfile(h2);
+        return 0;
+    }
+
+    In[0] = 1.0f;
+    cmsPipelineEvalFloat(In, Out, pipe);
+    if (fabs(Out[0] - 1.0f) > 1e-5) {
+        Fail("Encoding %d at input 1.0: got %f, expected 1.0", EncodingType, Out[0]);
+        cmsCloseProfile(h2);
+        return 0;
+    }
+
+    // Halfway between them must interpolate
+    In[0] = 0.5f;
+    cmsPipelineEvalFloat(In, Out, pipe);
+    if (fabs(Out[0] - 0.5f) > 1e-4) {
+        Fail("Encoding %d at input 0.5: got %f, expected 0.5", EncodingType, Out[0]);
+        cmsCloseProfile(h2);
+        return 0;
+    }
+
+    cmsCloseProfile(h2);
+    return 1;
+}
+
+static
+cmsInt32Number CheckExtCLutAllEncodings(void)
+{
+    static const cmsUInt8Number Float32Data[] = {
+        0x00, 0x00, 0x00, 0x00,
+        0x3F, 0x80, 0x00, 0x00
+    };
+    static const cmsUInt8Number Float16Data[] = {
+        0x00, 0x00,
+        0x3C, 0x00                  // 1.0 as float16
+    };
+    static const cmsUInt8Number UInt16Data[] = {
+        0x00, 0x00,
+        0xFF, 0xFF
+    };
+    static const cmsUInt8Number UInt8Data[] = {
+        0x00,
+        0xFF
+    };
+
+    // Each encoding, with the field written the way real profiles write it
+    if (!TryExtCLutEncoding(0, FALSE, Float32Data, sizeof(Float32Data))) {
+        Fail("float32 extendedCLUT failed");
+        return 0;
+    }
+
+    if (!TryExtCLutEncoding(1, FALSE, Float16Data, sizeof(Float16Data))) {
+        Fail("float16 extendedCLUT failed");
+        return 0;
+    }
+
+    if (!TryExtCLutEncoding(2, FALSE, UInt16Data, sizeof(UInt16Data))) {
+        Fail("uInt16 extendedCLUT failed");
+        return 0;
+    }
+
+    if (!TryExtCLutEncoding(3, FALSE, UInt8Data, sizeof(UInt8Data))) {
+        Fail("uInt8 extendedCLUT failed");
+        return 0;
+    }
+
+    // And again with the field spelled as a uInt32Number, the literal reading of
+    // Table 117, which must also be understood
+    if (!TryExtCLutEncoding(0, TRUE, Float32Data, sizeof(Float32Data))) {
+        Fail("float32 extendedCLUT failed with a uInt32 encoding field");
+        return 0;
+    }
+
+    if (!TryExtCLutEncoding(2, TRUE, UInt16Data, sizeof(UInt16Data))) {
+        Fail("uInt16 extendedCLUT failed with a uInt32 encoding field");
+        return 0;
+    }
+
+    if (!TryExtCLutEncoding(3, TRUE, UInt8Data, sizeof(UInt8Data))) {
+        Fail("uInt8 extendedCLUT failed with a uInt32 encoding field");
+        return 0;
+    }
+
+    // An unknown encoding type must be rejected, not guessed at
+    {
+        cmsInt32Number rc;
+
+        cmsSetLogErrorHandler(ErrorReportingFunction);
+        rc = TryExtCLutEncoding(99, FALSE, Float32Data, sizeof(Float32Data));
+        cmsSetLogErrorHandler(FatalErrorQuit);
+        TrappedError = FALSE;
+
+        if (rc) {
+            Fail("An unknown valueEncodingType was accepted");
+            return 0;
+        }
+
+        if (SimultaneousErrors == 0) {
+            Fail("An unknown valueEncodingType was rejected without reporting why");
+            return 0;
+        }
+        SimultaneousErrors = 0;
+    }
+
+    return 1;
+}
+
+
+// Pipelines wider than the old cmsMAXCHANNELS ceiling must allocate and evaluate.
+// Only direct evaluation is exercised: transforms still use cmsMAXCHANNELS buffers.
+static
+cmsInt32Number CheckHighChannelPipeline(void)
+{
+    cmsPipeline* pipe;
+    cmsStage* mpe;
+    _cmsStageCLutData* clut;
+    cmsFloat32Number In[3], Out[64];
+    cmsUInt32Number GridPoints[3] = { 2, 2, 2 };
+    cmsUInt32Number i;
+    cmsUInt32Number rc = 0;
+
+    pipe = cmsPipelineAlloc(DbgThread(), 3, 64);
+    if (pipe == NULL) { Fail("cmsPipelineAlloc(3,64) failed, channel limit too low?"); return 0; }
+
+    mpe = cmsStageAllocCLutFloatGranular(DbgThread(), GridPoints, 3, 64, NULL);
+    if (mpe == NULL) { Fail("cmsStageAllocCLutFloatGranular 3->64 failed"); goto Error; }
+
+    // Zero everywhere, then give the first grid point a ramp across all 64 outputs
+    clut = (_cmsStageCLutData*) mpe ->Data;
+    for (i = 0; i < clut ->nEntries; i++)
+        clut ->Tab.TFloat[i] = 0.0f;
+
+    for (i = 0; i < 64; i++)
+        clut ->Tab.TFloat[i] = (cmsFloat32Number) i / 63.0f;
+
+    if (!cmsPipelineInsertStage(pipe, cmsAT_END, mpe)) {
+        Fail("cmsPipelineInsertStage failed");
+        cmsStageFree(mpe);
+        goto Error;
+    }
+
+    In[0] = 0.0f; In[1] = 0.0f; In[2] = 0.0f;
+    cmsPipelineEvalFloat(In, Out, pipe);
+
+    for (i = 0; i < 64; i++) {
+
+        cmsFloat32Number expected = (cmsFloat32Number) i / 63.0f;
+
+        if (fabs(Out[i] - expected) > 1e-5) {
+            Fail("High channel output[%d]: got %f, expected %f", i, Out[i], expected);
+            goto Error;
+        }
+    }
+
+    // MAX_STAGE_CHANNELS itself is still out of bounds
+    {
+        cmsPipeline* TooWide = cmsPipelineAlloc(DbgThread(), 3, MAX_STAGE_CHANNELS);
+        if (TooWide != NULL) {
+            Fail("cmsPipelineAlloc accepted MAX_STAGE_CHANNELS outputs");
+            cmsPipelineFree(TooWide);
+            goto Error;
+        }
+    }
+
+    rc = 1;
+
+Error:
+    cmsPipelineFree(pipe);
+    return rc;
+}
+
+
+// Opening and re-saving an ordinary ICC.1 profile must not invent a spectral PCS,
+// and a profile that has one must round trip it.
+static
+cmsInt32Number CheckSpectralPCSPreservation(void)
+{
+    cmsHPROFILE h;
+    cmsUInt32Number clen = 0;
+    char* data;
+    cmsFloat32Number Start, End;
+    cmsUInt16Number Steps;
+
+    // A vanilla v4 profile
+    h = cmsCreateProfilePlaceholder(DbgThread());
+    if (h == NULL) { Fail("cmsCreateProfilePlaceholder failed"); return 0; }
+
+    cmsSetProfileVersion(h, 4.3);
+    cmsSetDeviceClass(h, cmsSigDisplayClass);
+    cmsSetColorSpace(h, cmsSigRgbData);
+    cmsSetPCS(h, cmsSigXYZData);
+
+    if (cmsGetSpectralPCS(h) != 0) {
+        Fail("A new profile should have no spectral PCS");
+        cmsCloseProfile(h);
+        return 0;
+    }
+
+    // The range setter must refuse to run without a signature
+    if (cmsSetSpectralPCSRange(h, 380.0f, 730.0f, 37)) {
+        Fail("cmsSetSpectralPCSRange should fail with no spectral PCS set");
+        cmsCloseProfile(h);
+        return 0;
+    }
+
+    if (cmsGetSpectralPCSRange(h, &Start, &End, &Steps)) {
+        Fail("cmsGetSpectralPCSRange should fail with no spectral PCS set");
+        cmsCloseProfile(h);
+        return 0;
+    }
+
+    cmsSaveProfileToMem(h, NULL, &clen);
+    data = (char*) malloc(clen);
+    if (data == NULL) { Fail("malloc failed"); cmsCloseProfile(h); return 0; }
+    cmsSaveProfileToMem(h, data, &clen);
+    cmsCloseProfile(h);
+
+    h = cmsOpenProfileFromMem(data, clen);
+    free(data);
+    if (h == NULL) { Fail("Cannot reopen the vanilla profile"); return 0; }
+
+    if (cmsGetSpectralPCS(h) != 0) {
+        Fail("Round trip invented a spectral PCS: 0x%x", cmsGetSpectralPCS(h));
+        cmsCloseProfile(h);
+        return 0;
+    }
+
+    if (cmsGetSpectralPCSChannels(h) != 0) {
+        Fail("Vanilla profile reports %d spectral channels", cmsGetSpectralPCSChannels(h));
+        cmsCloseProfile(h);
+        return 0;
+    }
+    cmsCloseProfile(h);
+
+    // Now one that does carry a spectral PCS
+    h = cmsCreateProfilePlaceholder(DbgThread());
+    if (h == NULL) { Fail("cmsCreateProfilePlaceholder failed"); return 0; }
+
+    cmsSetProfileVersion(h, 5.0);
+    cmsSetDeviceClass(h, cmsSigOutputClass);
+    cmsSetColorSpace(h, cmsSigCmykData);
+    cmsSetPCS(h, cmsSigLabData);
+
+    if (!cmsSetSpectralPCS(h, 0x72730025)) {   // 'rs' with 37 channels
+        Fail("cmsSetSpectralPCS failed");
+        cmsCloseProfile(h);
+        return 0;
+    }
+    if (!cmsSetSpectralPCSRange(h, 380.0f, 730.0f, 37)) {
+        Fail("cmsSetSpectralPCSRange failed");
+        cmsCloseProfile(h);
+        return 0;
+    }
+
+    clen = 0;
+    cmsSaveProfileToMem(h, NULL, &clen);
+    data = (char*) malloc(clen);
+    if (data == NULL) { Fail("malloc failed"); cmsCloseProfile(h); return 0; }
+    cmsSaveProfileToMem(h, data, &clen);
+    cmsCloseProfile(h);
+
+    h = cmsOpenProfileFromMem(data, clen);
+    free(data);
+    if (h == NULL) { Fail("Cannot reopen the spectral profile"); return 0; }
+
+    if (cmsGetSpectralPCS(h) != 0x72730025) {
+        Fail("SpectralPCS: got 0x%x, expected 0x72730025", cmsGetSpectralPCS(h));
+        cmsCloseProfile(h);
+        return 0;
+    }
+
+    if (cmsGetSpectralPCSChannels(h) != 37) {
+        Fail("Spectral channels: got %d, expected 37", cmsGetSpectralPCSChannels(h));
+        cmsCloseProfile(h);
+        return 0;
+    }
+
+    if (!cmsGetSpectralPCSRange(h, &Start, &End, &Steps)) {
+        Fail("cmsGetSpectralPCSRange returned FALSE");
+        cmsCloseProfile(h);
+        return 0;
+    }
+
+    // 380 and 730 are both exactly representable as float16
+    if (Start != 380.0f || End != 730.0f || Steps != 37) {
+        Fail("Spectral range: got start=%f end=%f steps=%d", Start, End, Steps);
+        cmsCloseProfile(h);
+        return 0;
+    }
+
+    // The PCS itself must be untouched by all of this
+    if (cmsGetPCS(h) != cmsSigLabData) {
+        Fail("The PCS field was corrupted by the spectral PCS write");
+        cmsCloseProfile(h);
+        return 0;
+    }
+
+    cmsCloseProfile(h);
+    return 1;
+}
+
+
+// Builds a DToB3 holding a curveSetElement of one singleSampledCurve, from raw wire
+// bytes, then reads it back and evaluates it at the given inputs. There is no API for
+// authoring an 'sngf' from scratch, and the real profile only ever uses N=2, uInt16,
+// clip, so the encodings and the extrapolating mode need driving by hand.
+//
+// Samples are given already encoded. nEntries, F and L describe them; Extension is 0
+// for clip or 1 for linear extrapolation.
+static
+cmsInt32Number TrySingleSampledCurve(cmsUInt32Number nEntries,
+                                     cmsFloat32Number F, cmsFloat32Number L,
+                                     cmsUInt16Number Extension,
+                                     cmsUInt16Number EncodingType,
+                                     const cmsUInt8Number* SampleBytes,
+                                     cmsUInt32Number SampleBytesSize,
+                                     const cmsFloat32Number* In,
+                                     const cmsFloat32Number* Expected,
+                                     cmsUInt32Number nProbes,
+                                     cmsFloat32Number Tolerance)
+{
+    cmsUInt8Number raw[256];
+    cmsUInt32Number pos = 0;
+    cmsUInt32Number ElemOffset, ElemSize, CurveOffset, CurveSize;
+    cmsHPROFILE h, h2;
+    cmsPipeline* pipe;
+    cmsUInt32Number clen = 0, i;
+    char* data;
+    union { cmsFloat32Number f; cmsUInt32Number u; } conv;
+
+#define PUT32(v) do { cmsUInt32Number t_ = (v); \
+    raw[pos++] = (cmsUInt8Number)(t_ >> 24); raw[pos++] = (cmsUInt8Number)(t_ >> 16); \
+    raw[pos++] = (cmsUInt8Number)(t_ >> 8);  raw[pos++] = (cmsUInt8Number)(t_); } while (0)
+#define PUT16(v) do { cmsUInt16Number t_ = (v); \
+    raw[pos++] = (cmsUInt8Number)(t_ >> 8);  raw[pos++] = (cmsUInt8Number)(t_); } while (0)
+
+    memset(raw, 0, sizeof(raw));
+
+    CurveSize = 24 + SampleBytesSize;
+    ElemSize  = 12 + 8 + CurveSize;         // header + one position table entry + curve
+    CurveOffset = 20;                       // from the start of the element
+
+    // multiProcessElementsType, 1 in 1 out, one element
+    raw[pos++] = 'm'; raw[pos++] = 'p'; raw[pos++] = 'e'; raw[pos++] = 't';
+    PUT32(0);
+    PUT16(1);
+    PUT16(1);
+    PUT32(1);
+
+    ElemOffset = pos + 8;
+    PUT32(ElemOffset);
+    PUT32(ElemSize);
+
+    // curveSetElement: signature, reserved, channels, then a position table
+    raw[pos++] = 'c'; raw[pos++] = 'v'; raw[pos++] = 's'; raw[pos++] = 't';
+    PUT32(0);
+    PUT16(1);
+    PUT16(1);
+    PUT32(CurveOffset);
+    PUT32(CurveSize);
+
+    // The singleSampledCurve, ICC.2:2023 Table 108
+    raw[pos++] = 's'; raw[pos++] = 'n'; raw[pos++] = 'g'; raw[pos++] = 'f';
+    PUT32(0);
+    PUT32(nEntries);
+    conv.f = F; PUT32(conv.u);
+    conv.f = L; PUT32(conv.u);
+    PUT16(Extension);
+    PUT16(EncodingType);
+
+    if (pos + SampleBytesSize > sizeof(raw)) { Fail("raw buffer too small"); return 0; }
+    memmove(raw + pos, SampleBytes, SampleBytesSize);
+    pos += SampleBytesSize;
+
+#undef PUT32
+#undef PUT16
+
+    h = cmsCreateProfilePlaceholder(DbgThread());
+    if (h == NULL) { Fail("cmsCreateProfilePlaceholder failed"); return 0; }
+
+    cmsSetProfileVersion(h, 5.0);
+    cmsSetDeviceClass(h, cmsSigOutputClass);
+    cmsSetColorSpace(h, cmsSigGrayData);
+    cmsSetPCS(h, cmsSigLabData);
+
+    if (!cmsWriteRawTag(h, cmsSigDToB3Tag, raw, pos)) {
+        Fail("cmsWriteRawTag failed");
+        cmsCloseProfile(h);
+        return 0;
+    }
+
+    cmsSaveProfileToMem(h, NULL, &clen);
+    data = (char*) malloc(clen);
+    if (data == NULL) { Fail("malloc failed"); cmsCloseProfile(h); return 0; }
+    cmsSaveProfileToMem(h, data, &clen);
+    cmsCloseProfile(h);
+
+    h2 = cmsOpenProfileFromMem(data, clen);
+    free(data);
+    if (h2 == NULL) { Fail("Cannot reopen the profile"); return 0; }
+
+    // Not reported: a caller may be checking that a malformed curve is refused
+    pipe = (cmsPipeline*) cmsReadTag(h2, cmsSigDToB3Tag);
+    if (pipe == NULL) { cmsCloseProfile(h2); return 0; }
+
+    for (i = 0; i < nProbes; i++) {
+
+        cmsFloat32Number vin = In[i], vout = -12345.0f;
+
+        cmsPipelineEvalFloat(&vin, &vout, pipe);
+
+        if (fabs(vout - Expected[i]) > Tolerance) {
+            Fail("sngf(enc %d, ext %d) at %f: got %f, expected %f",
+                 EncodingType, Extension, vin, vout, Expected[i]);
+            cmsCloseProfile(h2);
+            return 0;
+        }
+    }
+
+    cmsCloseProfile(h2);
+    return 1;
+}
+
+
+static
+cmsInt32Number CheckSingleSampledCurve(void)
+{
+    // A five entry ramp over [0, 1]: 0, 0.25, 0.5, 0.75, 1
+    static const cmsUInt8Number RampF32[] = {
+        0x00, 0x00, 0x00, 0x00,     // 0.0
+        0x3E, 0x80, 0x00, 0x00,     // 0.25
+        0x3F, 0x00, 0x00, 0x00,     // 0.5
+        0x3F, 0x40, 0x00, 0x00,     // 0.75
+        0x3F, 0x80, 0x00, 0x00      // 1.0
+    };
+    static const cmsUInt8Number RampU16[] = {
+        0x00, 0x00,
+        0x40, 0x00,                 // 16384/65535 = 0.2500
+        0x80, 0x00,                 // 32768/65535 = 0.5000
+        0xBF, 0xFF,
+        0xFF, 0xFF
+    };
+    static const cmsUInt8Number RampU8[] = { 0x00, 0x40, 0x80, 0xBF, 0xFF };
+    static const cmsUInt8Number RampF16[] = {
+        0x00, 0x00,                 // 0.0
+        0x34, 0x00,                 // 0.25
+        0x38, 0x00,                 // 0.5
+        0x3A, 0x00,                 // 0.75
+        0x3C, 0x00                  // 1.0
+    };
+
+    // Identity inside the domain, and each encoding must land on the same answers
+    static const cmsFloat32Number In[]  = { 0.0f, 0.125f, 0.25f, 0.5f, 0.875f, 1.0f };
+    static const cmsFloat32Number Out[] = { 0.0f, 0.125f, 0.25f, 0.5f, 0.875f, 1.0f };
+
+    if (!TrySingleSampledCurve(5, 0.0f, 1.0f, 0, 0, RampF32, sizeof(RampF32),
+                               In, Out, 6, 1e-5f)) {
+        Fail("float32 singleSampledCurve failed");
+        return 0;
+    }
+
+    if (!TrySingleSampledCurve(5, 0.0f, 1.0f, 0, 2, RampU16, sizeof(RampU16),
+                               In, Out, 6, 1e-4f)) {
+        Fail("uInt16 singleSampledCurve failed");
+        return 0;
+    }
+
+    // uInt8 quantises 0.25 to 64/255, so allow the coarser step
+    if (!TrySingleSampledCurve(5, 0.0f, 1.0f, 0, 3, RampU8, sizeof(RampU8),
+                               In, Out, 6, 4e-3f)) {
+        Fail("uInt8 singleSampledCurve failed");
+        return 0;
+    }
+
+    if (!TrySingleSampledCurve(5, 0.0f, 1.0f, 0, 1, RampF16, sizeof(RampF16),
+                               In, Out, 6, 1e-4f)) {
+        Fail("float16 singleSampledCurve failed");
+        return 0;
+    }
+
+    // Clipping outside [F, L]. Domain is [0.25, 0.75], so 0 clips to the first sample
+    // and 1 clips to the last.
+    {
+        static const cmsFloat32Number ClipIn[]  = { 0.0f, 0.25f, 0.5f, 0.75f, 1.0f };
+        static const cmsFloat32Number ClipOut[] = { 0.0f, 0.0f, 0.5f, 1.0f, 1.0f };
+
+        if (!TrySingleSampledCurve(5, 0.25f, 0.75f, 0, 0, RampF32, sizeof(RampF32),
+                                   ClipIn, ClipOut, 5, 1e-5f)) {
+            Fail("clipping singleSampledCurve failed");
+            return 0;
+        }
+    }
+
+    // Linear extrapolation over the same domain. The ramp has slope 2 in this domain,
+    // so below 0.25 it continues down to -0.5 at 0 and above 0.75 up to 1.5 at 1.
+    {
+        static const cmsFloat32Number ExtIn[]  = { 0.0f, 0.125f, 0.25f, 0.5f, 0.75f, 0.875f, 1.0f };
+        static const cmsFloat32Number ExtOut[] = { -0.5f, -0.25f, 0.0f, 0.5f, 1.0f, 1.25f, 1.5f };
+
+        if (!TrySingleSampledCurve(5, 0.25f, 0.75f, 1, 0, RampF32, sizeof(RampF32),
+                                   ExtIn, ExtOut, 7, 1e-5f)) {
+            Fail("extrapolating singleSampledCurve failed");
+            return 0;
+        }
+    }
+
+    // Two entries is the minimum and must work
+    {
+        static const cmsUInt8Number TwoPoint[] = {
+            0x3E, 0x80, 0x00, 0x00,     // 0.25
+            0x3F, 0x40, 0x00, 0x00      // 0.75
+        };
+        static const cmsFloat32Number TwoIn[]  = { 0.0f, 0.5f, 1.0f };
+        static const cmsFloat32Number TwoOut[] = { 0.25f, 0.5f, 0.75f };
+
+        if (!TrySingleSampledCurve(2, 0.0f, 1.0f, 0, 0, TwoPoint, sizeof(TwoPoint),
+                                   TwoIn, TwoOut, 3, 1e-5f)) {
+            Fail("two entry singleSampledCurve failed");
+            return 0;
+        }
+    }
+
+    // Malformed curves must be refused rather than half read
+    {
+        static const cmsFloat32Number Dummy[] = { 0.0f };
+        cmsInt32Number rc;
+
+        cmsSetLogErrorHandler(ErrorReportingFunction);
+
+        // Fewer than two entries
+        rc = TrySingleSampledCurve(1, 0.0f, 1.0f, 0, 0, RampF32, 4, Dummy, Dummy, 0, 1e-5f);
+        if (rc) { Fail("A one entry singleSampledCurve was accepted"); goto TrapError; }
+
+        // L must be greater than F
+        rc = TrySingleSampledCurve(5, 1.0f, 1.0f, 0, 0, RampF32, sizeof(RampF32), Dummy, Dummy, 0, 1e-5f);
+        if (rc) { Fail("A singleSampledCurve with F equal to L was accepted"); goto TrapError; }
+
+        rc = TrySingleSampledCurve(5, 1.0f, 0.0f, 0, 0, RampF32, sizeof(RampF32), Dummy, Dummy, 0, 1e-5f);
+        if (rc) { Fail("A singleSampledCurve with L below F was accepted"); goto TrapError; }
+
+        // Unknown extension type
+        rc = TrySingleSampledCurve(5, 0.0f, 1.0f, 7, 0, RampF32, sizeof(RampF32), Dummy, Dummy, 0, 1e-5f);
+        if (rc) { Fail("An unknown lookup extension type was accepted"); goto TrapError; }
+
+        // Unknown value encoding
+        rc = TrySingleSampledCurve(5, 0.0f, 1.0f, 0, 42, RampF32, sizeof(RampF32), Dummy, Dummy, 0, 1e-5f);
+        if (rc) { Fail("An unknown value encoding type was accepted"); goto TrapError; }
+
+        cmsSetLogErrorHandler(FatalErrorQuit);
+        TrappedError = FALSE;
+        SimultaneousErrors = 0;
+        goto Continue;
+
+    TrapError:
+        cmsSetLogErrorHandler(FatalErrorQuit);
+        TrappedError = FALSE;
+        SimultaneousErrors = 0;
+        return 0;
+    }
+
+Continue:
+    return 1;
+}
+
+
+// A singleSampledCurve must survive a round trip as one, rather than being promoted to
+// a segmentedCurve, and must still evaluate the same afterwards.
+static
+cmsInt32Number CheckSingleSampledCurveRoundTrip(void)
+{
+    static const cmsUInt8Number RampF32[] = {
+        0x00, 0x00, 0x00, 0x00,
+        0x3E, 0x80, 0x00, 0x00,
+        0x3F, 0x00, 0x00, 0x00,
+        0x3F, 0x40, 0x00, 0x00,
+        0x3F, 0x80, 0x00, 0x00
+    };
+    cmsHPROFILE h = NULL, h2 = NULL;
+    cmsPipeline* pipe;
+    cmsPipeline* Dup = NULL;
+    _cmsStageToneCurvesData* CurveData;
+    cmsUInt32Number clen = 0;
+    char* data = NULL;
+    cmsUInt32Number rc = 0;
+    cmsFloat32Number vin, vout;
+
+    // A five point ramp over [0.25, 0.75] that extrapolates, so both the sampled
+    // middle and the outer extension segments have something to preserve
+    {
+        cmsUInt8Number buf[256];
+        cmsUInt32Number pos = 0;
+        cmsUInt32Number ElemSize = 12 + 8 + 24 + sizeof(RampF32);
+        union { cmsFloat32Number f; cmsUInt32Number u; } conv;
+
+        memset(buf, 0, sizeof(buf));
+
+        buf[pos++] = 'm'; buf[pos++] = 'p'; buf[pos++] = 'e'; buf[pos++] = 't';
+        pos += 4;
+        buf[pos++] = 0; buf[pos++] = 1;
+        buf[pos++] = 0; buf[pos++] = 1;
+        buf[pos++] = 0; buf[pos++] = 0; buf[pos++] = 0; buf[pos++] = 1;
+        buf[pos++] = 0; buf[pos++] = 0; buf[pos++] = 0; buf[pos++] = 24;   // element offset
+        buf[pos++] = (cmsUInt8Number)(ElemSize >> 24); buf[pos++] = (cmsUInt8Number)(ElemSize >> 16);
+        buf[pos++] = (cmsUInt8Number)(ElemSize >> 8);  buf[pos++] = (cmsUInt8Number)(ElemSize);
+
+        buf[pos++] = 'c'; buf[pos++] = 'v'; buf[pos++] = 's'; buf[pos++] = 't';
+        pos += 4;
+        buf[pos++] = 0; buf[pos++] = 1;
+        buf[pos++] = 0; buf[pos++] = 1;
+        buf[pos++] = 0; buf[pos++] = 0; buf[pos++] = 0; buf[pos++] = 20;   // curve offset
+        buf[pos++] = 0; buf[pos++] = 0; buf[pos++] = 0;
+        buf[pos++] = (cmsUInt8Number)(24 + sizeof(RampF32));               // curve size
+
+        buf[pos++] = 's'; buf[pos++] = 'n'; buf[pos++] = 'g'; buf[pos++] = 'f';
+        pos += 4;
+        buf[pos++] = 0; buf[pos++] = 0; buf[pos++] = 0; buf[pos++] = 5;    // N
+        conv.f = 0.25f;
+        buf[pos++] = (cmsUInt8Number)(conv.u >> 24); buf[pos++] = (cmsUInt8Number)(conv.u >> 16);
+        buf[pos++] = (cmsUInt8Number)(conv.u >> 8);  buf[pos++] = (cmsUInt8Number)(conv.u);
+        conv.f = 0.75f;
+        buf[pos++] = (cmsUInt8Number)(conv.u >> 24); buf[pos++] = (cmsUInt8Number)(conv.u >> 16);
+        buf[pos++] = (cmsUInt8Number)(conv.u >> 8);  buf[pos++] = (cmsUInt8Number)(conv.u);
+        buf[pos++] = 0; buf[pos++] = 1;                                    // extension: extrapolate
+        buf[pos++] = 0; buf[pos++] = 0;                                    // encoding: float32
+        memmove(buf + pos, RampF32, sizeof(RampF32));
+        pos += sizeof(RampF32);
+
+        h = cmsCreateProfilePlaceholder(DbgThread());
+        if (h == NULL) { Fail("cmsCreateProfilePlaceholder failed"); return 0; }
+
+        cmsSetProfileVersion(h, 5.0);
+        cmsSetDeviceClass(h, cmsSigOutputClass);
+        cmsSetColorSpace(h, cmsSigGrayData);
+        cmsSetPCS(h, cmsSigLabData);
+
+        if (!cmsWriteRawTag(h, cmsSigDToB3Tag, buf, pos)) { Fail("cmsWriteRawTag failed"); goto Error; }
+
+        cmsSaveProfileToMem(h, NULL, &clen);
+        data = (char*) malloc(clen);
+        if (data == NULL) { Fail("malloc failed"); goto Error; }
+        cmsSaveProfileToMem(h, data, &clen);
+        cmsCloseProfile(h); h = NULL;
+
+        h2 = cmsOpenProfileFromMem(data, clen);
+        free(data); data = NULL;
+        if (h2 == NULL) { Fail("Cannot reopen the profile"); goto Error; }
+    }
+
+    pipe = (cmsPipeline*) cmsReadTag(h2, cmsSigDToB3Tag);
+    if (pipe == NULL) { Fail("Cannot read the fixture DToB3"); goto Error; }
+
+    CurveData = (_cmsStageToneCurvesData*) cmsPipelineGetPtrToFirstStage(pipe) ->Data;
+    if (CurveData ->TheCurves[0] ->CurveType != cmsSigSingleSampledCurve) {
+        Fail("The curve was not tagged as a singleSampledCurve on read");
+        goto Error;
+    }
+
+    // cmsDupToneCurve must carry the encoding across, which cmsPipelineDup relies on
+    Dup = cmsPipelineDup(pipe);
+    if (Dup == NULL) { Fail("cmsPipelineDup failed"); goto Error; }
+
+    CurveData = (_cmsStageToneCurvesData*) cmsPipelineGetPtrToFirstStage(Dup) ->Data;
+    if (CurveData ->TheCurves[0] ->CurveType != cmsSigSingleSampledCurve) {
+        Fail("cmsDupToneCurve lost the singleSampledCurve encoding");
+        goto Error;
+    }
+
+    // Write the duplicate back out and read it once more. The curve must still be an
+    // 'sngf' and must still extrapolate the same way.
+    {
+        cmsHPROFILE h3 = cmsCreateProfilePlaceholder(DbgThread());
+        cmsHPROFILE h4;
+        cmsPipeline* ReRead;
+
+        if (h3 == NULL) { Fail("cmsCreateProfilePlaceholder failed"); goto Error; }
+
+        cmsSetProfileVersion(h3, 5.0);
+        cmsSetDeviceClass(h3, cmsSigOutputClass);
+        cmsSetColorSpace(h3, cmsSigGrayData);
+        cmsSetPCS(h3, cmsSigLabData);
+
+        if (!cmsWriteTag(h3, cmsSigDToB3Tag, Dup)) { Fail("cmsWriteTag failed"); cmsCloseProfile(h3); goto Error; }
+
+        clen = 0;
+        cmsSaveProfileToMem(h3, NULL, &clen);
+        data = (char*) malloc(clen);
+        if (data == NULL) { Fail("malloc failed"); cmsCloseProfile(h3); goto Error; }
+        cmsSaveProfileToMem(h3, data, &clen);
+        cmsCloseProfile(h3);
+
+        h4 = cmsOpenProfileFromMem(data, clen);
+        free(data); data = NULL;
+        if (h4 == NULL) { Fail("Cannot reopen the rewritten profile"); goto Error; }
+
+        ReRead = (cmsPipeline*) cmsReadTag(h4, cmsSigDToB3Tag);
+        if (ReRead == NULL) { Fail("Cannot read the rewritten DToB3"); cmsCloseProfile(h4); goto Error; }
+
+        CurveData = (_cmsStageToneCurvesData*) cmsPipelineGetPtrToFirstStage(ReRead) ->Data;
+        if (CurveData ->TheCurves[0] ->CurveType != cmsSigSingleSampledCurve) {
+            Fail("The curve was promoted away from a singleSampledCurve on write");
+            cmsCloseProfile(h4);
+            goto Error;
+        }
+
+        // Inside the domain, and extrapolated below it
+        vin = 0.5f;  cmsPipelineEvalFloat(&vin, &vout, ReRead);
+        if (fabs(vout - 0.5f) > 1e-5) {
+            Fail("After the round trip, 0.5 gave %f", vout);
+            cmsCloseProfile(h4);
+            goto Error;
+        }
+
+        vin = 0.0f;  cmsPipelineEvalFloat(&vin, &vout, ReRead);
+        if (fabs(vout + 0.5f) > 1e-5) {
+            Fail("After the round trip, extrapolation at 0.0 gave %f, expected -0.5", vout);
+            cmsCloseProfile(h4);
+            goto Error;
+        }
+
+        cmsCloseProfile(h4);
+    }
+
+    rc = 1;
+
+Error:
+    if (Dup != NULL) cmsPipelineFree(Dup);
+    if (h != NULL) cmsCloseProfile(h);
+    if (h2 != NULL) cmsCloseProfile(h2);
+    if (data != NULL) free(data);
+    return rc;
+}
+
+
+// Reads a hybrid printer profile: an ICC.1 CMYK profile carrying an embedded ICC.2
+// sub-profile in its 'ICC5' tag, whose DToB3 tag maps CMYK to a spectral reflectance
+// vector. This is the only committed profile that exercises the iccMAX paths, so it
+// is mandatory rather than skipped when missing.
+//
+// HybridPrinterCMYK_small.icc derives from the ICC HybridPrinterWithReflectance ICS
+// package, rebuilt with the iccDEV tools, with every CLUT subsampled onto a coarser grid to
+// get the file down to a committable size: 4-input CLUTs to 5 points per axis and
+// 3-input to 9. Those strides divide the originals exactly, so every value in it is an
+// original node value rather than a resampled one. It is therefore structurally
+// faithful but far too coarse to be colorimetrically useful, and the ICC.1 and
+// embedded ICC.2 renderings no longer track each other. See
+// testbed/subsample_clut.py to regenerate it.
+//
+// The embedded profile declares version 5.1 and a spectral PCS of 'rs' with 36
+// channels, and its DToB3 is 4 to 36 channels built from a curve set, then an
+// extendedCLUT reducing to basis coefficients, then a matrix expanding those to the
+// spectrum. Three of the four curves are singleSampledCurves; the first was replaced with
+// a segmentedCurve holding one ICC.2 formulaCurveSegment of function type 0003h, with
+// identity parameters so it changes no output, purely so the fixture exercises the
+// formula segment reader as well. Version 5.1 rather than 5.0 is deliberate too: it is
+// the case that proves the header version check tolerates a minor bump.
+//
+// So the fixture covers the sngf curves, an ICC.2-only formula segment, the
+// extendedCLUT reader in uInt16 encoding, the wide matrix, the spectral header fields
+// and the embedded profile tag all at once. The assertions below pin the element chain
+// and the channel relationships rather than literal counts, so a regenerated profile
+// with different internal widths still passes.
+static
+cmsInt32Number CheckHybridPrinterProfile(void)
+{
+    cmsHPROFILE hBase = NULL;
+    cmsHPROFILE hSub = NULL;
+    cmsPipeline* pipe;
+    const cmsICCData* Embedded;
+    cmsUInt16Number nSpectralChans;
+    cmsFloat32Number Start, End;
+    cmsUInt16Number Steps;
+    cmsFloat32Number In[4], Out[MAX_STAGE_CHANNELS];
+    cmsUInt32Number i;
+    cmsUInt32Number rc = 0;
+    cmsBool AnyNonZero;
+
+    // Trap the error instead of letting the global handler end the process. A missing
+    // path makes cmsOpenProfileFromFile signal cmsERROR_FILE, and FatalErrorQuit
+    // calls exit(1), which would abort the whole suite rather than failing one test.
+    cmsSetLogErrorHandler(ErrorReportingFunction);
+    hBase = cmsOpenProfileFromFile("HybridPrinterCMYK_small.icc", "r");
+    cmsSetLogErrorHandler(FatalErrorQuit);
+    TrappedError = FALSE;
+    SimultaneousErrors = 0;
+
+    if (hBase == NULL) {
+
+        // Committed to the repository, so absence is a broken checkout rather than
+        // a reason to skip
+        Fail("Cannot open HybridPrinterCMYK_small.icc");
+        return 0;
+    }
+
+    if (cmsGetColorSpace(hBase) != cmsSigCmykData) {
+        Fail("The hybrid profile is not CMYK");
+        goto Error;
+    }
+
+    // The containing ICC.1 profile must not itself claim a spectral PCS
+    if (cmsGetSpectralPCS(hBase) != 0) {
+        Fail("The containing ICC.1 profile reports a spectral PCS");
+        goto Error;
+    }
+
+    Embedded = (const cmsICCData*) cmsReadTag(hBase, cmsSigEmbeddedV5ProfileTag);
+    if (Embedded == NULL) { Fail("No ICC5 tag in the hybrid profile"); goto Error; }
+
+    if (Embedded ->len < 132) { Fail("The ICC5 tag is too small: %d", Embedded ->len); goto Error; }
+
+    hSub = cmsOpenProfileFromMem(Embedded ->data, Embedded ->len);
+    if (hSub == NULL) { Fail("Cannot open the embedded ICC.2 profile"); goto Error; }
+
+    // The embedding technical note requires the sub-profile to be a logical
+    // replacement: same class, same device space
+    if (cmsGetDeviceClass(hSub) != cmsGetDeviceClass(hBase)) {
+        Fail("The embedded profile has a different device class");
+        goto Error;
+    }
+
+    if (cmsGetColorSpace(hSub) != cmsGetColorSpace(hBase)) {
+        Fail("The embedded profile has a different colour space");
+        goto Error;
+    }
+
+    nSpectralChans = cmsGetSpectralPCSChannels(hSub);
+    if (nSpectralChans == 0) { Fail("No spectral PCS in the embedded profile"); goto Error; }
+
+    // The channel count implied by the signature must agree with the range steps
+    if (!cmsGetSpectralPCSRange(hSub, &Start, &End, &Steps)) {
+        Fail("cmsGetSpectralPCSRange failed on the embedded profile");
+        goto Error;
+    }
+
+    if (Steps != nSpectralChans) {
+        Fail("Spectral PCS says %d channels but the range says %d steps", nSpectralChans, Steps);
+        goto Error;
+    }
+
+    if (!(Start > 200.0f && Start < End && End < 1200.0f)) {
+        Fail("Implausible spectral range: %f to %f nm", Start, End);
+        goto Error;
+    }
+
+    pipe = (cmsPipeline*) cmsReadTag(hSub, cmsSigDToB3Tag);
+    if (pipe == NULL) { Fail("Cannot read DToB3 from the embedded profile"); goto Error; }
+
+    if (cmsPipelineInputChannels(pipe) != 4) {
+        Fail("DToB3 has %d input channels, expected 4", cmsPipelineInputChannels(pipe));
+        goto Error;
+    }
+
+    if (cmsPipelineOutputChannels(pipe) != nSpectralChans) {
+        Fail("DToB3 outputs %d channels but the spectral PCS says %d",
+             cmsPipelineOutputChannels(pipe), nSpectralChans);
+        goto Error;
+    }
+
+    // Walk the elements. The profile is built as a curve set, then an extendedCLUT
+    // reducing to basis coefficients, then a matrix expanding those to the spectrum.
+    {
+        cmsStage* stage = cmsPipelineGetPtrToFirstStage(pipe);
+        _cmsStageToneCurvesData* CurveData;
+        cmsUInt32Number c;
+
+        if (cmsPipelineStageCount(pipe) != 3) {
+            Fail("DToB3 has %d stages, expected 3", cmsPipelineStageCount(pipe));
+            goto Error;
+        }
+
+        if (cmsStageType(stage) != cmsSigCurveSetElemType) {
+            Fail("The first DToB3 stage is not a curve set");
+            goto Error;
+        }
+
+        // Curve 0 is deliberately a segmentedCurve carrying one ICC.2 formulaCurveSegment of
+        // function type 0003h -- lcms parametric type 9, Y = a*(b*X + c)^gamma + d -- with
+        // identity parameters, so the fixture exercises the formula segment reader as well as
+        // the sampled one. The rest are singleSampledCurves and must be recognised as such
+        // rather than silently promoted to segmentedCurves.
+        CurveData = (_cmsStageToneCurvesData*) stage ->Data;
+
+        if (CurveData ->TheCurves[0] ->CurveType == cmsSigSingleSampledCurve) {
+            Fail("DToB3 curve 0 should be a segmentedCurve, not a singleSampledCurve");
+            goto Error;
+        }
+
+        if (CurveData ->TheCurves[0] ->nSegments != 1 ||
+            CurveData ->TheCurves[0] ->Segments == NULL) {
+            Fail("DToB3 curve 0 has %d segments, expected 1",
+                 CurveData ->TheCurves[0] ->nSegments);
+            goto Error;
+        }
+
+        if (CurveData ->TheCurves[0] ->Segments[0].Type != 9) {
+            Fail("DToB3 curve 0 segment is parametric type %d, expected 9 (ICC.2 0003h)",
+                 CurveData ->TheCurves[0] ->Segments[0].Type);
+            goto Error;
+        }
+
+        // gamma, a, b, c, d
+        {
+            static const cmsFloat64Number Identity[5] = { 1.0, 1.0, 1.0, 0.0, 0.0 };
+            cmsUInt32Number p;
+
+            for (p = 0; p < 5; p++) {
+
+                if (fabs(CurveData ->TheCurves[0] ->Segments[0].Params[p] - Identity[p]) > 1E-6) {
+                    Fail("DToB3 curve 0 parameter %d is %f, expected %f", p,
+                         CurveData ->TheCurves[0] ->Segments[0].Params[p], Identity[p]);
+                    goto Error;
+                }
+            }
+        }
+
+        // Identity parameters, so the curve must be a no-op. This also proves the evaluator is
+        // wired to the type the reader assigned.
+        if (fabs(cmsEvalToneCurveFloat(CurveData ->TheCurves[0], 0.25f) - 0.25) > 1E-6 ||
+            fabs(cmsEvalToneCurveFloat(CurveData ->TheCurves[0], 1.00f) - 1.00) > 1E-6) {
+            Fail("DToB3 curve 0 does not evaluate as an identity");
+            goto Error;
+        }
+
+        for (c = 1; c < cmsStageInputChannels(stage); c++) {
+
+            if (CurveData ->TheCurves[c] ->CurveType != cmsSigSingleSampledCurve) {
+                Fail("DToB3 curve %d is not marked as a singleSampledCurve", c);
+                goto Error;
+            }
+        }
+
+        stage = cmsStageNext(stage);
+        if (cmsStageType(stage) != (cmsStageSignature) cmsSigExtCLutElemType) {
+            Fail("The second DToB3 stage is not an extendedCLUT");
+            goto Error;
+        }
+
+        stage = cmsStageNext(stage);
+        if (cmsStageType(stage) != cmsSigMatrixElemType) {
+            Fail("The third DToB3 stage is not a matrix");
+            goto Error;
+        }
+
+        if (cmsStageInputChannels(stage) <= 4 || cmsStageOutputChannels(stage) != nSpectralChans) {
+            Fail("The expanding matrix is %d to %d, expected something to %d",
+                 cmsStageInputChannels(stage), cmsStageOutputChannels(stage), nSpectralChans);
+            goto Error;
+        }
+    }
+
+    // Paper white: no ink at all should give a high, non-zero reflectance everywhere
+    In[0] = 0.0f; In[1] = 0.0f; In[2] = 0.0f; In[3] = 0.0f;
+    memset(Out, 0, sizeof(Out));
+    cmsPipelineEvalFloat(In, Out, pipe);
+
+    AnyNonZero = FALSE;
+    for (i = 0; i < nSpectralChans; i++) {
+
+        if (Out[i] != 0.0f) AnyNonZero = TRUE;
+
+        // Reflectance is relative to the perfect reflector, so stay in a sane band
+        if (Out[i] < -0.01f || Out[i] > 2.0f) {
+            Fail("Reflectance[%d] of paper white is %f, out of range", i, Out[i]);
+            goto Error;
+        }
+    }
+
+    if (!AnyNonZero) { Fail("DToB3 gave an all zero spectrum for paper white"); goto Error; }
+
+    // Solid ink must come back darker than bare paper, summed across the spectrum
+    {
+        cmsFloat32Number WhiteSum = 0.0f, InkSum = 0.0f;
+
+        for (i = 0; i < nSpectralChans; i++) WhiteSum += Out[i];
+
+        In[0] = 1.0f; In[1] = 1.0f; In[2] = 1.0f; In[3] = 1.0f;
+        cmsPipelineEvalFloat(In, Out, pipe);
+
+        for (i = 0; i < nSpectralChans; i++) InkSum += Out[i];
+
+        if (!(InkSum < WhiteSum)) {
+            Fail("Full ink reflects as much as paper white: %f vs %f", InkSum, WhiteSum);
+            goto Error;
+        }
+    }
+
+    rc = 1;
+
+Error:
+    if (hSub != NULL) cmsCloseProfile(hSub);
+    if (hBase != NULL) cmsCloseProfile(hBase);
+    return rc;
+}
+
+// swpt round-trip through the idiomatic cmsReadTag/cmsWriteTag path. Task 3 extends
+// this function with the raw-tag accessor path, including ui16.
+static
+cmsInt32Number CheckSpectralWhitePointRoundTrip(void)
+{
+    cmsHPROFILE h;
+    cmsFloatArray* w;
+    cmsFloatArray* r;
+    cmsUInt8Number* Mem = NULL;
+    cmsUInt32Number Size = 0;
+    cmsUInt32Number i;
+    cmsInt32Number rc = 0;
+    cmsFloat32Number Fl16Values[36]; // values read back from the fl16 tag, kept for
+                                      // an exact comparison against the fl32 promotion
+
+    // Write 36 values as fl32, reload, and compare exactly: float32 is lossless
+    h = cmsCreateProfilePlaceholder(DbgThread());
+    if (h == NULL) return 0;
+
+    cmsSetProfileVersion(h, 5.0);
+
+    w = cmsAllocFloatArray(DbgThread(), 36);
+    if (w == NULL) { cmsCloseProfile(h); return 0; }
+
+    for (i = 0; i < 36; i++)
+        w ->Values[i] = (cmsFloat32Number) (0.25 + i * 0.02);
+
+    if (!cmsWriteTag(h, cmsSigSpectralWhitePointTag, w)) {
+
+        Fail("Could not write swpt as fl32");
+        goto Cleanup;
+    }
+
+    if (!cmsSaveProfileToMem(h, NULL, &Size) || Size == 0) {
+
+        Fail("Could not size swpt profile");
+        goto Cleanup;
+    }
+
+    Mem = (cmsUInt8Number*) malloc(Size);
+    if (Mem == NULL) goto Cleanup;
+
+    if (!cmsSaveProfileToMem(h, Mem, &Size)) {
+
+        Fail("Could not save swpt profile");
+        goto Cleanup;
+    }
+
+    cmsCloseProfile(h);
+    h = cmsOpenProfileFromMemTHR(DbgThread(), Mem, Size);
+    if (h == NULL) {
+
+        Fail("Could not reopen swpt profile");
+        goto Cleanup;
+    }
+
+    r = (cmsFloatArray*) cmsReadTag(h, cmsSigSpectralWhitePointTag);
+    if (r == NULL) {
+
+        Fail("Could not read swpt back");
+        goto Cleanup;
+    }
+
+    if (r ->nValues != 36) {
+
+        Fail("swpt came back with %d values, expected 36", r ->nValues);
+        goto Cleanup;
+    }
+
+    for (i = 0; i < 36; i++) {
+
+        if (r ->Values[i] != w ->Values[i]) {
+
+            Fail("swpt fl32 value %d changed: got %f expected %f",
+                 i, r ->Values[i], w ->Values[i]);
+            goto Cleanup;
+        }
+    }
+
+    // Now the same array authored as fl16 through the raw-tag accessor --
+    // cmsWriteSpectralWhitePoint still emits any of the three encodings ICC.2
+    // permits, which is what lets this test put a real fl16 tag on disk to read
+    // back through the registered handler below.
+    if (!cmsWriteSpectralWhitePoint(h, w, cmsSigFloat16ArrayType)) {
+
+        Fail("Could not write swpt as fl16");
+        goto Cleanup;
+    }
+
+    free(Mem);
+    Mem = NULL;
+    Size = 0;
+
+    if (!cmsSaveProfileToMem(h, NULL, &Size) || Size == 0) goto Cleanup;
+
+    Mem = (cmsUInt8Number*) malloc(Size);
+    if (Mem == NULL) goto Cleanup;
+
+    if (!cmsSaveProfileToMem(h, Mem, &Size)) goto Cleanup;
+
+    cmsCloseProfile(h);
+    h = cmsOpenProfileFromMemTHR(DbgThread(), Mem, Size);
+    if (h == NULL) goto Cleanup;
+
+    // Confirm the on-disk type signature really is 'fl16' (0x666C3136), independent
+    // of any registered type handler: bytes 0..3 of the raw tag are the type
+    // signature, big-endian on the wire.
+    {
+        cmsUInt32Number RawSig;
+
+        if (cmsReadRawTag(h, cmsSigSpectralWhitePointTag, &RawSig, sizeof(RawSig)) != sizeof(RawSig)) {
+
+            Fail("Could not read swpt raw tag header");
+            goto Cleanup;
+        }
+
+        if (_cmsAdjustEndianess32(RawSig) != cmsSigFloat16ArrayType) {
+
+            Fail("swpt written as fl16 was not saved with the fl16 type signature");
+            goto Cleanup;
+        }
+    }
+
+    // Read it back through cmsReadTag -- the registered fl16 handler. This is the
+    // regression this change most risks: SupportedTypes still lists fl16 so
+    // cmsReadTag can still decode it, even though DecideType no longer exists to
+    // pick fl16 back up on write.
+    r = (cmsFloatArray*) cmsReadTag(h, cmsSigSpectralWhitePointTag);
+    if (r == NULL) {
+
+        Fail("Could not read fl16 swpt back through cmsReadTag");
+        goto Cleanup;
+    }
+
+    if (r ->nValues != 36) {
+
+        Fail("fl16 swpt came back with %d values, expected 36", r ->nValues);
+        goto Cleanup;
+    }
+
+    for (i = 0; i < 36; i++) {
+
+        if (fabs(r ->Values[i] - w ->Values[i]) > 1E-3) {
+
+            Fail("swpt fl16 value %d changed: got %f expected %f",
+                 i, r ->Values[i], w ->Values[i]);
+            goto Cleanup;
+        }
+    }
+
+    memcpy(Fl16Values, r ->Values, sizeof(Fl16Values));
+
+    // Write that same object (r, just read back as fl16) through cmsWriteTag. The
+    // target is a fresh profile rather than h itself: cmsWriteTag's _cmsNewTag frees
+    // whatever the destination slot already holds before duplicating "data" into it,
+    // so writing into the very slot "r" was read from would read data through a
+    // pointer already freed by that same call. A second profile sidesteps that
+    // without changing what is being proven: with DecideType gone, SupportedTypes[0]
+    // (fl32) is what cmsWriteTag picks, pinning the policy that a tag read as fl16
+    // is always written back as fl32.
+    {
+        cmsHPROFILE hProm = cmsCreateProfilePlaceholder(DbgThread());
+        cmsUInt32Number RawSig;
+        cmsFloatArray* rp;
+
+        if (hProm == NULL) goto Cleanup;
+
+        cmsSetProfileVersion(hProm, 5.0);
+
+        if (!cmsWriteTag(hProm, cmsSigSpectralWhitePointTag, r)) {
+
+            Fail("Could not write fl16-read swpt back");
+            cmsCloseProfile(hProm);
+            goto Cleanup;
+        }
+
+        free(Mem);
+        Mem = NULL;
+        Size = 0;
+
+        if (!cmsSaveProfileToMem(hProm, NULL, &Size) || Size == 0) { cmsCloseProfile(hProm); goto Cleanup; }
+
+        Mem = (cmsUInt8Number*) malloc(Size);
+        if (Mem == NULL) { cmsCloseProfile(hProm); goto Cleanup; }
+
+        if (!cmsSaveProfileToMem(hProm, Mem, &Size)) { cmsCloseProfile(hProm); goto Cleanup; }
+
+        cmsCloseProfile(hProm);
+
+        hProm = cmsOpenProfileFromMemTHR(DbgThread(), Mem, Size);
+        if (hProm == NULL) goto Cleanup;
+
+        // Pins the documented policy: read fl16, write fl32 (0x666C3332).
+        if (cmsReadRawTag(hProm, cmsSigSpectralWhitePointTag, &RawSig, sizeof(RawSig)) != sizeof(RawSig)) {
+
+            Fail("Could not read promoted swpt raw tag header");
+            cmsCloseProfile(hProm);
+            goto Cleanup;
+        }
+
+        if (_cmsAdjustEndianess32(RawSig) != cmsSigFloat32ArrayType) {
+
+            Fail("swpt read as fl16 was not promoted to fl32 on write");
+            cmsCloseProfile(hProm);
+            goto Cleanup;
+        }
+
+        rp = (cmsFloatArray*) cmsReadTag(hProm, cmsSigSpectralWhitePointTag);
+        if (rp == NULL) {
+
+            Fail("Could not read fl32-promoted swpt back");
+            cmsCloseProfile(hProm);
+            goto Cleanup;
+        }
+
+        if (rp ->nValues != 36) {
+
+            Fail("fl32-promoted swpt came back with %d values, expected 36", rp ->nValues);
+            cmsCloseProfile(hProm);
+            goto Cleanup;
+        }
+
+        // The values going in were already half-precision (read back from fl16
+        // above), and fl32 is lossless from fl16, so the promotion must reproduce
+        // them exactly -- an exact comparison is correct here, not a tolerance.
+        for (i = 0; i < 36; i++) {
+
+            if (rp ->Values[i] != Fl16Values[i]) {
+
+                Fail("swpt fl32-promoted value %d changed: got %f expected %f",
+                     i, rp ->Values[i], Fl16Values[i]);
+                cmsCloseProfile(hProm);
+                goto Cleanup;
+            }
+        }
+
+        cmsCloseProfile(hProm);
+    }
+
+    // Now the accessor path, which also covers ui16. Each encoding is written, saved,
+    // reloaded and read back through cmsReadSpectralWhitePoint.
+    {
+        static const cmsTagTypeSignature Encodings[3] = {
+            cmsSigFloat32ArrayType, cmsSigFloat16ArrayType, cmsSigUInt16ArrayType };
+        static const cmsFloat64Number Tolerances[3] = { 1E-6, 1E-3, 2E-5 };
+        cmsUInt32Number e;
+
+        for (e = 0; e < 3; e++) {
+
+            cmsFloatArray* got = NULL;
+            cmsHPROFILE h2 = cmsCreateProfilePlaceholder(DbgThread());
+
+            if (h2 == NULL) goto Cleanup;
+
+            cmsSetProfileVersion(h2, 5.0);
+
+            if (!cmsWriteSpectralWhitePoint(h2, w, Encodings[e])) {
+
+                Fail("cmsWriteSpectralWhitePoint refused encoding %d", e);
+                cmsCloseProfile(h2);
+                goto Cleanup;
+            }
+
+            free(Mem);
+            Mem = NULL;
+            Size = 0;
+
+            if (!cmsSaveProfileToMem(h2, NULL, &Size) || Size == 0) { cmsCloseProfile(h2); goto Cleanup; }
+
+            Mem = (cmsUInt8Number*) malloc(Size);
+            if (Mem == NULL) { cmsCloseProfile(h2); goto Cleanup; }
+
+            if (!cmsSaveProfileToMem(h2, Mem, &Size)) { cmsCloseProfile(h2); goto Cleanup; }
+
+            cmsCloseProfile(h2);
+
+            h2 = cmsOpenProfileFromMemTHR(DbgThread(), Mem, Size);
+            if (h2 == NULL) goto Cleanup;
+
+            // Directly verifies cmsWriteSpectralWhitePoint emitted the requested
+            // encoding: bytes 0..3 of the raw tag are the type signature.
+            {
+                cmsUInt32Number RawSig;
+
+                if (cmsReadRawTag(h2, cmsSigSpectralWhitePointTag, &RawSig, sizeof(RawSig)) != sizeof(RawSig)) {
+
+                    Fail("Could not read raw tag header for encoding %d", e);
+                    cmsCloseProfile(h2);
+                    goto Cleanup;
+                }
+
+                if (_cmsAdjustEndianess32(RawSig) != (cmsUInt32Number) Encodings[e]) {
+
+                    Fail("Accessor round trip %d saved with type signature %x, expected %x",
+                         e, _cmsAdjustEndianess32(RawSig), Encodings[e]);
+                    cmsCloseProfile(h2);
+                    goto Cleanup;
+                }
+            }
+
+            if (!cmsReadSpectralWhitePoint(h2, &got) || got == NULL) {
+
+                Fail("cmsReadSpectralWhitePoint failed for encoding %d", e);
+                cmsCloseProfile(h2);
+                goto Cleanup;
+            }
+
+            if (got ->nValues != 36) {
+
+                Fail("Accessor round trip %d returned %d values, expected 36",
+                     e, got ->nValues);
+                cmsFreeFloatArray(got);
+                cmsCloseProfile(h2);
+                goto Cleanup;
+            }
+
+            for (i = 0; i < 36; i++) {
+
+                if (fabs(got ->Values[i] - w ->Values[i]) > Tolerances[e]) {
+
+                    Fail("Accessor round trip %d value %d: got %f expected %f",
+                         e, i, got ->Values[i], w ->Values[i]);
+                    cmsFreeFloatArray(got);
+                    cmsCloseProfile(h2);
+                    goto Cleanup;
+                }
+            }
+
+            cmsFreeFloatArray(got);
+            cmsCloseProfile(h2);
+        }
+
+        // An encoding ICC.2 does not permit must be refused, not written anyway.
+        // cmsWriteSpectralWhitePoint signals an error on the way to refusing, so the
+        // global handler must be swapped out first or FatalErrorQuit would exit(1).
+        {
+            cmsHPROFILE h3 = cmsCreateProfilePlaceholder(DbgThread());
+            cmsBool WroteBadEncoding;
+
+            if (h3 == NULL) goto Cleanup;
+
+            cmsSetProfileVersion(h3, 5.0);
+
+            cmsSetLogErrorHandler(ErrorReportingFunction);
+            WroteBadEncoding = cmsWriteSpectralWhitePoint(h3, w, cmsSigUInt8ArrayType);
+            cmsSetLogErrorHandler(FatalErrorQuit);
+            TrappedError = FALSE;
+            SimultaneousErrors = 0;
+
+            if (WroteBadEncoding) {
+
+                Fail("cmsWriteSpectralWhitePoint accepted ui08, which ICC.2 forbids for swpt");
+                cmsCloseProfile(h3);
+                goto Cleanup;
+            }
+
+            cmsCloseProfile(h3);
+        }
+    }
+
+    // ui16's write-time clamp order matters: isnan(x) must be checked before the
+    // x > 1.0 / x < 0.0 relational tests, because every IEEE 754 relational
+    // comparison involving NaN is false, so a reordering would let NaN pass through
+    // un-clamped instead of becoming 0. Exercise NaN, +/-infinity, and plain
+    // out-of-range values against the reference mapping (icFtoU16 in the reference
+    // implementation): NaN -> 0, +Inf -> 1.0, -Inf -> 0, >1 -> 1.0, <0 -> 0. NaN and
+    // infinity are produced via sqrt(-1.0)/log(0.0) rather than a literal division
+    // by zero, so as not to trip a constant-division-by-zero warning.
+    {
+        cmsFloatArray* special = cmsAllocFloatArray(DbgThread(), 5);
+        cmsFloatArray* gotSpecial = NULL;
+        cmsHPROFILE h4;
+        static const cmsFloat64Number Expected[5] = { 0.0, 1.0, 0.0, 1.0, 0.0 };
+
+        if (special == NULL) goto Cleanup;
+
+        special ->Values[0] = (cmsFloat32Number) sqrt(-1.0);            // NaN
+        special ->Values[1] = (cmsFloat32Number) (-log(0.0));           // +Infinity
+        special ->Values[2] = (cmsFloat32Number) log(0.0);              // -Infinity
+        special ->Values[3] = 5.0f;                                     // above 1.0
+        special ->Values[4] = -5.0f;                                    // below 0.0
+
+        h4 = cmsCreateProfilePlaceholder(DbgThread());
+        if (h4 == NULL) { cmsFreeFloatArray(special); goto Cleanup; }
+
+        cmsSetProfileVersion(h4, 5.0);
+
+        if (!cmsWriteSpectralWhitePoint(h4, special, cmsSigUInt16ArrayType)) {
+
+            Fail("cmsWriteSpectralWhitePoint refused NaN/infinity values as ui16");
+            cmsFreeFloatArray(special);
+            cmsCloseProfile(h4);
+            goto Cleanup;
+        }
+
+        cmsFreeFloatArray(special);
+
+        free(Mem);
+        Mem = NULL;
+        Size = 0;
+
+        if (!cmsSaveProfileToMem(h4, NULL, &Size) || Size == 0) { cmsCloseProfile(h4); goto Cleanup; }
+
+        Mem = (cmsUInt8Number*) malloc(Size);
+        if (Mem == NULL) { cmsCloseProfile(h4); goto Cleanup; }
+
+        if (!cmsSaveProfileToMem(h4, Mem, &Size)) { cmsCloseProfile(h4); goto Cleanup; }
+
+        cmsCloseProfile(h4);
+
+        h4 = cmsOpenProfileFromMemTHR(DbgThread(), Mem, Size);
+        if (h4 == NULL) goto Cleanup;
+
+        if (!cmsReadSpectralWhitePoint(h4, &gotSpecial) || gotSpecial == NULL || gotSpecial ->nValues != 5) {
+
+            Fail("Could not read back the NaN/infinity ui16 probe");
+            if (gotSpecial != NULL) cmsFreeFloatArray(gotSpecial);
+            cmsCloseProfile(h4);
+            goto Cleanup;
+        }
+
+        for (i = 0; i < 5; i++) {
+
+            if (fabs(gotSpecial ->Values[i] - Expected[i]) > 2E-5) {
+
+                Fail("ui16 special value %d: got %f, expected %f",
+                     i, gotSpecial ->Values[i], Expected[i]);
+                cmsFreeFloatArray(gotSpecial);
+                cmsCloseProfile(h4);
+                goto Cleanup;
+            }
+        }
+
+        cmsFreeFloatArray(gotSpecial);
+        cmsCloseProfile(h4);
+    }
+
+    rc = 1;
+
+Cleanup:
+    if (Mem != NULL) free(Mem);
+    cmsFreeFloatArray(w);
+    if (h != NULL) cmsCloseProfile(h);
+
+    return rc;
+}
+
+// N and M are deliberately different, and the three observer vectors deliberately
+// hold different values, so a transposed X/Y/Z ordering or a swapped N/M cannot pass.
+static
+cmsInt32Number CheckSpectralViewingConditionsRoundTrip(void)
+{
+    cmsHPROFILE h = NULL;
+    cmsSpectralViewingConditions* w = NULL;
+    cmsSpectralViewingConditions* r;
+    cmsUInt8Number* Mem = NULL;
+    cmsUInt32Number Size = 0, TagSize;
+    cmsUInt32Number i;
+    cmsInt32Number rc = 0;
+    const cmsUInt16Number N = 5, M = 7;
+
+    // Regression-test state for the hand-corrupted N == 0x0100 bounds probe below.
+    // ICC.2 reuses the 'svcn' FourCC for both cmsSigSpectralViewingConditionsTag
+    // (the tag directory entry) and cmsSigSpectralViewingConditionsType (the type
+    // header at the start of the tag's own data), so a bare 4-byte search for
+    // 'svcn' matches the directory entry first -- it precedes the tag data pool
+    // and is followed by a nonzero file offset, not by the type header's 4
+    // reserved zero bytes. Searching for the 8-byte pattern (signature + reserved)
+    // lands on the type header instead.
+    static const cmsUInt8Number svcnSig[8] = { 0x73, 0x76, 0x63, 0x6E, 0x00, 0x00, 0x00, 0x00 };  // 'svcn' + reserved
+    cmsUInt8Number* corrupted = NULL;
+    cmsHPROFILE hBad = NULL;
+    cmsSpectralViewingConditions* rBad = NULL;
+    cmsUInt32Number sigOffset, k;
+
+    w = cmsAllocSpectralViewingConditions(DbgThread(), N, M);
+    if (w == NULL) return 0;
+
+    w ->ObserverType    = 1;            // CIE 1931
+    w ->ObserverStart   = 400.0f;
+    w ->ObserverEnd     = 500.0f;
+    w ->IlluminantType  = 9;            // black body defined by CCT
+    w ->CCT             = 5000.0f;
+    w ->IlluminantStart = 380.0f;
+    w ->IlluminantEnd   = 440.0f;
+
+    // X vector 1..5, Y vector 11..15, Z vector 21..25
+    for (i = 0; i < 3u * N; i++)
+        w ->Observer[i] = (cmsFloat32Number) (1 + (i / N) * 10 + (i % N));
+
+    for (i = 0; i < M; i++)
+        w ->Illuminant[i] = (cmsFloat32Number) (0.5 + i);
+
+    w ->IlluminantXYZ.X = 96.42;  w ->IlluminantXYZ.Y = 100.0; w ->IlluminantXYZ.Z = 82.49;
+    w ->SurroundXYZ.X   = 19.28;  w ->SurroundXYZ.Y   = 20.0;  w ->SurroundXYZ.Z   = 16.50;
+
+    h = cmsCreateProfilePlaceholder(DbgThread());
+    if (h == NULL) goto Cleanup;
+
+    cmsSetProfileVersion(h, 5.0);
+
+    if (!cmsWriteTag(h, cmsSigSpectralViewingConditionsTag, w)) {
+
+        Fail("Could not write svcn");
+        goto Cleanup;
+    }
+
+    if (!cmsSaveProfileToMem(h, NULL, &Size) || Size == 0) goto Cleanup;
+
+    Mem = (cmsUInt8Number*) malloc(Size);
+    if (Mem == NULL) goto Cleanup;
+
+    if (!cmsSaveProfileToMem(h, Mem, &Size)) goto Cleanup;
+
+    cmsCloseProfile(h);
+    h = cmsOpenProfileFromMemTHR(DbgThread(), Mem, Size);
+    if (h == NULL) {
+
+        Fail("Could not reopen svcn profile");
+        goto Cleanup;
+    }
+
+    // ICC.2 Table 69: the whole tag is 60 + 12N + 4M bytes
+    TagSize = cmsReadRawTag(h, cmsSigSpectralViewingConditionsTag, NULL, 0);
+    if (TagSize != 60u + 12u * N + 4u * M) {
+
+        Fail("svcn tag is %d bytes, expected %d", TagSize, 60u + 12u * N + 4u * M);
+        goto Cleanup;
+    }
+
+    r = (cmsSpectralViewingConditions*) cmsReadTag(h, cmsSigSpectralViewingConditionsTag);
+    if (r == NULL) {
+
+        Fail("Could not read svcn back");
+        goto Cleanup;
+    }
+
+    if (r ->ObserverSteps != N || r ->IlluminantSteps != M) {
+
+        Fail("svcn steps came back as N=%d M=%d, expected N=%d M=%d",
+             r ->ObserverSteps, r ->IlluminantSteps, N, M);
+        goto Cleanup;
+    }
+
+    if (r ->ObserverType != w ->ObserverType || r ->IlluminantType != w ->IlluminantType) {
+
+        Fail("svcn observer or illuminant type changed");
+        goto Cleanup;
+    }
+
+    if (r ->ObserverStart != w ->ObserverStart || r ->ObserverEnd != w ->ObserverEnd ||
+        r ->IlluminantStart != w ->IlluminantStart || r ->IlluminantEnd != w ->IlluminantEnd) {
+
+        Fail("svcn spectral range changed");
+        goto Cleanup;
+    }
+
+    if (r ->CCT != w ->CCT) {
+
+        Fail("svcn CCT changed: got %f expected %f", r ->CCT, w ->CCT);
+        goto Cleanup;
+    }
+
+    for (i = 0; i < 3u * N; i++) {
+
+        if (r ->Observer[i] != w ->Observer[i]) {
+
+            Fail("svcn observer value %d changed: got %f expected %f",
+                 i, r ->Observer[i], w ->Observer[i]);
+            goto Cleanup;
+        }
+    }
+
+    for (i = 0; i < M; i++) {
+
+        if (r ->Illuminant[i] != w ->Illuminant[i]) {
+
+            Fail("svcn illuminant value %d changed: got %f expected %f",
+                 i, r ->Illuminant[i], w ->Illuminant[i]);
+            goto Cleanup;
+        }
+    }
+
+    // These two triples are stored as float32, not XYZNumber (ICC.2 Table 69 says
+    // XYZNumber, but that is a spec-table error -- see the comment in
+    // Type_SpectralViewingConditions_Read). A round trip through cmsCIEXYZ's
+    // float64 members therefore loses only float64->float32 precision, well
+    // inside this tolerance.
+    if (fabs(r ->IlluminantXYZ.X - w ->IlluminantXYZ.X) > 1E-4 ||
+        fabs(r ->IlluminantXYZ.Y - w ->IlluminantXYZ.Y) > 1E-4 ||
+        fabs(r ->IlluminantXYZ.Z - w ->IlluminantXYZ.Z) > 1E-4 ||
+        fabs(r ->SurroundXYZ.X   - w ->SurroundXYZ.X)   > 1E-4 ||
+        fabs(r ->SurroundXYZ.Y   - w ->SurroundXYZ.Y)   > 1E-4 ||
+        fabs(r ->SurroundXYZ.Z   - w ->SurroundXYZ.Z)   > 1E-4) {
+
+        Fail("svcn XYZ triples changed");
+        goto Cleanup;
+    }
+
+    // Regression test for the bounds guard in Type_SpectralViewingConditions_Read:
+    // a bounds guard has already regressed once on this branch, so hand-corrupt
+    // the already-serialized tag's N field to claim 256 observer steps -- 0x0100,
+    // inside a tag whose actual on-disk size cannot possibly hold 256*3 float32
+    // values -- and confirm the reader rejects it rather than over-reading.
+    sigOffset = (cmsUInt32Number) -1;
+    for (k = 0; k + 8 <= Size; k++) {
+        if (memcmp(Mem + k, svcnSig, 8) == 0) { sigOffset = k; break; }
+    }
+
+    if (sigOffset == (cmsUInt32Number) -1) {
+        Fail("Could not locate the svcn type header in the serialized profile");
+        goto Cleanup;
+    }
+
+    corrupted = (cmsUInt8Number*) malloc(Size);
+    if (corrupted == NULL) { Fail("malloc failed"); goto Cleanup; }
+    memcpy(corrupted, Mem, Size);
+
+    // Signature (4) + reserved (4) + observerType (4) + ObserverStart (2) +
+    // ObserverEnd (2) puts N's big-endian uInt16 at offset +16 from the signature.
+    corrupted[sigOffset + 16] = 0x01;
+    corrupted[sigOffset + 17] = 0x00;              // N = 256
+
+    // Rejection goes through cmsSignalError(cmsERROR_CORRUPTION_DETECTED, ...)
+    // (src/cmsio0.c, the tag-read framework's "Corrupted tag" path), which the
+    // installed FatalErrorQuit handler treats as fatal, so it is swapped out for
+    // the non-fatal ErrorReportingFunction for the duration of this probe, exactly
+    // as other negative-case tests in this file do (e.g. CheckICCMAXFormulaRoundTrip).
+    // No goto/return/Fail between the swap and the restore, so the handler cannot
+    // be left non-fatal on any exit path from this window.
+    cmsSetLogErrorHandler(ErrorReportingFunction);
+    TrappedError = FALSE;
+    SimultaneousErrors = 0;
+
+    hBad = cmsOpenProfileFromMemTHR(DbgThread(), corrupted, Size);
+    if (hBad != NULL) {
+        rBad = (cmsSpectralViewingConditions*) cmsReadTag(hBad, cmsSigSpectralViewingConditionsTag);
+    }
+
+    cmsSetLogErrorHandler(FatalErrorQuit);
+    TrappedError = FALSE;
+    SimultaneousErrors = 0;
+
+    if (rBad != NULL) {
+
+        Fail("svcn declaring N = 0x0100 inside an undersized tag was not rejected");
+        goto Cleanup;
+    }
+
+    rc = 1;
+
+Cleanup:
+    if (corrupted != NULL) free(corrupted);
+    if (hBad != NULL) cmsCloseProfile(hBad);
+    if (Mem != NULL) free(Mem);
+    cmsFreeSpectralViewingConditions(w);
+    if (h != NULL) cmsCloseProfile(h);
+
+    return rc;
+}
+
+// Reads the committed hybrid printer fixture and checks both spectral tags against
+// values produced by the reference implementation, not by our own writer.
+static
+cmsInt32Number CheckSpectralTagsAgainstFixture(void)
+{
+    cmsHPROFILE outer = NULL, sub = NULL;
+    cmsICCData* Embedded;
+    cmsFloatArray* w;
+    cmsSpectralViewingConditions* sv;
+    cmsInt32Number rc = 0;
+
+    outer = cmsOpenProfileFromFileTHR(DbgThread(), "HybridPrinterCMYK_small.icc", "r");
+    if (outer == NULL) {
+
+        Fail("Could not open HybridPrinterCMYK_small.icc");
+        return 0;
+    }
+
+    Embedded = (cmsICCData*) cmsReadTag(outer, cmsSigEmbeddedV5ProfileTag);
+    if (Embedded == NULL) {
+
+        Fail("Fixture has no ICC5 tag");
+        goto Cleanup;
+    }
+
+    sub = cmsOpenProfileFromMemTHR(DbgThread(), Embedded ->data, Embedded ->len);
+    if (sub == NULL) {
+
+        Fail("Could not open the embedded ICC.2 profile");
+        goto Cleanup;
+    }
+
+    w = (cmsFloatArray*) cmsReadTag(sub, cmsSigSpectralWhitePointTag);
+    if (w == NULL) {
+
+        Fail("Fixture sub-profile has no readable swpt");
+        goto Cleanup;
+    }
+
+    if (w ->nValues != 36) {
+
+        Fail("Fixture swpt has %d values, expected 36", w ->nValues);
+        goto Cleanup;
+    }
+
+    if (fabs(w ->Values[0] - 0.27557) > 1E-4) {
+
+        Fail("Fixture swpt[0] is %f, expected 0.27557", w ->Values[0]);
+        goto Cleanup;
+    }
+
+    sv = (cmsSpectralViewingConditions*) cmsReadTag(sub, cmsSigSpectralViewingConditionsTag);
+    if (sv == NULL) {
+
+        Fail("Fixture sub-profile has no readable svcn");
+        goto Cleanup;
+    }
+
+    if (sv ->ObserverType != 1) {
+
+        Fail("Fixture observer type is %d, expected 1 (CIE 1931)", sv ->ObserverType);
+        goto Cleanup;
+    }
+
+    if (sv ->ObserverSteps != 81 || sv ->IlluminantSteps != 81) {
+
+        Fail("Fixture svcn steps are N=%d M=%d, expected 81 and 81",
+             sv ->ObserverSteps, sv ->IlluminantSteps);
+        goto Cleanup;
+    }
+
+    // 380 and 780 are exactly representable in float16, so this compares exactly
+    // (to floating point noise).
+    if (fabs(sv ->ObserverStart - 380.0) > 1E-5 || fabs(sv ->ObserverEnd - 780.0) > 1E-5) {
+
+        Fail("Fixture observer range is %f..%f, expected 380..780",
+             sv ->ObserverStart, sv ->ObserverEnd);
+        goto Cleanup;
+    }
+
+    // The first CMF triple is the textbook CIE 1931 tristimulus at 380 nm, which is
+    // also what proves the matrix is stored as X-vector then Y then Z rather than
+    // interleaved: these three come from the heads of three separate vectors.
+    if (fabs(sv ->Observer[0] - 0.001370) > 1E-5 ||
+        fabs(sv ->Observer[81] - 0.000040) > 1E-5 ||
+        fabs(sv ->Observer[162] - 0.006450) > 1E-5) {
+
+        Fail("Fixture first CMF triple is %f/%f/%f, expected 0.001370/0.000040/0.006450",
+             sv ->Observer[0], sv ->Observer[81], sv ->Observer[162]);
+        goto Cleanup;
+    }
+
+    if (sv ->IlluminantType != 1) {
+
+        Fail("Fixture illuminant type is %d, expected 1 (D50)", sv ->IlluminantType);
+        goto Cleanup;
+    }
+
+    // 5000 is exact in float32, so this compares exactly (to floating point noise).
+    if (fabs(sv ->CCT - 5000.0) > 1E-5) {
+
+        Fail("Fixture CCT is %f, expected 5000", sv ->CCT);
+        goto Cleanup;
+    }
+
+    if (fabs(sv ->Illuminant[0] - 24.457) > 1E-2) {
+
+        Fail("Fixture illuminant[0] is %f, expected about 24.457", sv ->Illuminant[0]);
+        goto Cleanup;
+    }
+
+    // ICC.2 Table 69 says XYZNumber (s15Fixed16) for these two triples, but the
+    // reference implementation and this fixture both encode them as float32 --
+    // see the matching comment in Type_SpectralViewingConditions_Read. Pinned to
+    // the fixture's actual bytes (43 1a 47 7f / 43 20 00 00 / 43 03 f2 db as
+    // float32 = 154.279 / 160.0 / 131.949, i.e. D50 at 160 cd/m2) rather than
+    // just checking Y > 0: reading these bytes as s15Fixed16 instead would give
+    // a physically nonsensical near-equal-energy white at Y = 17184, which a
+    // Y > 0 check alone cannot catch. In this fixture the illuminant and
+    // surround triples happen to be byte-identical, so this test cannot detect
+    // an illuminant/surround swap -- only that both decode to the right value.
+    if (fabs(sv ->IlluminantXYZ.X - 154.279) > 1E-3 ||
+        fabs(sv ->IlluminantXYZ.Y - 160.0)   > 1E-3 ||
+        fabs(sv ->IlluminantXYZ.Z - 131.949) > 1E-3 ||
+        fabs(sv ->SurroundXYZ.X   - 154.279) > 1E-3 ||
+        fabs(sv ->SurroundXYZ.Y   - 160.0)   > 1E-3 ||
+        fabs(sv ->SurroundXYZ.Z   - 131.949) > 1E-3) {
+
+        Fail("Fixture svcn illuminant/surround XYZ is %f/%f/%f and %f/%f/%f, expected 154.279/160.0/131.949 for both",
+             sv ->IlluminantXYZ.X, sv ->IlluminantXYZ.Y, sv ->IlluminantXYZ.Z,
+             sv ->SurroundXYZ.X, sv ->SurroundXYZ.Y, sv ->SurroundXYZ.Z);
+        goto Cleanup;
+    }
+
+    rc = 1;
+
+Cleanup:
+    if (sub != NULL) cmsCloseProfile(sub);
+    if (outer != NULL) cmsCloseProfile(outer);
+
+    return rc;
+}
+
+// Identity sampler for a float CLUT: Cargo points at the channel count.
+static
+cmsInt32Number IdentitySamplerFloatForHybrid(const cmsFloat32Number In[], cmsFloat32Number Out[], void* Cargo)
+{
+    cmsUInt32Number nChan = *(cmsUInt32Number*) Cargo;
+    cmsUInt32Number i;
+
+    for (i = 0; i < nChan; i++)
+        Out[i] = In[i];
+
+    return 1;
+}
+
+// Builds a hybrid printer profile from nothing and reads every spectral part back.
+// If this cannot be written without hand-assembling tags, the feature has not
+// achieved its goal.
+static
+cmsInt32Number CheckAuthorHybridProfile(void)
+{
+    cmsHPROFILE sub = NULL, outer = NULL, reopened = NULL, extracted = NULL;
+    cmsSpectralViewingConditions* sv = NULL;
+    cmsFloatArray* w = NULL;
+    cmsPipeline* lut = NULL;
+    cmsICCData* Embedded;
+    cmsUInt8Number* SubMem = NULL;
+    cmsUInt8Number* OuterMem = NULL;
+    cmsUInt32Number SubSize = 0, OuterSize = 0;
+    cmsUInt32Number i;
+    cmsUInt32Number ChanCount;
+    cmsInt32Number rc = 0;
+    const cmsUInt16Number Channels = 4;
+
+    ChanCount = Channels;
+
+    // ---- the ICC.2 sub-profile ----
+    sub = cmsCreateProfilePlaceholder(DbgThread());
+    if (sub == NULL) return 0;
+
+    cmsSetProfileVersion(sub, 5.0);
+    cmsSetDeviceClass(sub, cmsSigOutputClass);
+    cmsSetColorSpace(sub, cmsSigCmykData);
+    cmsSetPCS(sub, cmsSigLabData);
+
+    // 'rs' 0004h: reflectance spectra, 4 channels (ICC.2 Table 21)
+    if (!cmsSetSpectralPCS(sub, 0x72730000u | Channels)) {
+
+        Fail("cmsSetSpectralPCS refused a version 5.0 profile");
+        goto Cleanup;
+    }
+
+    if (!cmsSetSpectralPCSRange(sub, 400.0f, 700.0f, Channels)) {
+
+        Fail("cmsSetSpectralPCSRange failed");
+        goto Cleanup;
+    }
+
+    w = cmsAllocFloatArray(DbgThread(), Channels);
+    if (w == NULL) goto Cleanup;
+
+    for (i = 0; i < Channels; i++)
+        w ->Values[i] = (cmsFloat32Number) (0.8 + i * 0.01);
+
+    if (!cmsWriteTag(sub, cmsSigSpectralWhitePointTag, w)) {
+
+        Fail("Could not write swpt into the authored sub-profile");
+        goto Cleanup;
+    }
+
+    sv = cmsAllocSpectralViewingConditions(DbgThread(), 3, 3);
+    if (sv == NULL) goto Cleanup;
+
+    sv ->ObserverType    = 1;
+    sv ->ObserverStart   = 400.0f;
+    sv ->ObserverEnd     = 700.0f;
+    sv ->IlluminantType  = 1;                   // D50
+    sv ->CCT             = 5000.0f;
+    sv ->IlluminantStart = 400.0f;
+    sv ->IlluminantEnd   = 700.0f;
+
+    for (i = 0; i < 9; i++)
+        sv ->Observer[i] = (cmsFloat32Number) (i + 1);
+
+    for (i = 0; i < 3; i++)
+        sv ->Illuminant[i] = (cmsFloat32Number) (100 + i);
+
+    sv ->IlluminantXYZ.X = 96.42; sv ->IlluminantXYZ.Y = 100.0; sv ->IlluminantXYZ.Z = 82.49;
+    sv ->SurroundXYZ.X   = 19.28; sv ->SurroundXYZ.Y   = 20.0;  sv ->SurroundXYZ.Z   = 16.50;
+
+    if (!cmsWriteTag(sub, cmsSigSpectralViewingConditionsTag, sv)) {
+
+        Fail("Could not write svcn into the authored sub-profile");
+        goto Cleanup;
+    }
+
+    // A minimal DToB3: 4 device channels in, 4 spectral channels out. The CLUT stage
+    // must hold float samples: _cmsStageAllocIdentityCLut builds a 16 bit CLUT, and
+    // the mpet element writer (Type_MPEclut_Write, src/cmstypes.c) refuses anything
+    // that is not HasFloatValues, so the identity grid is built directly as a float
+    // CLUT here instead.
+    lut = cmsPipelineAlloc(DbgThread(), Channels, Channels);
+    if (lut == NULL) goto Cleanup;
+
+    {
+        cmsStage* identity = cmsStageAllocCLutFloat(DbgThread(), 2, Channels, Channels, NULL);
+
+        if (identity == NULL || !cmsStageSampleCLutFloat(identity, IdentitySamplerFloatForHybrid, &ChanCount, 0)) {
+
+            if (identity != NULL) cmsStageFree(identity);
+            Fail("Could not build the authored DToB3 pipeline");
+            goto Cleanup;
+        }
+
+        if (!cmsPipelineInsertStage(lut, cmsAT_BEGIN, identity)) {
+
+            cmsStageFree(identity);
+            Fail("Could not build the authored DToB3 pipeline");
+            goto Cleanup;
+        }
+    }
+
+    if (!cmsWriteTag(sub, cmsSigDToB3Tag, lut)) {
+
+        Fail("Could not write DToB3 into the authored sub-profile");
+        goto Cleanup;
+    }
+
+    if (!cmsSaveProfileToMem(sub, NULL, &SubSize) || SubSize == 0) goto Cleanup;
+
+    SubMem = (cmsUInt8Number*) malloc(SubSize);
+    if (SubMem == NULL) goto Cleanup;
+
+    if (!cmsSaveProfileToMem(sub, SubMem, &SubSize)) {
+
+        Fail("Could not save the authored sub-profile");
+        goto Cleanup;
+    }
+
+    // ---- wrap it in an ICC.1 profile's ICC5 tag ----
+    outer = cmsCreate_sRGBProfileTHR(DbgThread());
+    if (outer == NULL) goto Cleanup;
+
+    {
+        cmsICCData* Wrapper = (cmsICCData*) malloc(sizeof(cmsICCData) + SubSize);
+
+        if (Wrapper == NULL) goto Cleanup;
+
+        Wrapper ->len  = SubSize;
+        Wrapper ->flag = 0;
+        memcpy(Wrapper ->data, SubMem, SubSize);
+
+        if (!cmsWriteTag(outer, cmsSigEmbeddedV5ProfileTag, Wrapper)) {
+
+            Fail("Could not write the ICC5 tag");
+            free(Wrapper);
+            goto Cleanup;
+        }
+
+        free(Wrapper);
+    }
+
+    if (!cmsSaveProfileToMem(outer, NULL, &OuterSize) || OuterSize == 0) goto Cleanup;
+
+    OuterMem = (cmsUInt8Number*) malloc(OuterSize);
+    if (OuterMem == NULL) goto Cleanup;
+
+    if (!cmsSaveProfileToMem(outer, OuterMem, &OuterSize)) goto Cleanup;
+
+    // ---- read the whole thing back ----
+    reopened = cmsOpenProfileFromMemTHR(DbgThread(), OuterMem, OuterSize);
+    if (reopened == NULL) {
+
+        Fail("Could not reopen the authored outer profile");
+        goto Cleanup;
+    }
+
+    Embedded = (cmsICCData*) cmsReadTag(reopened, cmsSigEmbeddedV5ProfileTag);
+    if (Embedded == NULL || Embedded ->len != SubSize) {
+
+        Fail("Authored ICC5 tag did not survive: len %d, expected %d",
+             Embedded == NULL ? 0 : Embedded ->len, SubSize);
+        goto Cleanup;
+    }
+
+    extracted = cmsOpenProfileFromMemTHR(DbgThread(), Embedded ->data, Embedded ->len);
+    if (extracted == NULL) {
+
+        Fail("Could not open the authored sub-profile out of the ICC5 tag");
+        goto Cleanup;
+    }
+
+    if (cmsGetSpectralPCS(extracted) != (0x72730000u | Channels)) {
+
+        Fail("Authored spectral PCS came back as %x, expected %x",
+             cmsGetSpectralPCS(extracted), 0x72730000u | Channels);
+        goto Cleanup;
+    }
+
+    {
+        cmsFloatArray* gotW = (cmsFloatArray*) cmsReadTag(extracted, cmsSigSpectralWhitePointTag);
+        cmsSpectralViewingConditions* gotV =
+            (cmsSpectralViewingConditions*) cmsReadTag(extracted, cmsSigSpectralViewingConditionsTag);
+
+        if (gotW == NULL || gotW ->nValues != Channels) {
+
+            Fail("Authored swpt did not survive");
+            goto Cleanup;
+        }
+
+        for (i = 0; i < Channels; i++) {
+
+            if (fabs(gotW ->Values[i] - w ->Values[i]) > 1E-6) {
+
+                Fail("Authored swpt value %d changed", i);
+                goto Cleanup;
+            }
+        }
+
+        if (gotV == NULL || gotV ->ObserverSteps != 3 || gotV ->IlluminantSteps != 3 ||
+            gotV ->IlluminantType != 1) {
+
+            Fail("Authored svcn did not survive");
+            goto Cleanup;
+        }
+
+        // Dimensions alone are not proof the arrays made it through the ICC5
+        // wrapper -- check one value out of each. Observer[0] was written as
+        // (0+1) = 1.0, Illuminant[0] as (100+0) = 100.0.
+        if (gotV ->Observer == NULL || fabs(gotV ->Observer[0] - 1.0) > 1E-6) {
+
+            Fail("Authored svcn Observer[0] did not survive: got %f, expected 1.0",
+                 gotV ->Observer == NULL ? -1.0 : gotV ->Observer[0]);
+            goto Cleanup;
+        }
+
+        if (gotV ->Illuminant == NULL || fabs(gotV ->Illuminant[0] - 100.0) > 1E-6) {
+
+            Fail("Authored svcn Illuminant[0] did not survive: got %f, expected 100.0",
+                 gotV ->Illuminant == NULL ? -1.0 : gotV ->Illuminant[0]);
+            goto Cleanup;
+        }
+    }
+
+    // A bare non-NULL check here would not catch the identity CLUT silently
+    // degrading to the zero-filled grid a naive DToB3 stage would produce, so
+    // evaluate the round-tripped pipeline at both exact grid corners of the 2 node
+    // per side float CLUT -- 0.0 and 1.0, where identity must hold exactly to
+    // float precision -- plus an interior point, where linear interpolation of a
+    // genuinely identity-shaped grid is still exact.
+    {
+        cmsPipeline* gotLut = (cmsPipeline*) cmsReadTag(extracted, cmsSigDToB3Tag);
+        cmsFloat32Number Probe[3][4] = {
+            { 0.0f, 0.0f, 0.0f, 0.0f },
+            { 1.0f, 1.0f, 1.0f, 1.0f },
+            { 0.37f, 0.62f, 0.05f, 0.91f }
+        };
+        cmsUInt32Number p;
+
+        if (gotLut == NULL) {
+
+            Fail("Authored DToB3 did not survive");
+            goto Cleanup;
+        }
+
+        for (p = 0; p < 3; p++) {
+
+            cmsFloat32Number Out[MAX_STAGE_CHANNELS];
+
+            memset(Out, 0, sizeof(Out));
+            cmsPipelineEvalFloat(Probe[p], Out, gotLut);
+
+            for (i = 0; i < Channels; i++) {
+
+                if (fabs(Out[i] - Probe[p][i]) > 1E-4) {
+
+                    Fail("Authored DToB3 probe %d channel %d: got %f, expected %f",
+                         p, i, Out[i], Probe[p][i]);
+                    goto Cleanup;
+                }
+            }
+        }
+    }
+
+    rc = 1;
+
+Cleanup:
+    if (lut != NULL) cmsPipelineFree(lut);
+    cmsFreeFloatArray(w);
+    cmsFreeSpectralViewingConditions(sv);
+    if (SubMem != NULL) free(SubMem);
+    if (OuterMem != NULL) free(OuterMem);
+    if (extracted != NULL) cmsCloseProfile(extracted);
+    if (reopened != NULL) cmsCloseProfile(reopened);
+    if (outer != NULL) cmsCloseProfile(outer);
+    if (sub != NULL) cmsCloseProfile(sub);
+
+    return rc;
+}
+
+// Builds a one-segment curve of a given iccMAX formula type and evaluates it.
+// nProbes is the number of (In, Expected) pairs to check; all 10 Params slots
+// are always copied into the segment regardless of how many a given type uses.
+static
+cmsInt32Number TryFormulaSegment(cmsInt32Number Type,
+                                 const cmsFloat64Number* Params,
+                                 const cmsFloat32Number* In,
+                                 const cmsFloat32Number* Expected,
+                                 cmsUInt32Number nProbes,
+                                 cmsFloat64Number Tolerance)
+{
+    cmsCurveSegment Seg[1];
+    cmsToneCurve* Curve;
+    cmsUInt32Number i;
+
+    memset(Seg, 0, sizeof(Seg));
+
+    Seg[0].x0 = -1e22f;
+    Seg[0].x1 = 1e22f;
+    Seg[0].Type = Type;
+    for (i = 0; i < 10; i++)
+        Seg[0].Params[i] = Params[i];
+
+    Curve = cmsBuildSegmentedToneCurve(DbgThread(), 1, Seg);
+    if (Curve == NULL) {
+        Fail("cmsBuildSegmentedToneCurve failed for type %d", Type);
+        return 0;
+    }
+
+    for (i = 0; i < nProbes; i++) {
+
+        cmsFloat32Number got = cmsEvalToneCurveFloat(Curve, In[i]);
+
+        // isnan() must be checked before the tolerance comparison: every relational
+        // comparison involving NaN is false under IEEE 754, so "fabs(got - Expected[i])
+        // > Tolerance" would silently pass a NaN result instead of failing it.
+        if (isnan(got)) {
+            Fail("type %d at %f: got NaN, expected %f", Type, In[i], Expected[i]);
+            cmsFreeToneCurve(Curve);
+            return 0;
+        }
+
+        if (fabs(got - Expected[i]) > Tolerance) {
+            Fail("type %d at %f: got %f, expected %f", Type, In[i], got, Expected[i]);
+            cmsFreeToneCurve(Curve);
+            return 0;
+        }
+    }
+
+    cmsFreeToneCurve(Curve);
+    return 1;
+}
+
+static
+cmsInt32Number CheckICCMAXFormulaSegments(void)
+{
+    // Type 9:  Y = a*(b*X + c)^g + d          g=2 a=3 b=1 c=0 d=1
+    {
+        static const cmsFloat64Number P[10] = { 2, 3, 1, 0, 1, 0, 0, 0, 0, 0 };
+        static const cmsFloat32Number In[]  = { 2.0f, 0.0f };
+        static const cmsFloat32Number Out[] = { 13.0f, 1.0f };
+
+        if (!TryFormulaSegment(9, P, In, Out, 2, 1e-5)) return 0;
+    }
+
+    // Type 10: Y = a*ln(d*X^g - b) + c        g=1 a=2 b=0 c=5 d=1
+    {
+        static const cmsFloat64Number P[10] = { 1, 2, 0, 5, 1, 0, 0, 0, 0, 0 };
+        static const cmsFloat32Number In[]  = { 1.0f, 0.25f };
+        static const cmsFloat32Number Out[] = { 5.0f, 2.2274113f };
+
+        if (!TryFormulaSegment(10, P, In, Out, 2, 1e-5)) return 0;
+    }
+
+    // Type 11: Y = e*exp((d*X^g - c)/a) + b   g=1 a=2 b=1 c=0 d=2 e=3
+    {
+        static const cmsFloat64Number P[10] = { 1, 2, 1, 0, 2, 3, 0, 0, 0, 0 };
+        static const cmsFloat32Number In[]  = { 0.0f, 1.0f };
+        static const cmsFloat32Number Out[] = { 4.0f, 9.1548455f };
+
+        if (!TryFormulaSegment(11, P, In, Out, 2, 1e-5)) return 0;
+    }
+
+    // Type 12: Y = d*(max(e*X^g - a,0)/(b - c*X^g))^w   w=2 g=1 a=0 b=2 c=0 d=1 e=1
+    // Chosen so transposing omega and gamma would give 0.5 at X=1, not 0.25
+    {
+        static const cmsFloat64Number P[10] = { 2, 1, 0, 2, 0, 1, 1, 0, 0, 0 };
+        static const cmsFloat32Number In[]  = { 1.0f, 2.0f };
+        static const cmsFloat32Number Out[] = { 0.25f, 1.0f };
+
+        if (!TryFormulaSegment(12, P, In, Out, 2, 1e-5)) return 0;
+    }
+
+    // Type 13: Y = d*((a + b*X^g)/(1 + c*X^g))^w        w=2 g=1 a=0 b=1 c=1 d=1
+    // Same guard against a transposed omega/gamma: it would give 0.5 at X=1
+    {
+        static const cmsFloat64Number P[10] = { 2, 1, 0, 1, 1, 1, 0, 0, 0, 0 };
+        static const cmsFloat32Number In[]  = { 1.0f, 3.0f };
+        static const cmsFloat32Number Out[] = { 0.25f, 0.5625f };
+
+        if (!TryFormulaSegment(13, P, In, Out, 2, 1e-5)) return 0;
+    }
+
+    return 1;
+}
+
+// Drives every degenerate branch on purpose and asserts the documented finite
+// fallback, not merely that nothing crashed.
+static
+cmsInt32Number CheckICCMAXFormulaDegenerate(void)
+{
+    // Type 9 with b*X + c negative -> d
+    {
+        static const cmsFloat64Number P[10] = { 0.5, 3, 1, 0, 7, 0, 0, 0, 0, 0 };
+        static const cmsFloat32Number In[]  = { -1.0f };
+        static const cmsFloat32Number Out[] = { 7.0f };
+
+        if (!TryFormulaSegment(9, P, In, Out, 1, 1e-5)) return 0;
+    }
+
+    // Type 10 with a non-positive log argument -> c
+    {
+        static const cmsFloat64Number P[10] = { 1, 2, 5, 11, 1, 0, 0, 0, 0, 0 };
+        static const cmsFloat32Number In[]  = { 1.0f };
+        static const cmsFloat32Number Out[] = { 11.0f };
+
+        if (!TryFormulaSegment(10, P, In, Out, 1, 1e-5)) return 0;
+    }
+
+    // Type 11 with a == 0 -> b
+    {
+        static const cmsFloat64Number P[10] = { 1, 0, 13, 0, 2, 3, 0, 0, 0, 0 };
+        static const cmsFloat32Number In[]  = { 0.5f };
+        static const cmsFloat32Number Out[] = { 13.0f };
+
+        if (!TryFormulaSegment(11, P, In, Out, 1, 1e-5)) return 0;
+    }
+
+    // Type 12 with a zero denominator (b - c*X^g == 0 at X = 1) -> 0
+    {
+        static const cmsFloat64Number P[10] = { 2, 1, 0, 1, 1, 5, 1, 0, 0, 0 };
+        static const cmsFloat32Number In[]  = { 1.0f };
+        static const cmsFloat32Number Out[] = { 0.0f };
+
+        if (!TryFormulaSegment(12, P, In, Out, 1, 1e-5)) return 0;
+    }
+
+    // Type 13 with a zero denominator (1 + c*X^g == 0 at X = 1, c = -1) -> 0
+    {
+        static const cmsFloat64Number P[10] = { 2, 1, 0, 1, -1, 5, 0, 0, 0, 0 };
+        static const cmsFloat32Number In[]  = { 1.0f };
+        static const cmsFloat32Number Out[] = { 0.0f };
+
+        if (!TryFormulaSegment(13, P, In, Out, 1, 1e-5)) return 0;
+    }
+
+    return 1;
+}
+
+// Writes a segmented curve holding one segment of each iccMAX formula type into a
+// DToB3 mpet, reloads it, and checks the type and every parameter survived. This is
+// what exercises ParamsByType on both sides: a wrong count there would misread the
+// following segment's bytes rather than fail cleanly. It then corrupts the serialized
+// bytes so the first segment claims ICC function type 8 and confirms the reader still
+// rejects it at the wire level, exactly as it does for the in-memory writer path.
+static
+cmsInt32Number CheckICCMAXFormulaRoundTrip(void)
+{
+    static const cmsInt32Number Types[5] = { 9, 10, 11, 12, 13 };
+    static const cmsUInt32Number Counts[5] = { 5, 5, 6, 7, 6 };
+    static const cmsFloat64Number P[5][10] = {
+        { 2, 3, 1, 0, 1, 0, 0, 0, 0, 0 },
+        { 1, 2, 0, 5, 1, 0, 0, 0, 0, 0 },
+        { 1, 2, 1, 0, 2, 3, 0, 0, 0, 0 },
+        { 2, 1, 0, 2, 0, 1, 1, 0, 0, 0 },
+        { 2, 1, 0, 1, 1, 1, 0, 0, 0, 0 }
+    };
+    static const cmsUInt8Number FormulaSeg[4] = { 0x70, 0x61, 0x72, 0x66 }; // 'parf'
+
+    cmsHPROFILE h = NULL;
+    cmsHPROFILE h2 = NULL;
+    cmsHPROFILE h3 = NULL;
+    cmsPipeline* pipe = NULL;
+    cmsPipeline* ReadPipe;
+    cmsPipeline* BadPipe;
+    cmsToneCurve* Curves[1];
+    cmsCurveSegment Seg[5];
+    cmsStage* stage;
+    _cmsStageToneCurvesData* Data;
+    cmsUInt32Number clen = 0;
+    cmsUInt32Number i, j;
+    cmsUInt32Number rc = 0;
+    cmsUInt32Number sigOffset;
+    char* data = NULL;
+    char* corrupted = NULL;
+
+    // One curve, five segments, one per formula type. Breakpoints are arbitrary but
+    // must be increasing; the values are not evaluated here, only round-tripped.
+    memset(Seg, 0, sizeof(Seg));
+    for (i = 0; i < 5; i++) {
+
+        Seg[i].x0 = (i == 0) ? -1e22f : (cmsFloat32Number) i;
+        Seg[i].x1 = (i == 4) ? 1e22f  : (cmsFloat32Number) (i + 1);
+        Seg[i].Type = Types[i];
+
+        for (j = 0; j < 10; j++)
+            Seg[i].Params[j] = P[i][j];
+    }
+
+    Curves[0] = cmsBuildSegmentedToneCurve(DbgThread(), 5, Seg);
+    if (Curves[0] == NULL) { Fail("cmsBuildSegmentedToneCurve failed"); return 0; }
+
+    pipe = cmsPipelineAlloc(DbgThread(), 1, 1);
+    if (pipe == NULL) { Fail("cmsPipelineAlloc failed"); goto Error; }
+
+    if (!cmsPipelineInsertStage(pipe, cmsAT_END, cmsStageAllocToneCurves(DbgThread(), 1, Curves))) {
+        Fail("cmsStageAllocToneCurves failed");
+        goto Error;
+    }
+
+    h = cmsCreateProfilePlaceholder(DbgThread());
+    if (h == NULL) { Fail("cmsCreateProfilePlaceholder failed"); goto Error; }
+
+    cmsSetProfileVersion(h, 5.0);
+    cmsSetDeviceClass(h, cmsSigOutputClass);
+    cmsSetColorSpace(h, cmsSigGrayData);
+    cmsSetPCS(h, cmsSigLabData);
+
+    if (!cmsWriteTag(h, cmsSigDToB3Tag, pipe)) { Fail("cmsWriteTag DToB3 failed"); goto Error; }
+
+    if (!cmsSaveProfileToMem(h, NULL, &clen)) { Fail("cmsSaveProfileToMem size failed"); goto Error; }
+    data = (char*) malloc(clen);
+    if (data == NULL) { Fail("malloc failed"); goto Error; }
+    if (!cmsSaveProfileToMem(h, data, &clen)) { Fail("cmsSaveProfileToMem failed"); goto Error; }
+
+    h2 = cmsOpenProfileFromMem(data, clen);
+    if (h2 == NULL) { Fail("cmsOpenProfileFromMem failed"); goto Error; }
+
+    ReadPipe = (cmsPipeline*) cmsReadTag(h2, cmsSigDToB3Tag);
+    if (ReadPipe == NULL) { Fail("cmsReadTag DToB3 returned NULL"); goto Error; }
+
+    stage = cmsPipelineGetPtrToFirstStage(ReadPipe);
+    if (stage == NULL || cmsStageType(stage) != cmsSigCurveSetElemType) {
+        Fail("First stage is not a curve set");
+        goto Error;
+    }
+
+    Data = (_cmsStageToneCurvesData*) stage ->Data;
+    if (Data ->TheCurves[0] ->nSegments != 5) {
+        Fail("Got %d segments, expected 5", Data ->TheCurves[0] ->nSegments);
+        goto Error;
+    }
+
+    for (i = 0; i < 5; i++) {
+
+        cmsCurveSegment* s = &Data ->TheCurves[0] ->Segments[i];
+
+        if (s ->Type != Types[i]) {
+            Fail("Segment %d: type %d, expected %d", i, s ->Type, Types[i]);
+            goto Error;
+        }
+
+        for (j = 0; j < Counts[i]; j++) {
+
+            if (fabs(s ->Params[j] - P[i][j]) > 1e-5) {
+                Fail("Segment %d param %d: got %f, expected %f", i, j, s ->Params[j], P[i][j]);
+                goto Error;
+            }
+        }
+    }
+
+    // Wire-level negative case: hand-corrupt the serialized bytes so the first
+    // formula segment (stored on the wire as ICC function type 9 - 6 = 3) instead
+    // claims ICC function type 8, one past the highest type this branch supports
+    // (7), and confirm the reader still rejects it. Rejection goes through
+    // cmsSignalError(cmsERROR_CORRUPTION_DETECTED, ...), which the installed
+    // FatalErrorQuit handler treats as fatal, so it is swapped out for the
+    // non-fatal ErrorReportingFunction for the duration of this probe, exactly as
+    // other negative-case tests in this file do (e.g. CheckSingleSampledCurve).
+    sigOffset = (cmsUInt32Number) -1;
+    for (i = 0; i + 4 <= clen; i++) {
+        if (memcmp(data + i, FormulaSeg, 4) == 0) { sigOffset = i; break; }
+    }
+    if (sigOffset == (cmsUInt32Number) -1) {
+        Fail("Could not locate a formula curve segment signature in the serialized profile");
+        goto Error;
+    }
+
+    corrupted = (char*) malloc(clen);
+    if (corrupted == NULL) { Fail("malloc failed"); goto Error; }
+    memcpy(corrupted, data, clen);
+
+    // Signature (4 bytes) + reserved (4 bytes) + Type (2 bytes, big endian) ...
+    corrupted[sigOffset + 8] = (char) 0x00;
+    corrupted[sigOffset + 9] = (char) 0x08;
+
+    cmsSetLogErrorHandler(ErrorReportingFunction);
+    TrappedError = FALSE;
+    SimultaneousErrors = 0;
+
+    BadPipe = NULL;
+    h3 = cmsOpenProfileFromMem(corrupted, clen);
+    if (h3 != NULL) {
+        BadPipe = (cmsPipeline*) cmsReadTag(h3, cmsSigDToB3Tag);
+    }
+
+    cmsSetLogErrorHandler(FatalErrorQuit);
+    TrappedError = FALSE;
+    SimultaneousErrors = 0;
+
+    if (h3 != NULL && BadPipe != NULL) {
+        Fail("ICC function type 8 was not rejected at the wire level");
+        goto Error;
+    }
+
+    rc = 1;
+
+Error:
+    if (h != NULL) cmsCloseProfile(h);
+    if (h2 != NULL) cmsCloseProfile(h2);
+    if (h3 != NULL) cmsCloseProfile(h3);
+    if (pipe != NULL) cmsPipelineFree(pipe);
+    if (Curves[0] != NULL) cmsFreeToneCurve(Curves[0]);
+    if (data != NULL) free(data);
+    if (corrupted != NULL) free(corrupted);
+    return rc;
+}
+
+// ICC.2 Table 113 bounds a clutElement's input count (P <= 16) but places no bound at all
+// on its output count -- the spec pins Q only where it carries meaning, as in
+// emissionCLUTElement and reflectanceCLUTElement, which both require Q = 3. Multi process
+// elements are not constrained by the 16 channel ceiling that applies to a profile's
+// colour spaces. So a spectral transform may be built from a plain 'clut' rather than the
+// extended 'xclt', and such a profile must load.
+static
+cmsInt32Number CheckWidePlainClutElement(void)
+{
+    cmsHPROFILE h = NULL;
+    cmsPipeline* lut = NULL;
+    cmsPipeline* got;
+    cmsUInt8Number* Mem = NULL;
+    cmsUInt32Number Size = 0;
+    cmsInt32Number rc = 0;
+    const cmsUInt32Number In = 4, Out = 36;
+
+    h = cmsCreateProfilePlaceholder(DbgThread());
+    if (h == NULL) return 0;
+
+    cmsSetProfileVersion(h, 5.0);
+
+    lut = cmsPipelineAlloc(DbgThread(), In, Out);
+    if (lut == NULL) goto Cleanup;
+
+    // A plain clutElement, not an extendedCLUTElement: 2 grid points per axis, 36 outputs
+    if (!cmsPipelineInsertStage(lut, cmsAT_BEGIN,
+                                cmsStageAllocCLutFloat(DbgThread(), 2, In, Out, NULL))) {
+
+        Fail("Could not build a wide plain clut pipeline");
+        goto Cleanup;
+    }
+
+    if (!cmsWriteTag(h, cmsSigDToB3Tag, lut)) {
+
+        Fail("Could not write a wide plain clut into DToB3");
+        goto Cleanup;
+    }
+
+    if (!cmsSaveProfileToMem(h, NULL, &Size) || Size == 0) goto Cleanup;
+
+    Mem = (cmsUInt8Number*) malloc(Size);
+    if (Mem == NULL) goto Cleanup;
+
+    if (!cmsSaveProfileToMem(h, Mem, &Size)) goto Cleanup;
+
+    cmsCloseProfile(h);
+
+    h = cmsOpenProfileFromMemTHR(DbgThread(), Mem, Size);
+    if (h == NULL) {
+
+        Fail("Could not reopen the wide plain clut profile");
+        goto Cleanup;
+    }
+
+    // Swap the fatal handler out around the read. If this ever regresses, the reader
+    // signals a corrupted tag, and under FatalErrorQuit that would kill the whole run
+    // partway through instead of reporting a failure here -- which would also make the
+    // Fail below unreachable.
+    cmsSetLogErrorHandler(ErrorReportingFunction);
+    got = (cmsPipeline*) cmsReadTag(h, cmsSigDToB3Tag);
+    cmsSetLogErrorHandler(FatalErrorQuit);
+
+    if (got == NULL) {
+
+        Fail("A profile with a wide plain clutElement failed to load");
+        goto Cleanup;
+    }
+
+    if (cmsPipelineInputChannels(got) != In || cmsPipelineOutputChannels(got) != Out) {
+
+        Fail("Wide plain clut came back as %d to %d channels, expected %d to %d",
+             cmsPipelineInputChannels(got), cmsPipelineOutputChannels(got), In, Out);
+        goto Cleanup;
+    }
+
+    rc = 1;
+
+Cleanup:
+    if (lut != NULL) cmsPipelineFree(lut);
+    if (Mem != NULL) free(Mem);
+    if (h != NULL) cmsCloseProfile(h);
+
+    return rc;
+}
+
+#endif /* CMS_USE_ICCMAX_SPECTRAL */
+
 // -----------------------------------------------------------------------------------------------------
 
 
@@ -9799,6 +12684,28 @@ int main(int argc, char* argv[])
     Check("Named color lists", CheckNamedColorList);
     Check("Create named color profile", CreateNamedColorProfile);
 
+    // CLUT allocation limits
+    Check("CLUT overflow rejected", CheckCLUTOverflowRejected);
+
+    // iccMAX (ICC.2)
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+    Check("Float16 IO", CheckFloat16IO);
+    Check("Extended CLUT element", CheckExtCLutElement);
+    Check("ExtCLUT all encoding types", CheckExtCLutAllEncodings);
+    Check("High channel count pipeline", CheckHighChannelPipeline);
+    Check("Spectral PCS preservation", CheckSpectralPCSPreservation);
+    Check("Single sampled curve", CheckSingleSampledCurve);
+    Check("Single sampled curve round trip", CheckSingleSampledCurveRoundTrip);
+    Check("Hybrid printer profile", CheckHybridPrinterProfile);
+    Check("Spectral white point round trip", CheckSpectralWhitePointRoundTrip);
+    Check("Spectral viewing conditions round trip", CheckSpectralViewingConditionsRoundTrip);
+    Check("Spectral tags against fixture", CheckSpectralTagsAgainstFixture);
+    Check("Author a hybrid printer profile", CheckAuthorHybridProfile);
+    Check("iccMAX formula segments", CheckICCMAXFormulaSegments);
+    Check("iccMAX formula degenerate cases", CheckICCMAXFormulaDegenerate);
+    Check("iccMAX formula round trip", CheckICCMAXFormulaRoundTrip);
+    Check("Wide plain clut element", CheckWidePlainClutElement);
+#endif
 
     // Profile I/O (this one is huge!)
     Check("Profile creation", CheckProfileCreation);

@@ -321,6 +321,43 @@ cmsBool CMSEXPORT  _cmsWriteFloat32Number(cmsIOHANDLER* io, cmsFloat32Number n)
     return TRUE;
 }
 
+#ifndef CMS_NO_HALF_SUPPORT
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+
+// Reads a float16Number (IEEE 754 half precision), widened to float32. Used by
+// the iccMAX spectralRange, extendedCLUTElement and singleSampledCurve encodings.
+// The conversion itself lives in cmshalf.c; this only handles IO and byte order.
+cmsBool CMSEXPORT  _cmsReadFloat16Number(cmsIOHANDLER* io, cmsFloat32Number* n)
+{
+    cmsUInt16Number tmp;
+
+    _cmsAssert(io != NULL);
+
+    if (io->Read(io, &tmp, sizeof(cmsUInt16Number), 1) != 1)
+        return FALSE;
+
+    if (n != NULL) *n = _cmsHalf2Float(_cmsAdjustEndianess16(tmp));
+
+    return TRUE;
+}
+
+// Writes a float32 as a float16Number (IEEE 754 half precision)
+cmsBool CMSEXPORT  _cmsWriteFloat16Number(cmsIOHANDLER* io, cmsFloat32Number n)
+{
+    cmsUInt16Number tmp;
+
+    _cmsAssert(io != NULL);
+
+    tmp = _cmsAdjustEndianess16(_cmsFloat2Half(n));
+    if (io -> Write(io, sizeof(cmsUInt16Number), &tmp) != 1)
+            return FALSE;
+
+    return TRUE;
+}
+
+#endif // CMS_USE_ICCMAX_SPECTRAL
+#endif // CMS_NO_HALF_SUPPORT
+
 cmsBool CMSEXPORT  _cmsWriteUInt64Number(cmsIOHANDLER* io, cmsUInt64Number* n)
 {
     cmsUInt64Number tmp;

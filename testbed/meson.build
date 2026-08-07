@@ -8,7 +8,7 @@ testcms_srcs = files(
 iccs = [
   'bad.icc', 'crayons.icc', 'test2.icc', 'test4.icc', 
   'bad_mpe.icc', 'ibm-t61.icc', 'test1.icc', 'test3.icc', 'test5.icc',
-  'toosmall.icc'
+  'toosmall.icc', 'HybridPrinterCMYK_small.icc'
 ]
 # fs=import('fs') - requires Meson >=0.53.0
 foreach icc : iccs

@@ -902,7 +902,16 @@ cmsBool _cmsReadHeader(_cmsICCPROFILE* Icc)
     _cmsAdjustEndianess64(&Icc -> attributes, &Header.attributes);
     Icc -> Version         = _cmsAdjustEndianess32(_validatedVersion(Header.version));
 
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+    // Gate on the major version only. The version field is binary coded decimal with
+    // the major version in byte 8, and per ICC.2:2023 7.2.6 a minor version change
+    // happens precisely when profiles conforming to the revised spec can still be
+    // processed by existing CMMs. Real iccMAX profiles declare 5.1, so a test against
+    // the whole word would turn them away for no reason.
+    if ((Icc->Version >> 24) > 0x05) {
+#else
     if (Icc->Version > 0x5000000) {
+#endif
         cmsSignalError(Icc->ContextID, cmsERROR_UNKNOWN_EXTENSION, "Unsupported profile version '0x%x'", Icc->Version);
         return FALSE;
     }
@@ -925,6 +934,36 @@ cmsBool _cmsReadHeader(_cmsICCPROFILE* Icc)
 
     // The profile ID are 32 raw bytes
     memmove(Icc ->ProfileID.ID32, Header.profileID.ID32, 16);
+
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+    // Pick up the spectral PCS, which lives in what ICC.1 calls the reserved area.
+    // reserved[0] is header byte 100, since profileID ends at byte 99. So the
+    // spectral PCS signature (bytes 100-103) is reserved[0..3] and the spectral
+    // range (bytes 104-109) is reserved[4..9]. Do not confuse these with the MCS
+    // signature at bytes 116-119, which is reserved[16..19].
+    //
+    // Only for v5 and above. ICC.1 says that area shall be zero but nothing enforces
+    // it, so junk in a v2 or v4 profile must not be reported as a spectral PCS.
+    if ((Icc ->Version >> 24) >= 0x05) {
+
+        cmsUInt32Number SpectralPCS;
+        cmsUInt16Number Start, End, Steps;
+
+        memmove(&SpectralPCS, Header.reserved + 0, 4);
+        Icc ->SpectralPCS = _cmsAdjustEndianess32(SpectralPCS);
+
+        if (Icc ->SpectralPCS != 0) {
+
+            memmove(&Start, Header.reserved + 4, 2);
+            memmove(&End,   Header.reserved + 6, 2);
+            memmove(&Steps, Header.reserved + 8, 2);
+
+            Icc ->SpectralPCSStart = _cmsHalf2Float(_cmsAdjustEndianess16(Start));
+            Icc ->SpectralPCSEnd   = _cmsHalf2Float(_cmsAdjustEndianess16(End));
+            Icc ->SpectralPCSSteps = _cmsAdjustEndianess16(Steps);
+        }
+    }
+#endif // CMS_USE_ICCMAX_SPECTRAL
 
 
     // Read tag directory
@@ -1039,6 +1078,28 @@ cmsBool _cmsWriteHeader(_cmsICCPROFILE* Icc, cmsUInt32Number UsedSpace)
     Header.creator      = _cmsAdjustEndianess32(Icc ->creator);
 
     memset(&Header.reserved, 0, sizeof(Header.reserved));
+
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+    // Put the spectral PCS back where it came from, at header bytes 100-109.
+    // reserved[0] is byte 100. Everything else in the reserved area stays zero,
+    // so a v5 profile using the bi-spectral range, MCS or sub-class fields does
+    // not survive a round trip through here.
+    //
+    // Only for v5 and above, mirroring the read side: those bytes are reserved in
+    // ICC.1, so nothing may be authored there in a v2 or v4 profile.
+    if (Icc ->SpectralPCS != 0 && (Icc ->Version >> 24) >= 0x05) {
+
+        cmsUInt32Number SpectralPCS = _cmsAdjustEndianess32(Icc ->SpectralPCS);
+        cmsUInt16Number Steps = _cmsAdjustEndianess16(Icc ->SpectralPCSSteps);
+        cmsUInt16Number Start = _cmsAdjustEndianess16(_cmsFloat2Half(Icc ->SpectralPCSStart));
+        cmsUInt16Number End   = _cmsAdjustEndianess16(_cmsFloat2Half(Icc ->SpectralPCSEnd));
+
+        memmove(Header.reserved + 0, &SpectralPCS, 4);
+        memmove(Header.reserved + 4, &Start, 2);
+        memmove(Header.reserved + 6, &End, 2);
+        memmove(Header.reserved + 8, &Steps, 2);
+    }
+#endif // CMS_USE_ICCMAX_SPECTRAL
 
     // Set profile ID. Endianness is always big endian
     memmove(&Header.profileID, &Icc ->ProfileID, 16);
@@ -1182,6 +1243,311 @@ void CMSEXPORT cmsSetPCS(cmsHPROFILE hProfile, cmsColorSpaceSignature pcs)
     _cmsICCPROFILE*  Icc = (_cmsICCPROFILE*) hProfile;
     Icc -> PCS = pcs;
 }
+
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+// The spectral PCS signature, from header bytes 100-103. Zero means the profile
+// does not use a spectrally-based PCS, which is always the case for ICC.1.
+cmsUInt32Number CMSEXPORT cmsGetSpectralPCS(cmsHPROFILE hProfile)
+{
+    _cmsICCPROFILE*  Icc = (_cmsICCPROFILE*) hProfile;
+    return Icc -> SpectralPCS;
+}
+
+// The spectral PCS is an ICC.2-only header field, so refuse to author one into a
+// profile that does not declare at least version 5. Set the version first. Returns
+// FALSE when the version gate rejects the call, so the caller can tell, rather than
+// having to read the field back to find out -- mirroring cmsSetSpectralPCSRange.
+cmsBool CMSEXPORT cmsSetSpectralPCS(cmsHPROFILE hProfile, cmsUInt32Number SpectralPCS)
+{
+    _cmsICCPROFILE*  Icc = (_cmsICCPROFILE*) hProfile;
+
+    if ((Icc ->Version >> 24) < 0x05) return FALSE;
+
+    Icc -> SpectralPCS = SpectralPCS;
+
+    return TRUE;
+}
+
+// Spectral colour space signatures pack a two character type identifier in the high
+// 16 bits and the channel count in the low 16 bits, e.g. 'rs' 0025h is reflectance
+// with 37 channels (ICC.2:2023 Table 21). Note that nothing here checks the count
+// against the steps field of the spectral range, which the spec requires to match.
+cmsUInt16Number CMSEXPORT cmsGetSpectralPCSChannels(cmsHPROFILE hProfile)
+{
+    _cmsICCPROFILE*  Icc = (_cmsICCPROFILE*) hProfile;
+
+    if (Icc -> SpectralPCS == 0) return 0;
+
+    return (cmsUInt16Number) (Icc -> SpectralPCS & 0xFFFF);
+}
+
+cmsBool CMSEXPORT cmsGetSpectralPCSRange(cmsHPROFILE hProfile,
+                                         cmsFloat32Number* Start,
+                                         cmsFloat32Number* End,
+                                         cmsUInt16Number* Steps)
+{
+    _cmsICCPROFILE*  Icc = (_cmsICCPROFILE*) hProfile;
+
+    if (Icc -> SpectralPCS == 0) return FALSE;
+
+    if (Start != NULL) *Start = Icc -> SpectralPCSStart;
+    if (End   != NULL) *End   = Icc -> SpectralPCSEnd;
+    if (Steps != NULL) *Steps = Icc -> SpectralPCSSteps;
+
+    return TRUE;
+}
+
+cmsBool CMSEXPORT cmsSetSpectralPCSRange(cmsHPROFILE hProfile,
+                                         cmsFloat32Number Start,
+                                         cmsFloat32Number End,
+                                         cmsUInt16Number Steps)
+{
+    _cmsICCPROFILE*  Icc = (_cmsICCPROFILE*) hProfile;
+
+    // ICC.2-only header field, so the profile has to declare at least version 5
+    if ((Icc ->Version >> 24) < 0x05) return FALSE;
+
+    // The range is only meaningful alongside a spectral PCS signature, and the
+    // spec requires it to be zero when that signature is zero
+    if (Icc -> SpectralPCS == 0) return FALSE;
+
+    Icc -> SpectralPCSStart = Start;
+    Icc -> SpectralPCSEnd   = End;
+    Icc -> SpectralPCSSteps = Steps;
+
+    return TRUE;
+}
+
+// Allocates a spectral value array, zeroed, defaulting to the lossless encoding.
+// The upper bound is the largest channel count an ICC.2 spectral PCS signature can
+// express, since its channel count is a 16 bit field (ICC.2 Table 21).
+cmsFloatArray* CMSEXPORT cmsAllocFloatArray(cmsContext ContextID, cmsUInt32Number nValues)
+{
+    cmsFloatArray* v;
+
+    if (nValues == 0 || nValues > 0xFFFF) return NULL;
+
+    v = (cmsFloatArray*) _cmsMallocZero(ContextID, sizeof(cmsFloatArray));
+    if (v == NULL) return NULL;
+
+    // Set ContextID before anything can fail, so every free path uses the same
+    // allocator the allocation came from
+    v ->ContextID = ContextID;
+
+    v ->Values = (cmsFloat32Number*) _cmsCalloc(ContextID, nValues, sizeof(cmsFloat32Number));
+    if (v ->Values == NULL) {
+
+        _cmsFree(ContextID, v);
+        return NULL;
+    }
+
+    v ->nValues   = nValues;
+
+    return v;
+}
+
+void CMSEXPORT cmsFreeFloatArray(cmsFloatArray* v)
+{
+    if (v == NULL) return;
+
+    if (v ->Values != NULL) _cmsFree(v ->ContextID, v ->Values);
+
+    _cmsFree(v ->ContextID, v);
+}
+
+void CMSEXPORT cmsFreeSpectralViewingConditions(cmsSpectralViewingConditions* v)
+{
+    if (v == NULL) return;
+
+    if (v ->Observer   != NULL) _cmsFree(v ->ContextID, v ->Observer);
+    if (v ->Illuminant != NULL) _cmsFree(v ->ContextID, v ->Illuminant);
+
+    _cmsFree(v ->ContextID, v);
+}
+
+// Observer and illuminant step counts are independent of each other and of the
+// spectral PCS channel count (ICC.2:2023 Table 69) -- nothing here assumes they agree.
+cmsSpectralViewingConditions* CMSEXPORT cmsAllocSpectralViewingConditions(cmsContext ContextID,
+                                                                          cmsUInt16Number ObserverSteps,
+                                                                          cmsUInt16Number IlluminantSteps)
+{
+    cmsSpectralViewingConditions* v;
+
+    if (ObserverSteps == 0 || IlluminantSteps == 0) return NULL;
+
+    v = (cmsSpectralViewingConditions*) _cmsMallocZero(ContextID, sizeof(cmsSpectralViewingConditions));
+    if (v == NULL) return NULL;
+
+    // Set ContextID first, so the partial-failure path below frees against the same
+    // allocator the allocations came from
+    v ->ContextID = ContextID;
+
+    // 3N for the observer: the X vector, then Y, then Z
+    v ->Observer = (cmsFloat32Number*) _cmsCalloc(ContextID, 3 * (cmsUInt32Number) ObserverSteps,
+                                                  sizeof(cmsFloat32Number));
+    v ->Illuminant = (cmsFloat32Number*) _cmsCalloc(ContextID, IlluminantSteps,
+                                                    sizeof(cmsFloat32Number));
+
+    if (v ->Observer == NULL || v ->Illuminant == NULL) {
+
+        cmsFreeSpectralViewingConditions(v);
+        return NULL;
+    }
+
+    v ->ObserverSteps   = ObserverSteps;
+    v ->IlluminantSteps = IlluminantSteps;
+
+    return v;
+}
+
+cmsBool CMSEXPORT cmsReadSpectralWhitePoint(cmsHPROFILE hProfile, cmsFloatArray** Out)
+{
+    cmsUInt8Number* Raw = NULL;
+    cmsFloatArray* v = NULL;
+    cmsUInt32Number Size, Type, n, i, BytesPerValue;
+
+    if (Out == NULL) return FALSE;
+    *Out = NULL;
+
+    Size = cmsReadRawTag(hProfile, cmsSigSpectralWhitePointTag, NULL, 0);
+    if (Size < 12) return FALSE;                 // 8 byte prefix plus at least one value
+
+    Raw = (cmsUInt8Number*) _cmsMalloc(cmsGetProfileContextID(hProfile), Size);
+    if (Raw == NULL) return FALSE;
+
+    if (cmsReadRawTag(hProfile, cmsSigSpectralWhitePointTag, Raw, Size) != Size) goto Error;
+
+    // Bytes 0..3 are the type signature, 4..7 reserved, the values follow
+    Type = _cmsAdjustEndianess32(*(cmsUInt32Number*) Raw);
+
+    switch (Type) {
+
+        case cmsSigFloat32ArrayType: BytesPerValue = 4; break;
+        case cmsSigFloat16ArrayType: BytesPerValue = 2; break;
+        case cmsSigUInt16ArrayType:  BytesPerValue = 2; break;
+
+        default:
+            cmsSignalError(cmsGetProfileContextID(hProfile), cmsERROR_UNKNOWN_EXTENSION,
+                "swpt has type '%x', which ICC.2 9.2.112 does not permit", Type);
+            goto Error;
+    }
+
+    n = (Size - 8) / BytesPerValue;
+    if (n == 0) goto Error;
+
+    v = cmsAllocFloatArray(cmsGetProfileContextID(hProfile), n);
+    if (v == NULL) goto Error;
+
+    for (i = 0; i < n; i++) {
+
+        cmsUInt8Number* p = Raw + 8 + i * BytesPerValue;
+
+        if (Type == cmsSigFloat32ArrayType) {
+
+            cmsUInt32Number bits = _cmsAdjustEndianess32(*(cmsUInt32Number*) p);
+            memcpy(&v ->Values[i], &bits, sizeof(cmsFloat32Number));
+        }
+        else if (Type == cmsSigFloat16ArrayType) {
+
+            v ->Values[i] = _cmsHalf2Float(_cmsAdjustEndianess16(*(cmsUInt16Number*) p));
+        }
+        else {
+
+            // ui16 is 0 to 65535 mapped onto 0,0 to 1,0, per icU16toF in the
+            // reference implementation. ICC.2 itself does not state this.
+            v ->Values[i] = (cmsFloat32Number)
+                (_cmsAdjustEndianess16(*(cmsUInt16Number*) p) / 65535.0);
+        }
+    }
+
+    // This accessor no longer reports which encoding it found; a caller that
+    // needs to know can inspect the first four bytes of cmsReadRawTag itself.
+
+    _cmsFree(cmsGetProfileContextID(hProfile), Raw);
+    *Out = v;
+    return TRUE;
+
+Error:
+    if (v != NULL) cmsFreeFloatArray(v);
+    if (Raw != NULL) _cmsFree(cmsGetProfileContextID(hProfile), Raw);
+    return FALSE;
+}
+
+cmsBool CMSEXPORT cmsWriteSpectralWhitePoint(cmsHPROFILE hProfile,
+                                             const cmsFloatArray* In,
+                                             cmsTagTypeSignature AsType)
+{
+    cmsUInt8Number* Raw = NULL;
+    cmsUInt32Number Size, i, BytesPerValue;
+    cmsBool rc;
+
+    if (In == NULL || In ->Values == NULL || In ->nValues == 0) return FALSE;
+
+    // cmsAllocFloatArray caps nValues at 0xFFFF -- the largest channel count an
+    // ICC.2 spectral PCS signature can express, since its channel count is a 16 bit
+    // field -- but cmsFloatArray is a public struct and nothing stops a caller from
+    // populating one by hand and setting nValues past that bound. Without this
+    // guard, "8 + In->nValues * BytesPerValue" below can wrap a 32 bit Size to a
+    // tiny value (e.g. nValues = 0x40000000, BytesPerValue = 4, product 0x100000000
+    // wraps to 0, Size becomes 8), so the allocation would succeed far too small and
+    // the write loop would then walk off the end of it.
+    if (In ->nValues > 0xFFFF) return FALSE;
+
+    switch (AsType) {
+
+        case cmsSigFloat32ArrayType: BytesPerValue = 4; break;
+        case cmsSigFloat16ArrayType: BytesPerValue = 2; break;
+        case cmsSigUInt16ArrayType:  BytesPerValue = 2; break;
+
+        default:
+            cmsSignalError(cmsGetProfileContextID(hProfile), cmsERROR_UNKNOWN_EXTENSION,
+                "ICC.2 9.2.112 does not permit type '%x' for swpt", AsType);
+            return FALSE;
+    }
+
+    Size = 8 + In ->nValues * BytesPerValue;
+
+    Raw = (cmsUInt8Number*) _cmsMallocZero(cmsGetProfileContextID(hProfile), Size);
+    if (Raw == NULL) return FALSE;
+
+    *(cmsUInt32Number*) Raw = _cmsAdjustEndianess32((cmsUInt32Number) AsType);
+    // Bytes 4..7 stay zero: ICC.2 requires the reserved field to be 0
+
+    for (i = 0; i < In ->nValues; i++) {
+
+        cmsUInt8Number* p = Raw + 8 + i * BytesPerValue;
+
+        if (AsType == cmsSigFloat32ArrayType) {
+
+            cmsUInt32Number bits;
+            memcpy(&bits, &In ->Values[i], sizeof(cmsUInt32Number));
+            *(cmsUInt32Number*) p = _cmsAdjustEndianess32(bits);
+        }
+        else if (AsType == cmsSigFloat16ArrayType) {
+
+            *(cmsUInt16Number*) p = _cmsAdjustEndianess16(_cmsFloat2Half(In ->Values[i]));
+        }
+        else {
+
+            // Mirrors icFtoU16: infinity becomes 1,0, NaN becomes 0, the value is
+            // clamped to 0,0 .. 1,0, then scaled and rounded
+            cmsFloat64Number x = In ->Values[i];
+
+            if (isnan(x)) x = 0.0;
+            else if (x > 1.0) x = 1.0;           // also catches +infinity
+            else if (x < 0.0) x = 0.0;           // also catches -infinity
+
+            *(cmsUInt16Number*) p =
+                _cmsAdjustEndianess16((cmsUInt16Number) floor(x * 65535.0 + 0.5));
+        }
+    }
+
+    rc = cmsWriteRawTag(hProfile, cmsSigSpectralWhitePointTag, Raw, Size);
+
+    _cmsFree(cmsGetProfileContextID(hProfile), Raw);
+    return rc;
+}
+#endif // CMS_USE_ICCMAX_SPECTRAL
 
 cmsColorSpaceSignature CMSEXPORT cmsGetColorSpace(cmsHPROFILE hProfile)
 {

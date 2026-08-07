@@ -551,7 +551,7 @@ cmsStage* CMSEXPORT cmsStageAllocCLut16bitGranular(cmsContext ContextID,
                                          cmsUInt32Number outputChan,
                                          const cmsUInt16Number* Table)
 {
-    cmsUInt32Number i, n;
+    cmsUInt32Number i, n, cube;
     _cmsStageCLutData* NewElem;
     cmsStage* NewMPE;
 
@@ -575,13 +575,19 @@ cmsStage* CMSEXPORT cmsStageAllocCLut16bitGranular(cmsContext ContextID,
 
     NewMPE ->Data  = (void*) NewElem;
 
-    NewElem -> nEntries = n = outputChan * CubeSize(clutPoints, inputChan);
-    NewElem -> HasFloatValues = FALSE;
+    // There is a potential integer overflow on computing n and nEntries. CubeSize only
+    // bounds its result against a fixed divisor, so the multiply by outputChan has to
+    // be checked here: a table whose product does not fit in 32 bits would be allocated
+    // short while _cmsComputeInterpParamsEx computed full-width strides for it.
+    cube = CubeSize(clutPoints, inputChan);
 
-    if (n == 0) {
+    if (cube == 0 || outputChan == 0 || cube > UINT_MAX / outputChan) {
         cmsStageFree(NewMPE);
         return NULL;
     }
+
+    NewElem -> nEntries = n = outputChan * cube;
+    NewElem -> HasFloatValues = FALSE;
 
 
     NewElem ->Tab.T  = (cmsUInt16Number*) _cmsCalloc(ContextID, n, sizeof(cmsUInt16Number));
@@ -642,7 +648,7 @@ cmsStage* CMSEXPORT cmsStageAllocCLutFloat(cmsContext ContextID,
 
 cmsStage* CMSEXPORT cmsStageAllocCLutFloatGranular(cmsContext ContextID, const cmsUInt32Number clutPoints[], cmsUInt32Number inputChan, cmsUInt32Number outputChan, const cmsFloat32Number* Table)
 {
-    cmsUInt32Number i, n;
+    cmsUInt32Number i, n, cube;
     _cmsStageCLutData* NewElem;
     cmsStage* NewMPE;
 
@@ -666,14 +672,19 @@ cmsStage* CMSEXPORT cmsStageAllocCLutFloatGranular(cmsContext ContextID, const c
 
     NewMPE ->Data  = (void*) NewElem;
 
-    // There is a potential integer overflow on conputing n and nEntries.
-    NewElem -> nEntries = n = outputChan * CubeSize(clutPoints, inputChan);
-    NewElem -> HasFloatValues = TRUE;
+    // There is a potential integer overflow on computing n and nEntries. CubeSize only
+    // bounds its result against a fixed divisor, so the multiply by outputChan has to
+    // be checked here: a table whose product does not fit in 32 bits would be allocated
+    // short while _cmsComputeInterpParamsEx computed full-width strides for it.
+    cube = CubeSize(clutPoints, inputChan);
 
-    if (n == 0) {
+    if (cube == 0 || outputChan == 0 || cube > UINT_MAX / outputChan) {
         cmsStageFree(NewMPE);
         return NULL;
     }
+
+    NewElem -> nEntries = n = outputChan * cube;
+    NewElem -> HasFloatValues = TRUE;
 
     NewElem ->Tab.TFloat  = (cmsFloat32Number*) _cmsCalloc(ContextID, n, sizeof(cmsFloat32Number));
     if (NewElem ->Tab.TFloat == NULL) {
@@ -1380,8 +1391,18 @@ cmsPipeline* CMSEXPORT cmsPipelineAlloc(cmsContext ContextID, cmsUInt32Number In
        cmsPipeline* NewLUT;
 
        // A value of zero in channels is allowed as placeholder
+#ifdef CMS_USE_ICCMAX_SPECTRAL
+       // The limit is MAX_STAGE_CHANNELS rather than cmsMAXCHANNELS so that MPE
+       // pipelines can carry an iccMAX spectral PCS (37+ channels). The float and
+       // 16-bit eval paths both use MAX_STAGE_CHANNELS buffers. Note this ceiling
+       // does NOT apply to transforms: cmsxform.c still uses cmsMAXCHANNELS-sized
+       // buffers, so such a pipeline must only be evaluated directly.
+       if (InputChannels >= MAX_STAGE_CHANNELS ||
+           OutputChannels >= MAX_STAGE_CHANNELS) return NULL;
+#else
        if (InputChannels >= cmsMAXCHANNELS ||
            OutputChannels >= cmsMAXCHANNELS) return NULL;
+#endif
 
        NewLUT = (cmsPipeline*) _cmsMallocZero(ContextID, sizeof(cmsPipeline));
        if (NewLUT == NULL) return NULL;
