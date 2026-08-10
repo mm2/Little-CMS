@@ -3253,6 +3253,7 @@ cmsHPROFILE CMSEXPORT cmsCreateDeviceLinkFromCubeFileTHR(cmsContext ContextID, c
     strncpy(cube->FileStack[0]->FileName, cFileName, cmsMAX_PATH - 1);
     cube->FileStack[0]->FileName[cmsMAX_PATH - 1] = 0;
 
+    // Note that it can allocate Shaper and CLUT even when failing
     if (!ParseCube(cube, &Shaper, &CLUT, title)) goto Done;
         
     // Success on parsing, let's create the profile
@@ -3274,16 +3275,16 @@ cmsHPROFILE CMSEXPORT cmsCreateDeviceLinkFromCubeFileTHR(cmsContext ContextID, c
     // Populates the pipeline
     if (Shaper != NULL) {
         if (!cmsPipelineInsertStage(Pipeline, cmsAT_BEGIN, Shaper)) {
-            cmsStageFree(Shaper);
             goto Done;
         }
+        Shaper = NULL; // ownership has been transferred
     }
 
     if (CLUT != NULL) {
         if (!cmsPipelineInsertStage(Pipeline, cmsAT_END, CLUT)) {
-            cmsStageFree(CLUT);
             goto Done;
         }
+        CLUT = NULL;
     }
 
     // Propagate the description. We put no copyright because we know
@@ -3297,6 +3298,12 @@ cmsHPROFILE CMSEXPORT cmsCreateDeviceLinkFromCubeFileTHR(cmsContext ContextID, c
 
 Done:
 
+    if (CLUT != NULL)
+        cmsStageFree(CLUT);
+    
+    if (Shaper != NULL)
+        cmsStageFree(Shaper);
+    
     if (cube->FileStack[0]->Stream != NULL)
         fclose(cube->FileStack[0]->Stream);
 
