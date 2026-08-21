@@ -5365,6 +5365,7 @@ cmsBool ReadOneWChar(cmsIOHANDLER* io,  _cmsDICelem* e, cmsUInt32Number i, wchar
 
       if (!_cmsReadWCharArray(io, nChars, *wcstr)) {
           _cmsFree(e ->ContextID, *wcstr);
+          *wcstr = NULL;
           return FALSE;
       }
 
