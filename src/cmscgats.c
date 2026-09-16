@@ -3170,7 +3170,10 @@ cmsBool ParseCube(cmsIT8* cube, cmsStage** Shaper, cmsStage** CLUT, char title[]
 
                     cmsFloat64Number nums[3];
 
-                    if (!ReadNumbers(cube, 3, nums)) return FALSE;
+                    if (!ReadNumbers(cube, 3, nums)) {
+                        _cmsFree(cube->ContextID, shapers);                        
+                        return FALSE;
+                    }
 
                     shapers[i + 0]               = (cmsFloat32Number) ((nums[0] - domain_min[0]) / (domain_max[0] - domain_min[0]));
                     shapers[i + 1 * shaper_size] = (cmsFloat32Number) ((nums[1] - domain_min[1]) / (domain_max[1] - domain_min[1]));
@@ -3211,7 +3214,10 @@ cmsBool ParseCube(cmsIT8* cube, cmsStage** Shaper, cmsStage** CLUT, char title[]
 
                     cmsFloat64Number nums[3];
 
-                    if (!ReadNumbers(cube, 3, nums)) return FALSE;
+                    if (!ReadNumbers(cube, 3, nums)) {
+                        _cmsFree(cube->ContextID, lut_table);
+                        return FALSE;
+                    }
 
                     lut_table[i * 3 + 2] = (cmsFloat32Number) ((nums[0] - domain_min[0]) / (domain_max[0] - domain_min[0]));
                     lut_table[i * 3 + 1] = (cmsFloat32Number) ((nums[1] - domain_min[1]) / (domain_max[1] - domain_min[1]));
