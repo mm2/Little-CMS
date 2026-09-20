@@ -2591,7 +2591,12 @@ cmsHANDLE  CMSEXPORT cmsIT8LoadFromMem(cmsContext ContextID, const void *Ptr, cm
     strncpy(it8->FileStack[0]->FileName, "", cmsMAX_PATH-1);
     it8-> Source = it8 -> MemoryBlock;
 
-    if (!ParseIT8(it8, type-1)) {
+    if (!ParseIT8(it8, type - 1)) {
+
+        while (it8->IncludeSP > 0) {
+            fclose(it8->FileStack[it8->IncludeSP]->Stream);
+            it8->IncludeSP--;
+        }
 
         cmsIT8Free(hIT8);
         return NULL;
@@ -2637,11 +2642,15 @@ cmsHANDLE  CMSEXPORT cmsIT8LoadFromFile(cmsContext ContextID, const char* cFileN
     strncpy(it8->FileStack[0]->FileName, cFileName, cmsMAX_PATH-1);
     it8->FileStack[0]->FileName[cmsMAX_PATH-1] = 0;
 
-    if (!ParseIT8(it8, type-1)) {
+    if (!ParseIT8(it8, type - 1)) {
 
-            fclose(it8 ->FileStack[0]->Stream);
-            cmsIT8Free(hIT8);
-            return NULL;
+        while (it8->IncludeSP > 0) {
+            fclose(it8->FileStack[it8->IncludeSP]->Stream);
+            it8->IncludeSP--;
+        }
+        fclose(it8->FileStack[0]->Stream);
+        cmsIT8Free(hIT8);
+        return NULL;
     }
 
     CookPointers(it8);
