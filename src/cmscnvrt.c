@@ -826,11 +826,16 @@ cmsPipeline*  BlackPreservingKOnlyIntents(cmsContext     ContextID,
     // Insert possible devicelinks at the end
     for (i = lastProfilePos + 1; i < nProfiles; i++)
     {
+        int rc;
+
         cmsPipeline* devlink = _cmsReadDevicelinkLUT(hProfiles[i], ICCIntents[i]);
         if (devlink == NULL)
             goto Error;
 
-        if (!cmsPipelineCat(Result, devlink))
+        rc = cmsPipelineCat(Result, devlink);
+        cmsPipelineFree(devlink);
+
+        if (!rc)
             goto Error;
     }
 
