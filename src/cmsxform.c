@@ -1223,12 +1223,20 @@ cmsHTRANSFORM CMSEXPORT cmsCreateExtendedTransform(cmsContext ContextID,
    
 
     // Create a gamut check LUT if requested
-    if (hGamutProfile != NULL && (dwFlags & cmsFLAGS_GAMUTCHECK))
+    if (hGamutProfile != NULL && (dwFlags & cmsFLAGS_GAMUTCHECK)) {
+
         xform ->GamutCheck  = _cmsCreateGamutCheckPipeline(ContextID, hProfiles,
                                                         BPC, Intents,
                                                         AdaptationStates,
                                                         nGamutPCSposition,
                                                         hGamutProfile);
+        if (xform->GamutCheck == NULL) {
+            cmsSignalError(ContextID, cmsERROR_NULL, "Could't create gamut check on transform");
+            cmsDeleteTransform(xform);
+            return NULL;
+        }
+        
+    }
 
 
     // Try to read input and output colorant table
