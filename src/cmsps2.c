@@ -818,7 +818,7 @@ int EmitCIEBasedDEF(cmsIOHANDLER* m, cmsPipeline* Pipeline, cmsUInt32Number Inte
         mpe = mpe ->Next;
     }
 
-    if (cmsStageType(mpe) == cmsSigCLutElemType) {
+    if (mpe != NULL && cmsStageType(mpe) == cmsSigCLutElemType) {
 
             _cmsIOPrintf(m, "/Table ");
             WriteCLUT(m, mpe, PreMaj, PostMaj, PreMin, PostMin, FALSE, (cmsColorSpaceSignature) 0);
