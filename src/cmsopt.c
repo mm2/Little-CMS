@@ -634,6 +634,16 @@ cmsBool FixWhiteMisalignment(cmsPipeline* Lut, cmsColorSpaceSignature EntryColor
     return TRUE;
 }
 
+// Adapt the interpolation callback to the pipeline evaluator signature.
+static
+void CLUTEval16(const cmsUInt16Number In[], cmsUInt16Number Out[], const void* D)
+{
+    const cmsInterpParams* p = (const cmsInterpParams*) D;
+
+    p ->Interpolation.Lerp16(In, Out, p);
+}
+
+
 // -----------------------------------------------------------------------------------------------------------------------------------------------
 // This function creates simple LUT from complex ones. The generated LUT has an optional set of
 // prelinearization curves, a CLUT of nGridPoints and optional postlinearization tables.
@@ -778,7 +788,7 @@ Error:
 
     if (DataSetIn == NULL && DataSetOut == NULL) {
 
-        _cmsPipelineSetOptimizationParameters(Dest, (_cmsPipelineEval16Fn) DataCLUT->Params->Interpolation.Lerp16, DataCLUT->Params, NULL, NULL);
+        _cmsPipelineSetOptimizationParameters(Dest, CLUTEval16, DataCLUT->Params, NULL, NULL);
     }
     else {
 
