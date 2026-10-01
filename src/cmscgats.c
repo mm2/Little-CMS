@@ -2277,7 +2277,7 @@ cmsBool HeaderSection(cmsIT8* it8)
                     // for each pair, split the subkey and the value
                     Value = (char*)strrchr(Subkey, ',');
                     if (Value == NULL)
-                        return SynError(it8, "Invalid value for property '%s'.", VarName);
+                        break;
 
                     // gobble the spaces before the coma, and the coma itself
                     temp = Value++;
@@ -2292,7 +2292,7 @@ cmsBool HeaderSection(cmsIT8* it8)
                     Value += strspn(Value, " ");
 
                     if (Subkey[0] == 0 || Value[0] == 0)
-                        return SynError(it8, "Invalid value for property '%s'.", VarName);
+                        break;
                     AddToList(it8, &GetTable(it8)->HeaderList, VarName, Subkey, Value, WRITE_PAIR);
                 }
             }
