@@ -1889,7 +1889,7 @@ cmsUInt8Number* PackPlanarWords(CMSREGISTER _cmsTRANSFORM* info,
     else
     {
         if (Premul && Extra)
-            alpha_factor = _cmsToFixedDomain(((cmsUInt16Number*)output)[nChan * Stride]);
+            alpha_factor = _cmsToFixedDomain(*(cmsUInt16Number*) (&output[nChan * Stride]));
     }
 
     for (i=0; i < nChan; i++) {
