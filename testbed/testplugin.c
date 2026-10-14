@@ -1634,7 +1634,7 @@ cmsBool WriteHeaderPluginSample(cmsContext ContextID, cmsHPROFILE hProfile, cmsI
 }
 
 static cmsPluginHeader HeaderPluginSample = {
-    { cmsPluginMagicNumber, 2190, cmsPluginHeaderSig, NULL },
+    { cmsPluginMagicNumber, LCMS_VERSION, cmsPluginHeaderSig, NULL },
     0x05000000,
     ReadHeaderPluginSample,
     WriteHeaderPluginSample

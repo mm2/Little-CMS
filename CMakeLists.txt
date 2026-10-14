@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16...3.29)
 
 project(lcms2
-  VERSION 2.19
+  VERSION 2.20
   LANGUAGES C
 )
 
