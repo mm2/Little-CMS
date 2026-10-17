@@ -112,6 +112,88 @@ cmsHPROFILE CreateCurves(void)
 }
 
 
+// Check a 15 bit planar formatter touches only its own components, with the plane stride in bytes
+static
+void CheckSingleFormatter15Planar(cmsUInt32Number Type, const char* Text)
+{
+       cmsUInt16Number Values[cmsMAXCHANNELS];
+       cmsUInt16Number BufferWords[512], CopyWords[512];
+       cmsUInt8Number* Buffer = (cmsUInt8Number*) BufferWords;
+       cmsUInt8Number* Copy = (cmsUInt8Number*) CopyWords;
+       cmsUInt8Number InComponent[1024];
+       cmsUInt32Number nChannels, nAlpha, i;
+       cmsUInt32Number ComponentStartingOrder[cmsMAXCHANNELS], ComponentPointerIncrements[cmsMAXCHANNELS];
+       cmsUInt32Number PlaneStride = 64;
+       cmsUInt8Number* ptr;
+       cmsFormatter f, b;
+       _xform_head infoIn, infoOut;
+
+       f = Formatter_15Bit_Factory(Type, cmsFormatterInput, CMS_PACK_FLAGS_16BITS);
+       b = Formatter_15Bit_Factory(Type, cmsFormatterOutput, CMS_PACK_FLAGS_16BITS);
+
+       if (f.Fmt16 == NULL || b.Fmt16 == NULL) {
+
+              Fail("no formatter for %s", Text);
+              return;
+       }
+
+       memset(&infoIn, 0, sizeof(infoIn));
+       memset(&infoOut, 0, sizeof(infoOut));
+       infoIn.InputFormat = Type;
+       infoOut.OutputFormat = Type;
+
+       _cmsComputeComponentIncrements(Type, PlaneStride, &nChannels, &nAlpha, ComponentStartingOrder, ComponentPointerIncrements);
+
+       memset(InComponent, 0, sizeof(InComponent));
+       for (i = 0; i < nChannels; i++) {
+
+              InComponent[ComponentStartingOrder[i]] = 1;
+              InComponent[ComponentStartingOrder[i] + 1] = 1;
+              Values[i] = (cmsUInt16Number)((i + 1) << 1);
+       }
+
+       memset(Buffer, 0xEE, sizeof(BufferWords));
+       ptr = b.Fmt16((struct _cmstransform_struct*) &infoOut, Values, Buffer, PlaneStride);
+
+       if (ptr != Buffer + sizeof(cmsUInt16Number)) {
+
+              Fail("%s packs a wrong number of bytes", Text);
+              return;
+       }
+
+       memset(Copy, 0xEE, sizeof(CopyWords));
+       for (i = 0; i < sizeof(BufferWords); i++) {
+
+              if (InComponent[i])
+                     Copy[i] = Buffer[i];
+              else
+              if (Buffer[i] != 0xEE) {
+
+                     Fail("%s packs outside its components", Text);
+                     return;
+              }
+       }
+
+       memset(Values, 0, sizeof(Values));
+       ptr = f.Fmt16((struct _cmstransform_struct*) &infoIn, Values, Copy, PlaneStride);
+
+       if (ptr != Copy + sizeof(cmsUInt16Number)) {
+
+              Fail("%s unrolls a wrong number of bytes", Text);
+              return;
+       }
+
+       for (i = 0; i < nChannels; i++) {
+
+              if (Values[i] != ((i + 1) << 1)) {
+
+                     Fail("%s unrolls wrong components", Text);
+                     return;
+              }
+       }
+}
+
+
 // Check for a single 15 bit Photoshop-like formatter
 static
 void CheckSingleFormatter15(cmsContext id, cmsUInt32Number Type, const char* Text)
@@ -147,9 +229,9 @@ void CheckSingleFormatter15(cmsContext id, cmsUInt32Number Type, const char* Tex
                      Values[i] = (cmsUInt16Number)(i + j) << 1;
               }
 
-              b.Fmt16((struct _cmstransform_struct*) &info, Values, Buffer, 1);
+              b.Fmt16((struct _cmstransform_struct*) &info, Values, Buffer, sizeof(cmsUInt16Number));
               memset(Values, 0, sizeof(Values));
-              f.Fmt16((struct _cmstransform_struct*) &info, Values, Buffer, 1);
+              f.Fmt16((struct _cmstransform_struct*) &info, Values, Buffer, sizeof(cmsUInt16Number));
 
               for (i = 0; i < nChannels; i++) {
 
@@ -160,6 +242,9 @@ void CheckSingleFormatter15(cmsContext id, cmsUInt32Number Type, const char* Tex
                      }
               }
        }
+
+       if (T_PLANAR(Type))
+              CheckSingleFormatter15Planar(Type, Text);
 }
 
 #define C(a) CheckSingleFormatter15(0, a, #a)
@@ -1261,12 +1346,57 @@ void CheckAlphaDetect(void)
     cmsSetLogErrorHandler(FatalErrorQuit);
 }
 
+// Planar gray float curves should place the output planes by the output plane stride
+static
+void CheckGrayFloatPlanarStride(void)
+{
+    cmsToneCurve* gamma18 = cmsBuildGamma(0, 1.8);
+    cmsToneCurve* gamma22 = cmsBuildGamma(0, 2.2);
+    cmsHPROFILE hIn = cmsCreateGrayProfile(NULL, gamma18);
+    cmsHPROFILE hOut = cmsCreateGrayProfile(NULL, gamma22);
+    cmsHTRANSFORM xform;
+    cmsFloat32Number In[32], Out[32];
+    cmsUInt32Number i;
+
+    cmsFreeToneCurve(gamma18);
+    cmsFreeToneCurve(gamma22);
+
+    xform = cmsCreateTransform(hIn, TYPE_GRAYA_FLT_PLANAR, hOut, TYPE_GRAYA_FLT_PLANAR, INTENT_PERCEPTUAL, cmsFLAGS_COPY_ALPHA);
+    cmsCloseProfile(hIn);
+    cmsCloseProfile(hOut);
+
+    for (i = 0; i < 32; i++) {
+        In[i] = (cmsFloat32Number) i / 32.0f;
+        Out[i] = -1.0f;
+    }
+
+    // 4 pixels, input planes 16 floats apart, output planes 4 floats apart
+    cmsDoTransformLineStride(xform, In, Out, 4, 1, 0, 0, 16 * sizeof(cmsFloat32Number), 4 * sizeof(cmsFloat32Number));
+    cmsDeleteTransform(xform);
+
+    for (i = 0; i < 4; i++) {
+
+        if (Out[4 + i] != In[16 + i])
+            Fail("Planar gray float alpha #%d is %f, should be %f", i, Out[4 + i], In[16 + i]);
+    }
+
+    for (i = 8; i < 32; i++) {
+
+        if (Out[i] != -1.0f)
+            Fail("Planar gray float wrote past its output planes at %d", i);
+    }
+}
+
 // Convert some known values
 static
 void CheckConversionFloat(void)
 {
     trace("Check alpha detection.");
     CheckAlphaDetect();
+    trace("Ok\n");
+
+    trace("Check planar gray float strides.");
+    CheckGrayFloatPlanarStride();
     trace("Ok\n");
 
     trace("Crash test.");
