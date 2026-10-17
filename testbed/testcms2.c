@@ -8285,6 +8285,118 @@ int CheckPlanarFloat2int(void)
     return 1;
 }
 
+#ifndef CMS_NO_HALF_SUPPORT
+
+/**
+* Planar half float to 8 bits, the plane stride is given in input bytes.
+* Formats are changed on a 16 bits transform to get the half to 16 bits unroller.
+*/
+#define TYPE_RGB_HALF_FLT_PLANAR   (TYPE_RGB_HALF_FLT|PLANAR_SH(1))
+
+static
+int CheckPlanarHalf2int8(void)
+{
+    cmsHPROFILE sRGB = cmsCreate_sRGBProfile();
+    cmsHTRANSFORM planar = cmsCreateTransform(sRGB, TYPE_RGB_16_PLANAR,
+        sRGB, TYPE_RGB_8_PLANAR, INTENT_PERCEPTUAL, 0);
+    cmsHTRANSFORM chunky = cmsCreateTransform(sRGB, TYPE_RGB_16,
+        sRGB, TYPE_RGB_8, INTENT_PERCEPTUAL, 0);
+
+    const cmsFloat32Number values[] = { 0.0f, 0.4f, 0.8f,  0.1f, 0.5f, 0.9f,  0.2f, 0.6f, 1.0f,   0.3f, 0.7f, 1.0f };
+    cmsUInt16Number inPlanar[3*4], inChunky[3*4];
+    cmsUInt8Number outPlanar[3*4] = { 0 }, outChunky[3*4] = { 0 };
+    int i, c, rc = 1;
+
+    if (!cmsChangeBuffersFormat(planar, TYPE_RGB_HALF_FLT_PLANAR, TYPE_RGB_8_PLANAR) ||
+        !cmsChangeBuffersFormat(chunky, TYPE_RGB_HALF_FLT, TYPE_RGB_8)) {
+
+        Fail("Cannot change buffers format to half float");
+        rc = 0;
+        goto Done;
+    }
+
+    for (i = 0; i < 4; i++)
+        for (c = 0; c < 3; c++) {
+
+            inPlanar[c * 4 + i] = _cmsFloat2Half(values[c * 4 + i]);
+            inChunky[i * 3 + c] = inPlanar[c * 4 + i];
+        }
+
+    cmsDoTransform(planar, inPlanar, outPlanar, 4);
+    cmsDoTransform(chunky, inChunky, outChunky, 4);
+
+    for (i = 0; i < 4; i++)
+        for (c = 0; c < 3; c++) {
+
+            if (outPlanar[c * 4 + i] != outChunky[i * 3 + c]) {
+                Fail("Planar half to 8 bits: pixel %d channel %d is %d, expected %d", i, c, outPlanar[c * 4 + i], outChunky[i * 3 + c]);
+                rc = 0;
+            }
+        }
+
+Done:
+    cmsDeleteTransform(planar);
+    cmsDeleteTransform(chunky);
+    cmsCloseProfile(sRGB);
+
+    return rc;
+}
+
+#endif
+
+/**
+* 16 bits to planar Lab double, the plane stride is given in output bytes
+*/
+#define TYPE_Lab_DBL_PLANAR   (TYPE_Lab_DBL|PLANAR_SH(1))
+
+static
+int CheckPlanarLabDoubleFrom16(void)
+{
+    cmsHPROFILE sRGB = cmsCreate_sRGBProfile();
+    cmsHPROFILE Lab = cmsCreateLab4Profile(NULL);
+    cmsHTRANSFORM planar = cmsCreateTransform(sRGB, TYPE_RGB_16_PLANAR,
+        Lab, TYPE_Lab_16|PLANAR_SH(1), INTENT_PERCEPTUAL, 0);
+    cmsHTRANSFORM chunky = cmsCreateTransform(sRGB, TYPE_RGB_16,
+        Lab, TYPE_Lab_16, INTENT_PERCEPTUAL, 0);
+
+    const cmsUInt16Number inChunky[3*4] = { 0, 0, 0,  0xffff, 0xffff, 0xffff,  0xffff, 0, 0,  0x1234, 0x5678, 0x9abc };
+    cmsUInt16Number inPlanar[3*4];
+    cmsFloat64Number outPlanar[3*4] = { 0 }, outChunky[3*4] = { 0 };
+    int i, c, rc = 1;
+
+    if (!cmsChangeBuffersFormat(planar, TYPE_RGB_16_PLANAR, TYPE_Lab_DBL_PLANAR) ||
+        !cmsChangeBuffersFormat(chunky, TYPE_RGB_16, TYPE_Lab_DBL)) {
+
+        Fail("Cannot change buffers format to Lab double");
+        rc = 0;
+        goto Done;
+    }
+
+    for (i = 0; i < 4; i++)
+        for (c = 0; c < 3; c++)
+            inPlanar[c * 4 + i] = inChunky[i * 3 + c];
+
+    cmsDoTransform(planar, inPlanar, outPlanar, 4);
+    cmsDoTransform(chunky, inChunky, outChunky, 4);
+
+    for (i = 0; i < 4; i++)
+        for (c = 0; c < 3; c++) {
+
+            if (outPlanar[c * 4 + i] != outChunky[i * 3 + c]) {
+                Fail("Planar Lab double from 16 bits: pixel %d channel %d is %g, expected %g", i, c, outPlanar[c * 4 + i], outChunky[i * 3 + c]);
+                rc = 0;
+            }
+        }
+
+Done:
+    cmsDeleteTransform(planar);
+    cmsDeleteTransform(chunky);
+    cmsCloseProfile(Lab);
+    cmsCloseProfile(sRGB);
+
+    return rc;
+}
+
 
 
 
@@ -9906,6 +10018,10 @@ int main(int argc, char* argv[])
     Check("Matrix simplification", CheckMatrixSimplify);
     Check("Planar 8 optimization", CheckPlanar8opt);
     Check("Planar float to int16", CheckPlanarFloat2int);
+#ifndef CMS_NO_HALF_SUPPORT
+    Check("Planar half to int8", CheckPlanarHalf2int8);
+#endif
+    Check("Planar Lab double from int16", CheckPlanarLabDoubleFrom16);
     Check("Swap endian feature", CheckSE);
     Check("Transform line stride RGB", CheckTransformLineStride);
     Check("Forged MPE profile", CheckForgedMPE);

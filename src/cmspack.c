@@ -2735,6 +2735,8 @@ cmsUInt8Number* PackLabDoubleFrom16(CMSREGISTER _cmsTRANSFORM* info,
         cmsFloat64Number* Out = (cmsFloat64Number*) output;
         cmsLabEncoded2Float(&Lab, wOut);
 
+        Stride /= PixelSize(info->OutputFormat);
+
         Out[0]        = Lab.L;
         Out[Stride]   = Lab.a;
         Out[Stride*2] = Lab.b;
@@ -3375,7 +3377,7 @@ cmsUInt8Number* UnrollHalfTo16(CMSREGISTER _cmsTRANSFORM* info,
     cmsFloat32Number maximum = IsInkSpace(info ->InputFormat) ? 655.35F : 65535.0F;
 
 
-    Stride /= PixelSize(info->OutputFormat);
+    Stride /= PixelSize(info->InputFormat);
 
     if (ExtraFirst)
             start = Extra;
