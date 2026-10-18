@@ -280,10 +280,8 @@ cmsUInt8Number* Unroll15bitsPlanar(CMSREGISTER struct _cmstransform_struct* CMMc
        int i;
        cmsUInt8Number* Init = accum;
 
-       UNUSED_PARAMETER(Stride);
-
        if (DoSwap) {
-              accum += T_EXTRA(head->InputFormat) * Stride * 2;
+              accum += T_EXTRA(head->InputFormat) * Stride;
        }
 
        for (i = 0; i < nChan; i++) {
@@ -292,7 +290,7 @@ cmsUInt8Number* Unroll15bitsPlanar(CMSREGISTER struct _cmstransform_struct* CMMc
         
               wIn[index] = UnrollOne(*(cmsUInt16Number*)accum, Reverse, SwapEndian);
 
-              accum += Stride * 2;
+              accum += Stride;
        }
 
        return (Init + 2);
@@ -315,7 +313,7 @@ cmsUInt8Number* Pack15bitsPlanar(CMSREGISTER struct _cmstransform_struct* CMMcar
 
 
        if (DoSwap) {
-              output += T_EXTRA(head->OutputFormat) * Stride * 2;
+              output += T_EXTRA(head->OutputFormat) * Stride;
        }
 
        for (i = 0; i < nChan; i++) {
@@ -323,7 +321,7 @@ cmsUInt8Number* Pack15bitsPlanar(CMSREGISTER struct _cmstransform_struct* CMMcar
               int index = DoSwap ? (nChan - i - 1) : i;
 
               *(cmsUInt16Number*)output = PackOne(wOut[index], Reverse, SwapEndian);
-              output += (Stride * sizeof(cmsUInt16Number));
+              output += Stride;
        }
 
        return (Init + sizeof(cmsUInt16Number));
