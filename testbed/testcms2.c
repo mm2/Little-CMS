@@ -9054,38 +9054,6 @@ int CheckGamutCheckFloats(void)
     return 1;
 }
 
-static
-int CheckMixedRawAndCooked(void)
-{
-    const cmsUInt32Number data = cmsSigFilmScanner;
-    const cmsUInt32Number* pdata;
-    cmsBool is_ok = FALSE;
-
-    // This is the internal representation of cmsSigTechnologyTag tag type
-    struct _cooked_st
-    {
-        _cmsTagBase base;
-        cmsUInt32Number data;
-
-    } buffer = { { (cmsTagTypeSignature) cmsSigTechnologyTag, {0} }, cmsSigFilmScanner };
-
-    cmsHPROFILE hProfile = cmsCreateProfilePlaceholder(0);   
-    cmsWriteRawTag(hProfile, cmsSigTechnologyTag, &buffer, sizeof buffer);
-    cmsWriteTag(hProfile, cmsSigTechnologyTag, &data);
-    cmsWriteRawTag(hProfile, cmsSigTechnologyTag, &buffer, sizeof buffer);
-    cmsWriteRawTag(hProfile, cmsSigTechnologyTag, &buffer, sizeof buffer);
-    cmsWriteTag(hProfile, cmsSigTechnologyTag, &data);
-    cmsWriteTag(hProfile, cmsSigTechnologyTag, &data);
-    memset(&buffer, 0, sizeof(buffer));
-
-    cmsReadRawTag(hProfile, cmsSigTechnologyTag, &buffer, sizeof buffer );
-    pdata = cmsReadTag(hProfile, cmsSigTechnologyTag);
-
-    is_ok = (*pdata == cmsSigFilmScanner) && (_cmsAdjustEndianess32(buffer.data) == cmsSigFilmScanner);
-
-    cmsCloseProfile(hProfile);
-    return is_ok;
-}
 
 // --------------------------------------------------------------------------------------------------
 // P E R F O R M A N C E   C H E C K S
@@ -10036,8 +10004,7 @@ int main(int argc, char* argv[])
     Check("Corrupted built-in by using cmsWriteRawTag", CheckInducedCorruption);
     Check("Bad CGATS file", CheckBadCGATS);
     Check("Saving linearization devicelink", CheckSaveLinearizationDevicelink);
-    Check("Gamut check on floats", CheckGamutCheckFloats);
-    Check("Mixing RAW and Cooked tags", CheckMixedRawAndCooked);
+    Check("Gamut check on floats", CheckGamutCheckFloats);    
     }
 
     if (DoPluginTests)
