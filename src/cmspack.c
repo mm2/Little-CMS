@@ -577,9 +577,13 @@ cmsUInt8Number* UnrollAnyWordsPremul(CMSREGISTER _cmsTRANSFORM* info,
    cmsUInt32Number Extra       = T_EXTRA(info -> InputFormat);
    cmsUInt32Number ExtraFirst  = DoSwap ^ SwapFirst;
    cmsUInt32Number i;
+   cmsUInt32Number alpha_factor = 0;
 
-   cmsUInt16Number alpha = (ExtraFirst ? ((cmsUInt16Number*)accum)[0] : ((cmsUInt16Number*)accum)[nChan]);
-   cmsUInt32Number alpha_factor = _cmsToFixedDomain(alpha);
+   if (Extra)
+   {
+       cmsUInt16Number alpha = (ExtraFirst ? ((cmsUInt16Number*)accum)[0] : ((cmsUInt16Number*)accum)[nChan]);
+       alpha_factor = _cmsToFixedDomain(alpha);
+   }
 
     if (ExtraFirst) {
         accum += Extra * sizeof(cmsUInt16Number);
@@ -663,9 +667,13 @@ cmsUInt8Number* UnrollPlanarWordsPremul(CMSREGISTER _cmsTRANSFORM* info,
     cmsUInt32Number i;
     cmsUInt32Number ExtraFirst = DoSwap ^ SwapFirst;
     cmsUInt8Number* Init = accum;
+    cmsUInt32Number alpha_factor = 0;
 
-    cmsUInt16Number alpha = (ExtraFirst ? ((cmsUInt16Number*)accum)[0] : ((cmsUInt16Number*)accum)[nChan * Stride / 2]);
-    cmsUInt32Number alpha_factor = _cmsToFixedDomain(alpha);
+    if (Extra)
+    {
+        cmsUInt16Number alpha = (ExtraFirst ? ((cmsUInt16Number*)accum)[0] : ((cmsUInt16Number*)accum)[nChan * Stride / 2]);
+        alpha_factor = _cmsToFixedDomain(alpha);
+    }
 
     if (ExtraFirst) {
         accum += Extra * Stride;
