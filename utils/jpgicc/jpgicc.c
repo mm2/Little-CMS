@@ -276,7 +276,7 @@ cmsBool ProcessPhotoshopAPP13(JOCTET *data, int datalen)
 {
     int i;
 
-    for (i = 14; i < datalen; )
+    for (i = 14; i + 7 <= datalen; )
     {
         long len;
         unsigned int type;
@@ -294,12 +294,16 @@ cmsBool ProcessPhotoshopAPP13(JOCTET *data, int datalen)
 
         i += GETJOCTET(data[i]) + ((GETJOCTET(data[i]) & 1) ? 1 : 2);   // resource name
 
+        if (i + 4 > datalen) break;
+
         len = ((((GETJOCTET(data[i]<<8) + GETJOCTET(data[i+1]))<<8) +
                          GETJOCTET(data[i+2]))<<8) + GETJOCTET(data[i+3]);
 
         if (len < 0) return FALSE; // Keep bug hunters away
 
         i += 4; // Size
+
+        if (len > datalen - i) break;
 
         if (type == 0x03ED && len >= 16) {
 
@@ -474,6 +478,7 @@ cmsBool HandleEXIF(struct jpeg_decompress_struct* cinfo)
             if (memcmp(data, "Exif\0\0", 6) == 0) {
 
                 data += 6; // Skip EXIF marker
+                max  -= 6;
 
                 // 8 byte TIFF header
                 // first two determine byte order
