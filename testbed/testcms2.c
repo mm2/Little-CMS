@@ -3730,6 +3730,11 @@ cmsInt32Number CheckMLU_UTF8(void)
     cmsMLUgetUTF8(mlu, "en", "US", Buffer, 256);
     if (strcmp(Buffer, "\xce\xb2\xc5\x8b") != 0) rc = 0;
 
+    // Truncation must drop whole characters and terminate right after them
+    memset(Buffer, 'X', sizeof(Buffer));
+    if (cmsMLUgetUTF8(mlu, "en", "US", Buffer, 4) != 3) rc = 0;
+    if (strcmp(Buffer, "\xce\xb2") != 0) rc = 0;
+
     if (rc == 0)
         Fail("Unexpected string '%s'", Buffer);
 

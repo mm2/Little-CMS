@@ -295,14 +295,19 @@ cmsUInt32Number encodeUTF8(char* out, const wchar_t* in, cmsUInt32Number max_wch
 
             if (codepoint <= 0x7f)
             {
-                if (out && (size + 1 < max_chars)) *out++ = (char)codepoint;
+                if (out)
+                {
+                    if (size + 1 >= max_chars) break;
+                    *out++ = (char)codepoint;
+                }
                 size++;
             }
 
             else if (codepoint <= 0x7ff)
             {
-                if (out && (max_chars > 0) && (size + 2 < max_chars))
+                if (out)
                 {
+                    if (size + 2 >= max_chars) break;
                     *out++ = (char)(cmsUInt32Number)(0xc0 | ((codepoint >> 6) & 0x1f));
                     *out++ = (char)(cmsUInt32Number)(0x80 | (codepoint & 0x3f));                    
                 }
@@ -310,8 +315,9 @@ cmsUInt32Number encodeUTF8(char* out, const wchar_t* in, cmsUInt32Number max_wch
             }
             else if (codepoint <= 0xffff)
             {
-                if (out && (max_chars > 0) && (size + 3 < max_chars))
+                if (out)
                 {
+                    if (size + 3 >= max_chars) break;
                     *out++ = (char)(cmsUInt32Number)(0xe0 | ((codepoint >> 12) & 0x0f));
                     *out++ = (char)(cmsUInt32Number)(0x80 | ((codepoint >> 6) & 0x3f));
                     *out++ = (char)(cmsUInt32Number)(0x80 | (codepoint & 0x3f));
@@ -320,8 +326,9 @@ cmsUInt32Number encodeUTF8(char* out, const wchar_t* in, cmsUInt32Number max_wch
             }
             else
             {
-                if (out && (max_chars > 0) && (size + 4 < max_chars))
+                if (out)
                 {
+                    if (size + 4 >= max_chars) break;
                     *out++ = (char)(cmsUInt32Number)(0xf0 | ((codepoint >> 18) & 0x07));
                     *out++ = (char)(cmsUInt32Number)(0x80 | ((codepoint >> 12) & 0x3f));
                     *out++ = (char)(cmsUInt32Number)(0x80 | ((codepoint >> 6) & 0x3f));
@@ -621,12 +628,9 @@ cmsUInt32Number CMSEXPORT cmsMLUgetUTF8(const cmsMLU* mlu,
     // No buffer size means no data
     if (BufferSize <= 0) return 0;
 
-    // Some clipping may be required
-    if (BufferSize < UTF8len + 1)
-        UTF8len = BufferSize - 1;
-
-    // Process it
-    encodeUTF8(Buffer, Wide, StrLen / sizeof(wchar_t), BufferSize);    
+    // Process it. Characters that do not fit are dropped whole, so the
+    // returned count is what was actually written.
+    UTF8len = encodeUTF8(Buffer, Wide, StrLen / sizeof(wchar_t), BufferSize);
 
     // We put a termination "\0"
     Buffer[UTF8len] = 0;
