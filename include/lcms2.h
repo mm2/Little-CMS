@@ -1299,7 +1299,17 @@ CMSAPI cmsBool           CMSEXPORT cmsPipelineSetSaveAs8bitsFlag(cmsPipeline* lu
 // Where to place/locate the stages in the pipeline chain
 typedef enum { cmsAT_BEGIN, cmsAT_END } cmsStageLoc;
 
+// cmsPipelineInsertStage: the pipeline takes ownership of mpe whenever loc is
+// cmsAT_BEGIN or cmsAT_END, including when the call returns FALSE - a FALSE with
+// a valid loc means the stage was linked but the resulting chain is
+// inconsistent, and cmsPipelineFree will release it. Do not free mpe yourself
+// after such a call. FALSE without taking ownership happens only for a loc
+// outside the enum, or for a NULL argument.
 CMSAPI cmsBool           CMSEXPORT cmsPipelineInsertStage(cmsPipeline* lut, cmsStageLoc loc, cmsStage* mpe);
+
+// cmsPipelineUnlinkStage: hands the unlinked stage back through mpe, which the
+// caller then owns and must release with cmsStageFree. With mpe NULL the stage
+// is freed internally instead.
 CMSAPI void              CMSEXPORT cmsPipelineUnlinkStage(cmsPipeline* lut, cmsStageLoc loc, cmsStage** mpe);
 
 // This function is quite useful to analyze the structure of a Pipeline and retrieve the Stage elements
