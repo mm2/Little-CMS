@@ -37,7 +37,22 @@ cmsStage* CMSEXPORT _cmsStageAllocPlaceholder(cmsContext ContextID,
                                 _cmsStageFreeElemFn FreePtr,
                                 void*             Data)
 {
-    cmsStage* ph = (cmsStage*) _cmsMallocZero(ContextID, sizeof(cmsStage));
+    cmsStage* ph;
+
+    /* The pipeline evaluators keep their working buffers on the stack as
+     * cmsFloat32Number Storage[2][MAX_STAGE_CHANNELS] (_LUTeval16,
+     * _LUTevalFloat) and move InputChannels/OutputChannels samples through
+     * them, so a stage may never claim more channels than that. Without this
+     * check cmsStageAllocIdentity(ContextID, 4096) is accepted and the first
+     * cmsPipelineEval16 on a pipeline holding it overflows Storage. */
+    if (InputChannels > MAX_STAGE_CHANNELS || OutputChannels > MAX_STAGE_CHANNELS) {
+        cmsSignalError(ContextID, cmsERROR_RANGE,
+                       "Too many channels in stage (%d in, %d out, max=%d)",
+                       InputChannels, OutputChannels, MAX_STAGE_CHANNELS);
+        return NULL;
+    }
+
+    ph = (cmsStage*) _cmsMallocZero(ContextID, sizeof(cmsStage));
 
     if (ph == NULL) return NULL;
 
