@@ -12,7 +12,7 @@ Little CMS supports three build systems:
 | Build System | Status |
 |---|---|
 | Autotools (autoconf/automake/libtool) | **Fully Supported** |
-| CMake | **Supported, in active development** |
+| CMake | **Supported, in testing** |
 | Meson | **Supported, in testing** |
 
 Autotools remains the traditional and well-tested build system for Unix-like
