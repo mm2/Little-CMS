@@ -1639,6 +1639,10 @@ CMSAPI cmsBool           CMSEXPORT cmsMD5computeID(cmsHPROFILE hProfile);
 
 CMSAPI cmsHPROFILE      CMSEXPORT cmsOpenProfileFromFile(const char *ICCProfile, const char *sAccess);
 CMSAPI cmsHPROFILE      CMSEXPORT cmsOpenProfileFromFileTHR(cmsContext ContextID, const char *ICCProfile, const char *sAccess);
+// cmsOpenProfileFromStream: the returned profile takes ICCProfile over, and so
+// does a *failed* call - an unreadable header closes the profile internally,
+// which fcloses ICCProfile, and NULL is returned. Do not fclose it yourself
+// after either outcome.
 CMSAPI cmsHPROFILE      CMSEXPORT cmsOpenProfileFromStream(FILE* ICCProfile, const char* sAccess);
 CMSAPI cmsHPROFILE      CMSEXPORT cmsOpenProfileFromStreamTHR(cmsContext ContextID, FILE* ICCProfile, const char* sAccess);
 CMSAPI cmsHPROFILE      CMSEXPORT cmsOpenProfileFromMem(const void * MemPtr, cmsUInt32Number dwSize);
@@ -1648,8 +1652,13 @@ CMSAPI cmsHPROFILE      CMSEXPORT cmsOpenProfileFromIOhandler2THR(cmsContext Con
 CMSAPI cmsBool          CMSEXPORT cmsCloseProfile(cmsHPROFILE hProfile);
 
 CMSAPI cmsBool          CMSEXPORT cmsSaveProfileToFile(cmsHPROFILE hProfile, const char* FileName);
+// cmsSaveProfileToStream: Stream is closed before this returns, whether the
+// save succeeded or not. Do not fclose it yourself.
 CMSAPI cmsBool          CMSEXPORT cmsSaveProfileToStream(cmsHPROFILE hProfile, FILE* Stream);
 CMSAPI cmsBool          CMSEXPORT cmsSaveProfileToMem(cmsHPROFILE hProfile, void *MemPtr, cmsUInt32Number* BytesNeeded);
+// cmsSaveProfileToIOhandler: hProfile's own IO handler is replaced while saving
+// and is not restored, so the profile must not be used afterwards - only closed.
+// io itself stays the caller's to close.
 CMSAPI cmsUInt32Number  CMSEXPORT cmsSaveProfileToIOhandler(cmsHPROFILE hProfile, cmsIOHANDLER* io);
 
 // Predefined virtual profiles ------------------------------------------------------------------------------------------
