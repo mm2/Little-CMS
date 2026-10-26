@@ -1614,6 +1614,15 @@ cmsBool  CMSEXPORT cmsPipelineCat(cmsPipeline* l1, const cmsPipeline* l2)
 {
     cmsStage* mpe;
 
+    /* Appending a pipeline to itself would walk the very chain it extends:
+     * each iteration links one more stage after the element being visited, so
+     * the loop below never reaches NULL and allocates without bound. */
+    if (l1 == l2) {
+        cmsSignalError(l1 ->ContextID, cmsERROR_UNDEFINED,
+                       "cmsPipelineCat: destination and source must be different pipelines");
+        return FALSE;
+    }
+
     // If both LUTS does not have elements, we need to inherit
     // the number of channels
     if (l1 ->Elements == NULL && l2 ->Elements == NULL) {
