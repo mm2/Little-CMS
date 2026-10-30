@@ -2058,6 +2058,7 @@ cmsBool CMSEXPORT cmsIT8SaveToMem(cmsHANDLE hIT8, void *MemPtr, cmsUInt32Number*
     SAVESTREAM sd;
     cmsUInt32Number i;
     cmsIT8* it8 = (cmsIT8*) hIT8;
+    cmsBool DoWrite;
 
     memset(&sd, 0, sizeof(sd));
 
@@ -2067,7 +2068,8 @@ cmsBool CMSEXPORT cmsIT8SaveToMem(cmsHANDLE hIT8, void *MemPtr, cmsUInt32Number*
 
     sd.Used = 0;
 
-    if (sd.Base && (*BytesNeeded > 0)) {
+    DoWrite = (sd.Base != NULL && *BytesNeeded > 0);
+    if (DoWrite) {
 
         sd.Max = (*BytesNeeded) - 1;     // Write to memory?
     }
@@ -2084,7 +2086,7 @@ cmsBool CMSEXPORT cmsIT8SaveToMem(cmsHANDLE hIT8, void *MemPtr, cmsUInt32Number*
 
     sd.Used++;  // The \0 at the very end
 
-    if (sd.Base)
+    if (DoWrite)
         *sd.Ptr = 0;
 
     *BytesNeeded = sd.Used;
@@ -2570,6 +2572,8 @@ cmsHANDLE  CMSEXPORT cmsIT8LoadFromMem(cmsContext ContextID, const void *Ptr, cm
 
     _cmsAssert(Ptr != NULL);
     _cmsAssert(len != 0);
+
+    if (Ptr == NULL || len == 0 || len == (cmsUInt32Number)-1) return NULL;
 
     type = IsMyBlock((const cmsUInt8Number*)Ptr, len);
     if (type == 0) return NULL;

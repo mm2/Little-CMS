@@ -9745,6 +9745,175 @@ void PrintSupportedIntents(void)
 // ---------------------------------------------------------------------------------------
 
 
+// Empty pipelines copy common channels, clear additional outputs, and do not
+// write past the declared output channel count, including after optimization.
+static
+cmsInt32Number CheckEmptyPipelineChannels(void)
+{
+    cmsContext ContextID = DbgThread();
+    cmsUInt32Number Inputs, Outputs, i, Optimized;
+    cmsUInt16Number In16[3] = { 0x1234, 0x5678, 0x9abc }, Out16[4];
+    cmsFloat32Number InFloat[3] = { 0.25f, 0.5f, 0.75f }, OutFloat[4];
+    cmsUInt32Number InputFormat, OutputFormat, Flags;
+    cmsPipeline* Lut;
+    cmsBool Ok;
+
+    for (Inputs = 1; Inputs <= 3; Inputs++) {
+        for (Outputs = 1; Outputs <= 3; Outputs++) {
+            Lut = cmsPipelineAlloc(ContextID, Inputs, Outputs);
+            if (Lut == NULL) return FALSE;
+
+            for (Optimized = 0; Optimized < 2; Optimized++) {
+                if (Optimized) {
+                    InputFormat = CHANNELS_SH(Inputs) | BYTES_SH(2);
+                    OutputFormat = CHANNELS_SH(Outputs) | BYTES_SH(2);
+                    Flags = 0;
+                    if (!_cmsOptimizePipeline(ContextID, &Lut, INTENT_RELATIVE_COLORIMETRIC,
+                                              &InputFormat, &OutputFormat, &Flags)) {
+                        cmsPipelineFree(Lut);
+                        return FALSE;
+                    }
+                }
+
+                for (i = 0; i < 4; i++) {
+                    Out16[i] = 0xbeef;
+                    OutFloat[i] = -1.0f;
+                }
+                cmsPipelineEval16(In16, Out16, Lut);
+                cmsPipelineEvalFloat(InFloat, OutFloat, Lut);
+                Ok = TRUE;
+                for (i = 0; i < Outputs; i++) {
+                    if (Out16[i] != (i < Inputs ? In16[i] : 0) ||
+                        OutFloat[i] != (i < Inputs ? InFloat[i] : 0.0f)) Ok = FALSE;
+                }
+                for (; i < 4; i++) {
+                    if (Out16[i] != 0xbeef || OutFloat[i] != -1.0f) Ok = FALSE;
+                }
+                if (!Ok) {
+                    Fail("Empty pipeline channel mismatch (%u to %u, optimized=%u)",
+                         Inputs, Outputs, Optimized);
+                    cmsPipelineFree(Lut);
+                    return FALSE;
+                }
+            }
+            cmsPipelineFree(Lut);
+        }
+    }
+    return TRUE;
+}
+
+static
+cmsInt32Number CheckPipelineStageChannelBounds(void)
+{
+    cmsContext ContextID = DbgThread();
+    cmsPipeline* Lut;
+    cmsStage* Stage;
+    cmsUInt32Number i;
+    cmsBool Inserted;
+
+    for (i = 0; i < 2; i++) {
+        Lut = cmsPipelineAlloc(ContextID, 1, 1);
+        if (Lut == NULL) return FALSE;
+        Stage = _cmsStageAllocPlaceholder(ContextID, cmsSigIdentityElemType,
+                    i == 0 ? MAX_STAGE_CHANNELS + 1 : 1,
+                    i == 1 ? MAX_STAGE_CHANNELS + 1 : 1,
+                    NULL, NULL, NULL, NULL);
+        if (Stage == NULL) {
+            cmsPipelineFree(Lut);
+            return FALSE;
+        }
+        Inserted = cmsPipelineInsertStage(Lut, i == 0 ? cmsAT_BEGIN : cmsAT_END, Stage);
+        if (Inserted || cmsPipelineGetPtrToFirstStage(Lut) != NULL) {
+            // An attached stage is owned by the pipeline, even on failure.
+            if (cmsPipelineGetPtrToFirstStage(Lut) == NULL) cmsStageFree(Stage);
+            cmsPipelineFree(Lut);
+            Fail("Stage with excessive channel count was attached");
+            return FALSE;
+        }
+        cmsStageFree(Stage);
+        cmsPipelineFree(Lut);
+    }
+    return TRUE;
+}
+
+static
+cmsInt32Number CheckCLutAllocationBounds(void)
+{
+    cmsContext ContextID = DbgThread();
+    cmsUInt32Number Grid[1] = { 2 };
+    cmsUInt32Number Outputs[] = { 0, MAX_STAGE_CHANNELS };
+    cmsUInt32Number i;
+    cmsStage* Stage;
+
+    for (i = 0; i < 2; i++) {
+        Stage = cmsStageAllocCLut16bitGranular(ContextID, Grid, 1, Outputs[i], NULL);
+        if (Stage != NULL) { cmsStageFree(Stage); return FALSE; }
+        Stage = cmsStageAllocCLutFloatGranular(ContextID, Grid, 1, Outputs[i], NULL);
+        if (Stage != NULL) { cmsStageFree(Stage); return FALSE; }
+    }
+
+    // CubeSize fits in 32 bits, but the complete table entry count does not.
+    Grid[0] = (cmsUInt32Number)-1 / 15;
+    Stage = cmsStageAllocCLut16bitGranular(ContextID, Grid, 1, 16, NULL);
+    if (Stage != NULL) { cmsStageFree(Stage); return FALSE; }
+    Stage = cmsStageAllocCLutFloatGranular(ContextID, Grid, 1, 16, NULL);
+    if (Stage != NULL) { cmsStageFree(Stage); return FALSE; }
+
+    Grid[0] = 2;
+    Stage = cmsStageAllocCLut16bitGranular(ContextID, Grid, 1, 1, NULL);
+    if (Stage == NULL) return FALSE;
+    cmsStageFree(Stage);
+    Stage = cmsStageAllocCLutFloatGranular(ContextID, Grid, 1, 1, NULL);
+    if (Stage == NULL) return FALSE;
+    cmsStageFree(Stage);
+    return TRUE;
+}
+
+static
+cmsInt32Number CheckIT8MemoryBounds(void)
+{
+    cmsContext ContextID = DbgThread();
+    cmsHANDLE IT8 = cmsIT8Alloc(ContextID), Loaded;
+    cmsUInt32Number Needed = 0, Counted = 0;
+    cmsUInt8Number Sentinel = 0x5a;
+    char* Buffer;
+    cmsBool Ok;
+
+    if (IT8 == NULL) return FALSE;
+    Ok = cmsIT8SetSheetType(IT8, "CGATS.17") &&
+         cmsIT8SetPropertyDbl(IT8, "NUMBER_OF_FIELDS", 1) &&
+         cmsIT8SetPropertyDbl(IT8, "NUMBER_OF_SETS", 1) &&
+         cmsIT8SetDataFormat(IT8, 0, "SAMPLE_ID") &&
+         cmsIT8SetDataRowCol(IT8, 0, 0, "sample");
+    if (!Ok || !cmsIT8SaveToMem(IT8, NULL, &Needed) || Needed == 0) {
+        cmsIT8Free(IT8);
+        return FALSE;
+    }
+    // A non-null destination with no capacity reports a write error.
+    cmsSetLogErrorHandler(NULL);
+    Ok = cmsIT8SaveToMem(IT8, &Sentinel, &Counted);
+    ResetFatalError();
+    if (!Ok || Sentinel != 0x5a || Counted != Needed) {
+        cmsIT8Free(IT8);
+        Fail("IT8 sizing request modified the destination or reported an inconsistent size");
+        return FALSE;
+    }
+
+    Buffer = (char*) malloc(Needed);
+    if (Buffer == NULL) { cmsIT8Free(IT8); return FALSE; }
+    Ok = cmsIT8SaveToMem(IT8, Buffer, &Needed);
+    cmsIT8Free(IT8);
+    if (!Ok || Buffer[Needed - 1] != 0) { free(Buffer); return FALSE; }
+    Loaded = cmsIT8LoadFromMem(ContextID, Buffer, Needed);
+    if (Loaded == NULL) { free(Buffer); return FALSE; }
+    cmsIT8Free(Loaded);
+    Loaded = cmsIT8LoadFromMem(ContextID, Buffer, (cmsUInt32Number)-1);
+    free(Buffer);
+    if (Loaded != NULL) { cmsIT8Free(Loaded); return FALSE; }
+    return TRUE;
+}
+
+
 int main(int argc, char* argv[])
 {
     cmsInt32Number Exhaustive = 0;
@@ -9967,6 +10136,10 @@ int main(int argc, char* argv[])
     Check("Black point detection", CheckBlackPoint);
     Check("TAC detection", CheckTAC);
 
+    Check("Empty pipeline channels", CheckEmptyPipelineChannels);
+    Check("Pipeline stage channel bounds", CheckPipelineStageChannelBounds);
+    Check("CLUT allocation bounds", CheckCLutAllocationBounds);
+    Check("IT8 memory bounds", CheckIT8MemoryBounds);
     Check("CGATS parser", CheckCGATS);
     Check("CGATS parser on junk", CheckCGATS2);
     Check("CGATS parser on overflow", CheckCGATS_Overflow);

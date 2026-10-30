@@ -1395,9 +1395,14 @@ void FastIdentity16(CMSREGISTER const cmsUInt16Number In[],
 {
     cmsPipeline* Lut = (cmsPipeline*) D;
     cmsUInt32Number i;
+    cmsUInt32Number nCopy = (Lut ->InputChannels < Lut ->OutputChannels)
+                          ? Lut ->InputChannels : Lut ->OutputChannels;
 
-    for (i=0; i < Lut ->InputChannels; i++) {
+    for (i=0; i < nCopy; i++) {
          Out[i] = In[i];
+    }
+    for (; i < Lut ->OutputChannels; i++) {
+         Out[i] = 0;
     }
 }
 

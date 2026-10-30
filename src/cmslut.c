@@ -575,13 +575,14 @@ cmsStage* CMSEXPORT cmsStageAllocCLut16bitGranular(cmsContext ContextID,
 
     NewMPE ->Data  = (void*) NewElem;
 
-    NewElem -> nEntries = n = outputChan * CubeSize(clutPoints, inputChan);
-    NewElem -> HasFloatValues = FALSE;
-
-    if (n == 0) {
+    n = CubeSize(clutPoints, inputChan);
+    if (n == 0 || outputChan == 0 || outputChan >= MAX_STAGE_CHANNELS ||
+        n > (cmsUInt32Number)-1 / outputChan) {
         cmsStageFree(NewMPE);
         return NULL;
     }
+    NewElem -> nEntries = n = outputChan * n;
+    NewElem -> HasFloatValues = FALSE;
 
 
     NewElem ->Tab.T  = (cmsUInt16Number*) _cmsCalloc(ContextID, n, sizeof(cmsUInt16Number));
@@ -666,14 +667,14 @@ cmsStage* CMSEXPORT cmsStageAllocCLutFloatGranular(cmsContext ContextID, const c
 
     NewMPE ->Data  = (void*) NewElem;
 
-    // There is a potential integer overflow on conputing n and nEntries.
-    NewElem -> nEntries = n = outputChan * CubeSize(clutPoints, inputChan);
-    NewElem -> HasFloatValues = TRUE;
-
-    if (n == 0) {
+    n = CubeSize(clutPoints, inputChan);
+    if (n == 0 || outputChan == 0 || outputChan >= MAX_STAGE_CHANNELS ||
+        n > (cmsUInt32Number)-1 / outputChan) {
         cmsStageFree(NewMPE);
         return NULL;
     }
+    NewElem -> nEntries = n = outputChan * n;
+    NewElem -> HasFloatValues = TRUE;
 
     NewElem ->Tab.TFloat  = (cmsFloat32Number*) _cmsCalloc(ContextID, n, sizeof(cmsFloat32Number));
     if (NewElem ->Tab.TFloat == NULL) {
@@ -1333,6 +1334,9 @@ void _LUTeval16(CMSREGISTER const cmsUInt16Number In[], CMSREGISTER cmsUInt16Num
     cmsFloat32Number Storage[2][MAX_STAGE_CHANNELS];
     int Phase = 0, NextPhase;
 
+    if (lut ->Elements == NULL && lut ->OutputChannels > lut ->InputChannels) {
+        memset(&Storage[Phase][0], 0, lut ->OutputChannels * sizeof(cmsFloat32Number));
+    }
     From16ToFloat(In, &Storage[Phase][0], lut ->InputChannels);
 
     for (mpe = lut ->Elements;
@@ -1359,6 +1363,9 @@ void _LUTevalFloat(const cmsFloat32Number In[], cmsFloat32Number Out[], const vo
     cmsFloat32Number Storage[2][MAX_STAGE_CHANNELS];
     int Phase = 0, NextPhase;
 
+    if (lut ->Elements == NULL && lut ->OutputChannels > lut ->InputChannels) {
+        memset(&Storage[Phase][0], 0, lut ->OutputChannels * sizeof(cmsFloat32Number));
+    }
     memmove(&Storage[Phase][0], In, lut ->InputChannels  * sizeof(cmsFloat32Number));
 
     for (mpe = lut ->Elements;
@@ -1522,6 +1529,10 @@ int CMSEXPORT cmsPipelineInsertStage(cmsPipeline* lut, cmsStageLoc loc, cmsStage
     cmsStage* Anterior = NULL, *pt;
 
     if (lut == NULL || mpe == NULL)
+        return FALSE;
+
+    if (mpe ->InputChannels > MAX_STAGE_CHANNELS ||
+        mpe ->OutputChannels > MAX_STAGE_CHANNELS)
         return FALSE;
 
     switch (loc) {
