@@ -45,9 +45,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "doc", "doc", "{4DD637AE-09B
 		..\..\BUILDING.md = ..\..\BUILDING.md
 		..\..\plugins\fast_float\doc\LittleCMS floating point extensions 1.7.pdf = ..\..\plugins\fast_float\doc\LittleCMS floating point extensions 1.7.pdf
 		..\..\plugins\threaded\doc\LittleCMS threaded extensions 1.0.pdf = ..\..\plugins\threaded\doc\LittleCMS threaded extensions 1.0.pdf
-		..\..\doc\LittleCMS2.19 API.pdf = ..\..\doc\LittleCMS2.19 API.pdf
-		..\..\doc\LittleCMS2.19 Plugin API.pdf = ..\..\doc\LittleCMS2.19 Plugin API.pdf
-		..\..\doc\LittleCMS2.19 tutorial.pdf = ..\..\doc\LittleCMS2.19 tutorial.pdf
+		..\..\doc\LittleCMS2.20 API.pdf = ..\..\doc\LittleCMS2.20 API.pdf
+		..\..\doc\LittleCMS2.20 Plugin API.pdf = ..\..\doc\LittleCMS2.20 Plugin API.pdf
+		..\..\doc\LittleCMS2.20 tutorial.pdf = ..\..\doc\LittleCMS2.20 tutorial.pdf
 	EndProjectSection
 EndProject
 Global
