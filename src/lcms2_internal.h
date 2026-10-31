@@ -62,7 +62,11 @@
 // even though sizeof(void *) is only four: for greatest flexibility
 // allow the build to specify ptr alignment.
 #ifndef CMS_PTR_ALIGNMENT
-# define CMS_PTR_ALIGNMENT sizeof(void *)
+# if defined(sparc) || defined(__sparc) || defined(__sparc__)
+#  define CMS_PTR_ALIGNMENT 8
+# else
+#  define CMS_PTR_ALIGNMENT sizeof(void *)
+# endif
 #endif
 
 #define _cmsALIGNMEM(x)  (((x)+(CMS_PTR_ALIGNMENT - 1)) & ~(CMS_PTR_ALIGNMENT - 1))
