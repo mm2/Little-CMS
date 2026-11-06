@@ -514,6 +514,26 @@ cmsFloat64Number DefaultEvalParametricFn(cmsInt32Number Type, const cmsFloat64Nu
     {
 
         e = Params[1] * Params[4] + Params[2];
+
+        // The threshold (ad+b)^g is constant, but evaluating it costs a pow() on
+        // every call. Since Y >= (ad+b)^g <=> Y^1/g >= ad+b for g > 0, decide the
+        // branch on Y^1/g, which is needed anyway. Only close to the threshold,
+        // where rounding could matter, fall back to the exact test below.
+        if (e > 0 && R > 0 && Params[0] >= MATRIX_DET_TOLERANCE && fabs(Params[1]) >= MATRIX_DET_TOLERANCE) {
+
+            cmsFloat64Number t = pow(R, 1.0 / Params[0]);
+
+            if (t > e * (1.0 + 1E-9)) {
+                Val = (t - Params[2]) / Params[1];
+                break;
+            }
+
+            if (t < e * (1.0 - 1E-9) && fabs(Params[3]) >= MATRIX_DET_TOLERANCE) {
+                Val = R / Params[3];
+                break;
+            }
+        }
+
         if (e < 0)
             disc = 0;
         else
