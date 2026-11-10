@@ -3687,6 +3687,11 @@ cmsFormatter _cmsGetStockInputFormatter(cmsUInt32Number dwInput, cmsUInt32Number
     cmsUInt32Number i;
     cmsFormatter fr;
 
+    if (T_PLANAR(dwInput) && T_SWAPFIRST(dwInput) && T_EXTRA(dwInput) == 0) {
+        fr.Fmt16 = NULL;
+        return fr;
+    }
+
     switch (dwFlags) {
 
     case CMS_PACK_FLAGS_16BITS: {
@@ -3852,6 +3857,11 @@ cmsFormatter _cmsGetStockOutputFormatter(cmsUInt32Number dwInput, cmsUInt32Numbe
 {
     cmsUInt32Number i;
     cmsFormatter fr;
+
+    if (T_PLANAR(dwInput) && T_SWAPFIRST(dwInput) && T_EXTRA(dwInput) == 0) {
+        fr.Fmt16 = NULL;
+        return fr;
+    }
 
     // Optimization is only a hint
     dwInput &= ~OPTIMIZED_SH(1);
