@@ -2887,7 +2887,13 @@ cmsUInt8Number* PackDoubleFrom16(CMSREGISTER _cmsTRANSFORM* info,
 
     if (Extra == 0 && SwapFirst) {
 
-         memmove(swap1 + 1, swap1, (nChan-1)* sizeof(cmsFloat64Number));
+        // Rotate across planes without touching neighboring pixels.
+        if (Planar) {
+            for (i = nChan - 1; i > 0; --i)
+                swap1[i * Stride] = swap1[(i - 1) * Stride];
+        }
+        else
+            memmove(swap1 + 1, swap1, (nChan-1)* sizeof(cmsFloat64Number));
         *swap1 = v;
     }
 
@@ -2940,7 +2946,13 @@ cmsUInt8Number* PackFloatFrom16(CMSREGISTER _cmsTRANSFORM* info,
        
        if (Extra == 0 && SwapFirst) {
 
-              memmove(swap1 + 1, swap1, (nChan - 1)* sizeof(cmsFloat32Number));
+              // Rotate across planes without touching neighboring pixels.
+              if (Planar) {
+                     for (i = nChan - 1; i > 0; --i)
+                            swap1[i * Stride] = swap1[(i - 1) * Stride];
+              }
+              else
+                     memmove(swap1 + 1, swap1, (nChan - 1)* sizeof(cmsFloat32Number));
               *swap1 = (cmsFloat32Number)v;
        }
 
@@ -2995,7 +3007,13 @@ cmsUInt8Number* PackBytesFromFloat(_cmsTRANSFORM* info,
 
     if (Extra == 0 && SwapFirst) {
 
-        memmove(swap1 + 1, swap1, (nChan - 1) * sizeof(cmsUInt8Number));
+        // Rotate across planes without touching neighboring pixels.
+        if (Planar) {
+            for (i = nChan - 1; i > 0; --i)
+                swap1[i * Stride] = swap1[(i - 1) * Stride];
+        }
+        else
+            memmove(swap1 + 1, swap1, (nChan - 1) * sizeof(cmsUInt8Number));
         *swap1 = vv;
     }
 
@@ -3046,7 +3064,13 @@ cmsUInt8Number* PackWordsFromFloat(_cmsTRANSFORM* info,
 
     if (Extra == 0 && SwapFirst) {
 
-        memmove(swap1 + 1, swap1, (nChan - 1) * sizeof(cmsUInt16Number));
+        // Rotate across planes without touching neighboring pixels.
+        if (Planar) {
+            for (i = nChan - 1; i > 0; --i)
+                swap1[i * Stride] = swap1[(i - 1) * Stride];
+        }
+        else
+            memmove(swap1 + 1, swap1, (nChan - 1) * sizeof(cmsUInt16Number));
         *swap1 = vv;
     }
 
@@ -3098,7 +3122,13 @@ cmsUInt8Number* PackFloatsFromFloat(_cmsTRANSFORM* info,
 
        if (Extra == 0 && SwapFirst) {
 
-              memmove(swap1 + 1, swap1, (nChan - 1)* sizeof(cmsFloat32Number));
+              // Rotate across planes without touching neighboring pixels.
+              if (Planar) {
+                     for (i = nChan - 1; i > 0; --i)
+                            swap1[i * Stride] = swap1[(i - 1) * Stride];
+              }
+              else
+                     memmove(swap1 + 1, swap1, (nChan - 1)* sizeof(cmsFloat32Number));
               *swap1 = (cmsFloat32Number)v;
        }
 
@@ -3148,7 +3178,13 @@ cmsUInt8Number* PackDoublesFromFloat(_cmsTRANSFORM* info,
 
        if (Extra == 0 && SwapFirst) {
 
-              memmove(swap1 + 1, swap1, (nChan - 1)* sizeof(cmsFloat64Number));
+              // Rotate across planes without touching neighboring pixels.
+              if (Planar) {
+                     for (i = nChan - 1; i > 0; --i)
+                            swap1[i * Stride] = swap1[(i - 1) * Stride];
+              }
+              else
+                     memmove(swap1 + 1, swap1, (nChan - 1)* sizeof(cmsFloat64Number));
               *swap1 = v;
        }
 
@@ -3505,7 +3541,13 @@ cmsUInt8Number* PackHalfFrom16(CMSREGISTER _cmsTRANSFORM* info,
 
        if (Extra == 0 && SwapFirst) {
 
-              memmove(swap1 + 1, swap1, (nChan - 1)* sizeof(cmsUInt16Number));
+              // Rotate across planes without touching neighboring pixels.
+              if (Planar) {
+                     for (i = nChan - 1; i > 0; --i)
+                            swap1[i * Stride] = swap1[(i - 1) * Stride];
+              }
+              else
+                     memmove(swap1 + 1, swap1, (nChan - 1)* sizeof(cmsUInt16Number));
               *swap1 = _cmsFloat2Half(v);
        }
 

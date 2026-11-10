@@ -8285,6 +8285,152 @@ int CheckPlanarFloat2int(void)
     return 1;
 }
 
+// Exercise output channel ordering through the public API. The reference has
+// no channel swaps or extras; only sample conversion is shared with it.
+static
+int CheckSwapFirstOutput(cmsUInt32Number Channels, cmsUInt32Number SampleFormat, cmsBool From16)
+{
+    const cmsUInt32Number Spaces[] = { PT_GRAY, PT_MCH2, PT_RGB, PT_CMYK,
+        PT_MCH5, PT_MCH6, PT_MCH7, PT_MCH8, PT_MCH9, PT_MCH10,
+        PT_MCH11, PT_MCH12, PT_MCH13, PT_MCH14, PT_MCH15 };
+    const cmsUInt32Number Widths[] = { 0, 1, 2, 17, 64 };
+    enum { Rows = 3, Width = 64 };
+    cmsFloat32Number InputFloat[Rows * Width * cmsMAXCHANNELS];
+    cmsUInt16Number Input16[Rows * Width * cmsMAXCHANNELS];
+    cmsUInt8Number* Reference;
+    cmsUInt32Number Base = COLORSPACE_SH(Spaces[Channels - 1]) | CHANNELS_SH(Channels);
+    cmsUInt32Number InputFormat = Base | (From16 ? BYTES_SH(2) : FLOAT_SH(1) | BYTES_SH(4));
+    cmsUInt32Number Bytes = T_BYTES(SampleFormat) ? T_BYTES(SampleFormat) : 8;
+    cmsFloat32Number Maximum = (Channels >= 4) ? 100.0F : 1.0F;
+    const void* Input = From16 ? (const void*) Input16 : (const void*) InputFloat;
+    cmsUInt32Number InBytes = From16 ? sizeof(cmsUInt16Number) : sizeof(cmsFloat32Number);
+    cmsUInt32Number i, planar, swap, first, reverse, extra, padded, k, row, pixel, channel;
+    int rc = 1;
+
+    for (i = 0; i < Rows * Width * Channels; i++) {
+        InputFloat[i] = (i % 9) * (Maximum / 8.0F);
+        Input16[i] = (cmsUInt16Number) ((i * 1237) & 0xffff);
+    }
+
+    Reference = (cmsUInt8Number*) chknull(malloc(Rows * Width * Channels * Bytes));
+
+    for (reverse = 0; reverse < 2 && rc; reverse++) {
+        cmsUInt32Number Canonical = Base | SampleFormat | FLAVOR_SH(reverse);
+        cmsHTRANSFORM reference = cmsCreateTransform(NULL, InputFormat, NULL,
+            From16 ? InputFormat : Canonical, INTENT_PERCEPTUAL, cmsFLAGS_NULLTRANSFORM);
+
+        if (reference == NULL) { rc = 0; break; }
+
+        // Changing a 16-bit transform's buffers selects the From16 formatters.
+        if (From16 && !cmsChangeBuffersFormat(reference, InputFormat, Canonical)) {
+            cmsDeleteTransform(reference);
+            rc = 0;
+            break;
+        }
+        cmsDoTransform(reference, Input, Reference, Rows * Width);
+        cmsDeleteTransform(reference);
+
+        // Float output also has a numerical oracle independent of any formatter.
+        if (!From16 && SampleFormat == (FLOAT_SH(1) | BYTES_SH(4))) {
+            for (i = 0; i < Rows * Width * Channels; i++) {
+                cmsFloat32Number expected = reverse ? Maximum - InputFloat[i] : InputFloat[i];
+                if (((cmsFloat32Number*) Reference)[i] != expected) {
+                    Fail("Unexpected canonical float sample at %u", i);
+                    rc = 0;
+                    break;
+                }
+            }
+        }
+
+        for (planar = 0; planar < 2 && rc; planar++)
+        for (swap = 0; swap < 2 && rc; swap++)
+        for (first = 0; first < 2 && rc; first++)
+        for (extra = 0; extra < 3 && rc; extra++) {
+            cmsUInt32Number Format = Canonical | PLANAR_SH(planar) | DOSWAP_SH(swap) |
+                SWAPFIRST_SH(first) | EXTRA_SH(extra);
+            cmsHTRANSFORM transform = cmsCreateTransform(NULL, InputFormat, NULL,
+                From16 ? InputFormat : Format, INTENT_PERCEPTUAL, cmsFLAGS_NULLTRANSFORM);
+
+            if (transform == NULL) { rc = 0; break; }
+            if (From16 && !cmsChangeBuffersFormat(transform, InputFormat, Format)) {
+                cmsDeleteTransform(transform);
+                rc = 0;
+                break;
+            }
+
+            for (padded = 0; padded < 2 && rc; padded++)
+            for (k = 0; k < sizeof(Widths) / sizeof(Widths[0]) && rc; k++) {
+                cmsUInt32Number width = Widths[k];
+                cmsUInt32Number Line = (width ? width : 1) * (planar ? 1 : Channels + extra) + padded * 3;
+                cmsUInt32Number Plane = Rows * Line + padded * 5;
+                cmsUInt32Number Guard = padded * 8;
+                cmsUInt32Number Size = (2 * Guard + (planar ? (Channels + extra) * Plane : Rows * Line)) * Bytes;
+                cmsUInt8Number* output = (cmsUInt8Number*) chknull(malloc(Size));
+                cmsUInt8Number* expected = (cmsUInt8Number*) chknull(malloc(Size));
+
+                // With no padding these are exact-size allocations for ASan.
+                // Otherwise check every padding/guard byte and untouched extra.
+                memset(output, 0xa5, Size);
+                memset(expected, 0xa5, Size);
+                for (row = 0; row < Rows; row++)
+                for (pixel = 0; pixel < width; pixel++)
+                for (channel = 0; channel < Channels; channel++) {
+                    cmsUInt32Number slot = swap ? Channels - 1 - channel : channel;
+                    cmsUInt32Number offset;
+
+                    if (extra == 0 && first)
+                        slot = (slot + 1) % Channels;
+                    else if (extra && (swap ^ first))
+                        slot += extra;
+
+                    offset = Guard + row * Line + (planar ? slot * Plane + pixel : pixel * (Channels + extra) + slot);
+                    memcpy(expected + offset * Bytes,
+                        Reference + ((row * Width + pixel) * Channels + channel) * Bytes, Bytes);
+                }
+
+                cmsDoTransformLineStride(transform, Input, output + Guard * Bytes, width, Rows,
+                    Width * Channels * InBytes, Line * Bytes, 0, Plane * Bytes);
+                for (i = 0; i < Size; i++) {
+                    if (output[i] != expected[i]) {
+                        Fail("SWAPFIRST output: from16=%u format=%08x width=%u padded=%u byte=%u: %u != %u",
+                            From16, Format, width, padded, i, output[i], expected[i]);
+                        rc = 0;
+                        break;
+                    }
+                }
+                free(expected);
+                free(output);
+            }
+            cmsDeleteTransform(transform);
+        }
+    }
+    free(Reference);
+    return rc;
+}
+
+static
+int CheckPlanarSwapFirst(void)
+{
+    const cmsUInt32Number Formats[] = { BYTES_SH(1), BYTES_SH(2),
+        FLOAT_SH(1) | BYTES_SH(4), FLOAT_SH(1) | BYTES_SH(0)
+#ifndef CMS_NO_HALF_SUPPORT
+        , FLOAT_SH(1) | BYTES_SH(2)
+#endif
+    };
+    cmsUInt32Number channels, format, from16;
+
+    for (from16 = 0; from16 < 2; from16++)
+    for (format = 0; format < sizeof(Formats) / sizeof(Formats[0]); format++) {
+        // Half output is only registered for planar use in the 16-bit path.
+        if ((!from16 && Formats[format] == (FLOAT_SH(1) | BYTES_SH(2))) ||
+            (from16 && !T_FLOAT(Formats[format]))) continue;
+
+        for (channels = 1; channels <= 15; channels++)
+            if (!CheckSwapFirstOutput(channels, Formats[format], from16)) return 0;
+    }
+    return 1;
+}
+
 #ifndef CMS_NO_HALF_SUPPORT
 
 /**
@@ -9986,6 +10132,7 @@ int main(int argc, char* argv[])
     Check("Matrix simplification", CheckMatrixSimplify);
     Check("Planar 8 optimization", CheckPlanar8opt);
     Check("Planar float to int16", CheckPlanarFloat2int);
+    Check("Planar SWAPFIRST output", CheckPlanarSwapFirst);
 #ifndef CMS_NO_HALF_SUPPORT
     Check("Planar half to int8", CheckPlanarHalf2int8);
 #endif
